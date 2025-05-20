@@ -78,12 +78,12 @@ class Order_ScheduleController extends Controller
             'col_text_8'  => 'status',
             'col_text_9'  => 'machining_date',
             'col_text_10' => 'due_date',
-            'col_text_11' => 'alert',
-            'col_text_12' => 'days',
-            'col_text_13' => 'report',
-            'col_text_14' => 'our_source',
-            'col_text_15' => 'station',
-            'col_text_16' => 'notes',
+            'col_text_12' => 'alert',
+            'col_text_13' => 'days',
+            'col_text_14' => 'report',
+            'col_text_15' => 'our_source',
+            'col_text_16' => 'station',
+            'col_text_17' => 'notes',
         ];
     
         try {

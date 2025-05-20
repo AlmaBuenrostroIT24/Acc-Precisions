@@ -719,6 +719,8 @@ document.addEventListener("DOMContentLoaded", () => {
     
                 // Clonar la fila original (sin eventos)
                 const newRow = row.clone(false);
+
+                
     
                 // Mostrar cuántas columnas tiene la fila
                 console.log("Total celdas en la fila:", newRow.find("td").length);
@@ -792,12 +794,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             dataToSend[hiddenInput.attr("name")] = hiddenInput.val();
                         });
                     });
+                    console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
     
                     handlePostJsonWithAlerts(
                         "/orders",
                         dataToSend,
                         (response) => {
-                            alert("Registro guardado con ID: " + response.id);
+                            alert("Registro guardado con ID: " + response.order_id);
     
                             // Actualizar visualmente la fila: eliminar inputs excepto columna 7 y dejar texto plano
                             newRow.find("td").each(function (index) {
@@ -812,7 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
                             // Recolocar el ID en la columna 0
                             newRow.find("td:eq(0)").text(response.id);
-    
+                            console.log("⏳ Insertando contenido en la columna 18 (Notas)");
                             // 🔽 Generar contenido de la columna 18 (Notas)
                             const orderId = response.id;
                             const safeNotes = ""; // Al guardar nuevo, inicia vacío
