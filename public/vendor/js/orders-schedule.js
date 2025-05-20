@@ -841,8 +841,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
     
                             // Actualizar DataTable si está en uso
-                            const dtRow = table.row(newRow);
-                            dtRow.invalidate().draw(false);
+                            location.reload();
                         },
                         "Error al guardar el registro"
                     );
