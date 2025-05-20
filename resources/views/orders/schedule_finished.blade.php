@@ -126,7 +126,7 @@
                                 <td>
                                     <span class="open-notes-modal" data-id="{{ $order->id }}"
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
-                                        {{ Str::limit($order->notes, 30) ?: 'Add Note' }}
+                                        {{ Str::limit($order->notes, 30) }}
                                     </span>
                                 </td>
                             </tr>
