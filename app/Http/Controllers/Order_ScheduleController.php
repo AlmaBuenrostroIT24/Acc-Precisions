@@ -65,7 +65,7 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Request completo:', $request->all());
+       // Log::info('Request completo:', $request->all());
     
         $mapping = [
             'col_text_1'  => 'location',

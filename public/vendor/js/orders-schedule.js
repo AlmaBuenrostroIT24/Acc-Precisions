@@ -651,7 +651,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 `/orders/${orderId}/update-wo-qty`,
                 { wo_qty },
                 (data) => {
-                    // console.log("✅ Guardado correctamente", data);
+                    // Propagar a otras pestañas
+                    localStorage.setItem('wo-qty-change', JSON.stringify({
+                        orderId,
+                        wo_qty
+                    }));
+                    localStorage.removeItem('wo-qty-change'); // forzar el evento
                 },
                 "❌ Error to save"
             );
@@ -723,7 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
     
                 // Mostrar cuántas columnas tiene la fila
-                console.log("Total celdas en la fila:", newRow.find("td").length);
+               // console.log("Total celdas en la fila:", newRow.find("td").length);
     
                 // Mostrar el next_id en la primera celda (columna 0)
                 const idCell = newRow.find("td:eq(0)");
@@ -752,14 +757,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (e.key === "Enter" && !guardado) {
                             const val6 = $(this).val().trim();
                             if (val6) {
-                                if (confirm("¿Guardar este nuevo registro?")) {
+                                if (confirm("¿Save this new record?")) {
                                     guardado = true;
                                     checkInputsAndSend();
                                 }
                             } else {
-                                alert(
-                                    "Debes capturar al menos el campo de Cantidad (columna 6)."
-                                );
+                                //alert("Debes capturar al menos el campo de Cantidad (columna 6).");
                             }
                         }
                     });
@@ -771,9 +774,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         .trim();
     
                     if (!val6) {
-                        alert(
-                            "Debes capturar al menos el campo de Cantidad (columna 6)."
-                        );
+                      //  alert( "Debes capturar al menos el campo de Cantidad (columna 6).");
                         return;
                     }
     
@@ -801,13 +802,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             dataToSend[hiddenInput.attr("name")] = hiddenInput.val();
                         });
                     });
-                    console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+                   // console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
     
                     handlePostJsonWithAlerts(
                         "/orders",
                         dataToSend,
                         (response) => {
-                            alert("Registro guardado con ID: " + response.order_id);
+                           // alert("Registro guardado con ID: " + response.order_id);
     
                             // Actualizar visualmente la fila: eliminar inputs excepto columna 7 y dejar texto plano
                             newRow.find("td").each(function (index) {
@@ -822,7 +823,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
                             // Recolocar el ID en la columna 0
                             newRow.find("td:eq(0)").text(response.id);
-                            console.log("⏳ Insertando contenido en la columna 18 (Notas)");
+                           // console.log("⏳ Insertando contenido en la columna 18 (Notas)");
                             // 🔽 Generar contenido de la columna 18 (Notas)
                             const orderId = response.id;
                             const safeNotes = ""; // Al guardar nuevo, inicia vacío
@@ -837,7 +838,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (notesCell.length) {
                                 notesCell.html(newNotesHtml);
                             } else {
-                                console.warn("⚠ La columna 18 no existe en esta fila.");
+                                //console.warn("⚠ La columna 18 no existe en esta fila.");
                             }
     
                             // Actualizar DataTable si está en uso
@@ -848,8 +849,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             })
             .catch((err) => {
-                console.error("Error obteniendo próximo ID:", err);
-                alert("No se pudo obtener el próximo ID");
+                //console.error("Error obteniendo próximo ID:", err);
+                //alert("No se pudo obtener el próximo ID");
             });
     });
     
