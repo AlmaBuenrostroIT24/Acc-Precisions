@@ -28,9 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 "X-CSRF-TOKEN": csrfToken,
             },
             body: JSON.stringify(data),
-        }).then(res => {
+        }).then((res) => {
             if (!res.ok) {
-                return res.text().then(text => {
+                return res.text().then((text) => {
                     throw new Error(`HTTP ${res.status}: ${text}`);
                 });
             }
@@ -64,10 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
-            pageLength: 30,
+            pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [[11, "asc"]], // asc = más antigua primero
+            order: [[12, "asc"]], // asc = más antigua primero
             info: true,
             autoWidth: false,
             columnDefs: [
@@ -99,9 +99,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 break;
             case "/scheduleh":
                 window.table = initOrdersTable(tableElement, {
-                    pageLength: 50,
+                    pageLength: 40,
                     searching: false,
-                    lengthChange: true,
                 });
                 break;
             case "/ruta-vista-3":
@@ -138,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const finalClass = saved
             ? `${editableClass} text-success fw-bold`
             : `${editableClass} text-decoration-underline text-muted`;
-        const label = value || "Click para agregar";
+        const label = value || "Add";
 
         return $(
             `<span class="${finalClass.trim()}" data-id="${orderId}" style="cursor:pointer;">${label}</span>`
@@ -168,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
         onErrorMsg = "Error al comunicarse con el servidor."
     ) {
         postJson(url, body)
-            .then(response => {
+            .then((response) => {
                 console.log("Respuesta recibida:", response); // Para debug
                 onSuccess(response);
             })
@@ -577,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tableElement.on("click", ".open-notes-modal", function (event) {
         event.preventDefault();
-       // console.log("Clic detectado en .open-notes-modal"); // Verifica si esto aparece en consola
+        // console.log("Clic detectado en .open-notes-modal"); // Verifica si esto aparece en consola
         const orderId = $(this).data("id");
         const fullNotes = $(this).data("notes") || "";
 
@@ -591,7 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Guardar notas
     $("#notesForm").submit(function (e) {
         console.log("Interceptando submit del formulario de notas"); // 👈 esto
-        e.preventDefault();// Esto evita que el form se envíe "normalmente"
+        e.preventDefault(); // Esto evita que el form se envíe "normalmente"
         const orderId = $("#notesOrderId").val();
         const notes = $("#notesTextarea").val();
 
@@ -622,7 +621,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (row && window.table) {
                     const rowIndex = window.table.row(row).index();
                     window.table
-                        .cell(rowIndex, 18)
+                        .cell(rowIndex, 19)
                         .data(newNotesHtml)
                         .draw(false);
                 } else {
@@ -635,6 +634,225 @@ document.addEventListener("DOMContentLoaded", () => {
             "Error al comunicarse con el servidor."
         );
     });
+
+    //-------------------------------------------
+    //Es el input para agregar WO QTY
+    $(document).ready(function () {
+        // Delegación: escucha cualquier cambio en .wo-qty-input
+        $(document).on("change", ".wo-qty-input", function () {
+            const input = $(this);
+            const orderId = input.data("id");
+            const wo_qty = input.val();
+
+            //  console.log("⚡ Cambio detectado en orderId:", orderId, "Qty:", wo_qty);
+
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-wo-qty`,
+                { wo_qty },
+                (data) => {
+                    // Propagar a otras pestañas
+                    localStorage.setItem('wo-qty-change', JSON.stringify({
+                        orderId,
+                        wo_qty
+                    }));
+                    localStorage.removeItem('wo-qty-change'); // forzar el evento
+                },
+                "❌ Error to save"
+            );
+        });
+    });
+
+    //--------------------------------------------------------
+    // --- Aquí agregamos la lógica para el botón "Agregar" dentro de Part_description ---
+    // Insertar botón 'Agregar' en las celdas de Part_description que contienen "kit"
+
+    function agregarBotonesKit() {
+        tableElement.find("tbody tr").each(function (index) {
+            const partDescCell = $(this).find("td").eq(4); // columna PART/DESCRIPTION
+            partDescCell.css("position", "relative"); // para posicionar el botón dentro
+
+            const texto = partDescCell.text().toLowerCase();
+
+            //console.log(`🔍 Fila ${index} - Texto: ${texto}`);
+
+            if (texto.includes("kit")) {
+                if (partDescCell.find(".btn-add-kit").length === 0) {
+                    const btn = $(
+                        `<button 
+                            class="btn btn-primary btn-add-kit rounded-circle p-0" 
+                            type="button" 
+                            title="Agregar" 
+                            style="
+                                width: 1.6em; 
+                                height: 1.6em; 
+                                font-size: 1em;
+                                position: absolute; 
+                                right: 0.25em; 
+                                top: 70%; 
+                                transform: translateY(-50%);
+                            ">
+                            <i class="fas fa-plus" style="line-height: 1.6em;"></i>
+                        </button>`
+                    );
+                    partDescCell.append(btn);
+                    //console.log(`✅ Botón agregado en fila ${index}`);
+                }
+            }
+        });
+    }
+
+    // Ejecutar al cargar por primera vez
+    agregarBotonesKit();
+
+    // Re-ejecutar cada vez que se redibuja la tabla
+    tableElement.on("draw.dt", function () {
+        console.log("📢 Evento draw.dt disparado");
+        agregarBotonesKit();
+    });
+
+    // Manejar el click en botones 'Agregar' dinámicos
+    tableElement.on("click", ".btn-add-kit", function () {
+        const btn = $(this);
+        const row = btn.closest("tr");
+    
+        // Obtener próximo ID antes de hacer cualquier cosa
+        fetch("/orders/next-id")
+            .then((res) => res.json())
+            .then((data) => {
+                const nextId = data.next_id;
+    
+                // Clonar la fila original (sin eventos)
+                const newRow = row.clone(false);
+
+                
+    
+                // Mostrar cuántas columnas tiene la fila
+               // console.log("Total celdas en la fila:", newRow.find("td").length);
+    
+                // Mostrar el next_id en la primera celda (columna 0)
+                const idCell = newRow.find("td:eq(0)");
+                idCell.text(nextId);
+                idCell.append(
+                    `<input type="hidden" name="id" value="${nextId}">`
+                );
+    
+                // En las columnas 2, 4 y 6 ponemos inputs vacíos
+                [2, 4, 6].forEach((index) => {
+                    const cell = newRow.find(`td:eq(${index})`);
+                    cell.html(
+                        `<input type="text" name="col_text_${index}" class="form-control form-control-sm" value="">`
+                    );
+                });
+    
+                // Insertar la nueva fila justo debajo de la actual
+                row.after(newRow);
+    
+                let guardado = false;
+    
+                // Guardar solo al presionar Enter en input col_text_6
+                newRow
+                    .find('input[name="col_text_6"]')
+                    .on("keydown", function (e) {
+                        if (e.key === "Enter" && !guardado) {
+                            const val6 = $(this).val().trim();
+                            if (val6) {
+                                if (confirm("¿Save this new record?")) {
+                                    guardado = true;
+                                    checkInputsAndSend();
+                                }
+                            } else {
+                                //alert("Debes capturar al menos el campo de Cantidad (columna 6).");
+                            }
+                        }
+                    });
+    
+                function checkInputsAndSend() {
+                    const val6 = newRow
+                        .find('input[name="col_text_6"]')
+                        .val()
+                        .trim();
+    
+                    if (!val6) {
+                      //  alert( "Debes capturar al menos el campo de Cantidad (columna 6).");
+                        return;
+                    }
+    
+                    let dataToSend = { id: nextId };
+    
+                    newRow.find("td").each(function (index) {
+                        const cell = $(this);
+                        const input = cell.find("input");
+                        if (input.length) {
+                            dataToSend[`col_text_${index}`] = input.val();
+                        } else {
+                            let text = cell.text().trim();
+                        
+                            // Si es la columna 17 y tiene el texto por defecto "Note", se guarda vacío
+                            if (index === 17 && text === "Note") {
+                                text = "";
+                            }
+                        
+                            dataToSend[`col_text_${index}`] = text;
+                        }
+    
+                        // También incluir inputs ocultos
+                        cell.find('input[type="hidden"]').each(function () {
+                            const hiddenInput = $(this);
+                            dataToSend[hiddenInput.attr("name")] = hiddenInput.val();
+                        });
+                    });
+                   // console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+    
+                    handlePostJsonWithAlerts(
+                        "/orders",
+                        dataToSend,
+                        (response) => {
+                           // alert("Registro guardado con ID: " + response.order_id);
+    
+                            // Actualizar visualmente la fila: eliminar inputs excepto columna 7 y dejar texto plano
+                            newRow.find("td").each(function (index) {
+                                const cell = $(this);
+                                if (index === 7) return; // No tocar input en columna 7
+                                const input = cell.find("input");
+                                if (input.length) {
+                                    const value = input.val();
+                                    cell.text(value);
+                                }
+                            });
+    
+                            // Recolocar el ID en la columna 0
+                            newRow.find("td:eq(0)").text(response.id);
+                           // console.log("⏳ Insertando contenido en la columna 18 (Notas)");
+                            // 🔽 Generar contenido de la columna 18 (Notas)
+                            const orderId = response.id;
+                            const safeNotes = ""; // Al guardar nuevo, inicia vacío
+                            const shortNote = "Note";
+    
+                            const newNotesHtml =
+                                `<span class="open-notes-modal" data-id="${orderId}" data-notes="" style="cursor:pointer;" title="">
+                                    <i class="fas fa-plus-circle me-1 text-muted"></i> Note</span>`;
+    
+                            // Insertar en la columna 18 (si existe)
+                            const notesCell = newRow.find("td:eq(17)");
+                            if (notesCell.length) {
+                                notesCell.html(newNotesHtml);
+                            } else {
+                                //console.warn("⚠ La columna 18 no existe en esta fila.");
+                            }
+    
+                            // Actualizar DataTable si está en uso
+                            location.reload();
+                        },
+                        "Error al guardar el registro"
+                    );
+                }
+            })
+            .catch((err) => {
+                //console.error("Error obteniendo próximo ID:", err);
+                //alert("No se pudo obtener el próximo ID");
+            });
+    });
+    
 
     //-----------------------------------------
 });

@@ -82,9 +82,13 @@ Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 
 Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
 Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
 Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
-//Route::get('/orders', [Order_ScheduleController::class, 'yarnellSchedule']);
 
-
+Route::post('/orders/{id}/update-wo-qty', [Order_ScheduleController::class, 'updateWoQty']);
+Route::post('/orders/duplicate', [Order_ScheduleController::class, 'duplicate'])->name('orders.duplicate');
+Route::get('/orders/next-id', function () {
+    $lastId = \App\Models\OrderSchedule::max('id') ?? 0;
+    return response()->json(['next_id' => $lastId + 1]);
+});
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);
 Route::get('/orders/summary/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByMonth']);
 Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByWeek']);
@@ -94,3 +98,5 @@ Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleCont
 
 
 // -----------------------------------Machines-------------------------------------------------------
+
+

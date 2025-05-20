@@ -113,7 +113,7 @@
                     .join(" ");
 
                 const rowIdx = window.table.row(row).index();
-                const colIdx = 9;
+                const colIdx = 10;
 
                 const optionsHtml = Object.keys(statusLabels).map(s => {
                     const selected = s.toLowerCase() === status.toLowerCase() ? "selected" : "";
@@ -122,7 +122,7 @@
                 }).join("");
 
                 const selectHtml = `
-            <select class="form-select form-select-sm status-select fw-bold text-capitalize"
+            <select class="form-control form-control-sm location-select fw-bold text-capitalize" style="font-weight: bold; color: black;"
                 data-id="${orderId}" data-location="${window.currentLocation}">
                 ${optionsHtml}
             </select>
@@ -168,7 +168,7 @@
                 ${shortNote}</span>`;
 
                 const rowIndex = window.table.row(row).index();
-                window.table.cell(rowIndex, 17).data(newNotesHtml).draw(false);
+                window.table.cell(rowIndex, 19).data(newNotesHtml).draw(false);
 
                 // Inicializa tooltips si usas Bootstrap 4 o 5
                 if (typeof initTooltips === "function") {
@@ -211,6 +211,23 @@
                 }
 
                 console.log(`🔄 Work ID sincronizado para orden ${orderId}`);
+            }
+
+            function updateWoQty(orderId, wo_qty) {
+                const input = document.querySelector(`input.wo-qty-input[data-id="${orderId}"]`);
+                if (!input) return;
+
+                input.value = wo_qty;
+
+                if (wo_qty && wo_qty > 0) {
+                    input.classList.add("fw-bold");
+                    input.style.color = "black";
+                } else {
+                    input.classList.remove("fw-bold");
+                    input.style.color = "gray";
+                }
+
+               // console.log(`🔄 WO QTY sincronizado para orden ${orderId}:`, wo_qty);
             }
 
             window.addEventListener('storage', function(event) {
@@ -266,6 +283,10 @@
                     case 'work-id-change':
                         if (!isYarnell) return;
                         updateWorkId(data.orderId, data.work_id || "");
+                        break;
+                    case 'wo-qty-change':
+                        if (!isYarnell) return;
+                        updateWoQty(data.orderId, data.wo_qty || 0);
                         break;
 
                     default:

@@ -12,3 +12,32 @@
 .bg-status-onhold        { background-color: #ffffff !important; } /* Rosa pastel */
 
 
+.select-bold {
+    font-weight: bold;
+    color: black;
+    min-width: 100px;
+}
+
+.input-wo-qty {
+    width: 60px;
+    font-weight: bold;
+    color: black;
+}
+
+.text-xs {
+    font-size: 12px;
+}
+
+.thead-custom th {
+    font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+#orders_scheduleTable td {
+    font-size: clamp(10px, 0.9vw, 13px);
+    white-space: normal;      /* permite salto de línea */
+    word-wrap: break-word;    /* corta palabras largas si es necesario */
+    padding: 2px 6px;
+    vertical-align: middle;
+}

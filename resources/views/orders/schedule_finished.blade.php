@@ -76,7 +76,8 @@
                                 <th>PN</th>
                                 <th>PART/DESCRIPTION</th>
                                 <th>CUSTOMER</th>
-                                <th>Qty</th>
+                                <th>CO Qty</th>
+                                <th>WO Qty</th>
                                 <th>Report</th>
                                 <th>Out Source</th>
                                 <th>Due Date</th>
@@ -94,6 +95,7 @@
                                 <td style="font-size: 12px;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
+                                <td>{{ $order->wo_qty }}</td>
                                 <td>
                                     <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
                                         data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}">
@@ -124,7 +126,7 @@
                                 <td>
                                     <span class="open-notes-modal" data-id="{{ $order->id }}"
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
-                                        {{ Str::limit($order->notes, 30) ?: 'Add Note' }}
+                                        {{ Str::limit($order->notes, 30) }}
                                     </span>
                                 </td>
                             </tr>
