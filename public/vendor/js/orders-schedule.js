@@ -99,9 +99,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 break;
             case "/scheduleh":
                 window.table = initOrdersTable(tableElement, {
-                    pageLength: 50,
+                    pageLength: 40,
                     searching: false,
-                    lengthChange: true,
                 });
                 break;
             case "/ruta-vista-3":
