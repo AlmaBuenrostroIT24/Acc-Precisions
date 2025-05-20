@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [[11, "asc"]], // asc = más antigua primero
+            order: [[12, "asc"]], // asc = más antigua primero
             info: true,
             autoWidth: false,
             columnDefs: [
@@ -622,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (row && window.table) {
                     const rowIndex = window.table.row(row).index();
                     window.table
-                        .cell(rowIndex, 18)
+                        .cell(rowIndex, 19)
                         .data(newNotesHtml)
                         .draw(false);
                 } else {
@@ -785,7 +785,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (input.length) {
                             dataToSend[`col_text_${index}`] = input.val();
                         } else {
-                            dataToSend[`col_text_${index}`] = cell.text().trim();
+                            let text = cell.text().trim();
+                        
+                            // Si es la columna 17 y tiene el texto por defecto "Note", se guarda vacío
+                            if (index === 17 && text === "Note") {
+                                text = "";
+                            }
+                        
+                            dataToSend[`col_text_${index}`] = text;
                         }
     
                         // También incluir inputs ocultos
