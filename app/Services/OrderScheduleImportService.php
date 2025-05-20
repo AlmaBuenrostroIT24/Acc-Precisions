@@ -179,7 +179,7 @@ class OrderScheduleImportService
             'report'          => $row['report'] ?? '0',
             'our_source'      => $row['our_source'] ?? '0',
             'assigned_to'     => $row['station'] ?? '""',
-            'notes'   => $row['notes'] ?? 'default_value',
+            'notes'           => $row['notes'] ?? '',
             'location'        => $row['location'] ?? 'Floor',
             'priority'        => $row['priority'] ?? 'default_value',
             'assigned_to'     => $row['assigned_to'] ?? '1',
