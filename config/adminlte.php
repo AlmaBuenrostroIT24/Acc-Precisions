@@ -391,7 +391,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'Users',
-                    'url' => '#',
+                    'url' => 'users',
                 ],
     
                 [
