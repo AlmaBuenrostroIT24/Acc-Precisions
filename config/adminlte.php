@@ -321,57 +321,123 @@ return [
             'can' => 'manage-blog',
         ],
         [
-            'text' => 'pages',
+            'text' => 'Dashboard',
             'url' => 'admin/pages',
-            'icon' => 'far fa-fw fa-file',
+            'icon' => 'nav-icon fas fa-tachometer-alt',
             'label' => 4,
             'label_color' => 'success',
         ],
         ['header' => 'account_settings'],
         [
-            'text' => 'profile',
+            'text' => 'Quality Assurance',
             'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
-        [
-            'text' => 'change_password',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-        ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'fas fa-fw fa-share',
+            'icon' => 'nav-icon fas fa-cogs',
             'submenu' => [
                 [
-                    'text' => 'level_one',
+                    'text' => 'Calibration',
+                    'url' => '#',
+                ],
+    
+                [
+                    'text' => 'Instrument',
+                    'url' => '#',
+                ],
+            ],
+        ],
+        [
+            'text' => 'Machines',
+            'icon' => 'nav-icon fas fa-industry',
+            'submenu' => [
+                [
+                    'text' => 'Machinery',
                     'url' => '#',
                 ],
                 [
-                    'text' => 'level_one',
+                    'text' => 'Other Equipment',
                     'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                            ],
-                        ],
-                    ],
                 ],
                 [
-                    'text' => 'level_one',
+                    'text' => 'Maintenance',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Bateries',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Manuals',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Codes',
+                    'url' => '#',
+                ],
+            ],
+        ],
+        [
+            'text' => 'Orders',
+            'icon' => 'nav-icon fas fa-box',
+            'submenu' => [
+                [
+                    'text' => 'Schedule',
+                    'url' => '#',
+                ],
+            ],
+        ],
+
+        [
+            'text' => 'Employees',
+            'icon' => 'nav-icon fas fa-user',
+            'submenu' => [
+                [
+                    'text' => 'Users',
+                    'url' => '#',
+                ],
+    
+                [
+                    'text' => 'Roles & Permissions',
+                    'url' => '#',
+                ],
+            ],
+        ],
+        [
+            'text' => 'IT Department',
+            'icon' => 'nav-icon fas fa-desktop',
+            'submenu' => [
+                [
+                    'text' => 'Cameras',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Computers',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'NAS',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'PDF',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Phones',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Printers',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Red',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'Systems',
+                    'url' => '#',
+                ],
+                [
+                    'text' => 'TimeClock',
                     'url' => '#',
                 ],
             ],
