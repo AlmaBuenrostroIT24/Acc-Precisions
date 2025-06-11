@@ -22,16 +22,17 @@ class UserController extends Controller
     public function index()
     {
         // Obtener todos los usuarios con sus roles
-       // $users = User::with('roles')->get();  // Usamos 'with' para cargar los roles asociados--------------------
+        $users = User::with('roles')->get();  // Usamos 'with' para cargar los roles asociados
         $users = User::all(); // Obtener todos los usuarios
-        return view('users.index', compact('users')); // Enviar a la vista
+        $roles = Role::all(); // ¡esto es lo que te falta!
+        return view('users.index', compact('users', 'roles')); // Enviar a la vista
 
     }
 
     // Método para mostrar el formulario de creación de usuario
     public function create()
     {
-       // $roles = Role::all(); // Obtiene todos los roles disponibles----------------------------------------
+        $roles = Role::all(); // Obtiene todos los roles disponibles
         return view('users.create', compact('roles')); // Pásalos a la vista
     }
 
@@ -64,7 +65,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         // Obtener todos los roles disponibles
-       // $roles = Role::all();-------------------------------------------------
+        $roles = Role::all();
         // Pasar tanto el usuario como los roles a la vista
         return view('users.edit', compact('user', 'roles'));
     }
