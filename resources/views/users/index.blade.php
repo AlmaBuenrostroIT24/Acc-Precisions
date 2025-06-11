@@ -16,7 +16,10 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <a href="{{ route('users.create') }}" class="btn btn-success">New User</a>
+        <!-- Botón para abrir el modal -->
+        <button type="button" class="btn btn-secondary mb-3" data-toggle="modal" data-target="#createUserModal">
+           New User
+        </button>
     </div>
     <div class="card-body">
         <!-- Tabla de Calibraciones -->
@@ -38,7 +41,9 @@
                     <td>{{ $user->email }}</td>
                     <td>
                         <!-- Mostrar los roles del usuario -->
-
+                        @foreach($user->roles as $role)
+                        <span class="badge badge-info">{{ ucfirst($role->name) }}</span>
+                        @endforeach
                     </td>
                     <td>{{ $user->created_at->format('d F Y H:i') }}</td> <!-- Fecha con mes completo -->
                     <td>{{ $user->updated_at->format('d F Y H:i') }}</td> <!-- Fecha con mes completo -->
