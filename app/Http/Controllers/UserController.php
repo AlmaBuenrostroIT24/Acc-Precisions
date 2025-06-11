@@ -24,7 +24,8 @@ class UserController extends Controller
         // Obtener todos los usuarios con sus roles
         $users = User::with('roles')->get();  // Usamos 'with' para cargar los roles asociados
         $users = User::all(); // Obtener todos los usuarios
-        return view('users.index', compact('users')); // Enviar a la vista
+        $roles = Role::all(); // ¡esto es lo que te falta!
+        return view('users.index', compact('users', 'roles')); // Enviar a la vista
 
     }
 
