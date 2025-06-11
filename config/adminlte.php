@@ -109,8 +109,8 @@ return [
     |
     */
 
-    'preloader' => [
-        'enabled' => true,
+    'preloader' => [ //Efecto de pantalla cuando se actualiza
+        'enabled' => false,
         'mode' => 'fullscreen',
         'img' => [
             'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
