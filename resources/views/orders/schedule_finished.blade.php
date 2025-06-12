@@ -47,11 +47,6 @@
                                             <label for="locationFilter">Location</label>
                                             <select name="location" id="locationFilter" class="form-control auto-submit">
                                                 <option value="">-- All --</option>
-                                                @foreach($locations as $location)
-                                                <option value="{{ strtolower($location) }}" {{ strtolower(request('location')) == strtolower($location) ? 'selected' : '' }}>
-                                                    {{ $location ?? 'Sin asignar' }}
-                                                </option>
-                                                @endforeach
                                             </select>
                                         </div>
 
@@ -59,11 +54,6 @@
                                             <label for="customerFilter">Customer</label>
                                             <select id="customerFilter" class="form-control auto-submit">
                                                 <option value="">-- All --</option>
-                                                @foreach($customers as $customer)
-                                                <option value="{{ strtolower($customer) }}" {{ strtolower(request('customer')) == strtolower($customer) ? 'selected' : '' }}>
-                                                    {{ $customer }}
-                                                </option>
-                                                @endforeach
                                             </select>
                                         </div>
                                     </form>
@@ -162,6 +152,7 @@
             return status === 'sent';
         });
 
+
         // Inicializa la tabla con DataTables
         // Guarda la instancia en una variable global o local
         window.table = $('#orders_endscheduleTable').DataTable({
@@ -177,8 +168,35 @@
             }],
         });
 
-        // Filtrado con regex exacto
-        const applyFilter = (selector, columnIndex) => {
+        /**
+         * Extrae valores únicos de una columna específica y los usa para llenar un <select>
+         * @param {number} columnIndex - Índice de la columna en la tabla
+         * @param {string} selectId - ID del <select> para llenar (ej: #locationFilter)
+         */
+        function populateFilterFromColumn(columnIndex, selectId) {
+            const unique = new Set();
+
+            $('#orders_endscheduleTable tbody tr').each(function() {
+                const value = $(this).find('td').eq(columnIndex).text().trim().toLowerCase();
+                if (value) unique.add(value);
+            });
+
+            const values = [...unique].sort();
+            const $select = $(selectId);
+            $select.find('option:not(:first)').remove(); // mantener "-- All --"
+
+            values.forEach(value => {
+                const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
+                $select.append(`<option value="${value}">${capitalized}</option>`);
+            });
+        }
+
+        /**
+         * Aplica el filtro exacto con regex a una columna
+         * @param {string} selector - Selector del <select>
+         * @param {number} columnIndex - Índice de la columna a filtrar
+         */
+        function applyFilter(selector, columnIndex) {
             $(selector).on("change", function() {
                 const val = $(this).val()?.toLowerCase() || "";
                 window.table
@@ -186,11 +204,13 @@
                     .search(val ? `^${val}$` : "", true, false)
                     .draw();
             });
-        };
-        applyFilter("#locationFilter", 0);
-        applyFilter("#customerFilter", 4);
+        }
+        // Aplica filtros para location y customer
+        populateFilterFromColumn(0, '#locationFilter'); // columna 0 = location
+        applyFilter('#locationFilter', 0);
 
-
+        populateFilterFromColumn(4, '#customerFilter'); // columna 4 = customer
+        applyFilter('#customerFilter', 4);
     });
 </script>
 @endpush
