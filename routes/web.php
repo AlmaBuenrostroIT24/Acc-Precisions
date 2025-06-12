@@ -68,6 +68,7 @@ Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders
 
 //Route::resource('/schedule/general', Order_ScheduleController::class);
 Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general');
+Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell');
 Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
 
@@ -89,6 +90,8 @@ Route::get('/orders/next-id', function () {
     $lastId = \App\Models\OrderSchedule::max('id') ?? 0;
     return response()->json(['next_id' => $lastId + 1]);
 });
+
+
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);
 Route::get('/orders/summary/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByMonth']);
 Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByWeek']);

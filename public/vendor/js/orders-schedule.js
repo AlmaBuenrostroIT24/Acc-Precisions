@@ -228,6 +228,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Ultima Location
+
+    let lastLocations = {};
+
+    tableElement.on("focus", ".location-select", function () {
+        const select = $(this);
+        const orderId = select.data("id");
+        lastLocations[orderId] = select.val(); // Guardamos la última antes del cambio
+    });
+
     // Actualizar Location
     tableElement.on("change", ".location-select", function () {
         const select = $(this);
@@ -245,6 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.success) {
                     const locationLower = data.location.toLowerCase();
 
+                    // Actualizamos localStorage y UI
                     localStorage.setItem(
                         "location-change",
                         JSON.stringify({
@@ -264,8 +275,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     if (window.table) {
                         const rowIndex = window.table.row(row[0]).index();
-                        window.table.cell(rowIndex, 1).data(locationLower);
+                        // Actualiza la columna 1 (Location)
+                        window.table
+                            .cell(rowIndex, 1)
+                            .data(locationLower)
+                            .draw(false);
                     }
+
+                    // MOSTRAR ETIQUETA CON ÚLTIMA UBICACIÓN GUARDADA
+                    const label = select
+                        .closest("td")
+                        .find(".last-location-label");
+
+                    if (data.last_location === "Yarnell") {
+                        label
+                            .html(
+                                `
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                        </span>
+                    `
+                            )
+                            .show();
+                    } else {
+                        label.hide().html("");
+                    }
+
+                    // Actualizamos la variable local para el próximo cambio
+                    lastLocations[orderId] = newLocation;
                 } else {
                     alert("Hubo un problema al actualizar la ubicación.");
                 }
@@ -452,115 +489,190 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Actualizar Status
+    // Actualizar Status con confirmación SweetAlert
     tableElement.on("change", ".status-select", function () {
         const select = $(this);
         const orderId = select.data("id");
+        const oldStatus = select.data("old-status") || ""; // Estado previo guardado en data attribute
         const newStatus = select.val().toLowerCase();
 
-        handlePostJsonWithAlerts(
-            `/orders/${orderId}/update-status`,
-            { status: newStatus },
-            (data) => {
-                localStorage.setItem(
-                    "status-change",
-                    JSON.stringify({
-                        orderId,
-                        status: data.status,
-                        dias_restantes: data.dias_restantes,
-                        alertColor: data.alertColor,
-                        alertLabel: data.alertLabel,
-                    })
-                );
+        // Ubicación actual del order en la fila
+        const row = select.closest("tr");
+        const locationSelect = row.find(".location-select");
+        const currentLocation = locationSelect.length
+            ? locationSelect.val()
+            : "";
 
-                if (data.success) {
-                    const row = select.closest("tr");
-
-                    // 🚫 Eliminar fila si el estado es "sent"
-                    if (newStatus === "sent") {
-                        window.table
-                            .row($(select).closest("tr"))
-                            .remove()
-                            .draw(false);
-                        return;
-                    }
-                    // 👇 Actualizar campo sent_at si existe
-                    if (data.sent_at) {
-                        const sentCell = document.getElementById(
-                            `sent-at-${orderId}`
-                        );
-                        if (sentCell) sentCell.textContent = data.sent_at;
-                    }
-
-                    const hiddenStatusCell = document.getElementById(
-                        `hidden-status-${orderId}`
+        // Función que hace la petición para cambiar el status y actualiza UI
+        const enviarCambioStatus = () => {
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-status`,
+                { status: newStatus },
+                (data) => {
+                    localStorage.setItem(
+                        "status-change",
+                        JSON.stringify({
+                            orderId,
+                            status: data.status,
+                            dias_restantes: data.dias_restantes,
+                            alertColor: data.alertColor,
+                            alertLabel: data.alertLabel,
+                        })
                     );
-                    if (hiddenStatusCell)
-                        hiddenStatusCell.textContent =
-                            data.status.toLowerCase();
 
-                    if (window.table) {
-                        const rowIndex = window.table.row(row[0]).index();
-                        window.table
-                            .cell(rowIndex, 2)
-                            .data(data.status.toLowerCase())
-                            .draw(false);
-                    }
-
-                    const $statusFilter = $("#statusFilter");
-                    const newStatusVal = data.status.toLowerCase();
-
-                    if (
-                        $statusFilter.find(`option[value="${newStatusVal}"]`)
-                            .length === 0
-                    ) {
-                        const options = $statusFilter.find("option").toArray();
-                        const newOption = new Option(
-                            newStatusVal,
-                            newStatusVal
-                        );
-                        let inserted = false;
-                        for (let i = 1; i < options.length; i++) {
-                            if (options[i].value > newStatusVal) {
-                                $(options[i]).before(newOption);
-                                inserted = true;
-                                break;
+                    if (data.success) {
+                        // Actualizar location si viene en la respuesta
+                        if (data.location) {
+                            if (locationSelect.length) {
+                                locationSelect.val(data.location);
                             }
                         }
-                        if (!inserted) $statusFilter.append(newOption);
-                    }
 
-                    $(row).removeClass((i, c) =>
-                        (c.match(/bg-status-\S+/g) || []).join(" ")
-                    );
-                    $(row).addClass(`bg-status-${data.status}`);
+                        // Actualizar badge last-location-label
+                        const label = row.find(".last-location-label");
+                        if (data.last_location === "Yarnell") {
+                            label
+                                .html(
+                                    `
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                </span>
+                            `
+                                )
+                                .show();
+                        } else {
+                            label.hide().html("");
+                        }
 
-                    const diasTd = document.getElementById(
-                        `dias-restantes-${orderId}`
-                    );
-                    if (diasTd) {
-                        diasTd.textContent = `${data.dias_restantes} days`;
-                        diasTd.className =
-                            data.dias_restantes < 0
-                                ? "text-danger fw-bold"
-                                : data.dias_restantes <= 2
-                                ? "text-warning fw-bold"
-                                : "text-success fw-bold";
-                    }
+                        // Eliminar fila si estado es "sent"
+                        if (newStatus === "sent") {
+                            window.table.row(row).remove().draw(false);
+                            return;
+                        }
 
-                    const alertaDiv = document.querySelector(
-                        `#alerta-${orderId} .progress-bar`
-                    );
-                    if (alertaDiv) {
-                        alertaDiv.className = "progress-bar " + data.alertColor;
-                        alertaDiv.textContent = data.alertLabel;
+                        // Actualizar campo sent_at si existe
+                        if (data.sent_at) {
+                            const sentCell = document.getElementById(
+                                `sent-at-${orderId}`
+                            );
+                            if (sentCell) sentCell.textContent = data.sent_at;
+                        }
+
+                        const hiddenStatusCell = document.getElementById(
+                            `hidden-status-${orderId}`
+                        );
+                        if (hiddenStatusCell)
+                            hiddenStatusCell.textContent =
+                                data.status.toLowerCase();
+
+                        if (window.table) {
+                            const rowIndex = window.table.row(row[0]).index();
+                            window.table
+                                .cell(rowIndex, 2)
+                                .data(data.status.toLowerCase())
+                                .draw(false);
+                        }
+
+                        const $statusFilter = $("#statusFilter");
+                        const newStatusVal = data.status.toLowerCase();
+
+                        if (
+                            $statusFilter.find(
+                                `option[value="${newStatusVal}"]`
+                            ).length === 0
+                        ) {
+                            const options = $statusFilter
+                                .find("option")
+                                .toArray();
+                            const newOption = new Option(
+                                newStatusVal,
+                                newStatusVal
+                            );
+                            let inserted = false;
+                            for (let i = 1; i < options.length; i++) {
+                                if (options[i].value > newStatusVal) {
+                                    $(options[i]).before(newOption);
+                                    inserted = true;
+                                    break;
+                                }
+                            }
+                            if (!inserted) $statusFilter.append(newOption);
+                        }
+
+                        $(row).removeClass((i, c) =>
+                            (c.match(/bg-status-\S+/g) || []).join(" ")
+                        );
+                        $(row).addClass(`bg-status-${data.status}`);
+
+                        const diasTd = document.getElementById(
+                            `dias-restantes-${orderId}`
+                        );
+                        if (diasTd) {
+                            diasTd.textContent = `${data.dias_restantes} days`;
+                            diasTd.className =
+                                data.dias_restantes < 0
+                                    ? "text-danger fw-bold"
+                                    : data.dias_restantes <= 2
+                                    ? "text-warning fw-bold"
+                                    : "text-success fw-bold";
+                        }
+
+                        const alertaDiv = document.querySelector(
+                            `#alerta-${orderId} .progress-bar`
+                        );
+                        if (alertaDiv) {
+                            alertaDiv.className =
+                                "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
+
+                        // Actualiza el estado viejo guardado para poder revertir si se edita otra vez
+                        select.data("old-status", newStatus);
+                    } else {
+                        alert("Hubo un problema al actualizar el estado.");
                     }
+                },
+                "Error al comunicarse con el servidor."
+            );
+        };
+
+        // Mostrar confirmación si cumple condiciones
+        // Mostrar confirmación si cumple condiciones
+        if (
+            (newStatus === "deburring" || newStatus === "shipping") &&
+            currentLocation.toLowerCase() === "yarnell"
+        ) {
+            Swal.fire({
+                title: "¿Are you sure??",
+                text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, change",
+                cancelButtonText: "No, cancel",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 🔁 Notifica a otras pestañas que esta orden ahora estará en Hearst
+                    localStorage.setItem(
+                        "location-change",
+                        JSON.stringify({
+                            orderId: orderId,
+                            location: "hearst",
+                        })
+                    );
+
+                    console.log(
+                        "📢 Notificación enviada a pestañas: orden movida a Hearst"
+                    );
+
+                    enviarCambioStatus();
                 } else {
-                    alert("Hubo un problema al actualizar el estado.");
+                    // Revertir al estado anterior
+                    select.val(oldStatus);
                 }
-            },
-            "Error al comunicarse con el servidor."
-        );
+            });
+        } else {
+            enviarCambioStatus();
+        }
     });
 
     //-------------------------------------------------
@@ -641,20 +753,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const input = $(this);
         const original = input.data("original");
         const newVal = input.val();
-    
+
         if (original == newVal) return;
-    
+
         const orderId = input.data("id");
-    
+
         handlePostJsonWithAlerts(
             `/orders/${orderId}/update-wo-qty`,
             { wo_qty: newVal },
             (data) => {
-                localStorage.setItem('wo-qty-change', JSON.stringify({
-                    orderId,
-                    wo_qty: newVal
-                }));
-                localStorage.removeItem('wo-qty-change');
+                localStorage.setItem(
+                    "wo-qty-change",
+                    JSON.stringify({
+                        orderId,
+                        wo_qty: newVal,
+                    })
+                );
+                localStorage.removeItem("wo-qty-change");
             },
             "❌ Error to save"
         );
@@ -672,8 +787,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const texto = partDescCell.text().toLowerCase();
 
             //console.log(`🔍 Fila ${index} - Texto: ${texto}`);
-            const keywords = ["kit", "asy", "assy", "assembly", "asemble","asembly"];
-            if (keywords.some(word => texto.toLowerCase().includes(word))) {
+            const keywords = [
+                "kit",
+                "asy",
+                "assy",
+                "assembly",
+                "asemble",
+                "asembly",
+            ];
+            if (keywords.some((word) => texto.toLowerCase().includes(word))) {
                 if (partDescCell.find(".btn-add-kit").length === 0) {
                     const btn = $(
                         `<button 
@@ -704,7 +826,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Re-ejecutar cada vez que se redibuja la tabla
     tableElement.on("draw.dt", function () {
-        console.log("📢 Evento draw.dt disparado");
+        //console.log("📢 Evento draw.dt disparado");
         agregarBotonesKit();
     });
 
@@ -712,28 +834,26 @@ document.addEventListener("DOMContentLoaded", () => {
     tableElement.on("click", ".btn-add-kit", function () {
         const btn = $(this);
         const row = btn.closest("tr");
-    
+
         // Obtener próximo ID antes de hacer cualquier cosa
         fetch("/orders/next-id")
             .then((res) => res.json())
             .then((data) => {
                 const nextId = data.next_id;
-    
+
                 // Clonar la fila original (sin eventos)
                 const newRow = row.clone(false);
 
-                
-    
                 // Mostrar cuántas columnas tiene la fila
-               // console.log("Total celdas en la fila:", newRow.find("td").length);
-    
+                // console.log("Total celdas en la fila:", newRow.find("td").length);
+
                 // Mostrar el next_id en la primera celda (columna 0)
                 const idCell = newRow.find("td:eq(0)");
                 idCell.text(nextId);
                 idCell.append(
                     `<input type="hidden" name="id" value="${nextId}">`
                 );
-    
+
                 // En las columnas 2, 4 y 6 ponemos inputs vacíos
                 [2, 4, 6].forEach((index) => {
                     const cell = newRow.find(`td:eq(${index})`);
@@ -741,12 +861,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         `<input type="text" name="col_text_${index}" class="form-control form-control-sm" value="">`
                     );
                 });
-    
+
                 // Insertar la nueva fila justo debajo de la actual
                 row.after(newRow);
-    
+
                 let guardado = false;
-    
+
                 // Guardar solo al presionar Enter en input col_text_6
                 newRow
                     .find('input[name="col_text_6"]')
@@ -763,20 +883,20 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
                         }
                     });
-    
+
                 function checkInputsAndSend() {
                     const val6 = newRow
                         .find('input[name="col_text_6"]')
                         .val()
                         .trim();
-    
+
                     if (!val6) {
-                      //  alert( "Debes capturar al menos el campo de Cantidad (columna 6).");
+                        //  alert( "Debes capturar al menos el campo de Cantidad (columna 6).");
                         return;
                     }
-    
+
                     let dataToSend = { id: nextId };
-    
+
                     newRow.find("td").each(function (index) {
                         const cell = $(this);
                         const input = cell.find("input");
@@ -784,29 +904,30 @@ document.addEventListener("DOMContentLoaded", () => {
                             dataToSend[`col_text_${index}`] = input.val();
                         } else {
                             let text = cell.text().trim();
-                        
+
                             // Si es la columna 17 y tiene el texto por defecto "Note", se guarda vacío
                             if (index === 17 && text === "Note") {
                                 text = "";
                             }
-                        
+
                             dataToSend[`col_text_${index}`] = text;
                         }
-    
+
                         // También incluir inputs ocultos
                         cell.find('input[type="hidden"]').each(function () {
                             const hiddenInput = $(this);
-                            dataToSend[hiddenInput.attr("name")] = hiddenInput.val();
+                            dataToSend[hiddenInput.attr("name")] =
+                                hiddenInput.val();
                         });
                     });
-                   // console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
-    
+                    // console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+
                     handlePostJsonWithAlerts(
                         "/orders",
                         dataToSend,
                         (response) => {
-                           // alert("Registro guardado con ID: " + response.order_id);
-    
+                            // alert("Registro guardado con ID: " + response.order_id);
+
                             // Actualizar visualmente la fila: eliminar inputs excepto columna 7 y dejar texto plano
                             newRow.find("td").each(function (index) {
                                 const cell = $(this);
@@ -817,19 +938,18 @@ document.addEventListener("DOMContentLoaded", () => {
                                     cell.text(value);
                                 }
                             });
-    
+
                             // Recolocar el ID en la columna 0
                             newRow.find("td:eq(0)").text(response.id);
-                           // console.log("⏳ Insertando contenido en la columna 18 (Notas)");
+                            // console.log("⏳ Insertando contenido en la columna 18 (Notas)");
                             // 🔽 Generar contenido de la columna 18 (Notas)
                             const orderId = response.id;
                             const safeNotes = ""; // Al guardar nuevo, inicia vacío
                             const shortNote = "Note";
-    
-                            const newNotesHtml =
-                                `<span class="open-notes-modal" data-id="${orderId}" data-notes="" style="cursor:pointer;" title="">
+
+                            const newNotesHtml = `<span class="open-notes-modal" data-id="${orderId}" data-notes="" style="cursor:pointer;" title="">
                                     <i class="fas fa-plus-circle me-1 text-muted"></i> Note</span>`;
-    
+
                             // Insertar en la columna 18 (si existe)
                             const notesCell = newRow.find("td:eq(17)");
                             if (notesCell.length) {
@@ -837,7 +957,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             } else {
                                 //console.warn("⚠ La columna 18 no existe en esta fila.");
                             }
-    
+
                             // Actualizar DataTable si está en uso
                             location.reload();
                         },
@@ -850,7 +970,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 //alert("No se pudo obtener el próximo ID");
             });
     });
-    
 
     //-----------------------------------------
 });

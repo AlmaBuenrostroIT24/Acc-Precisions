@@ -17,7 +17,7 @@
         <nav aria-label="breadcrumb" class="mb-0 ml-auto">
             <ol class="breadcrumb mb-0 bg-transparent p-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Completed Orders</li>
+                <li class="breadcrumb-item active" aria-current="page">Orders Yarnell</li>
             </ol>
         </nav>
     </div>
@@ -42,17 +42,16 @@
                         <div class="card shadow">
                             <div class="card-body row">
                                 <div class="form-group col-md-12">
-                                    <form method="GET" action="{{ route('schedule.finished') }}" id="filterForm" class="row g-3 mb-3">
-                                        <div class="form-group col-md-4">
-                                            <label for="locationFilter">Location</label>
-                                            <select name="location" id="locationFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-
+                                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
                                         <div class="form-group col-md-4">
                                             <label for="customerFilter">Customer</label>
                                             <select id="customerFilter" class="form-control auto-submit">
+                                                <option value="">-- All --</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="locationFilter">Status</label>
+                                            <select name="location" id="locationFilter" class="form-control auto-submit">
                                                 <option value="">-- All --</option>
                                             </select>
                                         </div>
@@ -67,35 +66,36 @@
                         </button> -->
                 <div class="table-responsive">
                     {{-- Tabla --}}
-
                     <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th>LOCATION</th>
-                                <th>Work ID</th>
+                                <th>WORK ID</th>
                                 <th>PN</th>
                                 <th>PART/DESCRIPTION</th>
                                 <th>CUSTOMER</th>
-                                <th>CO Qty</th>
-                                <th>WO Qty</th>
-                                <th>Report</th>
-                                <th>Out Source</th>
-                                <th>Due Date</th>
-                                <th>End Date</th>
-                                <th>Target Date</th>
-                                <th>Notes</th>
+                                <th>CO QTY</th>
+                                <th>WO QTY</th>
+                                <th>REPORT</th>
+                                <th>OUT</th>
+                                <th>DUE DATE</th>
+                                <th>MACH DATE</th>
+                                <th>END MACH</th>
+                                <th>TARGET</th>
+                                <th>NOTES</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
                             @foreach($orders as $order)
                             <tr data-status="{{ $order->status }}">
                                 <td>
-                                    <span style="color: black; font-weight: bold;">{{ $order->location }}</span>
                                     @if ($order->last_location === 'Yarnell')
-                                    <span class="badge bg-warning text-dark d-inline-flex align-items-center">
-                                        <i class="fas fa-map-marker-alt me-1"></i> Yarnell
-                                    </span>
+                                    <span style="color: black; font-weight: bold;">Yarnell</span>
                                     @endif
+                                    <span class="badge bg-warning text-dark d-inline-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
+                                    </span>
+
                                 </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td style="min-width: 120px;">{{ $order->PN }}</td>
@@ -116,18 +116,19 @@
                                     </button>
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+                                <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
                                 <td>
-                                    {{ $order->sent_at ? $order->sent_at->format('M-d-y H:i') : '' }}
+                                    {{ $order->endate_mach ? $order->endate_mach->format('M-d-y H:i') : '' }}
                                 </td>
                                 <td>
-                                    @if ($order->target_date < 0)
-                                        <span class="badge bg-danger">{{ $order->target_date }} Late</span>
-                                        @elseif ($order->target_date == 0)
-                                        <span class="badge bg-success">{{ $order->target_date }} On time</span>
-                                        @elseif ($order->target_date > 0)
-                                        <span class="badge bg-info">{{ $order->target_date }} Early</span>
+                                    @if ($order->target_mach < 0)
+                                        <span class="badge bg-danger">{{ $order->target_mach }} Late</span>
+                                        @elseif ($order->target_mach == 0)
+                                        <span class="badge bg-success">{{ $order->target_mach }} On time</span>
+                                        @elseif ($order->target_mach > 0)
+                                        <span class="badge bg-info">{{ $order->target_mach}} Early</span>
                                         @else
-                                        <span>-</span> {{-- En caso de que target_date sea null --}}
+                                        <span>-</span> {{-- En caso de que target_mach sea null --}}
                                         @endif
                                 </td>
                                 <td>
@@ -156,16 +157,15 @@
 
 <script>
     $(document).ready(function() {
-        // Agrega un filtro personalizado para mostrar solo status = "sent"
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+
+        // Agrega un filtro personalizado para mostrar solo los status diferentes a "sent"
+      /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
             const row = settings.aoData[dataIndex].nTr;
             const status = $(row).data('status');
-            return status === 'sent';
-        });
-
+            return status !== 'sent'; // cambia esta línea
+        });*/
 
         // Inicializa la tabla con DataTables
-        // Guarda la instancia en una variable global o local
         window.table = $('#orders_endscheduleTable').DataTable({
             scrollX: false,
             autoWidth: false,

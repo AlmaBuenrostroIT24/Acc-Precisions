@@ -253,6 +253,7 @@
                             console.log("Cambio detectado en otra pestaña para location: hearst. Recargando página..");
                             window.location.reload();
                         } else {
+                              // Si location no es hearst, eliminar fila de la tabla
                             const row = window.table?.rows().nodes().to$().filter(function() {
                                 return $(this).find('.location-select').data('id') == data.orderId;
                             });
