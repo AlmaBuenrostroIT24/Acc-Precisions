@@ -1,16 +1,26 @@
 <!-- resources/views/orders/index_schedule.blade.php -->
 @extends('adminlte::page')
 
-@section('title', 'General Schedule')
+@section('title', 'Completed Orders')
 @section('meta') {{-- ✅ Asegura que el token se inyecta en el <head> --}}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
 @section('content_header')
-<div class="card bg-light d-flex justify-content-center align-items-center" style="height: 50px; padding: 0 15px;">
-    <h2 class="text-dark" style="font-size: 24px; margin: 0;">
-        <i class="fas fa-box"></i> Schedule Orders
-    </h2>
+<div class="card shadow-sm mb-2 border-0 bg-light">
+    <div class="card-body d-flex align-items-center py-2 px-3">
+        <h4 class="mb-0 text-dark">
+            <i class="fas fa-calendar-alt me-2" aria-hidden="true"></i>
+            General Schedule
+        </h4>
+
+        <nav aria-label="breadcrumb" class="mb-0 ml-auto">
+            <ol class="breadcrumb mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Completed Orders</li>
+            </ol>
+        </nav>
+    </div>
 </div>
 @endsection
 
@@ -151,25 +161,36 @@
             const status = $(row).data('status');
             return status === 'sent';
         });
+
         // Inicializa la tabla con DataTables
-        $('#orders_endscheduleTable').DataTable({
+        // Guarda la instancia en una variable global o local
+        window.table = $('#orders_endscheduleTable').DataTable({
             scrollX: false,
             autoWidth: false,
             pageLength: 25,
             order: [
-                [9, 'asc']
-            ], // Ordenar por "End Date"
-            columnDefs: [{
-                    targets: [6, 7, 11],
-                    orderable: false
-                } // Botones y notas no ordenables
+                [9, 'desc'] // corregí 'des' por 'desc'
             ],
+            columnDefs: [{
+                targets: [6, 7, 11],
+                orderable: false
+            }],
         });
 
-        // Auto-submit de filtros
-        $('.auto-submit').on('change', function() {
-            $('#filterForm').submit();
-        });
+        // Filtrado con regex exacto
+        const applyFilter = (selector, columnIndex) => {
+            $(selector).on("change", function() {
+                const val = $(this).val()?.toLowerCase() || "";
+                window.table
+                    .column(columnIndex)
+                    .search(val ? `^${val}$` : "", true, false)
+                    .draw();
+            });
+        };
+        applyFilter("#locationFilter", 0);
+        applyFilter("#customerFilter", 4);
+
+
     });
 </script>
 @endpush

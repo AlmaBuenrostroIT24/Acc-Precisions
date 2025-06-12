@@ -1,9 +1,23 @@
 <!-- resources/views/orders/index_schedule.blade.php -->
 @extends('adminlte::page')
 
-@section('title', 'Schedule Orders')
-@section('meta') {{-- ✅ Asegura que el token se inyecta en el <head> --}}
-<meta name="csrf-token" content="{{ csrf_token() }}">
+@section('title', 'General Schedule')
+@section('content_header')
+<div class="card shadow-sm mb-2 border-0 bg-light">
+    <div class="card-body d-flex align-items-center py-2 px-3">
+        <h4 class="mb-0 text-dark">
+            <i class="fas fa-calendar-alt me-2" aria-hidden="true"></i>
+            Order Schedule
+        </h4>
+
+        <nav aria-label="breadcrumb" class="mb-0 ml-auto">
+            <ol class="breadcrumb mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">General Schedule</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 @endsection
 
 @section('content_header')
