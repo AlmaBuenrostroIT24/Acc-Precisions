@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 //------------------------------------------------------------------------
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\Order_ScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,5 +57,28 @@ Route::match(['put', 'patch'], '/roles/{id}', [RolePermissionController::class, 
 // Devuelve la lista de permisos (GET)
 Route::get('/roles/{id}/permissions', [RolePermissionController::class, 'getPermissions']);
 
-
 //--------------------------------------------------
+Route::resource('schedule/general', Order_ScheduleController::class);
+// Ruta para almacenar la nueva orden
+Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
+
+//Route::resource('/schedule/general', Order_ScheduleController::class);
+Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general');
+Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
+Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
+
+Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
+Route::post('/orders/{order}/update-status', [Order_ScheduleController::class, 'updateStatus']);
+Route::post('/orders/{order}/update-report', [Order_ScheduleController::class, 'updateReport']);
+Route::post('/orders/{order}/update-source', [Order_ScheduleController::class, 'updateSource']);
+Route::post('/orders/{order}/update-location', [Order_ScheduleController::class, 'updateLocation'])->name('orders.updateLocation');
+Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);
+Route::post('/orders/{order}/update-notes', [Order_ScheduleController::class, 'updateNotes']);
+Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 'ajaxUpdateWorkId'])->name('orders.ajaxUpdateWorkId');
+Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
+Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
+Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
+//Route::get('/orders', [Order_ScheduleController::class, 'yarnellSchedule']);
+
+
+// -----------------------------------Machines-------------------------------------------------------

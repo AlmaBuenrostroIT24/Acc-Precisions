@@ -388,7 +388,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'Schedule',
-                    'url' => '#',
+                    'url' => 'schedule/general',
                 ],
             ],
         ],
@@ -512,32 +512,32 @@ return [
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
+                    'asset' => true,
                     'location' => 'vendor/datatables/jquery.dataTables.min.js',
                 ],
                 [
                     'type' => 'js',
-                    'asset' => false,
+                    'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.js',
                 ],
                 [
                     'type' => 'css',
-                    'asset' => false,
+                    'asset' =>true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.css',
                 ],
             ],
         ],
-        'Select2' => [
+        'Sweetalert2' => [
             'active' => true,
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
+                    'asset' => true,
                     'location' => 'vendor/sweetalert2/sweetalert2.min.js',
                 ],
                 [
                     'type' => 'css',
-                    'asset' => false,
+                    'asset' => true,
                     'location' => 'vendor/sweetalert2/sweetalert2.min.css',
                 ],
             ],
@@ -552,13 +552,18 @@ return [
                 ],
             ],
         ],
-        'Sweetalert2' => [
+        'Select2' => [
             'active' => true,
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'asset' => true,  
+                    'location' => 'vendor/select2/select2.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'vendor/select2/select2.css',
                 ],
             ],
         ],

@@ -1,0 +1,14 @@
+
+.bg-status-pending                 { background-color: #fcf4dd !important; } /* Amarillo pastel */
+.bg-status-waitingformaterial      { background-color: #e5e7e9 !important; } /* Celeste pastel */
+.bg-status-onrack                  { background-color: #d7dbdd !important; } /* Verde pastel */
+.bg-status-setup      { background-color: #d5f5e3 !important; } /* Gris pastel */
+
+.bg-status-machining    { background-color: #abebc6 !important; } /* Coral pastel */
+.bg-status-outsource        { background-color: #d2b4de !important; } /* Azul cielo pastel */
+.bg-status-qa      { background-color: #d6eaf8  !important; } /* Amarillo vainilla pastel */
+.bg-status-deburring      { background-color: #aed6f1 !important; } /* Naranja pastel */
+.bg-status-shipping     { background-color: #85c1e9 !important; } /* Verde menta pastel */
+.bg-status-onhold        { background-color: #ffffff !important; } /* Rosa pastel */
+
+
