@@ -1,4 +1,4 @@
-<table id="orders_scheduleTable">
+<table id="orders_scheduleTable" >
     <thead class="table-light">
         <tr>
             <th>Id</th>
