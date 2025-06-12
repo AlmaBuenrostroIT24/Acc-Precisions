@@ -109,8 +109,8 @@ return [
     |
     */
 
-    'preloader' => [ //Efecto de pantalla cuando se actualiza
-        'enabled' => false,
+    'preloader' => [
+        'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
             'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
@@ -332,45 +332,53 @@ return [
             'text' => 'Quality Assurance',
             'url' => 'admin/settings',
             'icon' => 'nav-icon fas fa-cogs',
+            'can' => ['QA/Calibrations', 'QA/Instruments'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Calibration',
-                    'url' => '#',
+                    'url' => 'QA/Calibrations',
                 ],
     
                 [
                     'text' => 'Instrument',
-                    'url' => '#',
+                    'url' => 'QA/Instruments',
                 ],
             ],
         ],
         [
             'text' => 'Machines',
             'icon' => 'nav-icon fas fa-industry',
+            'can' => ['machines/machinery', 'machines/otherequipment','machines/maintenance','machines/batteries','machines/manuals','machines/codes'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Machinery',
-                    'url' => '#',
+                    'url' => 'machines/machinery',
+                    'can' => 'machines/machinery',
                 ],
                 [
                     'text' => 'Other Equipment',
-                    'url' => '#',
+                    'url' => 'machines/otherequipment',
+                    'can' => 'machines/otherequipment',
                 ],
                 [
                     'text' => 'Maintenance',
-                    'url' => '#',
+                    'url' => 'machines/maintenance',
+                    'can' => 'machines/maintenance',
                 ],
                 [
-                    'text' => 'Bateries',
-                    'url' => '#',
+                    'text' => 'Batteries',
+                    'url' => 'machines/batteries',
+                    'can' => 'machines/batteries',
                 ],
                 [
                     'text' => 'Manuals',
-                    'url' => '#',
+                    'url' => 'machines/manuals',
+                    'can' => 'machines/manuals',
                 ],
                 [
                     'text' => 'Codes',
-                    'url' => '#',
+                    'url' => 'machines/codes',
+                    'can' => 'machines/codes',
                 ],
             ],
         ],
@@ -388,57 +396,61 @@ return [
         [
             'text' => 'Employees',
             'icon' => 'nav-icon fas fa-user',
+            'can' => ['users', 'roles'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Users',
                     'url' => 'users',
+                    'can' => 'users',
                 ],
     
                 [
                     'text' => 'Roles & Permissions',
                     'url' => 'roles',
+                    'can' => 'roles',
                 ],
             ],
         ],
         [
             'text' => 'IT Department',
             'icon' => 'nav-icon fas fa-desktop',
+            'can' => ['it/cameras', 'it/computers','it/nas','it/pdf','it/phones','it/printers','it/red','it/systems','it/timeClock'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Cameras',
-                    'url' => '#',
+                    'url' => 'it/cameras',
                 ],
                 [
                     'text' => 'Computers',
-                    'url' => '#',
+                    'url' => 'it/computers',
                 ],
                 [
                     'text' => 'NAS',
-                    'url' => '#',
+                    'url' => 'it/nas',
                 ],
                 [
                     'text' => 'PDF',
-                    'url' => '#',
+                    'url' => 'it/pdf',
                 ],
                 [
                     'text' => 'Phones',
-                    'url' => '#',
+                    'url' => 'it/phones',
                 ],
                 [
                     'text' => 'Printers',
-                    'url' => '#',
+                    'url' => 'it/printers',
                 ],
                 [
                     'text' => 'Red',
-                    'url' => '#',
+                    'url' => 'it/red',
                 ],
                 [
                     'text' => 'Systems',
-                    'url' => '#',
+                    'url' => 'it/systems',
                 ],
                 [
                     'text' => 'TimeClock',
-                    'url' => '#',
+                    'url' => 'it/timeClock',
                 ],
             ],
         ],
