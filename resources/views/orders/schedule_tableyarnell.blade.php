@@ -94,6 +94,14 @@
                     alertColor,
                     alertLabel
                 } = data;
+                if (status.toLowerCase() === "sent") {
+                    const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+                    if (row) {
+                        window.table.row(row).remove().draw(false);
+                        //console.log("🚫 Orden eliminada de la tabla por estatus 'sent':", orderId);
+                    }
+                    return; // salir sin seguir actualizando
+                }
                 const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
                 if (!row) return;
 
