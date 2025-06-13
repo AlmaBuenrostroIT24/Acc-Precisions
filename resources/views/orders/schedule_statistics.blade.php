@@ -55,7 +55,7 @@
                             <span class="badge badge-soft-info" style="font-size: 1rem;">
                                 Yarnell: {{ $cantidadYarnell }}
                             </span>
-                            <span class="badge bg-secondary bg-opacity-25" style="font-size: 1rem;">
+                            <span class="badge bg-secondary bg-opacity-25">
                                 Floor: {{ $cantidadFloor }}
                             </span>
                         </div>
@@ -78,23 +78,23 @@
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
-                <span class="info-box-icon bg-warning shadow-sm">
-                    <i class="fas fa-exclamation-triangle"></i> <!-- Ícono de engranaje múltiple -->
+                <span class="info-box-icon bg-primary shadow-sm">
+                    <i class="fas fa-calendar-week"></i> <!-- Ícono de engranaje múltiple -->
                 </span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Sales</span>
-                    <span class="info-box-number">760</span>
+                    <span class="info-box-text">Order this week</span>
+                    <h4 class="mb-0 fw-bold">{{ $ordenesSemana->count() }}</h4>
                 </div>
             </div>
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
-                <span class="info-box-icon bg-light shadow-sm">
-                    <i class="fas fa-exclamation-triangle"></i> <!-- Ícono de engranaje múltiple -->
+                <span class="info-box-icon bg-warning shadow-sm">
+                    <i class="fas fa-tasks"></i> <!-- Ícono de engranaje múltiple -->
                 </span>
                 <div class="info-box-content">
-                    <span class="info-box-text">New Orders</span>
+                    <span class="info-box-text">New Orders this week</span>
                     <span class="info-box-number">{{ $totalAgregadasSemana }}</span>
                 </div>
             </div>
@@ -113,14 +113,14 @@
             {{-- Ordenes esta semana --}}
             <div class="col-lg-6">
                 <div class="card shadow-sm border-0 rounded-3 h-100">
-                    <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
-                        <i class="fas fa-calendar-week fs-5"></i>
-                        <h6 class="mb-0">Orders This Week</h6>
+                    <div class="card-header bg-light d-flex align-items-center">
+                        <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
+                        <h6 class="mb-0 text-success">Orders This Week</h6>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table id="tableweek" class="table table-hover align-middle mb-0 small">
-                                <thead class="table-primary text-dark">
+                                <thead class="text-dark">
                                     <tr>
                                         <th>ID</th>
                                         <th>WORK ID</th>
@@ -162,9 +162,9 @@
             {{-- Ordenes atrasadas --}}
             <div class="col-lg-6">
                 <div class="card shadow-sm border-0 rounded-3 h-100">
-                    <div class="card-header bg-light text-white d-flex align-items-center gap-2">
-                        <i class="fas fa-exclamation-triangle fs-5"></i>
-                        <h6 class="mb-0">Late Orders</h6>
+                    <div class="card-header bg-light d-flex align-items-center gap-2">
+                        <i class="fas fa-exclamation-triangle fs-5 text-danger mr-2"></i>
+                        <h6 class="mb-0 text-danger">Late Orders</h6>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -203,7 +203,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-light text-center py-2">
-                        <small class="text-muted">Total orders this week: <strong>{{ $ordenesSemana->count() }}</strong></small>
+                        <small class="text-muted">Total orders this week: <strong>{{ $cantidadAtrasadas }}</strong></small>
                     </div>
                 </div>
             </div>
@@ -389,7 +389,7 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
         <script>
-           let currentFilterText = '';
+            let currentFilterText = '';
             document.addEventListener('DOMContentLoaded', () => {
                 // --- Ordenes general ---
                 const filterType = document.getElementById('filterType');
@@ -399,7 +399,7 @@
                 const customerFilter = document.getElementById('customerFilter');
                 const ctx = document.getElementById('ordersChart')?.getContext('2d');
                 let chart;
-
+               
 
 
                 // --- Órdenes por cliente ---
@@ -409,6 +409,7 @@
                 const weekInputCustomer = document.getElementById('weekInputCustomer');
                 const ctx2 = document.getElementById('byCustomerChart')?.getContext('2d');
                 let customerChart;
+                
 
                 // Función para mostrar inputs según filtro seleccionado (genérica)
                 function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
@@ -545,7 +546,7 @@
                                 data: {
                                     labels,
                                     datasets: [{
-                                        label: `ORDERS PER CUSTOMER (Total: ${totalAll})`, // <-- Aquí pones la suma
+                                        label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
                                         data: totals,
                                         backgroundColor: 'rgba(153, 102, 255, 0.7)',
                                         borderColor: 'rgba(153, 102, 255, 1)',
@@ -569,9 +570,20 @@
                                         tooltip: {
                                             mode: 'index',
                                             intersect: false,
+                                        },
+                                        datalabels: {
+                                            anchor: 'end', // Posición del texto, puedes usar 'center' si quieres dentro
+                                            align: 'right', // Ajusta para que quede dentro de la barra
+                                            color: '#fff', // Color blanco para que resalte dentro de barras moradas
+                                            font: {
+                                                weight: 'bold',
+                                                size: 12
+                                            },
+                                            formatter: value => value // Muestra el valor de la barra
                                         }
                                     }
-                                }
+                                },
+                                plugins: [ChartDataLabels]
                             });
                         })
                         .catch(err => console.error('Error al cargar gráfico por cliente:', err));
