@@ -41,7 +41,7 @@ class Order_ScheduleController extends Controller
         if ($request->is('schedule/general') && auth()->check() && auth()->user()->hasRole('QAdmin')) {
             $query->where('location', 'yarnell');
         }
-        
+
         $orders = $query->get();
 
 
@@ -145,6 +145,12 @@ class Order_ScheduleController extends Controller
         // Cantidad total de esas órdenes
         $totalAgregadasSemana = $ordenesAgregadasSemana->count();
 
+        $customers = OrderSchedule::select('costumer')
+            ->whereNotNull('costumer')
+            ->distinct()
+            ->orderBy('costumer')
+            ->pluck('costumer');
+
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.schedule_statistics', compact(
             'ordenesSemana',
@@ -157,7 +163,8 @@ class Order_ScheduleController extends Controller
             'totalOrdenes',
             'ordenesPorCliente',
             'ordenesAgregadasSemana',
-            'totalAgregadasSemana'
+            'totalAgregadasSemana',
+            'customers'
         ));
     }
 
@@ -253,61 +260,61 @@ class Order_ScheduleController extends Controller
     {
         try {
 
-           // Log::info("Cambio de status orden {$order->id} a: " . $request->status);
+            // Log::info("Cambio de status orden {$order->id} a: " . $request->status);
 
-        $request->validate([
-            'status' => 'required|string|max:50',
-            'target_date' => 'nullable|date',
-        ]);
+            $request->validate([
+                'status' => 'required|string|max:50',
+                'target_date' => 'nullable|date',
+            ]);
 
-        $newStatus = strtolower($request->status);
-        $order->status = $newStatus;
+            $newStatus = strtolower($request->status);
+            $order->status = $newStatus;
 
-        // Guardar la fecha cuando cambia a "sent"
-        if ($newStatus === 'sent') {
-            $order->sent_at = now();
-           // Log::info("Se asignó sent_at para orden {$order->id}: {$order->sent_at}");
+            // Guardar la fecha cuando cambia a "sent"
+            if ($newStatus === 'sent') {
+                $order->sent_at = now();
+                // Log::info("Se asignó sent_at para orden {$order->id}: {$order->sent_at}");
+            }
+
+            // Solo calcular target_date si tenemos ambas fechas
+            if ($order->due_date && $order->sent_at) {
+                $dueDate = \Carbon\Carbon::parse($order->due_date)->startOfDay();
+                $sentDate = \Carbon\Carbon::parse($order->sent_at)->startOfDay();
+
+                // Diferencia en días (positivo o negativo)
+                $diff = $dueDate->diffInDays($sentDate, false); // diferencia con signo
+
+                // Si la fecha enviada es mayor a due_date, invertimos el signo para que sea negativo
+                $diffDays = $diff > 0 ? -$diff : abs($diff);
+
+                $order->target_date = $diffDays;
+            }
+
+            $order->save();
+
+            // Calcular días restantes
+            $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
+
+            // Determinar color para "alerta"
+            $alert = $dias < 0 || $dias <= 2;
+            $alertColor = $dias < 0 ? 'bg-danger' : ($dias <= 2 ? 'bg-warning' : 'bg-success');
+            $alertLabel = $dias < 0 ? 'Late' : ($dias <= 2 ? 'Expedite' : 'On time');
+            //Log::info("Respuesta para orden {$order->id}: dias_restantes={$dias}, alert={$alertLabel}");
+            return response()->json([
+                'success' => true,
+                'dias_restantes' => $dias,
+                'alertColor' => $alertColor,
+                'alertLabel' => $alertLabel,
+                'status' => $order->status,
+            ]);
+        } catch (\Exception $e) {
+            // Log::error("Error actualizando status orden {$order->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
-
-        // Solo calcular target_date si tenemos ambas fechas
-        if ($order->due_date && $order->sent_at) {
-            $dueDate = \Carbon\Carbon::parse($order->due_date)->startOfDay();
-            $sentDate = \Carbon\Carbon::parse($order->sent_at)->startOfDay();
-
-            // Diferencia en días (positivo o negativo)
-            $diff = $dueDate->diffInDays($sentDate, false); // diferencia con signo
-
-            // Si la fecha enviada es mayor a due_date, invertimos el signo para que sea negativo
-            $diffDays = $diff > 0 ? -$diff : abs($diff);
-
-            $order->target_date = $diffDays;
-        }
-
-        $order->save();
-
-        // Calcular días restantes
-        $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
-
-        // Determinar color para "alerta"
-        $alert = $dias < 0 || $dias <= 2;
-        $alertColor = $dias < 0 ? 'bg-danger' : ($dias <= 2 ? 'bg-warning' : 'bg-success');
-        $alertLabel = $dias < 0 ? 'Late' : ($dias <= 2 ? 'Expedite' : 'On time');
-        //Log::info("Respuesta para orden {$order->id}: dias_restantes={$dias}, alert={$alertLabel}");
-        return response()->json([
-            'success' => true,
-            'dias_restantes' => $dias,
-            'alertColor' => $alertColor,
-            'alertLabel' => $alertLabel,
-            'status' => $order->status,
-        ]);
-    } catch (\Exception $e) {
-       // Log::error("Error actualizando status orden {$order->id}: " . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage(),
-        ], 500);
     }
-}
 
     public function updateLocation(Request $request, OrderSchedule $order)
     {
@@ -418,11 +425,11 @@ class Order_ScheduleController extends Controller
             );
         }
 
-       // Define la ubicación para la sincronización
-       $location = 'hearst';
+        // Define la ubicación para la sincronización
+        $location = 'hearst';
 
-       // Retorna la vista y pasa también la variable $location
-       return view('orders.schedule_tablehearst', compact('orders', 'location'));
+        // Retorna la vista y pasa también la variable $location
+        return view('orders.schedule_tablehearst', compact('orders', 'location'));
     }
 
     public function destroy(OrderSchedule $order)
@@ -491,5 +498,196 @@ class Order_ScheduleController extends Controller
 
         return redirect()->route('schedule.general')
             ->with('success', "$count records were imported successfully.");
+    }
+    // Por año (meses)
+    public function summaryByYear(Request $request, $year)
+    {
+        $query = OrderSchedule::query()
+            ->whereYear('created_at', $year);
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        $data = $query
+            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $labels = $data->pluck('month')->map(function ($m) {
+            return date('F', mktime(0, 0, 0, $m, 10)); // nombre del mes
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+    // Por mes (días)
+    public function summaryByMonth(Request $request, $year, $month)
+    {
+        $query = OrderSchedule::query()
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        $data = $query
+            ->select(DB::raw('DAY(created_at) as day'), DB::raw('COUNT(*) as total'))
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $labels = $data->pluck('day')->map(function ($d) use ($month, $year) {
+            return date('d M', strtotime("$year-$month-$d"));
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+
+    public function summaryByWeek(Request $request, $year, $week)
+    {
+        $query = OrderSchedule::query();
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        // Filtrar por semana usando YEARWEEK MySQL (o puedes usar Carbon para fechas)
+        $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT); // ej: "202523"
+
+        $data = $query
+            ->select(DB::raw('DAYOFWEEK(created_at) as weekday'), DB::raw('COUNT(*) as total'))
+            ->whereRaw("YEARWEEK(created_at, 1) = ?", [$weekString]) // 1 = lunes como primer día
+            ->groupBy('weekday')
+            ->orderBy('weekday')
+            ->get();
+
+        // Día de la semana en nombre corto (Dom, Lun, ...)
+        $labels = $data->pluck('weekday')->map(function ($w) {
+            $days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            return $days[$w - 1] ?? 'Día';
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+
+    // Resumen sin filtro (todo)
+    public function summaryByCustomer()
+    {
+        $data = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->groupBy('costumer')
+            ->orderBy('total', 'desc')
+            ->get();
+
+        return $this->formatChartData($data);
+    }
+
+    // Filtro por año
+    public function summaryByCustomerYear($year)
+    {
+        $query = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->whereYear('created_at', $year)
+            ->groupBy('costumer')
+            ->orderBy('total', 'desc');
+    
+        $data = $query->get();
+        $totalAll = $data->sum('total');
+    
+        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
+            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
+            return $item;
+        });
+    
+        return response()->json([
+            'labels' => $dataWithPercentage->pluck('costumer'),
+            'totals' => $dataWithPercentage->pluck('total'),
+            'percentages' => $dataWithPercentage->pluck('percentage'),
+            'totalAll' => $totalAll,
+        ]);
+    }
+
+    // Filtro Año: summaryByCustomerYear
+    public function summaryByCustomerMonth($year, $month)
+    {
+        $query = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->groupBy('costumer')
+            ->orderBy('total', 'desc');
+
+        $data = $query->get();
+
+        $totalAll = $data->sum('total');
+
+        // Añadimos el porcentaje a cada registro
+        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
+            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
+            return $item;
+        });
+
+        // Preparar datos para la gráfica
+        $labels = $dataWithPercentage->pluck('costumer');
+        $totals = $dataWithPercentage->pluck('total');
+        $percentages = $dataWithPercentage->pluck('percentage');
+
+        return response()->json([
+            'labels' => $labels,
+            'totals' => $totals,
+            'percentages' => $percentages,
+            'totalAll' => $totalAll,
+        ]);
+    }
+
+    // Filtro por semana
+    public function summaryByCustomerWeek($year, $week)
+    {
+        $query = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->whereRaw('YEARWEEK(created_at, 1) = ?', ["{$year}{$week}"])
+            ->groupBy('costumer')
+            ->orderBy('total', 'desc');
+    
+        $data = $query->get();
+        $totalAll = $data->sum('total');
+    
+        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
+            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
+            return $item;
+        });
+    
+        return response()->json([
+            'labels' => $dataWithPercentage->pluck('costumer'),
+            'totals' => $dataWithPercentage->pluck('total'),
+            'percentages' => $dataWithPercentage->pluck('percentage'),
+            'totalAll' => $totalAll,
+        ]);
+    }
+
+    // Función para formatear respuesta JSON para Chart.js
+    private function formatChartData($data)
+    {
+        return response()->json([
+            'labels' => $data->pluck('costumer'),
+            'data' => $data->pluck('total'),
+        ]);
     }
 }

@@ -81,4 +81,12 @@ Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->n
 //Route::get('/orders', [Order_ScheduleController::class, 'yarnellSchedule']);
 
 
+Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);
+Route::get('/orders/summary/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByMonth']);
+Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByWeek']);
+Route::get('/orders/summary/by-customer/year/{year}', [Order_ScheduleController::class, 'summaryByCustomerYear']);
+Route::get('/orders/summary/by-customer/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByCustomerMonth']);
+Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByCustomerWeek']);
+
+
 // -----------------------------------Machines-------------------------------------------------------
