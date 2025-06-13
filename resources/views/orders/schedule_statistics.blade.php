@@ -321,6 +321,10 @@
                 </select>
             </div>
         </div>
+        <!-- Botón para la gráfica de órdenes totales -->
+        <button onclick="printChart('ordersChart', 'TOTAL ORDERS')" class="btn btn-secondary mb-2">
+            Print Order Totals
+        </button>
         <canvas id="ordersChart" height="100"></canvas>
 
         <div class="row mb-3">
@@ -349,15 +353,10 @@
                 <input type="week" id="weekInputCustomer" class="form-control d-none">
             </div>
         </div>
-
-
-
-
-
-
-
-
-
+        <!-- Botón para la gráfica por cliente -->
+        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')" class="btn btn-secondary mb-2">
+            Print Order Customer
+        </button>
         <canvas id="byCustomerChart" height="120"></canvas>
 
         @endsection
@@ -390,6 +389,7 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
         <script>
+           let currentFilterText = '';
             document.addEventListener('DOMContentLoaded', () => {
                 // --- Ordenes general ---
                 const filterType = document.getElementById('filterType');
@@ -397,19 +397,22 @@
                 const monthInput = document.getElementById('monthInput');
                 const weekInput = document.getElementById('weekInput');
                 const customerFilter = document.getElementById('customerFilter');
-                const ctx = document.getElementById('ordersChart').getContext('2d');
+                const ctx = document.getElementById('ordersChart')?.getContext('2d');
                 let chart;
+
+
 
                 // --- Órdenes por cliente ---
                 const filterTypeCustomer = document.getElementById('filterTypeCustomer');
                 const yearInputCustomer = document.getElementById('yearInputCustomer');
                 const monthInputCustomer = document.getElementById('monthInputCustomer');
                 const weekInputCustomer = document.getElementById('weekInputCustomer');
-                const ctx2 = document.getElementById('byCustomerChart').getContext('2d');
+                const ctx2 = document.getElementById('byCustomerChart')?.getContext('2d');
                 let customerChart;
 
                 // Función para mostrar inputs según filtro seleccionado (genérica)
                 function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
+                    if (!yearInp || !monthInp || !weekInp) return;
                     yearInp.classList.add('d-none');
                     monthInp.classList.add('d-none');
                     weekInp.classList.add('d-none');
@@ -425,23 +428,33 @@
 
                 // Cargar gráfico de órdenes general
                 function loadChart() {
+                    if (!filterType || !ctx) return;
+
                     let url = '/orders/summary';
+                    currentFilterText = '';
 
                     if (filterType.value === 'year') {
-                        if (!yearInput.value) return;
+                        if (!yearInput?.value) return;
                         url += `/year/${yearInput.value}`;
+                        currentFilterText = `Year: ${yearInput.value}`;
                     } else if (filterType.value === 'month') {
-                        if (!monthInput.value) return;
+                        if (!monthInput?.value) return;
                         const [year, month] = monthInput.value.split('-');
                         url += `/month/${year}/${month}`;
+                        currentFilterText = `Month: ${monthInput.value}`;
                     } else if (filterType.value === 'week') {
-                        if (!weekInput.value) return;
+                        if (!weekInput?.value) return;
                         const [year, week] = weekInput.value.split('-W');
                         url += `/week/${year}/${week}`;
+                        currentFilterText = `Week: ${weekInput.value}`;
+                    } else {
+                        currentFilterText = 'Todos los períodos';
                     }
 
-                    if (customerFilter.value) {
-                        url += `?customer=${encodeURIComponent(customerFilter.value)}`;
+                    if (customerFilter?.value) {
+                        const separator = url.includes('?') ? '&' : '?';
+                        url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
+                        currentFilterText += `<br>Customer: ${customerFilter.value}`;
                     }
 
                     fetch(url)
@@ -454,12 +467,14 @@
                             data
                         }) => {
                             if (chart) chart.destroy();
+                            // Sumar total de órdenes
+                            const totalOrders = data.reduce((acc, val) => acc + val, 0);
                             chart = new Chart(ctx, {
                                 type: 'bar',
                                 data: {
                                     labels,
                                     datasets: [{
-                                        label: 'Órdenes',
+                                        label: `ORDERS (Total: ${totalOrders})`, // <-- Aquí pones la suma
                                         data,
                                         backgroundColor: 'rgba(75, 192, 192, 0.7)',
                                         borderColor: 'rgba(75, 192, 192, 1)',
@@ -496,17 +511,19 @@
 
                 // Cargar gráfico de órdenes por cliente con filtros independientes
                 function loadCustomerChart() {
+                    if (!filterTypeCustomer || !ctx2) return;
+
                     let url = '/orders/summary/by-customer';
 
                     if (filterTypeCustomer.value === 'year') {
-                        if (!yearInputCustomer.value) return;
+                        if (!yearInputCustomer?.value) return;
                         url += `/year/${yearInputCustomer.value}`;
                     } else if (filterTypeCustomer.value === 'month') {
-                        if (!monthInputCustomer.value) return;
+                        if (!monthInputCustomer?.value) return;
                         const [year, month] = monthInputCustomer.value.split('-');
                         url += `/month/${year}/${month}`;
                     } else if (filterTypeCustomer.value === 'week') {
-                        if (!weekInputCustomer.value) return;
+                        if (!weekInputCustomer?.value) return;
                         const [year, week] = weekInputCustomer.value.split('-W');
                         url += `/week/${year}/${week}`;
                     }
@@ -522,23 +539,19 @@
                             percentages,
                             totalAll
                         }) => {
-
                             if (customerChart) customerChart.destroy();
                             customerChart = new Chart(ctx2, {
                                 type: 'bar',
                                 data: {
                                     labels,
                                     datasets: [{
-                                            label: 'Órdenes por Cliente',
-                                            data: totals,
-                                            backgroundColor: 'rgba(153, 102, 255, 0.7)',
-                                            borderColor: 'rgba(153, 102, 255, 1)',
-                                            borderWidth: 1,
-                                            yAxisID: 'y',
-                                        },
-
-
-                                    ]
+                                        label: `ORDERS PER CUSTOMER (Total: ${totalAll})`, // <-- Aquí pones la suma
+                                        data: totals,
+                                        backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                                        borderColor: 'rgba(153, 102, 255, 1)',
+                                        borderWidth: 1,
+                                        yAxisID: 'y',
+                                    }]
                                 },
                                 options: {
                                     indexAxis: 'y',
@@ -548,7 +561,7 @@
                                             position: 'left',
                                             title: {
                                                 display: true,
-                                                text: `Órdenes (Total: ${totalAll})`
+                                                text: 'CUSTOMER'
                                             }
                                         }
                                     },
@@ -565,24 +578,82 @@
                 }
 
                 // Eventos para mostrar inputs según filtro
-                filterType.addEventListener('change', () => {
-                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                    loadChart();
-                });
-                filterTypeCustomer.addEventListener('change', () => {
-                    updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
-                    loadCustomerChart();
-                });
+                if (filterType) {
+                    filterType.addEventListener('change', () => {
+                        updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                        loadChart();
+                    });
+                }
+                if (filterTypeCustomer) {
+                    filterTypeCustomer.addEventListener('change', () => {
+                        updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
+                        loadCustomerChart();
+                    });
+                }
 
                 // Eventos para inputs que cambian el gráfico
-                [yearInput, monthInput, weekInput, customerFilter].forEach(el => el.addEventListener('change', loadChart));
-                [yearInputCustomer, monthInputCustomer, weekInputCustomer].forEach(el => el.addEventListener('change', loadCustomerChart));
+                [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
+                    if (el) el.addEventListener('change', loadChart);
+                });
+                [yearInputCustomer, monthInputCustomer, weekInputCustomer].forEach(el => {
+                    if (el) el.addEventListener('change', loadCustomerChart);
+                });
 
                 // Inicializar
-                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
+                if (filterType && yearInput && monthInput && weekInput)
+                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                if (filterTypeCustomer && yearInputCustomer && monthInputCustomer && weekInputCustomer)
+                    updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
                 loadChart();
                 loadCustomerChart();
+
+                // Eventos para los botones de impresión
+                const printOrdersBtn = document.getElementById('printOrdersChartBtn');
+                if (printOrdersBtn) {
+                    printOrdersBtn.addEventListener('click', () => {
+                        printChart('ordersChart', 'TOTAL ORDERS');
+                    });
+                }
+                const printCustomerBtn = document.getElementById('printCustomerChartBtn');
+                if (printCustomerBtn) {
+                    printCustomerBtn.addEventListener('click', () => {
+                        printChart('byCustomerChart', 'ORDERS PER CUSTOMER');
+                    });
+                }
             });
+
+            function printChart(canvasId, chartTitle) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+
+                const dataUrl = canvas.toDataURL();
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+<html>
+<head>
+    <title>${chartTitle}</title>
+    <style>
+        body { text-align: center; font-family: Arial; padding: 20px; }
+        h2 { margin-bottom: 20px; }
+         .filter-info { margin-bottom: 15px; font-size: 14px; }
+        img { max-width: 100%; }
+    </style>
+</head>
+<body>
+    <h2>${chartTitle}</h2>
+    <div class="filter-info">${currentFilterText}</div>
+    <img src="${dataUrl}" />
+    <script>
+        window.onload = () => {
+            window.print();
+        };
+    <\/script>
+</body>
+</html>
+`);
+                printWindow.document.close();
+            }
         </script>
+
         @endpush

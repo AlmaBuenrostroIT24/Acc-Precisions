@@ -471,7 +471,7 @@ class Order_ScheduleController extends Controller
         }
     }
 
-
+  //--------------------------------------------------------------------------------------------------------------
     ///////////////////Imporr Excel 
 
     protected $service;
@@ -499,6 +499,8 @@ class Order_ScheduleController extends Controller
         return redirect()->route('schedule.general')
             ->with('success', "$count records were imported successfully.");
     }
+
+    //--------------------------------------------------------------------------------------------------------------
     // Por año (meses)
     public function summaryByYear(Request $request, $year)
     {
@@ -586,7 +588,7 @@ class Order_ScheduleController extends Controller
             'data' => $values,
         ]);
     }
-
+  //--------------------------------------------------------------------------------------------------------------
     // Resumen sin filtro (todo)
     public function summaryByCustomer()
     {
