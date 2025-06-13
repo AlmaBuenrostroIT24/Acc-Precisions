@@ -406,7 +406,7 @@ class Order_ScheduleController extends Controller
     public function hearstSchedule(Request $request)
     {
 
-        // Filtra solo las órdenes con location 'yarnell'
+        // Filtra solo las órdenes con location 'hw'
         $orders = OrderSchedule::where('location', 'hearst')->latest()->get();
 
         // Si necesitas calcular días restantes como en index()
@@ -418,13 +418,11 @@ class Order_ScheduleController extends Controller
             );
         }
 
-        if ($request->ajax()) {
-            // Solo devolver el HTML parcial con la tabla para AJAX
-            return view('orders.schedule_tablehearst', compact('orders'))->render();
-        }
+       // Define la ubicación para la sincronización
+       $location = 'hearst';
 
-        // Retorna la vista que solo contiene la tabla
-        return view('orders.schedule_tablehearst', compact('orders'));
+       // Retorna la vista y pasa también la variable $location
+       return view('orders.schedule_tablehearst', compact('orders', 'location'));
     }
 
     public function destroy(OrderSchedule $order)

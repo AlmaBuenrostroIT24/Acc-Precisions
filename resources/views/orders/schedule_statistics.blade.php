@@ -61,328 +61,274 @@
                         </div>
                     </div>
                 </div>
-                <!-- /.info-box-content -->
             </div>
-            <!-- /.info-box -->
         </div>
-
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
-                <span class="info-box-icon text-bg-danger shadow-sm">
-                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                <span class="info-box-icon bg-danger shadow-sm">
+                    <i class="fas fa-exclamation-triangle"></i> <!-- Ícono de engranaje múltiple -->
                 </span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Likes</span>
-                    <span class="info-box-number">41,410</span>
+                    <span class="info-box-text">Late Orders</span>
+                    <h4 class="mb-0 fw-bold">{{ $cantidadAtrasadas }}</h4>
                 </div>
-                <!-- /.info-box-content -->
             </div>
-            <!-- /.info-box -->
         </div>
         <!-- /.col -->
-        <!-- fix for small devices only -->
-        <!-- <div class="clearfix hidden-md-up"></div> -->
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
-                <span class="info-box-icon text-bg-success shadow-sm">
-                    <i class="bi bi-cart-fill"></i>
+                <span class="info-box-icon bg-warning shadow-sm">
+                    <i class="fas fa-exclamation-triangle"></i> <!-- Ícono de engranaje múltiple -->
                 </span>
                 <div class="info-box-content">
                     <span class="info-box-text">Sales</span>
                     <span class="info-box-number">760</span>
                 </div>
-                <!-- /.info-box-content -->
             </div>
-            <!-- /.info-box -->
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
-                <span class="info-box-icon text-bg-warning shadow-sm">
-                    <i class="bi bi-people-fill"></i>
+                <span class="info-box-icon bg-light shadow-sm">
+                    <i class="fas fa-exclamation-triangle"></i> <!-- Ícono de engranaje múltiple -->
                 </span>
                 <div class="info-box-content">
-                    <span class="info-box-text">New Members</span>
-                    <span class="info-box-number">2,000</span>
-                </div>
-                <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-        </div>
-        <!-- /.col -->
-    </div>
-
-    <div class="row gx-2 gy-2">
-
-
-        <div class="col-lg-2 col-6">
-            <div class="small-box bg-soft-blue p-2" style="min-height: 90px; border-radius: 0.3rem;">
-                <div class="inner text-center">
-                    <h4 class="mb-0 fw-bold">53<sup style="font-size: 16px">%</sup></h4>
-                    <p class="mb-0 small">Pendient</p>
-                </div>
-                <div class="icon" style="top: 5px; right: 10px; font-size: 1.5rem; opacity: 0.3;">
-                    <i class="ion ion-stats-bars"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-2 col-6">
-            <div class="small-box bg-soft-yellow p-2" style="min-height: 90px; border-radius: 0.3rem;">
-                <div class="inner text-center">
-                    <h4 class="mb-0 fw-bold">44</h4>
-                    <p class="mb-0 small">Pendient</p>
-                </div>
-                <div class="icon" style="top: 5px; right: 10px; font-size: 1.5rem; opacity: 0.3;">
-                    <i class="ion ion-person-add"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-2 col-6">
-            <div class="small-box bg-soft-red p-2" style="min-height: 90px; border-radius: 0.3rem;">
-                <div class="inner text-center">
-                    <h4 class="mb-0 fw-bold">{{ $cantidadAtrasadas }}</h4>
-                    <p class="mb-0 small">Late Orders</p>
-                </div>
-                <div class="icon" style="top: 5px; right: 10px; font-size: 1.5rem; opacity: 0.3;">
-                    <i class="ion ion-pie-graph"></i>
+                    <span class="info-box-text">New Orders</span>
+                    <span class="info-box-number">{{ $totalAgregadasSemana }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-
-    {{-- Cards con tablas --}}
-    <div class="row g-4 mb-4">
-
-    <div class="container-fluid py-4">
+ 
 
 
 
+        <div class="container-fluid py-4">
 
-{{-- Cards con tablas --}}
-<div class="row g-4 mb-4">
+            {{-- Cards con tablas --}}
+            <div class="row g-4 mb-4">
 
-  {{-- Ordenes esta semana --}}
-  <div class="col-lg-6">
-    <div class="card shadow-sm border-0 rounded-3 h-100">
-      <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
-        <i class="fas fa-calendar-week fs-5"></i>
-        <h6 class="mb-0">Orders This Week</h6>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table id="tableweek"class="table table-hover align-middle mb-0 small">
-            <thead class="table-primary text-dark">
-              <tr>
-                <th>ID</th>
-                <th>WORK ID</th>
-                <th>PN</th>
-                <th>DESCRIPTION</th>
-                <th>CUSTOMER</th>
-                <th>QTY</th>
-                <th>STATUS</th>
-                <th>DUE DATE</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse ($ordenesSemana as $order)
-                <tr>
-                  <td>{{ $order->id }}</td>
-                  <td>{{ $order->work_id }}</td>
-                  <td>{{ $order->PN }}</td>
-                  <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
-                  <td>{{ ucfirst($order->costumer) }}</td>
-                  <td>{{ $order->qty }}</td>
-                  <td><span class="badge bg-info text-dark">{{ $order->status }}</span></td>
-                  <td><span class="text-primary fw-semibold">{{ $order->due_date->format('d/m/Y') }}</span></td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="8" class="text-center text-muted py-3">No orders found.</td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card-footer bg-light text-center py-2">
-        <small class="text-muted">Total orders this week: <strong>{{ $ordenesSemana->count() }}</strong></small>
-      </div>
-    </div>
-  </div>
-
-  {{-- Ordenes atrasadas --}}
-  <div class="col-lg-6">
-    <div class="card shadow-sm border-0 rounded-3 h-100">
-      <div class="card-header bg-danger text-white d-flex align-items-center gap-2">
-        <i class="fas fa-exclamation-triangle fs-5"></i>
-        <h6 class="mb-0">Late Orders</h6>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table id="tablelate" class="table table-hover align-middle mb-0 small">
-            <thead class="table-danger text-dark">
-              <tr>
-                <th>ID</th>
-                <th>WORK ID</th>
-                <th>PN</th>
-                <th>DESCRIPTION</th>
-                <th>CUSTOMER</th>
-                <th>QTY</th>
-                <th>STATUS</th>
-                <th>DUE DATE</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse ($ordenesAtrasadas as $order)
-                <tr>
-                  <td>{{ $order->id }}</td>
-                  <td>{{ $order->work_id }}</td>
-                  <td>{{ $order->PN }}</td>
-                  <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
-                  <td>{{ ucfirst($order->costumer) }}</td>
-                  <td>{{ $order->qty }}</td>
-                  <td><span class="badge bg-warning text-dark">{{ $order->status }}</span></td>
-                  <td><span class="text-danger fw-bold">{{ $order->due_date->format('d/m/Y') }}</span></td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="8" class="text-center text-muted py-3">No late orders found.</td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-<div class="row mb-2">
-  {{-- Card: Clientes con órdenes --}}
-  <div class="col-md-4 col-sm-6 mb-3">
-    <div class="card shadow-sm rounded-3 border-0 h-100">
-      <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
-          <i class="bi bi-people-fill"></i>
-          Customers with Orders
-        </div>
-        <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
-      </div>
-      <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
-        @if ($ordenesPorCliente->isNotEmpty())
-          <ul class="list-group list-group-flush small">
-            @foreach ($ordenesPorCliente as $grupo)
-              <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
-                <span class="text-truncate" style="max-width: 65%;">
-                  <i class="bi bi-person-circle me-2 text-muted fs-5"></i>
-                  {{ ucfirst($grupo->costumer) }}
-                </span>
-                <span class="badge bg-success rounded-pill fs-6">{{ $grupo->total }}</span>
-              </li>
-            @endforeach
-          </ul>
-        @else
-          <div class="text-center text-muted small py-5">
-            <i class="bi bi-info-circle fs-2 mb-2"></i>
-            No orders registered
-          </div>
-        @endif
-      </div>
-    </div>
-  </div>
-
-  {{-- Card: Órdenes agregadas esta semana --}}
-  <div class="col-md-4 col-sm-6 mb-3">
-    <div class="card shadow-sm rounded-3 border-0 h-100">
-      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
-          <i class="fas fa-calendar-plus"></i>
-          Orders Added This Week
-        </div>
-        <span class="badge bg-light text-primary fs-6">{{ $totalAgregadasSemana }}</span>
-      </div>
-      <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
-        @if ($ordenesAgregadasSemana->isNotEmpty())
-          <ul class="list-group list-group-flush small">
-            @foreach ($ordenesAgregadasSemana as $orden)
-              <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
-                <div class="text-truncate" style="max-width: 65%;">
-                  <strong>{{ ucfirst($orden->costumer) }}</strong> — PN {{ $orden->PN }}<br>
-                  <small class="text-secondary">WORK ID {{ $orden->work_id }} — {{ ucfirst($orden->location) }} — Qty: {{ $orden->qty }}</small><br>
-                  <small class="text-muted">{{ $orden->created_at->format('d M Y') }}</small>
+                {{-- Ordenes esta semana --}}
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-3 h-100">
+                        <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-calendar-week fs-5"></i>
+                            <h6 class="mb-0">Orders This Week</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="tableweek" class="table table-hover align-middle mb-0 small">
+                                    <thead class="table-primary text-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>WORK ID</th>
+                                            <th>PN</th>
+                                            <th>DESCRIPTION</th>
+                                            <th>CUSTOMER</th>
+                                            <th>QTY</th>
+                                            <th>STATUS</th>
+                                            <th>DUE DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($ordenesSemana as $order)
+                                        <tr>
+                                            <td>{{ $order->id }}</td>
+                                            <td>{{ $order->work_id }}</td>
+                                            <td>{{ $order->PN }}</td>
+                                            <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
+                                            <td>{{ ucfirst($order->costumer) }}</td>
+                                            <td>{{ $order->qty }}</td>
+                                            <td><span class="badge bg-info text-dark">{{ $order->status }}</span></td>
+                                            <td><span class="text-primary fw-semibold">{{ $order->due_date->format('d/m/Y') }}</span></td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-3">No orders found.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light text-center py-2">
+                            <small class="text-muted">Total orders this week: <strong>{{ $ordenesSemana->count() }}</strong></small>
+                        </div>
+                    </div>
                 </div>
-                <span class="badge bg-success">{{ $orden->status ?? 'No status' }}</span>
-              </li>
-            @endforeach
-          </ul>
-        @else
-          <div class="text-center text-muted small py-5">
-            <i class="bi bi-info-circle fs-2 mb-2"></i>
-            No orders added this week.
-          </div>
-        @endif
-      </div>
-    </div>
-  </div>
 
-  {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
-  <div class="col-md-4 col-sm-6 mb-3">
-    <div class="card shadow-sm rounded-3 border-0 h-100">
-      <div class="card-header bg-secondary text-white d-flex align-items-center fw-semibold fs-5">
-        <i class="fas fa-box me-2"></i> Example Third Card
-      </div>
-      <div class="card-body px-3 py-2 text-muted small">
-        Content for a third card goes here.
-      </div>
-    </div>
-  </div>
-</div>
+                {{-- Ordenes atrasadas --}}
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-3 h-100">
+                        <div class="card-header bg-light text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-exclamation-triangle fs-5"></i>
+                            <h6 class="mb-0">Late Orders</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="tablelate" class="table table-hover align-middle mb-0 small">
+                                    <thead class="text-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>WORK ID</th>
+                                            <th>PN</th>
+                                            <th>DESCRIPTION</th>
+                                            <th>CUSTOMER</th>
+                                            <th>QTY</th>
+                                            <th>STATUS</th>
+                                            <th>DUE DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($ordenesAtrasadas as $order)
+                                        <tr>
+                                            <td>{{ $order->id }}</td>
+                                            <td>{{ $order->work_id }}</td>
+                                            <td>{{ $order->PN }}</td>
+                                            <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
+                                            <td>{{ ucfirst($order->costumer) }}</td>
+                                            <td>{{ $order->qty }}</td>
+                                            <td><span class="badge bg-warning text-dark">{{ $order->status }}</span></td>
+                                            <td><span class="text-danger fw-bold">{{ $order->due_date->format('d/m/Y') }}</span></td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-3">No late orders found.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light text-center py-2">
+                            <small class="text-muted">Total orders this week: <strong>{{ $ordenesSemana->count() }}</strong></small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="row mb-2">
+                {{-- Card: Clientes con órdenes --}}
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <div class="card shadow-sm rounded-3 border-0 h-100">
+                        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
+                                <i class="bi bi-people-fill"></i>
+                                Customers with Orders
+                            </div>
+                            <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
+                        </div>
+                        <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
+                            @if ($ordenesPorCliente->isNotEmpty())
+                            <ul class="list-group list-group-flush small">
+                                @foreach ($ordenesPorCliente as $grupo)
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                                    <span class="text-truncate" style="max-width: 65%;">
+                                        <i class="bi bi-person-circle me-2 text-muted fs-5"></i>
+                                        {{ ucfirst($grupo->costumer) }}
+                                    </span>
+                                    <span class="badge bg-success rounded-pill fs-6">{{ $grupo->total }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            @else
+                            <div class="text-center text-muted small py-5">
+                                <i class="bi bi-info-circle fs-2 mb-2"></i>
+                                No orders registered
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card: Órdenes agregadas esta semana --}}
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <div class="card shadow-sm rounded-3 border-0 h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
+                                <i class="fas fa-calendar-plus"></i>
+                                Orders Added This Week
+                            </div>
+                            <span class="badge bg-light text-primary fs-6">{{ $totalAgregadasSemana }}</span>
+                        </div>
+                        <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
+                            @if ($ordenesAgregadasSemana->isNotEmpty())
+                            <ul class="list-group list-group-flush small">
+                                @foreach ($ordenesAgregadasSemana as $orden)
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                                    <div class="text-truncate" style="max-width: 65%;">
+                                        <strong>{{ ucfirst($orden->costumer) }}</strong> — PN {{ $orden->PN }} ( Qty: {{ $orden->qty }} )<br>
+                                        <small class="text-secondary">WORK ID {{ $orden->work_id }} — {{ ucfirst($orden->location) }}. {{ $orden->created_at->format('d M Y') }} </small><br>
+                                    </div>
+                                    <span class="badge bg-success">{{ $orden->status ?? 'No status' }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            @else
+                            <div class="text-center text-muted small py-5">
+                                <i class="bi bi-info-circle fs-2 mb-2"></i>
+                                No orders added this week.
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <div class="card shadow-sm rounded-3 border-0 h-100">
+                        <div class="card-header bg-secondary text-white d-flex align-items-center fw-semibold fs-5">
+                            <i class="fas fa-box me-2"></i> Example Third Card
+                        </div>
+                        <div class="card-body px-3 py-2 text-muted small">
+                            Content for a third card goes here.
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
 
 
-@endsection
+            @endsection
 
-@section('css')
-
-   
-<!-- CSS de DataTables + Botones -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap4.min.css">
-
-@endsection
-
-@push('js')
-<!-- JS de DataTables -->
+            @section('css')
 
 
-<!-- Botones -->
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
+            <!-- CSS de DataTables + Botones -->
+            <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+            <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap4.min.css">
 
-<!-- Exportaciones -->
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script>
-$(document).ready(function() {
-    $('#tableweek, #tablelate').DataTable({
-    paging: false,
-    searching: false,
-    info: false,
-    responsive: true,
-    dom: 'Bfrtip',
-    buttons: ['copy', 'excel', 'pdf', 'print']
-});
-    //$('.dt-buttons').addClass('mt-3'); // Usa 'mt-4' si quieres aún más espacio
-  
-});
+            @endsection
 
-</script>
-@endpush
+            @push('js')
+            <!-- JS de DataTables -->
+
+
+            <!-- Botones -->
+            <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+            <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
+
+            <!-- Exportaciones -->
+            <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+            <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+            <script>
+                $(document).ready(function() {
+                    $('#tableweek, #tablelate').DataTable({
+                        paging: false,
+                        searching: false,
+                        info: false,
+                        responsive: true,
+                        dom: 'Bfrtip',
+                        buttons: ['copy', 'excel', 'pdf', 'print']
+                    });
+                    $('.dt-buttons').addClass('mt-2'); // Usa 'mt-4' si quieres aún más espacio
+
+                });
+            </script>
+            @endpush

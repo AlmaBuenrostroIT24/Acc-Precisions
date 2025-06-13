@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     searching: false,
                 });
                 break;
-            case "/ruta-vista-2":
+            case "/scheduleh":
                 window.table = initOrdersTable(tableElement, {
                     pageLength: 50,
                     searching: false,
