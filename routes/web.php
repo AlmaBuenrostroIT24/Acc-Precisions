@@ -19,8 +19,12 @@ use App\Http\Controllers\Order_ScheduleController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
+
+Route::get('/login', function () {
+    return view('login');
+})->name('login');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
