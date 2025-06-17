@@ -69,7 +69,7 @@
                 <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
                 <!----------------------------------------->
                 <td style="min-width: 90px;">
-                    <select class="form-select form-select-sm location-select fw-bold text-capitalize" data-id="{{ $order->id }}">
+                    <select class="form-control form-control-sm location-select fw-bold text-capitalize" style="width: 80px; font-weight: bold; color: black;" data-id="{{ $order->id }}">
                         <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
                         <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
                         <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
@@ -97,8 +97,9 @@
                         class="wo-qty-input form-control form-control-sm"
                         style="width: 60px; font-weight: bold; color: black;">
                 </td>
-                <td style="min-width: 140px;">
-                    <select class="form-select form-select-sm status-select fw-bold text-capitalize" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
+                <td style="min-width: 120px;">
+                    <select class="form-control form-control-sm status-select"
+                    style=" font-weight: bold; color: black;" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
                         <option value="Pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
                         <option value="waitingformaterial" {{ strtolower($order->status) === 'waitingformaterial' ? 'selected' : '' }}>Wait Material</option>
                         <option value="onrack" {{ strtolower($order->status) === 'onrack' ? 'selected' : '' }}>OnRack</option>
