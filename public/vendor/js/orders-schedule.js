@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
-            pageLength: 30,
+            pageLength: 15,
             lengthChange: false,
             searching: true,
             order: [[11, "asc"]], // asc = más antigua primero
