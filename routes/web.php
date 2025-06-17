@@ -78,7 +78,8 @@ Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 
 Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
 Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
 Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
-//Route::get('/orders', [Order_ScheduleController::class, 'yarnellSchedule']);
+
+Route::post('/orders/{id}/update-wo-qty', [Order_ScheduleController::class, 'updateWoQty']);
 
 
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);

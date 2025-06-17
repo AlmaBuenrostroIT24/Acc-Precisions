@@ -1,4 +1,4 @@
-<table id="orders_scheduleTable" >
+<table id="orders_scheduleTable">
     <thead class="table-light">
         <tr>
             <th>Id</th>
@@ -9,7 +9,8 @@
             <th>PN</th>
             <th>PART/DESCRIPTION</th>
             <th>CUSTOMER</th>
-            <th>QTY</th>
+            <th>CO QTY</th>
+            <th>WO QTY</th>
             <th>STATUS</th>
             <th>MACHINING DATE</th>
             <th style="display:none;">StatusText</th> <!-- índice 2 -->
@@ -61,7 +62,7 @@
                 $alertColor=$dias < 0 ? 'bg-danger' : ($dias <=2 ? 'bg-warning' : 'bg-success' );
                 $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
                 @endphp
-                <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}"  id="row-{{ $order->id }}">
+                <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
                 <td>{{ $order->id }}</td>
                 <!-- Columna oculta solo texto para filtro -->
                 <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
@@ -90,6 +91,12 @@
                 <td style="font-size: 12px;">{{ $order->Part_description }}</td>
                 <td>{{ $order->costumer }}</td>
                 <td>{{ $order->qty }}</td>
+                <td>
+                    <input value="{{ $order->wo_qty }}"
+                        data-id="{{ $order->id }}"
+                        class="wo-qty-input form-control form-control-sm"
+                        style="width: 60px; font-weight: bold; color: black;">
+                </td>
                 <td style="min-width: 140px;">
                     <select class="form-select form-select-sm status-select fw-bold text-capitalize" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
                         <option value="Pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
@@ -109,7 +116,7 @@
                 <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
                 <td style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
                 <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}">
-                {{ $dias }} days
+                    {{ $dias }} days
                 </td>
 
                 <td style="min-width: 150px;">

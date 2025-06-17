@@ -98,6 +98,22 @@ class Order_ScheduleController extends Controller
         return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
     }
 
+    public function updateWoQty(Request $request, $id)
+    {
+       // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
+        $request->validate([
+            'wo_qty' => 'required|integer|min:0',
+        ]);
+    
+        $order = OrderSchedule::findOrFail($id);
+        $order->wo_qty = $request->input('wo_qty');
+        $order->save();
+    
+        return response()->json(['success' => true]);
+    }
+
+    
+
     public function statistics(Request $request)
     {
         $today = Carbon::today();
@@ -471,7 +487,7 @@ class Order_ScheduleController extends Controller
         }
     }
 
-  //--------------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------------
     ///////////////////Imporr Excel 
 
     protected $service;
@@ -588,7 +604,7 @@ class Order_ScheduleController extends Controller
             'data' => $values,
         ]);
     }
-  //--------------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------------
     // Resumen sin filtro (todo)
     public function summaryByCustomer()
     {
@@ -609,15 +625,15 @@ class Order_ScheduleController extends Controller
             ->whereYear('created_at', $year)
             ->groupBy('costumer')
             ->orderBy('total', 'desc');
-    
+
         $data = $query->get();
         $totalAll = $data->sum('total');
-    
+
         $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
             $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
             return $item;
         });
-    
+
         return response()->json([
             'labels' => $dataWithPercentage->pluck('costumer'),
             'totals' => $dataWithPercentage->pluck('total'),
@@ -667,15 +683,15 @@ class Order_ScheduleController extends Controller
             ->whereRaw('YEARWEEK(created_at, 1) = ?', ["{$year}{$week}"])
             ->groupBy('costumer')
             ->orderBy('total', 'desc');
-    
+
         $data = $query->get();
         $totalAll = $data->sum('total');
-    
+
         $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
             $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
             return $item;
         });
-    
+
         return response()->json([
             'labels' => $dataWithPercentage->pluck('costumer'),
             'totals' => $dataWithPercentage->pluck('total'),

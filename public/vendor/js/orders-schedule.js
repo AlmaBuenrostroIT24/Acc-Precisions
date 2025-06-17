@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const finalClass = saved
             ? `${editableClass} text-success fw-bold`
             : `${editableClass} text-decoration-underline text-muted`;
-        const label = value || "Click para agregar";
+        const label = value || "Add";
 
         return $(
             `<span class="${finalClass.trim()}" data-id="${orderId}" style="cursor:pointer;">${label}</span>`
@@ -634,6 +634,27 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             "Error al comunicarse con el servidor."
         );
+    });
+
+    //-------------------------------------------
+    $(document).ready(function () {
+        // Delegación: escucha cualquier cambio en .wo-qty-input
+        $(document).on("change", ".wo-qty-input", function () {
+            const input = $(this);
+            const orderId = input.data("id");
+            const wo_qty = input.val();
+    
+          //  console.log("⚡ Cambio detectado en orderId:", orderId, "Qty:", wo_qty);
+    
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-wo-qty`,
+                { wo_qty },
+                (data) => {
+                   // console.log("✅ Guardado correctamente", data);
+                },
+                "❌ Error to save"
+            );
+        });
     });
 
     //-----------------------------------------
