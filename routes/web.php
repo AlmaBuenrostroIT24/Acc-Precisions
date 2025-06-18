@@ -80,8 +80,11 @@ Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->
 Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
 
 Route::post('/orders/{id}/update-wo-qty', [Order_ScheduleController::class, 'updateWoQty']);
-
-
+Route::post('/orders/duplicate', [Order_ScheduleController::class, 'duplicate'])->name('orders.duplicate');
+Route::get('/orders/next-id', function () {
+    $lastId = \App\Models\OrderSchedule::max('id') ?? 0;
+    return response()->json(['next_id' => $lastId + 1]);
+});
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);
 Route::get('/orders/summary/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByMonth']);
 Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByWeek']);
@@ -91,3 +94,5 @@ Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleCont
 
 
 // -----------------------------------Machines-------------------------------------------------------
+
+

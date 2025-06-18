@@ -61,6 +61,119 @@ class Order_ScheduleController extends Controller
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
+    
+
+    public function store(Request $request)
+    {
+        Log::info('Request completo:', $request->all());
+    
+        $mapping = [
+            'col_text_1'  => 'location',
+            'col_text_2'  => 'work_id',
+            'col_text_3'  => 'PN',
+            'col_text_4'  => 'Part_description',
+            'col_text_5'  => 'costumer',
+            'col_text_6'  => 'qty',
+            'col_text_7'  => 'wo_qty',
+            'col_text_8'  => 'status',
+            'col_text_9'  => 'machining_date',
+            'col_text_10' => 'due_date',
+            'col_text_11' => 'alert',
+            'col_text_12' => 'days',
+            'col_text_13' => 'report',
+            'col_text_14' => 'our_source',
+            'col_text_15' => 'station',
+            'col_text_16' => 'notes',
+        ];
+    
+        try {
+            $input = $request->only(array_keys($mapping));
+    
+            $data = [];
+            foreach ($input as $key => $value) {
+                if (isset($mapping[$key])) {
+                    $data[$mapping[$key]] = $value;
+                }
+            }
+    
+            // Limpiar cadenas
+            foreach ($data as $field => &$value) {
+                if (is_string($value)) {
+                    $value = trim(preg_replace('/\s+/', ' ', $value));
+                }
+            }
+            unset($value);
+    
+            // Extraer solo el número para 'days'
+            if (!empty($data['days'])) {
+                preg_match('/\d+/', $data['days'], $matches);
+                $data['days'] = isset($matches[0]) ? (int)$matches[0] : null;
+            }
+    
+            // Convertir fechas con Carbon (manejar excepciones)
+            try {
+                if (!empty($data['machining_date'])) {
+                    $data['machining_date'] = \Carbon\Carbon::parse($data['machining_date'])->format('Y-m-d');
+                }
+            } catch (\Exception $e) {
+                $data['machining_date'] = null;
+            }
+            try {
+                if (!empty($data['due_date'])) {
+                    $data['due_date'] = \Carbon\Carbon::parse($data['due_date'])->format('Y-m-d');
+                }
+            } catch (\Exception $e) {
+                $data['due_date'] = null;
+            }
+    
+            // Asegurar que alert NO sea nulo
+            if (empty($data['alert'])) {
+                $data['alert'] = '';
+            }
+    
+            $validatedData = validator($data, [
+                'work_id'        => 'nullable|string|max:255',
+                'PN'             => 'nullable|string|max:255',
+                'Part_description' => 'nullable|string|max:255',
+                'qty'            => 'nullable|integer|min:0',
+                'costumer'       => 'required|string|max:255',
+                'wo_qty'         => 'nullable|integer',
+                'status'         => 'nullable|string|max:255',
+                'machining_date' => 'nullable|date',
+                'due_date'       => 'nullable|date',
+                'days'           => 'nullable|integer',
+                'alert'          => 'nullable|string',
+                'report'         => 'nullable|string',
+                'our_source'     => 'nullable|string|max:255',
+                'station'        => 'nullable|string|max:255',
+                'notes'          => 'nullable|string',
+                'location'       => 'nullable|string|max:255',
+            ])->validate();
+    
+            $order = OrderSchedule::create($validatedData);
+    
+            return response()->json([
+                'success' => true,
+                'order_id' => $order->id,
+                'message' => 'Orden creada correctamente',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            Log::warning('Validación fallida en store: ' . $ve->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors'  => $ve->errors(),
+                'message' => 'Error de validación en los datos.',
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error inesperado en store: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor. Contacta al administrador.',
+            ], 500);
+        }
+    }
+    
+    
 
     public function finished(Request $request)
     {
@@ -189,7 +302,7 @@ class Order_ScheduleController extends Controller
         return view('orders.create');
     }
 
-    public function store(Request $request)
+  /*  public function store(Request $request)
     {
         $validated = $request->validate([
             'work_id' => 'required|string|max:255',
@@ -227,7 +340,7 @@ class Order_ScheduleController extends Controller
         OrderSchedule::create($validated);
 
         return redirect()->route('orders.index')->with('success', 'Orden creada correctamente.');
-    }
+    }*/
 
     public function edit(OrderSchedule $order)
     {
