@@ -672,8 +672,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const texto = partDescCell.text().toLowerCase();
 
             //console.log(`🔍 Fila ${index} - Texto: ${texto}`);
-
-            if (texto.includes("kit")) {
+            const keywords = ["kit", "asy", "assy", "assembly", "asemble","asembly"];
+            if (keywords.some(word => texto.toLowerCase().includes(word))) {
                 if (partDescCell.find(".btn-add-kit").length === 0) {
                     const btn = $(
                         `<button 
