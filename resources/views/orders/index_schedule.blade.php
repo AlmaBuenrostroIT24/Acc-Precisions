@@ -61,7 +61,7 @@
                                     </div>
                                 </div>
                                 <div class="card-footer text-end">
-                                    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Subir</button>
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload file</button>
                                 </div>
                             </form>
                             <!-- Indicador de carga -->

@@ -290,79 +290,93 @@
         </div>
 
 
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <label for="filterType">Year / Month / Week:</label>
-                <select id="filterType" class="form-control">
-                    <option value="year">Year</option>
-                    <option value="month">Month</option>
-                    <option value="week">Week</option>
-                </select>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Filters and Order Charts</h5>
             </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Columna izquierda: primer filtro + botón + gráfica -->
+                    <div class="col-md-6" style="border-right: 1px solid #ddd; padding-right: 20px;">
+                        <!-- Primer bloque de filtros -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="filterType">Year / Month / Week:</label>
+                                <select id="filterType" class="form-control">
+                                    <option value="year">Year</option>
+                                    <option value="month">Month</option>
+                                    <option value="week">Week</option>
+                                </select>
+                            </div>
 
-            <div class="col-md-3">
-                <label for="yearInput">Date:</label>
-                <input type="month" id="monthInput" class="form-control d-none">
-                <input type="week" id="weekInput" class="form-control d-none">
-                <select id="yearInput" class="form-control">
-                    @for ($y = date('Y'); $y >= 2020; $y--)
-                    <option value="{{ $y }}">{{ $y }}</option>
-                    @endfor
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label for="customerFilter">Customer:</label>
-                <select id="customerFilter" class="form-control">
-                    <option value="">All Customers</option>
-                    @foreach ($customers as $customer)
-                    <option value="{{ $customer }}">{{ $customer }}</option>
-                    @endforeach
-                </select>
+                            <div class="col-md-4">
+                                <label for="yearInput">Date:</label>
+                                <input type="month" id="monthInput" class="form-control d-none">
+                                <input type="week" id="weekInput" class="form-control d-none">
+                                <select id="yearInput" class="form-control">
+                                    @for ($y = date('Y'); $y >= 2020; $y--)
+                                    <option value="{{ $y }}">{{ $y }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="customerFilter">Customer:</label>
+                                <select id="customerFilter" class="form-control">
+                                    <option value="">All Customers</option>
+                                    @foreach ($customers as $customer)
+                                    <option value="{{ $customer }}">{{ $customer }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button onclick="printChart('ordersChart', 'TOTAL ORDERS')" class="btn btn-secondary mb-2 w-75">
+                                Print Order Totals
+                            </button>
+                        </div>
+                        <div class="d-flex flex-column align-items-center mb-3">
+                            <canvas id="ordersChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Columna derecha: segundo filtro + botón + gráfica -->
+                    <div class="col-md-6" style="padding-left: 20px;">
+                        <!-- Segundo bloque de filtros -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="filterTypeCustomer">Year / Month / Week:</label>
+                                <select id="filterTypeCustomer" class="form-control">
+                                    <option value="year" selected>Year</option>
+                                    <option value="month">Month</option>
+                                    <option value="week">Week</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="yearInputCustomer">Date:</label>
+                                <select id="yearInputCustomer" class="form-control">
+                                    @for ($y = date('Y'); $y >= 2020; $y--)
+                                    <option value="{{ $y }}">{{ $y }}</option>
+                                    @endfor
+                                </select>
+                                <input type="month" id="monthInputCustomer" class="form-control d-none">
+                                <input type="week" id="weekInputCustomer" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')" class="btn btn-secondary mb-2 w-75">
+                                Print Order Customer
+                            </button>
+                        </div>
+                        <div class="d-flex flex-column align-items-center">
+                            <canvas id="byCustomerChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Botón para la gráfica de órdenes totales -->
-        <button onclick="printChart('ordersChart', 'TOTAL ORDERS')" class="btn btn-secondary mb-2">
-            Print Order Totals
-        </button>
-        <canvas id="ordersChart" height="100"></canvas>
-
-        <div class="row mb-3">
-            <!-- Selector tipo filtro (año, mes, semana) -->
-            <div class="col-md-3">
-                <label for="filterTypeCustomer">Year / Month / Week:</label>
-                <select id="filterTypeCustomer" class="form-control">
-                    <option value="year" selected>Year</option>
-                    <option value="month">Month</option>
-                    <option value="week">Week</option>
-                </select>
-            </div>
-
-            <!-- Inputs según tipo de filtro -->
-            <div class="col-md-3">
-                <label for="yearInputCustomer">Date:</label>
-                <!-- Para año, un select con años -->
-                <select id="yearInputCustomer" class="form-control">
-                    @for ($y = date('Y'); $y >= 2020; $y--)
-                    <option value="{{ $y }}">{{ $y }}</option>
-                    @endfor
-                </select>
-                <!-- Para mes, input tipo month -->
-                <input type="month" id="monthInputCustomer" class="form-control d-none">
-                <!-- Para semana, input tipo week -->
-                <input type="week" id="weekInputCustomer" class="form-control d-none">
-            </div>
-        </div>
-        <!-- Botón para la gráfica por cliente -->
-        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')" class="btn btn-secondary mb-2">
-            Print Order Customer
-        </button>
-        <canvas id="byCustomerChart" height="120"></canvas>
 
         @endsection
 
         @section('css')
-
 
 
         <!-- CSS de DataTables + Botones -->
@@ -399,7 +413,7 @@
                 const customerFilter = document.getElementById('customerFilter');
                 const ctx = document.getElementById('ordersChart')?.getContext('2d');
                 let chart;
-               
+
 
 
                 // --- Órdenes por cliente ---
@@ -409,7 +423,7 @@
                 const weekInputCustomer = document.getElementById('weekInputCustomer');
                 const ctx2 = document.getElementById('byCustomerChart')?.getContext('2d');
                 let customerChart;
-                
+
 
                 // Función para mostrar inputs según filtro seleccionado (genérica)
                 function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
