@@ -637,29 +637,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     //-------------------------------------------
     //Es el input para agregar WO QTY
-    $(document).ready(function () {
-        // Delegación: escucha cualquier cambio en .wo-qty-input
-        $(document).on("change", ".wo-qty-input", function () {
-            const input = $(this);
-            const orderId = input.data("id");
-            const wo_qty = input.val();
-
-            //  console.log("⚡ Cambio detectado en orderId:", orderId, "Qty:", wo_qty);
-
-            handlePostJsonWithAlerts(
-                `/orders/${orderId}/update-wo-qty`,
-                { wo_qty },
-                (data) => {
-                    // Propagar a otras pestañas
-                    localStorage.setItem('wo-qty-change', JSON.stringify({
-                        orderId,
-                        wo_qty
-                    }));
-                    localStorage.removeItem('wo-qty-change'); // forzar el evento
-                },
-                "❌ Error to save"
-            );
-        });
+    $(document).on("blur", ".wo-qty-input", function () {
+        const input = $(this);
+        const original = input.data("original");
+        const newVal = input.val();
+    
+        if (original == newVal) return;
+    
+        const orderId = input.data("id");
+    
+        handlePostJsonWithAlerts(
+            `/orders/${orderId}/update-wo-qty`,
+            { wo_qty: newVal },
+            (data) => {
+                localStorage.setItem('wo-qty-change', JSON.stringify({
+                    orderId,
+                    wo_qty: newVal
+                }));
+                localStorage.removeItem('wo-qty-change');
+            },
+            "❌ Error to save"
+        );
     });
 
     //--------------------------------------------------------
@@ -674,8 +672,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const texto = partDescCell.text().toLowerCase();
 
             //console.log(`🔍 Fila ${index} - Texto: ${texto}`);
-
-            if (texto.includes("kit")) {
+            const keywords = ["kit", "asy", "assy", "assembly", "asemble","asembly"];
+            if (keywords.some(word => texto.toLowerCase().includes(word))) {
                 if (partDescCell.find(".btn-add-kit").length === 0) {
                     const btn = $(
                         `<button 
