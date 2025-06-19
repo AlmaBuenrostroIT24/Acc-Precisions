@@ -102,14 +102,9 @@
     </div>
 
 
-
-
-
     <div class="container-fluid py-4">
-
         {{-- Cards con tablas --}}
         <div class="row g-4 mb-4">
-
             {{-- Ordenes esta semana --}}
             <div class="col-lg-6">
                 <div class="card shadow-sm border-0 rounded-3 h-100">
@@ -119,10 +114,10 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table id="tableweek" class="table table-hover align-middle mb-0 small">
+                            <table id="tableweek" class="table table-hover align-middle mb-0 small datatable-export">
                                 <thead class="text-dark">
                                     <tr>
-                                        <th>ID</th>
+
                                         <th>WORK ID</th>
                                         <th>PN</th>
                                         <th>DESCRIPTION</th>
@@ -135,7 +130,7 @@
                                 <tbody>
                                     @forelse ($ordenesSemana as $order)
                                     <tr>
-                                        <td>{{ $order->id }}</td>
+
                                         <td>{{ $order->work_id }}</td>
                                         <td>{{ $order->PN }}</td>
                                         <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
@@ -156,8 +151,10 @@
                     <div class="card-footer bg-light text-center py-2">
                         <small class="text-muted">Total orders this week: <strong>{{ $ordenesSemana->count() }}</strong></small>
                     </div>
+
                 </div>
             </div>
+
 
             {{-- Ordenes atrasadas --}}
             <div class="col-lg-6">
@@ -168,10 +165,9 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table id="tablelate" class="table table-hover align-middle mb-0 small">
+                            <table id="tablelate" class="table table-hover align-middle mb-0 small datatable-export">
                                 <thead class="text-dark">
                                     <tr>
-                                        <th>ID</th>
                                         <th>WORK ID</th>
                                         <th>PN</th>
                                         <th>DESCRIPTION</th>
@@ -184,7 +180,6 @@
                                 <tbody>
                                     @forelse ($ordenesAtrasadas as $order)
                                     <tr>
-                                        <td>{{ $order->id }}</td>
                                         <td>{{ $order->work_id }}</td>
                                         <td>{{ $order->PN }}</td>
                                         <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
@@ -211,14 +206,14 @@
         </div>
         <div class="row mb-2">
             {{-- Card: Clientes con órdenes --}}
-            <div class="col-md-4 col-sm-6 mb-3">
+            <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
                 <div class="card shadow-sm rounded-3 border-0 h-100">
                     <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
                             <i class="bi bi-people-fill"></i>
                             Customers with Orders
                         </div>
-                        <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
+                        <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span> <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>
                     </div>
                     <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
                         @if ($ordenesPorCliente->isNotEmpty())
@@ -377,7 +372,13 @@
         @endsection
 
         @section('css')
-
+        <style>
+            .dataTables_wrapper {
+                margin-top: 20px !important;
+                margin-left: 15px !important;
+                margin-right: 15px !important;
+            }
+        </style>
 
         <!-- CSS de DataTables + Botones -->
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
@@ -403,9 +404,64 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
         <script>
-            let currentFilterText = '';
-            document.addEventListener('DOMContentLoaded', () => {
-                // --- Ordenes general ---
+            $(document).ready(function() {
+
+                function getFechaHoraActual() {
+                    const now = new Date();
+                    const fecha = now.toLocaleDateString('en-US');
+                    const hora = now.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    return `${fecha} ${hora}`;
+                }
+                // Inicializar DataTables con exportación y buscador
+                const logoBase64 = 'data:image/png;base64,...'; // <-- reemplaza con tu base64 real
+                function initDataTable(selector, tableTitle) {
+                    const fechaHora = getFechaHoraActual();
+                    $(selector).DataTable({
+                        pageLength: 10,
+                        order: [
+                            [6, 'asc']
+                        ],
+                        dom: "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
+                            "<'row'<'col-12'tr>>" +
+                            "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
+                        buttons: [{
+                                extend: 'excelHtml5',
+                                title: `${tableTitle} - ${fechaHora}`,// <-- Título en archivo Excel
+                                text: '<i class="fas fa-file-excel"></i> Excel',
+                                className: 'btn btn-success btn-sm mx-0',
+                                filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                title: `${tableTitle} - ${fechaHora}`, // <-- Título del PDF
+                                text: '<i class="fas fa-file-pdf"></i> PDF',
+                                className: 'btn btn-danger btn-sm mx-1',
+                                orientation: 'landscape',
+                                pageSize: 'A4',
+                                filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+
+                            },
+                            {
+                                extend: 'print',
+                                title: `${tableTitle} - ${fechaHora}`, // <-- Título al imprimir
+                                text: '<i class="fas fa-print"></i> Print',
+                                className: 'btn btn-primary btn-sm'
+                            }
+                        ],
+                        searching: true,
+                    });
+                }
+
+                // Inicializa ambas tablas con títulos PDF personalizados
+                initDataTable('#tableweek', 'ORDERS THIS WEEK');
+                initDataTable('#tablelate', 'LATE ORDERS');
+
+                // Variables para filtros y gráficos
+                let currentFilterText = '';
+
                 const filterType = document.getElementById('filterType');
                 const yearInput = document.getElementById('yearInput');
                 const monthInput = document.getElementById('monthInput');
@@ -414,9 +470,6 @@
                 const ctx = document.getElementById('ordersChart')?.getContext('2d');
                 let chart;
 
-
-
-                // --- Órdenes por cliente ---
                 const filterTypeCustomer = document.getElementById('filterTypeCustomer');
                 const yearInputCustomer = document.getElementById('yearInputCustomer');
                 const monthInputCustomer = document.getElementById('monthInputCustomer');
@@ -424,10 +477,10 @@
                 const ctx2 = document.getElementById('byCustomerChart')?.getContext('2d');
                 let customerChart;
 
-
-                // Función para mostrar inputs según filtro seleccionado (genérica)
+                // Función para mostrar/ocultar inputs según filtro seleccionado
                 function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
                     if (!yearInp || !monthInp || !weekInp) return;
+
                     yearInp.classList.add('d-none');
                     monthInp.classList.add('d-none');
                     weekInp.classList.add('d-none');
@@ -441,7 +494,7 @@
                     }
                 }
 
-                // Cargar gráfico de órdenes general
+                // Función para cargar gráfico general de órdenes
                 function loadChart() {
                     if (!filterType || !ctx) return;
 
@@ -482,14 +535,15 @@
                             data
                         }) => {
                             if (chart) chart.destroy();
-                            // Sumar total de órdenes
+
                             const totalOrders = data.reduce((acc, val) => acc + val, 0);
+
                             chart = new Chart(ctx, {
                                 type: 'bar',
                                 data: {
                                     labels,
                                     datasets: [{
-                                        label: `ORDERS (Total: ${totalOrders})`, // <-- Aquí pones la suma
+                                        label: `ORDERS (Total: ${totalOrders})`,
                                         data,
                                         backgroundColor: 'rgba(75, 192, 192, 0.7)',
                                         borderColor: 'rgba(75, 192, 192, 1)',
@@ -524,7 +578,7 @@
                         .catch(err => console.error('Error al cargar datos:', err));
                 }
 
-                // Cargar gráfico de órdenes por cliente con filtros independientes
+                // Función para cargar gráfico de órdenes por cliente
                 function loadCustomerChart() {
                     if (!filterTypeCustomer || !ctx2) return;
 
@@ -551,10 +605,10 @@
                         .then(({
                             labels,
                             totals,
-                            percentages,
                             totalAll
                         }) => {
                             if (customerChart) customerChart.destroy();
+
                             customerChart = new Chart(ctx2, {
                                 type: 'bar',
                                 data: {
@@ -583,17 +637,17 @@
                                     plugins: {
                                         tooltip: {
                                             mode: 'index',
-                                            intersect: false,
+                                            intersect: false
                                         },
                                         datalabels: {
-                                            anchor: 'end', // Posición del texto, puedes usar 'center' si quieres dentro
-                                            align: 'right', // Ajusta para que quede dentro de la barra
-                                            color: '#fff', // Color blanco para que resalte dentro de barras moradas
+                                            anchor: 'end',
+                                            align: 'right',
+                                            color: '#fff',
                                             font: {
                                                 weight: 'bold',
                                                 size: 12
                                             },
-                                            formatter: value => value // Muestra el valor de la barra
+                                            formatter: value => value
                                         }
                                     }
                                 },
@@ -603,7 +657,7 @@
                         .catch(err => console.error('Error al cargar gráfico por cliente:', err));
                 }
 
-                // Eventos para mostrar inputs según filtro
+                // Eventos para cambiar inputs visibles y recargar gráficos
                 if (filterType) {
                     filterType.addEventListener('change', () => {
                         updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
@@ -617,52 +671,49 @@
                     });
                 }
 
-                // Eventos para inputs que cambian el gráfico
                 [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
                     if (el) el.addEventListener('change', loadChart);
                 });
+
                 [yearInputCustomer, monthInputCustomer, weekInputCustomer].forEach(el => {
                     if (el) el.addEventListener('change', loadCustomerChart);
                 });
 
-                // Inicializar
+                // Inicializar inputs visibles según filtro y cargar gráficos
                 if (filterType && yearInput && monthInput && weekInput)
                     updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
                 if (filterTypeCustomer && yearInputCustomer && monthInputCustomer && weekInputCustomer)
                     updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
+
                 loadChart();
                 loadCustomerChart();
 
-                // Eventos para los botones de impresión
+                // Botones para imprimir gráficos
                 const printOrdersBtn = document.getElementById('printOrdersChartBtn');
                 if (printOrdersBtn) {
-                    printOrdersBtn.addEventListener('click', () => {
-                        printChart('ordersChart', 'TOTAL ORDERS');
-                    });
+                    printOrdersBtn.addEventListener('click', () => printChart('ordersChart', 'TOTAL ORDERS'));
                 }
                 const printCustomerBtn = document.getElementById('printCustomerChartBtn');
                 if (printCustomerBtn) {
-                    printCustomerBtn.addEventListener('click', () => {
-                        printChart('byCustomerChart', 'ORDERS PER CUSTOMER');
-                    });
+                    printCustomerBtn.addEventListener('click', () => printChart('byCustomerChart', 'ORDERS PER CUSTOMER'));
                 }
-            });
 
-            function printChart(canvasId, chartTitle) {
-                const canvas = document.getElementById(canvasId);
-                if (!canvas) return;
+                // Función para imprimir gráfico dado el ID del canvas
+                function printChart(canvasId, chartTitle) {
+                    const canvas = document.getElementById(canvasId);
+                    if (!canvas) return;
 
-                const dataUrl = canvas.toDataURL();
+                    const dataUrl = canvas.toDataURL();
 
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
 <html>
 <head>
     <title>${chartTitle}</title>
     <style>
         body { text-align: center; font-family: Arial; padding: 20px; }
         h2 { margin-bottom: 20px; }
-         .filter-info { margin-bottom: 15px; font-size: 14px; }
+        .filter-info { margin-bottom: 15px; font-size: 14px; }
         img { max-width: 100%; }
     </style>
 </head>
@@ -671,15 +722,73 @@
     <div class="filter-info">${currentFilterText}</div>
     <img src="${dataUrl}" />
     <script>
-        window.onload = () => {
-            window.print();
-        };
+        window.onload = () => { window.print(); };
     <\/script>
 </body>
 </html>
-`);
-                printWindow.document.close();
-            }
+        `);
+                    printWindow.document.close();
+                }
+
+                // Función para imprimir el contenido de un card (útil si tienes un div específico)
+                window.printCard = function() {
+                    const cardContent = document.getElementById('card-to-print');
+                    if (!cardContent) {
+                        alert("No se encontró el elemento para imprimir.");
+                        return;
+                    }
+                    const htmlContent = cardContent.innerHTML;
+                    const myWindow = window.open('', 'Print', 'width=700,height=700');
+                    myWindow.document.write(`
+<html>
+  <head>
+    <title>Imprimir Card</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+      @media print {
+        body {
+          margin: 1cm;
+          font-size: 12pt;
+          color: #000;
+          background: #fff !important;
+        }
+        .card {
+          box-shadow: none !important;
+          border: 1px solid #000 !important;
+          page-break-inside: avoid;
+        }
+        .card-body {
+          max-height: none !important;
+          overflow: visible !important;
+        }
+        button, .no-print {
+          display: none !important;
+        }
+        .card-header {
+          background: #ccc !important;
+          color: #000 !important;
+        }
+        i.bi {
+          color: #000 !important;
+        }
+      }
+      body {
+        margin: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    ${htmlContent}
+  </body>
+</html>
+        `);
+                    myWindow.document.close();
+                    myWindow.focus();
+                    myWindow.print();
+                    myWindow.close();
+                };
+            });
         </script>
 
         @endpush
