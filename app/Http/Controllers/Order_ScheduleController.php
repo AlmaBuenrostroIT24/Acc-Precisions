@@ -211,7 +211,7 @@ class Order_ScheduleController extends Controller
         return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
     }
 
-    public function updateWoQty(Request $request, $id)
+   public function updateWoQty(Request $request, $id)
     {
        // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
         $request->validate([
