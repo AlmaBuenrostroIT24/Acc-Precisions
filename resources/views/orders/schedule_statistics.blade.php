@@ -735,7 +735,8 @@
             if (printCustomerBtn) {
                 printCustomerBtn.addEventListener('click', () => printChart('byCustomerChart', 'ORDERS PER CUSTOMER'));
             }
-
+       
+            window.printChart = printChart;
             // Función para imprimir gráfico dado el ID del canvas
             function printChart(canvasId, chartTitle) {
                 const canvas = document.getElementById(canvasId);
@@ -768,64 +769,7 @@
                 printWindow.document.close();
             }
 
-            // Función para imprimir el contenido de un card (útil si tienes un div específico)
-            window.printCard = function() {
-                const cardContent = document.getElementById('card-to-print');
-                if (!cardContent) {
-                    alert("No se encontró el elemento para imprimir.");
-                    return;
-                }
-                const htmlContent = cardContent.innerHTML;
-                const myWindow = window.open('', 'Print', 'width=700,height=700');
-                myWindow.document.write(`
-<html>
-  <head>
-    <title>Imprimir Card</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    <style>
-      @media print {
-        body {
-          margin: 1cm;
-          font-size: 12pt;
-          color: #000;
-          background: #fff !important;
-        }
-        .card {
-          box-shadow: none !important;
-          border: 1px solid #000 !important;
-          page-break-inside: avoid;
-        }
-        .card-body {
-          max-height: none !important;
-          overflow: visible !important;
-        }
-        button, .no-print {
-          display: none !important;
-        }
-        .card-header {
-          background: #ccc !important;
-          color: #000 !important;
-        }
-        i.bi {
-          color: #000 !important;
-        }
-      }
-      body {
-        margin: 20px;
-      }
-    </style>
-  </head>
-  <body>
-    ${htmlContent}
-  </body>
-</html>
-        `);
-                myWindow.document.close();
-                myWindow.focus();
-                myWindow.print();
-                myWindow.close();
-            };
+
         });
     </script>
 
