@@ -64,7 +64,7 @@
                     $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
                     @endphp
                     <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
-                    <td >{{ $order->id }}</td>
+                    <td>{{ $order->id }}</td>
                     <!-- Columna oculta solo texto para filtro -->
                     <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
                     <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
@@ -75,6 +75,13 @@
                             <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
                             <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
                         </select>
+                        <div class="last-location-label mt-1">
+                            @if ($order->last_location === 'Yarnell')
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                            </span>
+                            @endif
+                        </div>
                     </td>
                     <td style="white-space: nowrap; width: 100px;">
                         @if ($order->was_work_id_null)
@@ -121,7 +128,7 @@
                         {{ $dias }} days
                     </td>
 
-                    <td >
+                    <td>
                         <div id="alerta-{{ $order->id }}" class="progress" style="width: 80px; height: 30px;">
                             <div class="progress-bar {{ $alertColor }}" role="progressbar"
                                 style="width: 100%; height: 30px; line-height: 30px; font-size: 18px; font-weight: bold;">

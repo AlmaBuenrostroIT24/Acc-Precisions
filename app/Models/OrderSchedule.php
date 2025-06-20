@@ -35,6 +35,7 @@ class OrderSchedule extends Model
         'our_source',
         'notes',
         'location',
+        'last_location',
         'priority',
         'assigned_to',
         'material_type',

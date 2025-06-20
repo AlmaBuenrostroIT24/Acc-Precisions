@@ -61,12 +61,12 @@ class Order_ScheduleController extends Controller
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
-    
+
 
     public function store(Request $request)
     {
-       // Log::info('Request completo:', $request->all());
-    
+        // Log::info('Request completo:', $request->all());
+
         $mapping = [
             'col_text_1'  => 'location',
             'col_text_2'  => 'work_id',
@@ -85,17 +85,17 @@ class Order_ScheduleController extends Controller
             'col_text_16' => 'station',
             'col_text_17' => 'notes',
         ];
-    
+
         try {
             $input = $request->only(array_keys($mapping));
-    
+
             $data = [];
             foreach ($input as $key => $value) {
                 if (isset($mapping[$key])) {
                     $data[$mapping[$key]] = $value;
                 }
             }
-    
+
             // Limpiar cadenas
             foreach ($data as $field => &$value) {
                 if (is_string($value)) {
@@ -103,13 +103,13 @@ class Order_ScheduleController extends Controller
                 }
             }
             unset($value);
-    
+
             // Extraer solo el número para 'days'
             if (!empty($data['days'])) {
                 preg_match('/\d+/', $data['days'], $matches);
                 $data['days'] = isset($matches[0]) ? (int)$matches[0] : null;
             }
-    
+
             // Convertir fechas con Carbon (manejar excepciones)
             try {
                 if (!empty($data['machining_date'])) {
@@ -125,12 +125,12 @@ class Order_ScheduleController extends Controller
             } catch (\Exception $e) {
                 $data['due_date'] = null;
             }
-    
+
             // Asegurar que alert NO sea nulo
             if (empty($data['alert'])) {
                 $data['alert'] = '';
             }
-    
+
             $validatedData = validator($data, [
                 'work_id'        => 'nullable|string|max:255',
                 'PN'             => 'nullable|string|max:255',
@@ -149,9 +149,9 @@ class Order_ScheduleController extends Controller
                 'notes'          => 'nullable|string',
                 'location'       => 'nullable|string|max:255',
             ])->validate();
-    
+
             $order = OrderSchedule::create($validatedData);
-    
+
             return response()->json([
                 'success' => true,
                 'order_id' => $order->id,
@@ -172,8 +172,8 @@ class Order_ScheduleController extends Controller
             ], 500);
         }
     }
-    
-    
+
+
 
     public function finished(Request $request)
     {
@@ -213,19 +213,19 @@ class Order_ScheduleController extends Controller
 
     public function updateWoQty(Request $request, $id)
     {
-       // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
+        // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
         $request->validate([
             'wo_qty' => 'required|integer|min:0',
         ]);
-    
+
         $order = OrderSchedule::findOrFail($id);
         $order->wo_qty = $request->input('wo_qty');
         $order->save();
-    
+
         return response()->json(['success' => true]);
     }
 
-    
+
 
     public function statistics(Request $request)
     {
@@ -302,7 +302,7 @@ class Order_ScheduleController extends Controller
         return view('orders.create');
     }
 
-  /*  public function store(Request $request)
+    /*  public function store(Request $request)
     {
         $validated = $request->validate([
             'work_id' => 'required|string|max:255',
@@ -451,12 +451,14 @@ class Order_ScheduleController extends Controller
             'location' => 'required|in:Floor,Yarnell,Hearst',
         ]);
 
+        $order->last_location = $order->location; // Guardamos la ubicación actual
         $order->location = $request->location;
         $order->save();
 
         return response()->json([
             'success' => true,
             'location' => $order->location,
+            'last_location' => $order->last_location,
             // otros datos que necesites devolver
         ]);
     }
