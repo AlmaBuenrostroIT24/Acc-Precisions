@@ -238,69 +238,78 @@ document.addEventListener("DOMContentLoaded", () => {
         lastLocations[orderId] = select.val(); // Guardamos la última antes del cambio
     });
 
-   // Actualizar Location
-tableElement.on("change", ".location-select", function () {
-    const select = $(this);
-    const orderId = select.data("id");
-    const newLocation = select.val();
-    const row = select.closest("tr");
-    const stationTd = row.find("td[data-location]");
+    // Actualizar Location
+    tableElement.on("change", ".location-select", function () {
+        const select = $(this);
+        const orderId = select.data("id");
+        const newLocation = select.val();
+        const row = select.closest("tr");
+        const stationTd = row.find("td[data-location]");
 
-    stationTd.attr("data-location", newLocation);
+        stationTd.attr("data-location", newLocation);
 
-    handlePostJsonWithAlerts(
-        `/orders/${orderId}/update-location`,
-        { location: newLocation },
-        (data) => {
-            if (data.success) {
-                const locationLower = data.location.toLowerCase();
+        handlePostJsonWithAlerts(
+            `/orders/${orderId}/update-location`,
+            { location: newLocation },
+            (data) => {
+                if (data.success) {
+                    const locationLower = data.location.toLowerCase();
 
-                // Actualizamos localStorage y UI
-                localStorage.setItem(
-                    "location-change",
-                    JSON.stringify({
-                        orderId,
-                        location: locationLower,
-                        updatedAt: Date.now(),
-                    })
-                );
+                    // Actualizamos localStorage y UI
+                    localStorage.setItem(
+                        "location-change",
+                        JSON.stringify({
+                            orderId,
+                            location: locationLower,
+                            updatedAt: Date.now(),
+                        })
+                    );
 
-                const hiddenLocationCell = document.getElementById(
-                    `hidden-location-${orderId}`
-                );
-                if (hiddenLocationCell) {
-                    hiddenLocationCell.textContent = locationLower;
-                    stationTd.attr("data-location", locationLower);
-                }
+                    const hiddenLocationCell = document.getElementById(
+                        `hidden-location-${orderId}`
+                    );
+                    if (hiddenLocationCell) {
+                        hiddenLocationCell.textContent = locationLower;
+                        stationTd.attr("data-location", locationLower);
+                    }
 
-                if (window.table) {
-                    const rowIndex = window.table.row(row[0]).index();
-                    // Actualiza la columna 1 (Location)
-                    window.table.cell(rowIndex, 1).data(locationLower).draw(false);
-                }
+                    if (window.table) {
+                        const rowIndex = window.table.row(row[0]).index();
+                        // Actualiza la columna 1 (Location)
+                        window.table
+                            .cell(rowIndex, 1)
+                            .data(locationLower)
+                            .draw(false);
+                    }
 
-                // MOSTRAR ETIQUETA CON ÚLTIMA UBICACIÓN GUARDADA
-                const label = select.closest("td").find(".last-location-label");
+                    // MOSTRAR ETIQUETA CON ÚLTIMA UBICACIÓN GUARDADA
+                    const label = select
+                        .closest("td")
+                        .find(".last-location-label");
 
-                if (data.last_location === "Yarnell") {
-                    label.html(`
+                    if (data.last_location === "Yarnell") {
+                        label
+                            .html(
+                                `
                         <span class="badge bg-warning text-dark">
                             <i class="fas fa-map-marker-alt me-1"></i> Yarnell
                         </span>
-                    `).show();
-                } else {
-                    label.hide().html("");
-                }
+                    `
+                            )
+                            .show();
+                    } else {
+                        label.hide().html("");
+                    }
 
-                // Actualizamos la variable local para el próximo cambio
-                lastLocations[orderId] = newLocation;
-            } else {
-                alert("Hubo un problema al actualizar la ubicación.");
-            }
-        },
-        "Error al comunicarse con el servidor."
-    );
-});
+                    // Actualizamos la variable local para el próximo cambio
+                    lastLocations[orderId] = newLocation;
+                } else {
+                    alert("Hubo un problema al actualizar la ubicación.");
+                }
+            },
+            "Error al comunicarse con el servidor."
+        );
+    });
 
     // Toggle report/source buttons
     tableElement.on(
@@ -480,12 +489,20 @@ tableElement.on("change", ".location-select", function () {
         });
     });
 
-    // Actualizar Status
-    tableElement.on("change", ".status-select", function () {
-        const select = $(this);
-        const orderId = select.data("id");
-        const newStatus = select.val().toLowerCase();
+// Actualizar Status con confirmación SweetAlert
+tableElement.on("change", ".status-select", function () {
+    const select = $(this);
+    const orderId = select.data("id");
+    const oldStatus = select.data("old-status") || ""; // Estado previo guardado en data attribute
+    const newStatus = select.val().toLowerCase();
 
+    // Ubicación actual del order en la fila
+    const row = select.closest("tr");
+    const locationSelect = row.find(".location-select");
+    const currentLocation = locationSelect.length ? locationSelect.val() : "";
+
+    // Función que hace la petición para cambiar el status y actualiza UI
+    const enviarCambioStatus = () => {
         handlePostJsonWithAlerts(
             `/orders/${orderId}/update-status`,
             { status: newStatus },
@@ -502,30 +519,46 @@ tableElement.on("change", ".location-select", function () {
                 );
 
                 if (data.success) {
-                    const row = select.closest("tr");
 
-                    // 🚫 Eliminar fila si el estado es "sent"
+                    // Actualizar location si viene en la respuesta
+                    if (data.location) {
+                        if (locationSelect.length) {
+                            locationSelect.val(data.location);
+                        }
+                    }
+
+                    // Actualizar badge last-location-label
+                    const label = row.find(".last-location-label");
+                    if (data.last_location === "Yarnell") {
+                        label
+                            .html(`
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                </span>
+                            `)
+                            .show();
+                    } else {
+                        label.hide().html("");
+                    }
+
+                    // Eliminar fila si estado es "sent"
                     if (newStatus === "sent") {
                         window.table
-                            .row($(select).closest("tr"))
+                            .row(row)
                             .remove()
                             .draw(false);
                         return;
                     }
-                    // 👇 Actualizar campo sent_at si existe
+
+                    // Actualizar campo sent_at si existe
                     if (data.sent_at) {
-                        const sentCell = document.getElementById(
-                            `sent-at-${orderId}`
-                        );
+                        const sentCell = document.getElementById(`sent-at-${orderId}`);
                         if (sentCell) sentCell.textContent = data.sent_at;
                     }
 
-                    const hiddenStatusCell = document.getElementById(
-                        `hidden-status-${orderId}`
-                    );
+                    const hiddenStatusCell = document.getElementById(`hidden-status-${orderId}`);
                     if (hiddenStatusCell)
-                        hiddenStatusCell.textContent =
-                            data.status.toLowerCase();
+                        hiddenStatusCell.textContent = data.status.toLowerCase();
 
                     if (window.table) {
                         const rowIndex = window.table.row(row[0]).index();
@@ -538,15 +571,9 @@ tableElement.on("change", ".location-select", function () {
                     const $statusFilter = $("#statusFilter");
                     const newStatusVal = data.status.toLowerCase();
 
-                    if (
-                        $statusFilter.find(`option[value="${newStatusVal}"]`)
-                            .length === 0
-                    ) {
+                    if ($statusFilter.find(`option[value="${newStatusVal}"]`).length === 0) {
                         const options = $statusFilter.find("option").toArray();
-                        const newOption = new Option(
-                            newStatusVal,
-                            newStatusVal
-                        );
+                        const newOption = new Option(newStatusVal, newStatusVal);
                         let inserted = false;
                         for (let i = 1; i < options.length; i++) {
                             if (options[i].value > newStatusVal) {
@@ -563,9 +590,7 @@ tableElement.on("change", ".location-select", function () {
                     );
                     $(row).addClass(`bg-status-${data.status}`);
 
-                    const diasTd = document.getElementById(
-                        `dias-restantes-${orderId}`
-                    );
+                    const diasTd = document.getElementById(`dias-restantes-${orderId}`);
                     if (diasTd) {
                         diasTd.textContent = `${data.dias_restantes} days`;
                         diasTd.className =
@@ -576,20 +601,48 @@ tableElement.on("change", ".location-select", function () {
                                 : "text-success fw-bold";
                     }
 
-                    const alertaDiv = document.querySelector(
-                        `#alerta-${orderId} .progress-bar`
-                    );
+                    const alertaDiv = document.querySelector(`#alerta-${orderId} .progress-bar`);
                     if (alertaDiv) {
                         alertaDiv.className = "progress-bar " + data.alertColor;
                         alertaDiv.textContent = data.alertLabel;
                     }
+
+                    // Actualiza el estado viejo guardado para poder revertir si se edita otra vez
+                    select.data("old-status", newStatus);
+
                 } else {
                     alert("Hubo un problema al actualizar el estado.");
                 }
             },
             "Error al comunicarse con el servidor."
         );
-    });
+    };
+
+    // Mostrar confirmación si cumple condiciones
+    if (
+        (newStatus === "deburring" || newStatus === "shipping") &&
+        currentLocation.toLowerCase() === "yarnell"
+    ) {
+        Swal.fire({
+            title: "¿Are you sure??",
+            text: `Change status to'${newStatus}' will move the location to 'Hearst'.`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, change",
+            cancelButtonText: "No, cancel",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                enviarCambioStatus();
+            } else {
+                // Revertir al estado anterior
+                select.val(oldStatus);
+            }
+        });
+    } else {
+        enviarCambioStatus();
+    }
+});
+
 
     //-------------------------------------------------
     // Tooltips

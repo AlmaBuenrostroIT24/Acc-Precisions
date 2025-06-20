@@ -399,6 +399,15 @@ class Order_ScheduleController extends Controller
             $newStatus = strtolower($request->status);
             $order->status = $newStatus;
 
+            // ✅ Si el status es "deburring" o "shipping", actualizar la location a "hearst"
+            if (
+                in_array($newStatus, ['deburring', 'shipping']) &&
+                ($order->location) === 'Yarnell'
+            ) {
+                $order->last_location = $order->location; // Guardar ubicación anterior
+                $order->location = 'Hearst';
+            }
+
             // Guardar la fecha cuando cambia a "sent"
             if ($newStatus === 'sent') {
                 $order->sent_at = now();
@@ -435,6 +444,8 @@ class Order_ScheduleController extends Controller
                 'alertColor' => $alertColor,
                 'alertLabel' => $alertLabel,
                 'status' => $order->status,
+                'location' => $order->location, // 👈 ¡Agrega esto!
+                'last_location' => $order->last_location, // <== Aquí
             ]);
         } catch (\Exception $e) {
             // Log::error("Error actualizando status orden {$order->id}: " . $e->getMessage());

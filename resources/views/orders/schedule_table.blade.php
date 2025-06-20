@@ -70,7 +70,10 @@
                     <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
                     <!----------------------------------------->
                     <td style="min-width: 90px;">
-                        <select class="form-control form-control-sm location-select fw-bold text-capitalize" style="width: 80px; font-weight: bold; color: black;" data-id="{{ $order->id }}">
+                        <select class="form-control form-control-sm location-select fw-bold text-capitalize"
+                            style="width: 80px; font-weight: bold; color: black;"
+                            data-id="{{ $order->id }}"
+                            data-old-status="{{ strtolower($order->status) }}">
                             <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
                             <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
                             <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
