@@ -89,7 +89,14 @@
                         <tbody id="statusTable">
                             @foreach($orders as $order)
                             <tr data-status="{{ $order->status }}">
-                                <td>{{ $order->location }}</td>
+                                <td style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: black; font-weight: bold;">{{ $order->location }}</span>
+                                    @if ($order->last_location === 'Yarnell')
+                                    <span class="badge bg-warning text-dark d-inline-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                    </span>
+                                    @endif
+                                </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td style="min-width: 120px;">{{ $order->PN }}</td>
                                 <td style="font-size: 12px;">{{ $order->Part_description }}</td>
@@ -164,7 +171,7 @@
             autoWidth: false,
             pageLength: 25,
             order: [
-                [9, 'desc'] // corregí 'des' por 'desc'
+                [10, 'desc'] // corregí 'des' por 'desc'
             ],
             columnDefs: [{
                 targets: [6, 7, 11],
