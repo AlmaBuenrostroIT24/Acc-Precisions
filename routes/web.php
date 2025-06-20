@@ -64,6 +64,7 @@ Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders
 
 //Route::resource('/schedule/general', Order_ScheduleController::class);
 Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general');
+Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell');
 Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
 

@@ -20,6 +20,10 @@ class Order_ScheduleController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    //------------------------------------------------INTERFACE VIEWS--------------------------------------------------------------
+    //General Schedule-------------------------------------------------------------------------------------------------------------
+
     public function index(Request $request)
     {
         // $orders = OrderSchedule::latest()->get();
@@ -33,7 +37,6 @@ class Order_ScheduleController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-
         // Ordenar por due_date descendente (más reciente primero)
 
         // 👇 Filtrar automáticamente solo si estamos en /schedule/general y el usuario tiene un rol específico
@@ -43,7 +46,6 @@ class Order_ScheduleController extends Controller
         }
 
         $orders = $query->get();
-
 
         // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
         $locations = OrderSchedule::select('location')->distinct()->pluck('location');
@@ -57,11 +59,150 @@ class Order_ScheduleController extends Controller
                 $order->machining_date
             );
         }
-
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
 
+    //----------------------------------------------------------------------------------------------------------------------------
+    //Orders Yarnell--------------------------------------------------------------------------------------------------------------
+
+    public function endyarnell(Request $request)
+    {
+        $query = OrderSchedule::latest()
+            ->where('last_location', 'Yarnell')
+            ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->get();
+
+        // 👇 obtenemos los valores únicos
+        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+        foreach ($orders as $order) {
+            $order->dias_restantes = $this->calcularDiasInterno(
+                $order->status,
+                $order->due_date,
+                $order->machining_date
+            );
+        }
+
+        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers'));
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------------
+    //Completed Orders--------------------------------------------------------------------------------------------------------------
+
+    public function finished(Request $request)
+    {
+        // $orders = OrderSchedule::latest()->get();
+        //return view('orders.index_schedule', compact('orders'));
+
+        $query = OrderSchedule::latest();
+
+        if ($request->filled('location')) {
+            $query->where('location', $request->location);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->get();
+
+        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
+        $locations = OrderSchedule::select('location')->distinct()->pluck('location');
+        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+        foreach ($orders as $order) {
+            $order->dias_restantes = $this->calcularDiasInterno(
+                $order->status,
+                $order->due_date,
+                $order->machining_date
+            );
+        }
+        // 👇 Asegúrate de enviar $locations y $statuses a la vista
+        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------------
+    //Orders Statistics--------------------------------------------------------------------------------------------------------------
+
+    public function statistics(Request $request)
+    {
+        $today = Carbon::today();
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        $ordenesSemana = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])->get();
+
+        $ordenesAtrasadas = OrderSchedule::where('due_date', '<', $today)
+            ->where('status', '!=', 'sent')
+            ->get();
+
+        $cantidadAtrasadas = $ordenesAtrasadas->count();
+
+        // 👉 Semana pasada: lunes a domingo
+        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
+        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
+
+        // Cantidad de órdenes de la semana pasada que no tienen status 'sent' y ya vencieron
+        $cantidadAtrasadasSemanaPasada = OrderSchedule::whereBetween('due_date', [$startOfLastWeek, $endOfLastWeek])
+            ->where('due_date', '<', $today)
+            ->where('status', '!=', 'sent')
+            ->count();
+
+        $totalOrdenes = OrderSchedule::where('status', '!=', 'sent')->count();
+
+        $cantidadHearst = OrderSchedule::where('location', 'hearst')
+            ->where('status', '!=', 'sent')
+            ->count();
+        $cantidadYarnell = OrderSchedule::where('location', 'yarnell')
+            ->where('status', '!=', 'sent')
+            ->count();
+        $cantidadFloor = OrderSchedule::where('location', 'floor')
+            ->where('status', '!=', 'sent')
+            ->count();
+
+        $ordenesPorCliente = OrderSchedule::select('costumer', DB::raw('count(*) as total'))
+            ->where('status', '!=', 'sent')
+            ->groupBy('costumer')
+            ->get();
+
+        // Órdenes creadas esta semana
+        $ordenesAgregadasSemana = OrderSchedule::whereBetween('created_at', [$startOfWeek, $endOfWeek])->get();
+
+        // Cantidad total de esas órdenes
+        $totalAgregadasSemana = $ordenesAgregadasSemana->count();
+
+        $customers = OrderSchedule::select('costumer')
+            ->whereNotNull('costumer')
+            ->distinct()
+            ->orderBy('costumer')
+            ->pluck('costumer');
+
+        // 👇 Asegúrate de enviar $locations y $statuses a la vista
+        return view('orders.schedule_statistics', compact(
+            'ordenesSemana',
+            'ordenesAtrasadas',
+            'cantidadAtrasadasSemanaPasada',
+            'cantidadAtrasadas',
+            'cantidadHearst',
+            'cantidadYarnell',
+            'cantidadFloor',
+            'totalOrdenes',
+            'ordenesPorCliente',
+            'ordenesAgregadasSemana',
+            'totalAgregadasSemana',
+            'customers'
+        ));
+    }
+    //----------------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------------------
 
     public function store(Request $request)
     {
@@ -175,41 +316,7 @@ class Order_ScheduleController extends Controller
 
 
 
-    public function finished(Request $request)
-    {
-        // $orders = OrderSchedule::latest()->get();
-        //return view('orders.index_schedule', compact('orders'));
 
-        $query = OrderSchedule::latest();
-
-        if ($request->filled('location')) {
-            $query->where('location', $request->location);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $orders = $query->get();
-
-        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
-        $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
-        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
-
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
-
-
-
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
-        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
-    }
 
     public function updateWoQty(Request $request, $id)
     {
@@ -225,77 +332,6 @@ class Order_ScheduleController extends Controller
         return response()->json(['success' => true]);
     }
 
-
-
-    public function statistics(Request $request)
-    {
-        $today = Carbon::today();
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek = Carbon::now()->endOfWeek();
-
-        $ordenesSemana = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])->get();
-
-        $ordenesAtrasadas = OrderSchedule::where('due_date', '<', $today)
-            ->where('status', '!=', 'sent')
-            ->get();
-
-        $cantidadAtrasadas = $ordenesAtrasadas->count();
-
-        // 👉 Semana pasada: lunes a domingo
-        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
-        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
-
-        // Cantidad de órdenes de la semana pasada que no tienen status 'sent' y ya vencieron
-        $cantidadAtrasadasSemanaPasada = OrderSchedule::whereBetween('due_date', [$startOfLastWeek, $endOfLastWeek])
-            ->where('due_date', '<', $today)
-            ->where('status', '!=', 'sent')
-            ->count();
-
-        $totalOrdenes = OrderSchedule::where('status', '!=', 'sent')->count();
-
-        $cantidadHearst = OrderSchedule::where('location', 'hearst')
-            ->where('status', '!=', 'sent')
-            ->count();
-        $cantidadYarnell = OrderSchedule::where('location', 'yarnell')
-            ->where('status', '!=', 'sent')
-            ->count();
-        $cantidadFloor = OrderSchedule::where('location', 'floor')
-            ->where('status', '!=', 'sent')
-            ->count();
-
-        $ordenesPorCliente = OrderSchedule::select('costumer', DB::raw('count(*) as total'))
-            ->where('status', '!=', 'sent')
-            ->groupBy('costumer')
-            ->get();
-
-        // Órdenes creadas esta semana
-        $ordenesAgregadasSemana = OrderSchedule::whereBetween('created_at', [$startOfWeek, $endOfWeek])->get();
-
-        // Cantidad total de esas órdenes
-        $totalAgregadasSemana = $ordenesAgregadasSemana->count();
-
-        $customers = OrderSchedule::select('costumer')
-            ->whereNotNull('costumer')
-            ->distinct()
-            ->orderBy('costumer')
-            ->pluck('costumer');
-
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
-        return view('orders.schedule_statistics', compact(
-            'ordenesSemana',
-            'ordenesAtrasadas',
-            'cantidadAtrasadasSemanaPasada',
-            'cantidadAtrasadas',
-            'cantidadHearst',
-            'cantidadYarnell',
-            'cantidadFloor',
-            'totalOrdenes',
-            'ordenesPorCliente',
-            'ordenesAgregadasSemana',
-            'totalAgregadasSemana',
-            'customers'
-        ));
-    }
 
     public function create()
     {
@@ -406,6 +442,7 @@ class Order_ScheduleController extends Controller
             ) {
                 $order->last_location = $order->location; // Guardar ubicación anterior
                 $order->location = 'Hearst';
+                $order->endate_mach = now(); // Guardar fecha y hora del cambio en endate_mach
             }
 
             // Guardar la fecha cuando cambia a "sent"
@@ -426,6 +463,18 @@ class Order_ScheduleController extends Controller
                 $diffDays = $diff > 0 ? -$diff : abs($diff);
 
                 $order->target_date = $diffDays;
+            }
+            // target_mach
+            if ($order->endate_mach && $order->machining_date) {
+                $endateMach = \Carbon\Carbon::parse($order->endate_mach)->startOfDay();
+                $machiningDate = \Carbon\Carbon::parse($order->machining_date)->startOfDay();
+            
+                // Invertimos el orden para restar machining_date - endate_mach
+                $diffMach = $machiningDate->diffInDays($endateMach, false);
+            
+                $diffMachDays = $diffMach > 0 ? -$diffMach : abs($diffMach);
+            
+                $order->target_mach = $diffMachDays;
             }
 
             $order->save();

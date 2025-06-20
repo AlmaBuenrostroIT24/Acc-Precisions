@@ -7,9 +7,15 @@
         </a>
     </li>
     <li class="nav-item" role="presentation">
+        <a class="nav-link {{ request()->routeIs('schedule.endyarnell') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
+           href="{{ route('schedule.endyarnell') }}">
+            <i class="fas fa-building me-2"></i> Orders Yarnell
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('schedule.finished') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
            href="{{ route('schedule.finished') }}">
-            <i class="fas fa-check me-2"></i> Completed Orders
+            <i class="fas fa-clipboard-check"></i> Completed Orders
         </a>
     </li>
     <li class="nav-item" role="presentation">

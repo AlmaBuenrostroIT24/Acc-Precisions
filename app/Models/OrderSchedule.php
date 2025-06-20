@@ -26,6 +26,8 @@ class OrderSchedule extends Model
         'status',
         'sent_at',
         'target_date',
+        'enddate_mach',
+        'target_mach',
         'machining_date',
         'due_date',
         'days',
@@ -54,6 +56,7 @@ class OrderSchedule extends Model
         'machining_date' => 'date',
         'due_date' => 'date',
         'sent_at' => 'datetime',
+        'endate_mach' => 'datetime',
     ];
 
     // Relaciones con el modelo User
