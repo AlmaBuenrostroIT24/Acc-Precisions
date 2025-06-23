@@ -489,160 +489,191 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-// Actualizar Status con confirmación SweetAlert
-tableElement.on("change", ".status-select", function () {
-    const select = $(this);
-    const orderId = select.data("id");
-    const oldStatus = select.data("old-status") || ""; // Estado previo guardado en data attribute
-    const newStatus = select.val().toLowerCase();
+    // Actualizar Status con confirmación SweetAlert
+    tableElement.on("change", ".status-select", function () {
+        const select = $(this);
+        const orderId = select.data("id");
+        const oldStatus = select.data("old-status") || ""; // Estado previo guardado en data attribute
+        const newStatus = select.val().toLowerCase();
 
-    // Ubicación actual del order en la fila
-    const row = select.closest("tr");
-    const locationSelect = row.find(".location-select");
-    const currentLocation = locationSelect.length ? locationSelect.val() : "";
+        // Ubicación actual del order en la fila
+        const row = select.closest("tr");
+        const locationSelect = row.find(".location-select");
+        const currentLocation = locationSelect.length
+            ? locationSelect.val()
+            : "";
 
-    // Función que hace la petición para cambiar el status y actualiza UI
-    const enviarCambioStatus = () => {
-        handlePostJsonWithAlerts(
-            `/orders/${orderId}/update-status`,
-            { status: newStatus },
-            (data) => {
-                localStorage.setItem(
-                    "status-change",
-                    JSON.stringify({
-                        orderId,
-                        status: data.status,
-                        dias_restantes: data.dias_restantes,
-                        alertColor: data.alertColor,
-                        alertLabel: data.alertLabel,
-                    })
-                );
+        // Función que hace la petición para cambiar el status y actualiza UI
+        const enviarCambioStatus = () => {
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-status`,
+                { status: newStatus },
+                (data) => {
+                    localStorage.setItem(
+                        "status-change",
+                        JSON.stringify({
+                            orderId,
+                            status: data.status,
+                            dias_restantes: data.dias_restantes,
+                            alertColor: data.alertColor,
+                            alertLabel: data.alertLabel,
+                        })
+                    );
 
-                if (data.success) {
-
-                    // Actualizar location si viene en la respuesta
-                    if (data.location) {
-                        if (locationSelect.length) {
-                            locationSelect.val(data.location);
+                    if (data.success) {
+                        // Actualizar location si viene en la respuesta
+                        if (data.location) {
+                            if (locationSelect.length) {
+                                locationSelect.val(data.location);
+                            }
                         }
-                    }
 
-                    // Actualizar badge last-location-label
-                    const label = row.find(".last-location-label");
-                    if (data.last_location === "Yarnell") {
-                        label
-                            .html(`
+                        // Actualizar badge last-location-label
+                        const label = row.find(".last-location-label");
+                        if (data.last_location === "Yarnell") {
+                            label
+                                .html(
+                                    `
                                 <span class="badge bg-warning text-dark">
                                     <i class="fas fa-map-marker-alt me-1"></i> Yarnell
                                 </span>
-                            `)
-                            .show();
-                    } else {
-                        label.hide().html("");
-                    }
-
-                    // Eliminar fila si estado es "sent"
-                    if (newStatus === "sent") {
-                        window.table
-                            .row(row)
-                            .remove()
-                            .draw(false);
-                        return;
-                    }
-
-                    // Actualizar campo sent_at si existe
-                    if (data.sent_at) {
-                        const sentCell = document.getElementById(`sent-at-${orderId}`);
-                        if (sentCell) sentCell.textContent = data.sent_at;
-                    }
-
-                    const hiddenStatusCell = document.getElementById(`hidden-status-${orderId}`);
-                    if (hiddenStatusCell)
-                        hiddenStatusCell.textContent = data.status.toLowerCase();
-
-                    if (window.table) {
-                        const rowIndex = window.table.row(row[0]).index();
-                        window.table
-                            .cell(rowIndex, 2)
-                            .data(data.status.toLowerCase())
-                            .draw(false);
-                    }
-
-                    const $statusFilter = $("#statusFilter");
-                    const newStatusVal = data.status.toLowerCase();
-
-                    if ($statusFilter.find(`option[value="${newStatusVal}"]`).length === 0) {
-                        const options = $statusFilter.find("option").toArray();
-                        const newOption = new Option(newStatusVal, newStatusVal);
-                        let inserted = false;
-                        for (let i = 1; i < options.length; i++) {
-                            if (options[i].value > newStatusVal) {
-                                $(options[i]).before(newOption);
-                                inserted = true;
-                                break;
-                            }
+                            `
+                                )
+                                .show();
+                        } else {
+                            label.hide().html("");
                         }
-                        if (!inserted) $statusFilter.append(newOption);
-                    }
 
-                    $(row).removeClass((i, c) =>
-                        (c.match(/bg-status-\S+/g) || []).join(" ")
+                        // Eliminar fila si estado es "sent"
+                        if (newStatus === "sent") {
+                            window.table.row(row).remove().draw(false);
+                            return;
+                        }
+
+                        // Actualizar campo sent_at si existe
+                        if (data.sent_at) {
+                            const sentCell = document.getElementById(
+                                `sent-at-${orderId}`
+                            );
+                            if (sentCell) sentCell.textContent = data.sent_at;
+                        }
+
+                        const hiddenStatusCell = document.getElementById(
+                            `hidden-status-${orderId}`
+                        );
+                        if (hiddenStatusCell)
+                            hiddenStatusCell.textContent =
+                                data.status.toLowerCase();
+
+                        if (window.table) {
+                            const rowIndex = window.table.row(row[0]).index();
+                            window.table
+                                .cell(rowIndex, 2)
+                                .data(data.status.toLowerCase())
+                                .draw(false);
+                        }
+
+                        const $statusFilter = $("#statusFilter");
+                        const newStatusVal = data.status.toLowerCase();
+
+                        if (
+                            $statusFilter.find(
+                                `option[value="${newStatusVal}"]`
+                            ).length === 0
+                        ) {
+                            const options = $statusFilter
+                                .find("option")
+                                .toArray();
+                            const newOption = new Option(
+                                newStatusVal,
+                                newStatusVal
+                            );
+                            let inserted = false;
+                            for (let i = 1; i < options.length; i++) {
+                                if (options[i].value > newStatusVal) {
+                                    $(options[i]).before(newOption);
+                                    inserted = true;
+                                    break;
+                                }
+                            }
+                            if (!inserted) $statusFilter.append(newOption);
+                        }
+
+                        $(row).removeClass((i, c) =>
+                            (c.match(/bg-status-\S+/g) || []).join(" ")
+                        );
+                        $(row).addClass(`bg-status-${data.status}`);
+
+                        const diasTd = document.getElementById(
+                            `dias-restantes-${orderId}`
+                        );
+                        if (diasTd) {
+                            diasTd.textContent = `${data.dias_restantes} days`;
+                            diasTd.className =
+                                data.dias_restantes < 0
+                                    ? "text-danger fw-bold"
+                                    : data.dias_restantes <= 2
+                                    ? "text-warning fw-bold"
+                                    : "text-success fw-bold";
+                        }
+
+                        const alertaDiv = document.querySelector(
+                            `#alerta-${orderId} .progress-bar`
+                        );
+                        if (alertaDiv) {
+                            alertaDiv.className =
+                                "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
+
+                        // Actualiza el estado viejo guardado para poder revertir si se edita otra vez
+                        select.data("old-status", newStatus);
+                    } else {
+                        alert("Hubo un problema al actualizar el estado.");
+                    }
+                },
+                "Error al comunicarse con el servidor."
+            );
+        };
+
+        // Mostrar confirmación si cumple condiciones
+        // Mostrar confirmación si cumple condiciones
+        if (
+            (newStatus === "deburring" || newStatus === "shipping") &&
+            currentLocation.toLowerCase() === "yarnell"
+        ) {
+            Swal.fire({
+                title: "¿Are you sure??",
+                text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, change",
+                cancelButtonText: "No, cancel",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 🔁 Notifica a otras pestañas que esta orden ahora estará en Hearst
+                    localStorage.setItem(
+                        "location-change",
+                        JSON.stringify({
+                            orderId: orderId,
+                            location: "hearst",
+                        })
                     );
-                    $(row).addClass(`bg-status-${data.status}`);
 
-                    const diasTd = document.getElementById(`dias-restantes-${orderId}`);
-                    if (diasTd) {
-                        diasTd.textContent = `${data.dias_restantes} days`;
-                        diasTd.className =
-                            data.dias_restantes < 0
-                                ? "text-danger fw-bold"
-                                : data.dias_restantes <= 2
-                                ? "text-warning fw-bold"
-                                : "text-success fw-bold";
-                    }
+                    console.log(
+                        "📢 Notificación enviada a pestañas: orden movida a Hearst"
+                    );
 
-                    const alertaDiv = document.querySelector(`#alerta-${orderId} .progress-bar`);
-                    if (alertaDiv) {
-                        alertaDiv.className = "progress-bar " + data.alertColor;
-                        alertaDiv.textContent = data.alertLabel;
-                    }
-
-                    // Actualiza el estado viejo guardado para poder revertir si se edita otra vez
-                    select.data("old-status", newStatus);
-
+                    enviarCambioStatus();
                 } else {
-                    alert("Hubo un problema al actualizar el estado.");
+                    // Revertir al estado anterior
+                    select.val(oldStatus);
                 }
-            },
-            "Error al comunicarse con el servidor."
-        );
-    };
-
-    // Mostrar confirmación si cumple condiciones
-    if (
-        (newStatus === "deburring" || newStatus === "shipping") &&
-        currentLocation.toLowerCase() === "yarnell"
-    ) {
-        Swal.fire({
-            title: "¿Are you sure??",
-            text: `Change status to'${newStatus}' will move the location to 'Hearst'.`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes, change",
-            cancelButtonText: "No, cancel",
-        }).then((result) => {
-            if (result.isConfirmed) {
-                enviarCambioStatus();
-            } else {
-                // Revertir al estado anterior
-                select.val(oldStatus);
-            }
-        });
-    } else {
-        enviarCambioStatus();
-    }
-});
-
+            });
+        } else {
+            enviarCambioStatus();
+        }
+    });
 
     //-------------------------------------------------
     // Tooltips

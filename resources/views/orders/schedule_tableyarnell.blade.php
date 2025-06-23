@@ -94,18 +94,17 @@
                     alertColor,
                     alertLabel
                 } = data;
-                if (status.toLowerCase() === "sent") {
-                    const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
-                    if (row) {
-                        window.table.row(row).remove().draw(false);
-                        //console.log("🚫 Orden eliminada de la tabla por estatus 'sent':", orderId);
-                    }
-                    return; // salir sin seguir actualizando
-                }
+
                 const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
                 if (!row) return;
 
-                // Actualizar clase de fila
+                // 🟥 Eliminar la fila si el estado es 'sent'
+                if (status.toLowerCase() === "sent") {
+                    window.table.row(row).remove().draw(false);
+                    return; // Salir sin seguir actualizando
+                }
+
+                // 🟩 Actualizar clase de la fila según el nuevo estado
                 row.className = row.className
                     .split(" ")
                     .filter(c => !c.startsWith("bg-status-"))
@@ -115,14 +114,15 @@
                 const rowIdx = window.table.row(row).index();
                 const colIdx = 10;
 
+                // 🔄 Opciones del select actualizadas
                 const optionsHtml = Object.keys(statusLabels).map(s => {
                     const selected = s.toLowerCase() === status.toLowerCase() ? "selected" : "";
                     const label = statusLabels[s.toLowerCase()] || s;
                     return `<option value="${s}" ${selected}>${label}</option>`;
                 }).join("");
 
-                const selectHtml = `
-            <select class="form-control form-control-sm location-select fw-bold text-capitalize" style="font-weight: bold; color: black;"
+    const selectHtml = `
+               <select class="form-control form-control-sm location-select fw-bold text-capitalize" style="font-weight: bold; color: black;"
                 data-id="${orderId}" data-location="${window.currentLocation}">
                 ${optionsHtml}
             </select>
@@ -130,11 +130,11 @@
 
                 window.table.cell(rowIdx, colIdx).data(selectHtml).draw(false);
 
-                // Celda oculta status
+                // 📦 Actualizar celda oculta con el nuevo status
                 const hidden = document.getElementById(`hidden-status-${orderId}`);
                 if (hidden) hidden.textContent = status.toLowerCase();
 
-                // Días restantes
+                // 📆 Actualizar días restantes
                 const diasTd = document.getElementById(`dias-restantes-${orderId}`);
                 if (diasTd) {
                     diasTd.textContent = `${dias_restantes} días`;
@@ -144,15 +144,14 @@
                         "text-success fw-bold";
                 }
 
-                // Alerta
+                // ⚠️ Actualizar alerta visual (barra de progreso)
                 const alertaDiv = document.querySelector(`#alerta-${orderId} .progress-bar`);
                 if (alertaDiv) {
                     alertaDiv.className = "progress-bar " + alertColor;
                     alertaDiv.textContent = alertLabel;
                 }
-
-                console.log("🔄 Status sincronizado para orden", orderId);
             }
+
 
             function updateNotes(orderId, notes) {
                 const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
@@ -191,7 +190,7 @@
                     notesModal.show();
                 });
 
-                console.log("🔄 Nota sincronizada para orden", orderId);
+                // console.log("🔄 Nota sincronizada para orden", orderId);
             }
 
             function updateWorkId(orderId, workId) {
@@ -227,7 +226,7 @@
                     input.style.color = "gray";
                 }
 
-               // console.log(`🔄 WO QTY sincronizado para orden ${orderId}:`, wo_qty);
+                // console.log(`🔄 WO QTY sincronizado para orden ${orderId}:`, wo_qty);
             }
 
             window.addEventListener('storage', function(event) {

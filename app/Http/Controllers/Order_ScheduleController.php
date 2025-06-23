@@ -583,7 +583,10 @@ class Order_ScheduleController extends Controller
     {
 
         // Filtra solo las órdenes con location 'yarnell'
-        $orders = OrderSchedule::where('location', 'yarnell')->latest()->get();
+        $orders = OrderSchedule::where('location', 'yarnell')
+        ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
+        ->latest()
+        ->get();
 
         // Si necesitas calcular días restantes como en index()
         foreach ($orders as $order) {
@@ -605,7 +608,10 @@ class Order_ScheduleController extends Controller
     {
 
         // Filtra solo las órdenes con location 'hw'
-        $orders = OrderSchedule::where('location', 'hearst')->latest()->get();
+        $orders = OrderSchedule::where('location', 'hearst')
+        ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
+        ->latest()
+        ->get();
 
         // Si necesitas calcular días restantes como en index()
         foreach ($orders as $order) {
