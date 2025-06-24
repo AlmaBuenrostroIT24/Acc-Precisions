@@ -389,6 +389,7 @@ return [
                 [
                     'text' => 'Schedule',
                     'url' => 'schedule/general',
+                    'can' => 'schedule/general',
                 ],
             ],
         ],
@@ -519,7 +520,35 @@ return [
                     'type' => 'js',
                     'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.js',
+                ],  
+                //<!-- Botones -->
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/dataTables.buttons.min.js',
                 ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/buttons.bootstrap4.min.js',
+                ],
+                //<!-- Exportaciones -->
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/buttons.html5.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/buttons.print.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/buttons.jszip.min.js',
+                ],
+
                 [
                     'type' => 'css',
                     'asset' =>true,

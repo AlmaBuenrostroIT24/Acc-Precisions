@@ -66,11 +66,14 @@ Route::resource('schedule/general', Order_ScheduleController::class);
 // Ruta para almacenar la nueva orden
 Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
 
-//Route::resource('/schedule/general', Order_ScheduleController::class);
-Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general');
-Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell');
-Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
-Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
+//Route::resource('/schedule/general', Order_ScheduleController::class); VISTAS
+Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general')->middleware('auth'); ;
+Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell')->middleware('auth');
+Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished')->middleware('auth');
+Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics')->middleware('auth');
+
+Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
+Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
 
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
 Route::post('/orders/{order}/update-status', [Order_ScheduleController::class, 'updateStatus']);
@@ -81,8 +84,6 @@ Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 
 Route::post('/orders/{order}/update-notes', [Order_ScheduleController::class, 'updateNotes']);
 Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 'ajaxUpdateWorkId'])->name('orders.ajaxUpdateWorkId');
 Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
-Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
-Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
 
 Route::post('/orders/{id}/update-wo-qty', [Order_ScheduleController::class, 'updateWoQty']);
 Route::post('/orders/duplicate', [Order_ScheduleController::class, 'duplicate'])->name('orders.duplicate');
@@ -90,8 +91,6 @@ Route::get('/orders/next-id', function () {
     $lastId = \App\Models\OrderSchedule::max('id') ?? 0;
     return response()->json(['next_id' => $lastId + 1]);
 });
-
-
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);
 Route::get('/orders/summary/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByMonth']);
 Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByWeek']);

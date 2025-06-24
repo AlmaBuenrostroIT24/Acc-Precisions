@@ -335,22 +335,6 @@ class Order_ScheduleController extends Controller
 
 
 
-
-    public function updateWoQty(Request $request, $id)
-    {
-        // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
-        $request->validate([
-            'wo_qty' => 'required|integer|min:0',
-        ]);
-
-        $order = OrderSchedule::findOrFail($id);
-        $order->wo_qty = $request->input('wo_qty');
-        $order->save();
-
-        return response()->json(['success' => true]);
-    }
-
-
     public function create()
     {
         return view('orders.create');
