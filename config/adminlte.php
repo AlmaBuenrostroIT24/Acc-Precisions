@@ -338,10 +338,13 @@ return [
                     'text' => 'Calibration',
                     'url' => 'QA/Calibrations',
                 ],
-    
                 [
                     'text' => 'Instrument',
                     'url' => 'QA/Instruments',
+                ],
+                [
+                    'text' => 'FAI Summary',
+                    'url' => 'QA/FAISummary',
                 ],
             ],
         ],

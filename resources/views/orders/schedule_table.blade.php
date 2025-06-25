@@ -2,7 +2,7 @@
     <table id="orders_scheduleTable" class="table  table-bordered" style="table-layout: fixed; width: 100%;">
         <thead class="table-light thead-custom">
             <tr>
-                <th style="width: 15px; ">Id</th>
+                <th style="display:none;">Id</th>
                 <th style="display:none;">LocationText</th> <!-- índice 1 -->
                 <th style="display:none;">StatusText</th> <!-- índice 2 -->
                 <th style="width: 65px;">LOCATION</th>
@@ -64,7 +64,7 @@
                     $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
                     @endphp
                     <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
-                    <td>{{ $order->id }}</td>
+                    <td style="display: none;">{{ $order->id }}</td>
                     <!-- Columna oculta solo texto para filtro -->
                     <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
                     <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
