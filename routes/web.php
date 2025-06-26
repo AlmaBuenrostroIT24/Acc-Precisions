@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Order_ScheduleController;
+use App\Http\Controllers\QaFaiSummaryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,7 +62,7 @@ Route::match(['put', 'patch'], '/roles/{id}', [RolePermissionController::class, 
 // Devuelve la lista de permisos (GET)
 Route::get('/roles/{id}/permissions', [RolePermissionController::class, 'getPermissions']);
 
-//--------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------
 Route::resource('schedule/general', Order_ScheduleController::class);
 // Ruta para almacenar la nueva orden
 Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
@@ -98,7 +99,11 @@ Route::get('/orders/summary/by-customer/year/{year}', [Order_ScheduleController:
 Route::get('/orders/summary/by-customer/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByCustomerMonth']);
 Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByCustomerWeek']);
 
+// -----------------------------------QA FAI-------------------------------------------------------
+
+Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'index'])->name('faisummary.general');
+Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision');
+Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
+Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
 
 // -----------------------------------Machines-------------------------------------------------------
-
-
