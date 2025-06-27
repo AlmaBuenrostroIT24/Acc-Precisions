@@ -106,4 +106,6 @@ Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision']
 Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
 Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
 
+Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
+
 // -----------------------------------Machines-------------------------------------------------------
