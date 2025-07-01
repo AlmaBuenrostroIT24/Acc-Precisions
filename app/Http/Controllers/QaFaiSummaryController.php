@@ -20,7 +20,7 @@ class QaFaiSummaryController extends Controller
     public function partsrevision()
     {
 
-        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation')->get();
+        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation','wo_qty')->get();
 
 
         return view('qa.faisummary.faisummary_partsrevision', compact('orders'));

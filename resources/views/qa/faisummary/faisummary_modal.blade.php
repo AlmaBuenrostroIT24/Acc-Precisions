@@ -13,30 +13,46 @@
                 </div>
                 <div class="modal-body">
                     <!-- Campos fijos -->
-                    <div class="form-row mb-3">
+                    <div class="form-row mb-1">
                         <div class="form-group col-md-2">
-                            <label for="edit-inspector">Inspector</label>
+                            <label for="edit-inspector">INSPECTOR</label>
                             <input type="text" class="form-control" id="edit-inspector" name="inspector"
                                 value="{{ Auth::user()->name }}" readonly>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label>Part# Rev.</label>
                             <input type="text" class="form-control" id="edit-fullpart" name="full_part" readonly>
                         </div>
-                        <div class="form-group col-md-3">
-                            <label>Job#</label>
+                        <div class="form-group col-md-1">
+                            <label>JOB</label>
                             <input type="text" class="form-control" id="edit-workid" name="work_id" readonly>
+                        </div>
+                        <div class="form-group col-md-1">
+                            <label>WO QTY</label>
+                            <input type="text" class="form-control" id="edit-woqty" name="wo_qty" readonly>
+                        </div>
+                        <div class="form-group col-md-1">
+                            <label>QTY. TO CHECK</label>
+                            <select class="form-control" id="sampling_type" name="sampling_type">
+                                <option value="normal" selected>Normal</option>
+                                <option value="tightened">Tightened</option>
+                            </select>
                         </div>
 
 
 
                         <div class="form-group col-md-1">
-                            <label for="edit-extra">No. Operations</label>
+                            <label for="edit-extra">NO.OPERATIONS</label>
                             <div class="d-flex">
                                 <input type="hidden" id="order-id">
                                 <input type="text" class="form-control" id="operationInput" name="dynamic_field[]">
                                 <button type="button" class="btn btn-success ml-2" id="addOperationBtn">+</button>
                             </div>
+                        </div>
+
+                        <div class="form-group col-md-3">
+                            <label>SAMPLING</label>
+                            <input type="text" class="form-control" id="edit-workid" name="work_id" readonly>
                         </div>
                     </div>
 

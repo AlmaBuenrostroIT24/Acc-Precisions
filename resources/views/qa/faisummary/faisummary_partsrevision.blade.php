@@ -50,6 +50,7 @@
                                     data-pn="{{ $order->PN }}"
                                     data-description="{{ $order->Part_description }}"
                                     data-workid="{{ $order->work_id }}"
+                                    data-woqty="{{ $order->wo_qty }}"
                                     data-operation="{{ $order->operation ?? '' }}">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -105,6 +106,7 @@
             $('#edit-id').val(id);
             $('#order-id').val(id);
             $('#edit-workid').val(button.data('workid'));
+            $('#edit-woqty').val(button.data('woqty'));
             $('#operationInput').val(operation);
 
             const pn = button.data('pn');
