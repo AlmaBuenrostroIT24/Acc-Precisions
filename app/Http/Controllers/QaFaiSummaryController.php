@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\QaFaiSummary;
 use Illuminate\Http\Request;
 use App\Models\OrderSchedule;
+use Illuminate\Support\Facades\Log;
 
 class QaFaiSummaryController extends Controller
 {
@@ -19,7 +20,7 @@ class QaFaiSummaryController extends Controller
     public function partsrevision()
     {
 
-        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description','operation')->get();
+        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation')->get();
 
 
         return view('qa.faisummary.faisummary_partsrevision', compact('orders'));
@@ -48,11 +49,49 @@ class QaFaiSummaryController extends Controller
         $request->validate([
             'operation' => 'required|string|max:255',
         ]);
-    
         $order = OrderSchedule::findOrFail($id);
         $order->operation = $request->operation;
         $order->save();
-    
         return response()->json(['success' => true, 'message' => 'Operation updated.']);
+    }
+    public function storeSingle(Request $request)
+    {
+        Log::info('storeSingle called', $request->all());
+    
+        $validated = $request->validate([
+            'order_schedule_id' => 'required|exists:orders_schedule,id',
+            'date' => 'required|date',
+            'insp_type' => 'required|in:FAI,IPI',
+            'operation' => 'required|string',
+            'operator' => 'nullable|string',
+            'results' => 'required|in:pass,no pass',
+            'sb_is' => 'nullable|string',
+            'observation' => 'nullable|string',
+            'station' => 'nullable|string',
+            'method' => 'required|in:Manual,Vmm/Manual,Visual,Vmm,Keyence,Keyence/Manual',
+            'inspector' => 'required|string',
+            'part_rev' => 'required|string',
+            'job' => 'required|string',
+            'num_operation' => 'required|string',
+        ]);
+    
+        if ($request->has('id')) {
+            $row = \App\Models\QaFaiSummary::find($request->id);
+            if (!$row) {
+                return response()->json(['error' => 'Registro no encontrado'], 404);
+            }
+            $row->update($validated);
+        } else {
+            $row = \App\Models\QaFaiSummary::create($validated);
+        }
+    
+        return response()->json(['success' => true, 'id' => $row->id]);
+    }
+    
+
+    public function getByOrder($orderScheduleId)
+    {
+        $rows = \App\Models\QaFaiSummary::where('order_schedule_id', $orderScheduleId)->get();
+        return response()->json($rows);
     }
 }

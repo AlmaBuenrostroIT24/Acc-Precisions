@@ -31,7 +31,7 @@ return new class extends Migration
             $table->enum('status_operation', ['pending', 'in progress', 'completed'])->default('pending');
     
             $table->unsignedBigInteger('order_schedule_id')->nullable();
-            $table->foreign('order_schedule_id')->references('id')->on('orders_schedule')->onDelete('set null');
+            $table->foreign('order_schedule_id')->references('id')->on('orders_schedule')->onDelete('set null');//Si se elimina una orden, las filas no se borran, solo se desvinculan (order_schedule_id = null).
     
             $table->timestamps();
         });

@@ -44,27 +44,27 @@
                     <table class="table table-bordered" id="dynamicTable">
                         <thead>
                             <tr>
-                                <th style="width: 10%;">DATE</th>
+                                <th style="width: 8%;">DATE</th>
                                 <th style="width: 8%;">INSP TYPE</th>
                                 <th style="width: 8%;">OPERATION</th>
-                                <th style="width: 10%;">OPERATOR</th>
+                                <th style="width: 8%;">OPERATOR</th>
                                 <th style="width: 8%;">RESULTS</th>
                                 <th style="width: 11%;">SB/IS</th>
                                 <th style="width: 20%;">OBSERVATION</th>
-                                <th style="width: 10%;">STATION</th>
-                                <th style="width: 10%;">METHOD</th>
-                                <th style="width: 5%;">ACTIONS</th>
+                                <th style="width: 8%;">STATION</th>
+                                <th style="width: 12%;">METHOD</th>
+                                <th style="width: 9%;">ACTIONS</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="rowsContainer">
                             <!-- Se agregan dinámicamente -->
                         </tbody>
                     </table>
 
-                    <button type="button" class="btn btn-primary mb-3" id="addRowBtn">Agregar fila</button>
+                    <button type="button" class="btn btn-primary mb-3" id="addRowBtn">Add OP Inspection</button>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Save inspection</button>
+                    <button type="submit" class="btn btn-success">Save Inspection</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
                 </div>
             </div>
