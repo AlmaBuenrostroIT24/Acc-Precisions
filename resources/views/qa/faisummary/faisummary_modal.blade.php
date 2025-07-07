@@ -14,12 +14,12 @@
                 <div class="modal-body">
                     <!-- Campos fijos -->
                     <div class="form-row mb-1">
-                        <div class="form-group col-md-2">
+                        <div class="form-group col-md-1">
                             <label for="edit-inspector">INSPECTOR</label>
                             <input type="text" class="form-control" id="edit-inspector" name="inspector"
                                 value="{{ Auth::user()->name }}" readonly>
                         </div>
-                        <div class="form-group col-md-3">
+                        <div class="form-group col-md-2">
                             <label>Part# Rev.</label>
                             <input type="text" class="form-control" id="edit-fullpart" name="full_part" readonly>
                         </div>
@@ -33,26 +33,28 @@
                         </div>
                         <div class="form-group col-md-1">
                             <label>QTY. TO CHECK</label>
-                            <select class="form-control" id="sampling_type" name="sampling_type">
+                            <select class="form-control" id="edit-sampling-type" name="sampling_type">
                                 <option value="normal" selected>Normal</option>
                                 <option value="tightened">Tightened</option>
                             </select>
                         </div>
-
-
-
                         <div class="form-group col-md-1">
-                            <label for="edit-extra">NO.OPERATIONS</label>
+                            <label for="edit-extra">NO.OPS</label>
                             <div class="d-flex">
                                 <input type="hidden" id="order-id">
                                 <input type="text" class="form-control" id="operationInput" name="dynamic_field[]">
                                 <button type="button" class="btn btn-success ml-2" id="addOperationBtn">+</button>
                             </div>
                         </div>
-
-                        <div class="form-group col-md-3">
+                        <div class="form-group col-md-1">
                             <label>SAMPLING</label>
-                            <input type="text" class="form-control" id="edit-workid" name="work_id" readonly>
+                            <input type="text" class="form-control" id="edit-sampling-result" name="sampling_qty" readonly>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>REPORT</label>
+                            <div id="inspection-missing-container" class="border rounded p-2 bg-light" style="min-height: 120px;">
+                                <pre id="inspection-missing" class="m-0" style="white-space: pre-wrap;"></pre>
+                            </div>
                         </div>
                     </div>
 

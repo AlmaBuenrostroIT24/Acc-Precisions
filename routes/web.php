@@ -110,4 +110,6 @@ Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::c
 Route::post('/qa/faisummary/store-single', [QaFAiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
 
+Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
+
 // -----------------------------------Machines-------------------------------------------------------

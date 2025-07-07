@@ -6,6 +6,7 @@ use App\Models\QaFaiSummary;
 use Illuminate\Http\Request;
 use App\Models\OrderSchedule;
 use Illuminate\Support\Facades\Log;
+use App\Models\QaSamplingPlan;
 
 class QaFaiSummaryController extends Controller
 {
@@ -41,8 +42,6 @@ class QaFaiSummaryController extends Controller
 
         return view('qa.faisummary.faisummary_statistics');
     }
-
-
 
     public function updateOperation(Request $request, $id)
     {
@@ -93,5 +92,40 @@ class QaFaiSummaryController extends Controller
     {
         $rows = \App\Models\QaFaiSummary::where('order_schedule_id', $orderScheduleId)->get();
         return response()->json($rows);
+    }
+
+    public function get(Request $request)
+    {
+        $lotSize = (int) $request->query('lot_size');
+        $type = $request->query('sampling_type', 'normal');
+
+        $plan = QaSamplingPlan::where('min_qty', '<=', $lotSize)
+            ->where(function ($q) use ($lotSize) {
+                $q->where('max_qty', '>=', $lotSize)
+                  ->orWhereNull('max_qty');
+            })
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'No se encontró plan de muestreo para este lote.'], 404);
+        }
+
+        $qtyField = $type === 'tightened' ? 'tightened_qty' : 'normal_qty';
+
+        $sampleQty = $plan->is_percent
+            ? ceil($lotSize * ($plan->$qtyField / 100))
+            : (int) $plan->$qtyField;
+
+        $surfaceQty = $plan->is_percent
+            ? ceil($lotSize * ($plan->surface_qty / 100))
+            : (int) $plan->surface_qty;
+
+        return response()->json([
+            'lot_size' => $lotSize,
+            'sampling_type' => $type,
+            'sample_qty' => $sampleQty,
+            'surface_qty' => $surfaceQty,
+            'plan_id' => $plan->id,
+        ]);
     }
 }
