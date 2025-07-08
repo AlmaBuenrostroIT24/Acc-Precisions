@@ -88,31 +88,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Inicialización condicional según la ruta o variable global ---
-    // Ejemplo con window.location.pathname, cámbialo según tu necesidad
     if (tableElement.length) {
-        switch (window.location.pathname) {
-            case "/scheduley":
-                window.table = initOrdersTable(tableElement, {
-                    pageLength: 40,
-                    searching: false,
-                });
-                break;
-            case "/scheduleh":
-                window.table = initOrdersTable(tableElement, {
-                    pageLength: 40,
-                    searching: false,
-                });
-                break;
-            case "/ruta-vista-3":
-                window.table = initOrdersTable(tableElement, {
-                    pageLength: 10,
-                    lengthChange: true,
-                    ordering: false,
-                });
-                break;
-            default:
-                window.table = initOrdersTable(tableElement);
-        }
+        const path = window.location.pathname;
+
+        const tableConfigs = {
+            "/scheduley": {
+                pageLength: 40,
+                searching: false,
+            },
+            "/scheduleh": {
+                pageLength: 40,
+                searching: false,
+            },
+            "/ruta-vista-3": {
+                pageLength: 10,
+                lengthChange: true,
+                ordering: false,
+            },
+        };
+        const config = tableConfigs[path] || {}; // Usa config vacía por defecto
+        window.table = initOrdersTable(tableElement, config);
     }
 
     // Filtrado con regex exacto
