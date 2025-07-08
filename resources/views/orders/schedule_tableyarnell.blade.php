@@ -215,9 +215,7 @@
             function updateWoQty(orderId, wo_qty) {
                 const input = document.querySelector(`input.wo-qty-input[data-id="${orderId}"]`);
                 if (!input) return;
-
                 input.value = wo_qty;
-
                 if (wo_qty && wo_qty > 0) {
                     input.classList.add("fw-bold");
                     input.style.color = "black";
@@ -225,7 +223,6 @@
                     input.classList.remove("fw-bold");
                     input.style.color = "gray";
                 }
-
                 // console.log(`🔄 WO QTY sincronizado para orden ${orderId}:`, wo_qty);
             }
 

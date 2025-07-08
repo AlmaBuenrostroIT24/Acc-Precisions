@@ -311,7 +311,66 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     });
 
-    // Toggle report/source buttons
+    //-------------------------------------------------START---------------------------------------------------------------
+    ///--------------------------------MANEJO DE BOTONES "report & our_source" --------------------------------------------
+    //FUNCIONES AUXILIARES
+    // ✅ 1. Centralizar alertas te ayuda a cambiar el comportamiento fácilmente más adelante
+    function showSourceAlert(currentValue) {
+        if (currentValue === 1) {
+            alert(
+                "¡Atención! Estás desactivando 'our_source' para esta orden."
+            );
+        } else {
+            alert("Estás activando 'our_source' para esta orden.");
+        }
+    }
+    //✅ 2. Evita duplicar lógica de clases e íconos con una función
+    function updateToggleButton(button, newValue) {
+        button.data("value", newValue);
+        button.toggleClass("btn-primary", newValue === 1);
+        button.toggleClass("btn-secondary", newValue === 0);
+        button
+            .find("i")
+            .attr(
+                "class",
+                `fas ${newValue === 1 ? "fa-check-circle" : "fa-times-circle"}`
+            );
+    }
+    //✅ 3. Extrae función para activar edición de fecha
+    function triggerEditableMachiningDate(orderId) {
+        const dateSpan = $(`.editable-machining-date[data-id="${orderId}"]`);
+        if (dateSpan.length > 0) {
+            dateSpan.attr("data-enabled", "1");
+            setTimeout(() => dateSpan.trigger("click"), 100);
+        } else {
+            console.warn(
+                "No se encontró el span editable para la orden:",
+                orderId
+            );
+        }
+    }
+    //✅ 4. Evita crear HTML con strings largos: usa plantillas
+    function createEditableDateSpan(orderId, date) {
+        const [year, month, day] = date.split("-");// "2025-07-11" → ["2025", "07", "11"]
+        const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
+        const shortMonth = dateObj.toLocaleString("en-US", { month: "short" }); // "Jul"
+        const twoDigitYear = year.slice(-2); // "25"
+    
+        const formatted = `${shortMonth}-${day.padStart(2, '0')}-${twoDigitYear}`; // "Jul-11-25"
+
+        return $(`
+            <span class="editable-machining-date text-decoration-underline"
+                  data-id="${orderId}"
+                  data-enabled="1"
+                  data-value="${date}"
+                  style="cursor:pointer;">
+                ${formatted}
+            </span>
+        `);
+    }
+
+    // ✅ Main: toggle de botones y edición de fecha
+
     tableElement.on(
         "click",
         ".toggle-report-btn, .toggle-source-btn",
@@ -321,12 +380,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentValue = parseInt(button.data("value"));
             const newValue = currentValue === 1 ? 0 : 1;
             const isReport = button.hasClass("toggle-report-btn");
+
             const url = `/orders/${orderId}/${
                 isReport ? "update-report" : "update-source"
             }`;
             const body = isReport
                 ? { report: newValue }
                 : { our_source: newValue };
+
+            //Mensaje de alertas cuando es 0 o 1
+            // if (!isReport) showSourceAlert(currentValue);
 
             handlePostJsonWithAlerts(
                 url,
@@ -342,19 +405,19 @@ document.addEventListener("DOMContentLoaded", () => {
                             })
                         );
 
-                        button.data("value", newValue);
-                        button.toggleClass("btn-primary", newValue === 1);
-                        button.toggleClass("btn-secondary", newValue === 0);
-                        button
-                            .find("i")
-                            .attr(
-                                "class",
-                                `fas ${
-                                    newValue === 1
-                                        ? "fa-check-circle"
-                                        : "fa-times-circle"
-                                }`
+                        updateToggleButton(button, newValue);
+
+                        if (!isReport && newValue === 1) {
+                            triggerEditableMachiningDate(orderId);
+                        } else if (!isReport && newValue === 0) {
+                            const dateSpan = $(
+                                `.editable-machining-date[data-id="${orderId}"]`
                             );
+                            if (dateSpan.length > 0) {
+                                dateSpan.attr("data-enabled", "0");
+                                dateSpan.css("cursor", "default");
+                            }
+                        }
                     } else {
                         alert("Error al actualizar.");
                     }
@@ -363,6 +426,60 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
     );
+
+    //✅ Edición de fecha de maquinado
+
+    tableElement.on("click", ".editable-machining-date", function () {
+        const span = $(this);
+        const orderId = span.data("id");
+        const isEnabled = parseInt(span.data("enabled")) === 1;
+        const currentValue = span.data("value") || "";
+
+        if (!isEnabled) return;
+
+        const input = $(
+            `<input type="date" class="form-control form-control-sm machining-date-input">`
+        ).val(currentValue);
+
+        span.replaceWith(input);
+        input.focus();
+
+        input.on("blur", function () {
+            const newDate = input.val();
+            if (!newDate || newDate === currentValue) {
+                input.replaceWith(span);
+                return;
+            }
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-date-machining`,
+                { machining_date: newDate },
+                (data) => {
+                    if (data.success) {
+                        localStorage.setItem(
+                            "date-machining-change",
+                            JSON.stringify({
+                                orderId,
+                                machining_date: newDate,
+                                updatedAt: Date.now(),
+                            })
+                        );
+
+                        const newSpan = createEditableDateSpan(
+                            orderId,
+                            newDate
+                        );
+                        input.replaceWith(newSpan);
+                    } else {
+                        alert("Error al guardar la fecha.");
+                        input.replaceWith(span);
+                    }
+                }
+            );
+        });
+    });
+
+    ///--------------------------------MANEJO DE BOTONES "report & our_source" --------------------------------------------
+    //----------------------------------------------------END--------------------------------------------------------------
 
     // Editable Station
     tableElement.on("click", ".editable-station", function () {

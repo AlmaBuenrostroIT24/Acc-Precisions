@@ -468,12 +468,12 @@ class Order_ScheduleController extends Controller
             if ($order->endate_mach && $order->machining_date) {
                 $endateMach = \Carbon\Carbon::parse($order->endate_mach)->startOfDay();
                 $machiningDate = \Carbon\Carbon::parse($order->machining_date)->startOfDay();
-            
+
                 // Invertimos el orden para restar machining_date - endate_mach
                 $diffMach = $machiningDate->diffInDays($endateMach, false);
-            
+
                 $diffMachDays = $diffMach > 0 ? -$diffMach : abs($diffMach);
-            
+
                 $order->target_mach = $diffMachDays;
             }
 
@@ -584,9 +584,9 @@ class Order_ScheduleController extends Controller
 
         // Filtra solo las órdenes con location 'yarnell'
         $orders = OrderSchedule::where('location', 'yarnell')
-        ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
-        ->latest()
-        ->get();
+            ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
+            ->latest()
+            ->get();
 
         // Si necesitas calcular días restantes como en index()
         foreach ($orders as $order) {
@@ -609,9 +609,9 @@ class Order_ScheduleController extends Controller
 
         // Filtra solo las órdenes con location 'hw'
         $orders = OrderSchedule::where('location', 'hearst')
-        ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
-        ->latest()
-        ->get();
+            ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
+            ->latest()
+            ->get();
 
         // Si necesitas calcular días restantes como en index()
         foreach ($orders as $order) {
@@ -627,6 +627,17 @@ class Order_ScheduleController extends Controller
 
         // Retorna la vista y pasa también la variable $location
         return view('orders.schedule_tablehearst', compact('orders', 'location'));
+    }
+    public function updateDateMachining(Request $request, OrderSchedule $order)
+    {
+        $validated = $request->validate([
+            'machining_date' => 'required|date',
+        ]);
+
+        $order->machining_date = $validated['machining_date'];
+        $order->save();
+
+        return response()->json(['success' => true]);
     }
 
     public function destroy(OrderSchedule $order)

@@ -124,7 +124,16 @@
                             <option value="onhold" {{ strtolower($order->status) === 'onhold' ? 'selected' : '' }}>OnHold</option>
                         </select>
                     </td>
-                    <td>{{ strtolower($date->format('M-d-y')) }}</td>
+
+                    <td>
+                        <span class="editable-machining-date text-decoration-underline"
+                            data-id="{{ $order->id }}"
+                            data-enabled="{{ $order->our_source ? '1' : '0' }}"
+                            data-value="{{ optional($order->machining_date)->format('Y-m-d') }}"
+                            style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
+                            {{ optional($order->machining_date)->format('M-d-y') ?? 'Click to set' }}
+                        </span>
+                    </td>
                     <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
                     <td style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
                     <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}">
