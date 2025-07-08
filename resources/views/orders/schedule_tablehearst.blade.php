@@ -253,7 +253,7 @@
                             console.log("Cambio detectado en otra pestaña para location: hearst. Recargando página..");
                             window.location.reload();
                         } else {
-                              // Si location no es hearst, eliminar fila de la tabla
+                            // Si location no es hearst, eliminar fila de la tabla
                             const row = window.table?.rows().nodes().to$().filter(function() {
                                 return $(this).find('.location-select').data('id') == data.orderId;
                             });
@@ -266,7 +266,21 @@
 
                     case 'report-toggle':
                     case 'source-toggle':
-                        updateButtonToggle(data.orderId, data.value, event.key === 'report-toggle');
+                        updateButtonToggle(data.orderId, data.value, false);
+
+                        const dateSpan = document.querySelector(`.editable-machining-date[data-id="${data.orderId}"]`);
+                        // console.log("🎯 Buscando span con data-id =", data.orderId, "=>", dateSpan);
+                        if (dateSpan) {
+                            const isEnabled = data.value === 1;
+                            dateSpan.dataset.enabled = isEnabled ? "1" : "0";
+                            dateSpan.style.cursor = isEnabled ? "pointer" : "default";
+
+                            if (isEnabled) {
+                                dateSpan.classList.add("text-decoration-underline");
+                            } else {
+                                dateSpan.classList.remove("text-decoration-underline");
+                            }
+                        }
                         break;
 
                     case 'station-change':
@@ -292,6 +306,44 @@
                         if (!isHearst) return;
                         updateWoQty(data.orderId, data.wo_qty || 0);
                         break;
+                    case 'date-machining-change':
+                        if (!isHearst) return;
+
+                        const dateSpan2 = document.querySelector(`.editable-machining-date[data-id="${data.orderId}"]`);
+                        if (dateSpan2) {
+                            // Actualiza value y formato de texto
+                            dateSpan2.dataset.value = data.machining_date;
+
+                            // Formatear como "Jul-11-25"
+                            const [year, month, day] = data.machining_date.split("-");
+                            const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
+                            const shortMonth = dateObj.toLocaleString("en-US", {
+                                month: "short"
+                            });
+                            const twoDigitYear = year.slice(-2);
+                            dateSpan2.innerText = `${shortMonth}-${day.padStart(2, "0")}-${twoDigitYear}`;
+                        }
+
+                        // También puedes actualizar días restantes y alerta visual
+                        const diasTd = document.getElementById(`dias-restantes-${data.orderId}`);
+                        if (diasTd) {
+                            diasTd.textContent = `${data.dias_restantes} days`;
+                            diasTd.className =
+                                data.dias_restantes < 0 ?
+                                "text-danger fw-bold" :
+                                data.dias_restantes <= 2 ?
+                                "text-warning fw-bold" :
+                                "text-success fw-bold";
+                        }
+
+                        const alertaDiv = document.querySelector(`#alerta-${data.orderId} .progress-bar`);
+                        if (alertaDiv) {
+                            alertaDiv.className = "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
+
+                        break;
+
 
                     default:
                         break;

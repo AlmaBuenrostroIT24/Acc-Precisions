@@ -458,6 +458,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             JSON.stringify({
                                 orderId,
                                 machining_date: newDate,
+                                dias_restantes: data.dias_restantes,
+                                alertColor: data.alertColor,
+                                alertLabel: data.alertLabel,
                                 updatedAt: Date.now(),
                             })
                         );
