@@ -4,19 +4,20 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!validLocations.includes(currentLocation)) return;
 
     const statusLabels = {
-        "waitingformaterial": "Wait Material",
-        "onrack": "OnRack",
-        "setup": "SetUp",
-        "machining": "Machining",
-        "outsource": "OutSource",
-        "qa": "QA",
-        "deburring": "Deburring",
-        "shipping": "Shipping",
-        "sent": "Sent",
-        "onhold": "OnHold",
-        "pending": "Pending"
+        waitingformaterial: "Wait Material",
+        onrack: "OnRack",
+        setup: "SetUp",
+        machining: "Machining",
+        outsource: "OutSource",
+        qa: "QA",
+        deburring: "Deburring",
+        shipping: "Shipping",
+        sent: "Sent",
+        onhold: "OnHold",
+        pending: "Pending",
     };
 
+    //🔁 formatShortDate(dateStr) Convierte una fecha en formato YYYY-MM-DD a un formato corto como "Jul-08-25"
     function formatShortDate(dateStr) {
         const [year, month, day] = dateStr.split("-");
         const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
@@ -24,6 +25,8 @@ window.addEventListener("DOMContentLoaded", () => {
         return `${shortMonth}-${day.padStart(2, "0")}-${year.slice(-2)}`;
     }
 
+    //🔄 updateButtonToggle(orderId, value, isReport)
+    //Actualiza el botón de "source" o "report" (fa-check-circle / fa-times-circle) visualmente, y cambia el color del botón según el valor (1 o 0).
     function updateButtonToggle(orderId, value, isReport) {
         const selector = isReport
             ? `.toggle-report-btn[data-id="${orderId}"]`
@@ -33,18 +36,32 @@ window.addEventListener("DOMContentLoaded", () => {
         btn.dataset.value = value;
         btn.classList.toggle("btn-primary", value == 1);
         btn.classList.toggle("btn-secondary", value == 0);
-        btn.querySelector("i").className = "fas " + (value == 1 ? "fa-check-circle" : "fa-times-circle");
+        btn.querySelector("i").className =
+            "fas " + (value == 1 ? "fa-check-circle" : "fa-times-circle");
     }
 
+    //🔁 updateStation(orderId, stations)
+    //Actualiza el texto y estilo del campo de estación en la fila de la orden.
+    // Si una orden pasa de "M1" a "M2, M3", este método actualiza el <span> para mostrar "M2, M3" en color verde y negrita.
     function updateStation(orderId, stations) {
-        const span = document.querySelector(`.editable-station[data-id="${orderId}"]`);
+        const span = document.querySelector(
+            `.editable-station[data-id="${orderId}"]`
+        );
         if (!span) return;
         span.classList.remove("text-muted");
         span.classList.add("text-success", "fw-bold");
         span.innerText = stations.length ? stations.join(", ") : "N/A";
     }
 
-    function updateDiasYAlerta(orderId, dias_restantes, alertColor, alertLabel) {
+    //🔁 updateDiasYAlerta(orderId, dias_restantes, alertColor, alertLabel)
+    // Actualiza la columna de días restantes y la barra de alerta de una orden.
+    // Aplica clases como text-danger, text-warning, text-success. Cambia el color y texto de la barra de progreso (alertColor, alertLabel)
+    function updateDiasYAlerta(
+        orderId,
+        dias_restantes,
+        alertColor,
+        alertLabel
+    ) {
         const diasTd = document.getElementById(`dias-restantes-${orderId}`);
         if (diasTd) {
             diasTd.textContent = `${dias_restantes} days`;
@@ -55,16 +72,21 @@ window.addEventListener("DOMContentLoaded", () => {
                     ? "text-warning fw-bold"
                     : "text-success fw-bold";
         }
-
-        const alertaDiv = document.querySelector(`#alerta-${orderId} .progress-bar`);
+        const alertaDiv = document.querySelector(
+            `#alerta-${orderId} .progress-bar`
+        );
         if (alertaDiv) {
             alertaDiv.className = "progress-bar " + alertColor;
             alertaDiv.textContent = alertLabel;
         }
     }
 
+    //🔁 updateStatus(data)
+    // Actualiza completamente el estado de una orden: Si el estado es sent, elimina la fila de la tabla
+    //1. Aplica clase de color a la fila (bg-status-xyz). 2. Reemplaza el select de estado. 3. Actualiza el valor oculto. 4. Llama a updateDiasYAlerta.
     function updateStatus(data) {
-        const { orderId, status, dias_restantes, alertColor, alertLabel } = data;
+        const { orderId, status, dias_restantes, alertColor, alertLabel } =
+            data;
         const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
         if (!row) return;
 
@@ -72,65 +94,70 @@ window.addEventListener("DOMContentLoaded", () => {
             window.table.row(row).remove().draw(false);
             return;
         }
-
         row.className = row.className
             .split(" ")
-            .filter(c => !c.startsWith("bg-status-"))
+            .filter((c) => !c.startsWith("bg-status-"))
             .concat(`bg-status-${status}`)
             .join(" ");
-
         const rowIdx = window.table.row(row).index();
         const colIdx = 10;
-
         const optionsHtml = Object.keys(statusLabels)
-            .map(s => {
-                const selected = s.toLowerCase() === status.toLowerCase() ? "selected" : "";
+            .map((s) => {
+                const selected =
+                    s.toLowerCase() === status.toLowerCase() ? "selected" : "";
                 const label = statusLabels[s.toLowerCase()] || s;
                 return `<option value="${s}" ${selected}>${label}</option>`;
             })
             .join("");
-
         const selectHtml = `
         <select class="form-control form-control-sm location-select fw-bold text-capitalize" style="font-weight: bold; color: black;"
             data-id="${orderId}" data-location="${window.currentLocation}">
             ${optionsHtml}
         </select>`;
-
         window.table.cell(rowIdx, colIdx).data(selectHtml).draw(false);
-
         const hidden = document.getElementById(`hidden-status-${orderId}`);
         if (hidden) hidden.textContent = status.toLowerCase();
-
         updateDiasYAlerta(orderId, dias_restantes, alertColor, alertLabel);
     }
 
+    //🔁 updateNotes(orderId, notes)
+    //Actualiza el contenido de las notas: 1. Muestra el texto corto o el ícono de "Note".
+    //2. Agrega evento para abrir el modal con el texto completo al hacer clic. 3. Limpia y escapa caracteres especiales (").
     function updateNotes(orderId, notes) {
         const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
         if (!row) return;
 
-        const shortNote = notes.length > 30 ? notes.substring(0, 30) + "..." : notes;
+        const shortNote =
+            notes.length > 30 ? notes.substring(0, 30) + "..." : notes;
         const safeNotes = notes.replace(/"/g, "&quot;").trim();
 
-        const newNotesHtml = safeNotes === ""
-            ? `<span class="open-notes-modal" data-id="${orderId}" data-notes="" style="cursor:pointer;" title="">
+        const newNotesHtml =
+            safeNotes === ""
+                ? `<span class="open-notes-modal" data-id="${orderId}" data-notes="" style="cursor:pointer;" title="">
                 <i class="fas fa-plus-circle me-1 text-muted"></i> Note</span>`
-            : `<span class="open-notes-modal" data-id="${orderId}" data-notes="${safeNotes}" style="cursor:pointer;" title="${safeNotes}">
+                : `<span class="open-notes-modal" data-id="${orderId}" data-notes="${safeNotes}" style="cursor:pointer;" title="${safeNotes}">
                 ${shortNote}</span>`;
 
         const rowIndex = window.table.row(row).index();
         window.table.cell(rowIndex, 19).data(newNotesHtml).draw(false);
-
-        $(".open-notes-modal").off("click").on("click", function () {
-            const orderId = $(this).data("id");
-            const fullNotes = $(this).data("notes") || "";
-            $("#notesOrderId").val(orderId);
-            $("#notesTextarea").val(fullNotes);
-            notesModal.show();
-        });
+        $(".open-notes-modal")
+            .off("click")
+            .on("click", function () {
+                const orderId = $(this).data("id");
+                const fullNotes = $(this).data("notes") || "";
+                $("#notesOrderId").val(orderId);
+                $("#notesTextarea").val(fullNotes);
+                notesModal.show();
+            });
     }
 
+    //🔢 updateWorkId(orderId, workId)
+    //Actualiza visualmente el Work ID: 1. Muestra el nuevo valor o el texto “Click para agregar”.
+    // 2. Aplica estilos dependiendo si hay valor (text-success, text-muted, etc.).
     function updateWorkId(orderId, workId) {
-        const span = document.querySelector(`.editable-work-id[data-id="${orderId}"]`);
+        const span = document.querySelector(
+            `.editable-work-id[data-id="${orderId}"]`
+        );
         if (!span) return;
         span.dataset.value = workId;
         span.textContent = workId || "Click para agregar";
@@ -143,15 +170,22 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // 🔄 updateWoQty(orderId, wo_qty)
+    //Actualiza la cantidad de WO Qty en el <input>: Establece el nuevo valor. Pone el texto en negro si hay valor, o gris si es cero o vacío.
     function updateWoQty(orderId, wo_qty) {
-        const input = document.querySelector(`input.wo-qty-input[data-id="${orderId}"]`);
+        const input = document.querySelector(
+            `input.wo-qty-input[data-id="${orderId}"]`
+        );
         if (!input) return;
         input.value = wo_qty;
         input.classList.toggle("fw-bold", wo_qty > 0);
         input.style.color = wo_qty > 0 ? "black" : "gray";
     }
 
-    window.addEventListener("storage", event => {
+    //🔄window.addEventListener("storage", ...)
+    //Escucha los cambios del localStorage que ocurren desde otras pestañas o ventanas del navegador, y sincroniza los datos de forma en tiempo real.
+    //Maneja distintos event.key:
+    window.addEventListener("storage", (event) => {
         if (!event.newValue) return;
         let data;
         try {
@@ -159,23 +193,40 @@ window.addEventListener("DOMContentLoaded", () => {
         } catch {
             return;
         }
-
         const keysRequiringUpdate = [
-            "station-change", "status-change", "notes-change", "work-id-change", "wo-qty-change", "date-machining-change"
+            "station-change",
+            "status-change",
+            "notes-change",
+            "work-id-change",
+            "wo-qty-change",
+            "date-machining-change",
         ];
 
         if (event.key === "location-change") {
             if (data.location === currentLocation) {
                 window.location.reload();
             } else {
-                const row = window.table?.rows().nodes().to$().filter(function () {
-                    return $(this).find('.location-select').data('id') == data.orderId;
-                });
+                const row = window.table
+                    ?.rows()
+                    .nodes()
+                    .to$()
+                    .filter(function () {
+                        return (
+                            $(this).find(".location-select").data("id") ==
+                            data.orderId
+                        );
+                    });
                 if (row?.length) window.table.row(row).remove().draw(false);
             }
         } else if (["report-toggle", "source-toggle"].includes(event.key)) {
-            updateButtonToggle(data.orderId, data.value, event.key === "report-toggle");
-            const span = document.querySelector(`.editable-machining-date[data-id="${data.orderId}"]`);
+            updateButtonToggle(
+                data.orderId,
+                data.value,
+                event.key === "report-toggle"
+            );
+            const span = document.querySelector(
+                `.editable-machining-date[data-id="${data.orderId}"]`
+            );
             if (span) {
                 const isEnabled = data.value === 1;
                 span.dataset.enabled = isEnabled ? "1" : "0";
@@ -184,18 +235,35 @@ window.addEventListener("DOMContentLoaded", () => {
             }
         } else if (currentLocation && keysRequiringUpdate.includes(event.key)) {
             switch (event.key) {
-                case "station-change": updateStation(data.orderId, data.stations || []); break;
-                case "status-change": updateStatus(data); break;
-                case "notes-change": updateNotes(data.orderId, data.notes || ""); break;
-                case "work-id-change": updateWorkId(data.orderId, data.work_id || ""); break;
-                case "wo-qty-change": updateWoQty(data.orderId, data.wo_qty || 0); break;
+                case "station-change":
+                    updateStation(data.orderId, data.stations || []);
+                    break;
+                case "status-change":
+                    updateStatus(data);
+                    break;
+                case "notes-change":
+                    updateNotes(data.orderId, data.notes || "");
+                    break;
+                case "work-id-change":
+                    updateWorkId(data.orderId, data.work_id || "");
+                    break;
+                case "wo-qty-change":
+                    updateWoQty(data.orderId, data.wo_qty || 0);
+                    break;
                 case "date-machining-change":
-                    const span = document.querySelector(`.editable-machining-date[data-id="${data.orderId}"]`);
+                    const span = document.querySelector(
+                        `.editable-machining-date[data-id="${data.orderId}"]`
+                    );
                     if (span) {
                         span.dataset.value = data.machining_date;
                         span.innerText = formatShortDate(data.machining_date);
                     }
-                    updateDiasYAlerta(data.orderId, data.dias_restantes, data.alertColor, data.alertLabel);
+                    updateDiasYAlerta(
+                        data.orderId,
+                        data.dias_restantes,
+                        data.alertColor,
+                        data.alertLabel
+                    );
                     break;
             }
         }
