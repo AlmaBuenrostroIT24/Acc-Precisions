@@ -351,12 +351,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     //✅ 4. Evita crear HTML con strings largos: usa plantillas
     function createEditableDateSpan(orderId, date) {
-        const [year, month, day] = date.split("-");// "2025-07-11" → ["2025", "07", "11"]
+        const [year, month, day] = date.split("-"); // "2025-07-11" → ["2025", "07", "11"]
         const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
         const shortMonth = dateObj.toLocaleString("en-US", { month: "short" }); // "Jul"
         const twoDigitYear = year.slice(-2); // "25"
-    
-        const formatted = `${shortMonth}-${day.padStart(2, '0')}-${twoDigitYear}`; // "Jul-11-25"
+
+        const formatted = `${shortMonth}-${day.padStart(
+            2,
+            "0"
+        )}-${twoDigitYear}`; // "Jul-11-25"
 
         return $(`
             <span class="editable-machining-date text-decoration-underline"
@@ -469,6 +472,28 @@ document.addEventListener("DOMContentLoaded", () => {
                             newDate
                         );
                         input.replaceWith(newSpan);
+                        // ✅ Actualizar visualmente días restantes y alerta
+                        const diasTd = document.getElementById(
+                            `dias-restantes-${orderId}`
+                        );
+                        if (diasTd) {
+                            diasTd.textContent = `${data.dias_restantes} days`;
+                            diasTd.className =
+                                data.dias_restantes < 0
+                                    ? "text-danger fw-bold"
+                                    : data.dias_restantes <= 2
+                                    ? "text-warning fw-bold"
+                                    : "text-success fw-bold";
+                        }
+
+                        const alertaDiv = document.querySelector(
+                            `#alerta-${orderId} .progress-bar`
+                        );
+                        if (alertaDiv) {
+                            alertaDiv.className =
+                                "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
                     } else {
                         alert("Error al guardar la fecha.");
                         input.replaceWith(span);

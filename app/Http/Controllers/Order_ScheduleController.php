@@ -315,9 +315,6 @@ class Order_ScheduleController extends Controller
     }
 
 
-
-
-
     public function updateWoQty(Request $request, $id)
     {
         // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
@@ -630,15 +627,49 @@ class Order_ScheduleController extends Controller
     }
     public function updateDateMachining(Request $request, OrderSchedule $order)
     {
-        $validated = $request->validate([
-            'machining_date' => 'required|date',
-        ]);
+        try {
+            $request->validate([
+                'machining_date' => 'required|date',
+            ]);
 
-        $order->machining_date = $validated['machining_date'];
-        $order->save();
+            $order->machining_date = $request->machining_date;
+            $order->save();
 
-        return response()->json(['success' => true]);
+            // Ahora agregamos el mismo cálculo que tienes en updateStatus
+            $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
+
+            $alert = $dias < 0 || $dias <= 2;
+            $alertColor = $dias < 0 ? 'bg-danger' : ($dias <= 2 ? 'bg-warning' : 'bg-success');
+            $alertLabel = $dias < 0 ? 'Late' : ($dias <= 2 ? 'Expedite' : 'On time');
+
+            // Recalcular target_mach también
+            if ($order->endate_mach && $order->machining_date) {
+                $endateMach = \Carbon\Carbon::parse($order->endate_mach)->startOfDay();
+                $machiningDate = \Carbon\Carbon::parse($order->machining_date)->startOfDay();
+
+                $diffMach = $machiningDate->diffInDays($endateMach, false);
+                $diffMachDays = $diffMach > 0 ? -$diffMach : abs($diffMach);
+
+                $order->target_mach = $diffMachDays;
+                $order->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'machining_date' => $order->machining_date,
+                'dias_restantes' => $dias,
+                'alertColor' => $alertColor,
+                'alertLabel' => $alertLabel,
+                'target_mach' => $order->target_mach,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     public function destroy(OrderSchedule $order)
     {
