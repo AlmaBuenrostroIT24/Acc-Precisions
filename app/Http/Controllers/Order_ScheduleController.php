@@ -12,7 +12,8 @@ use App\Imports\OrderScheduleImport;
 use App\Services\OrderScheduleImportService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\OrdMachiningDateLog;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class Order_ScheduleController extends Controller
@@ -627,32 +628,38 @@ class Order_ScheduleController extends Controller
     }
     public function updateDateMachining(Request $request, OrderSchedule $order)
     {
+
+        Log::info('Entró al método updateDateMachining', [
+            'id' => $order->id,
+            'fecha' => $request->machining_date
+        ]);
         try {
             $request->validate([
                 'machining_date' => 'required|date',
             ]);
 
-            $order->machining_date = $request->machining_date;
-            $order->save();
+            $newDate = $request->machining_date;
 
-            // Ahora agregamos el mismo cálculo que tienes en updateStatus
+            // Guardar log solo si la fecha cambia
+            if ($order->machining_date !== $newDate) {
+                OrdMachiningDateLog::create([
+                    'order_schedule_id' => $order->id,
+                    'previous_date' => $order->machining_date,
+                    'new_date' => $newDate,
+                    'changed_by' => Auth::user()?->name ?? 'sistema',
+                ]);
+    
+                $order->machining_date = $newDate;
+                $order->save();
+            }
+
+            // Calcular días restantes
             $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
 
             $alert = $dias < 0 || $dias <= 2;
             $alertColor = $dias < 0 ? 'bg-danger' : ($dias <= 2 ? 'bg-warning' : 'bg-success');
             $alertLabel = $dias < 0 ? 'Late' : ($dias <= 2 ? 'Expedite' : 'On time');
 
-            // Recalcular target_mach también
-            if ($order->endate_mach && $order->machining_date) {
-                $endateMach = \Carbon\Carbon::parse($order->endate_mach)->startOfDay();
-                $machiningDate = \Carbon\Carbon::parse($order->machining_date)->startOfDay();
-
-                $diffMach = $machiningDate->diffInDays($endateMach, false);
-                $diffMachDays = $diffMach > 0 ? -$diffMach : abs($diffMach);
-
-                $order->target_mach = $diffMachDays;
-                $order->save();
-            }
 
             return response()->json([
                 'success' => true,
@@ -660,7 +667,6 @@ class Order_ScheduleController extends Controller
                 'dias_restantes' => $dias,
                 'alertColor' => $alertColor,
                 'alertLabel' => $alertLabel,
-                'target_mach' => $order->target_mach,
             ]);
         } catch (\Exception $e) {
             return response()->json([
