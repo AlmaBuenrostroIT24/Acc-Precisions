@@ -111,7 +111,7 @@
                     <td style="min-width: 120px;">
                         <select class="form-control form-control-sm status-select"
                             style=" font-weight: bold; color: black;" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
-                            <option value="Pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
                             <option value="waitingformaterial" {{ strtolower($order->status) === 'waitingformaterial' ? 'selected' : '' }}>Wait Material</option>
                             <option value="onrack" {{ strtolower($order->status) === 'onrack' ? 'selected' : '' }}>OnRack</option>
                             <option value="setup" {{ strtolower($order->status) === 'setup' ? 'selected' : '' }}>SetUp</option>

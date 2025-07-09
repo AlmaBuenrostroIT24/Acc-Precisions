@@ -629,68 +629,73 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    //-------------------------------------------------START-------------------------------------------------------------//
+    //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
+
+    //✅ Captura dinámica del estado anterior. Se agrega este bloque antes del "change" para asegurar que data-old-status siempre tenga el valor actual:
+    tableElement.on("focus", ".status-select", function () {
+        const currentVal = ($(this).val() || "").toLowerCase(); // .toLowerCase() Normalizar el oldStatus a minúsculas
+        $(this).data("old-status", currentVal);
+    });
+
     // Actualizar Status con confirmación SweetAlert
     tableElement.on("change", ".status-select", function () {
         const select = $(this);
         const orderId = select.data("id");
-        const oldStatus = select.data("old-status") || ""; // Estado previo guardado en data attribute
-        const newStatus = select.val().toLowerCase();
 
-        // Ubicación actual del order en la fila
+        // ✅ Leer valor anterior y new status de forma segura y normalizada
+        const oldStatus = (select.data("old-status") || "").toLowerCase();
+        const newStatus = (select.val() || "").toLowerCase();
+
         const row = select.closest("tr");
         const locationSelect = row.find(".location-select");
         const currentLocation = locationSelect.length
             ? locationSelect.val()
             : "";
 
-        // Función que hace la petición para cambiar el status y actualiza UI
         const enviarCambioStatus = () => {
             handlePostJsonWithAlerts(
                 `/orders/${orderId}/update-status`,
                 { status: newStatus },
                 (data) => {
-                    localStorage.setItem(
-                        "status-change",
-                        JSON.stringify({
-                            orderId,
-                            status: data.status,
-                            dias_restantes: data.dias_restantes,
-                            alertColor: data.alertColor,
-                            alertLabel: data.alertLabel,
-                        })
-                    );
-
                     if (data.success) {
-                        // Actualizar location si viene en la respuesta
-                        if (data.location) {
-                            if (locationSelect.length) {
-                                locationSelect.val(data.location);
-                            }
+                        localStorage.setItem(
+                            "status-change",
+                            JSON.stringify({
+                                orderId,
+                                status: data.status,
+                                dias_restantes: data.dias_restantes,
+                                alertColor: data.alertColor,
+                                alertLabel: data.alertLabel,
+                            })
+                        );
+
+                        if (data.location && locationSelect.length) {
+                            locationSelect.val(data.location);
                         }
 
-                        // Actualizar badge last-location-label
                         const label = row.find(".last-location-label");
                         if (data.last_location === "Yarnell") {
                             label
                                 .html(
                                     `
-                                <span class="badge bg-warning text-dark">
-                                    <i class="fas fa-map-marker-alt me-1"></i> Yarnell
-                                </span>
-                            `
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                    </span>
+                                `
                                 )
                                 .show();
                         } else {
                             label.hide().html("");
                         }
 
-                        // Eliminar fila si estado es "sent"
+                        //✅ Eliminar fila si estado es "sent"
                         if (newStatus === "sent") {
                             window.table.row(row).remove().draw(false);
                             return;
                         }
 
-                        // Actualizar campo sent_at si existe
+                        //✅ Actualizar sent_at
                         if (data.sent_at) {
                             const sentCell = document.getElementById(
                                 `sent-at-${orderId}`
@@ -698,6 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (sentCell) sentCell.textContent = data.sent_at;
                         }
 
+                        //✅ Actualizar estado oculto
                         const hiddenStatusCell = document.getElementById(
                             `hidden-status-${orderId}`
                         );
@@ -705,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             hiddenStatusCell.textContent =
                                 data.status.toLowerCase();
 
+                        //✅ Actualizar en DataTable (columna 2)
                         if (window.table) {
                             const rowIndex = window.table.row(row[0]).index();
                             window.table
@@ -713,9 +720,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 .draw(false);
                         }
 
+                        // ✅Agregar nuevo valor al filtro si no existe
                         const $statusFilter = $("#statusFilter");
                         const newStatusVal = data.status.toLowerCase();
-
                         if (
                             $statusFilter.find(
                                 `option[value="${newStatusVal}"]`
@@ -739,11 +746,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (!inserted) $statusFilter.append(newOption);
                         }
 
+                        // ✅Actualizar fondo según estado
                         $(row).removeClass((i, c) =>
                             (c.match(/bg-status-\S+/g) || []).join(" ")
                         );
                         $(row).addClass(`bg-status-${data.status}`);
 
+                        // ✅Actualizar días restantes
                         const diasTd = document.getElementById(
                             `dias-restantes-${orderId}`
                         );
@@ -757,6 +766,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     : "text-success fw-bold";
                         }
 
+                        //✅Actualizar alerta
                         const alertaDiv = document.querySelector(
                             `#alerta-${orderId} .progress-bar`
                         );
@@ -765,8 +775,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 "progress-bar " + data.alertColor;
                             alertaDiv.textContent = data.alertLabel;
                         }
+                        // ✅ Actualiza el valor de referencia para futuros cambios
+                        select.data("old-status", newStatus);
 
-                        // Actualiza el estado viejo guardado para poder revertir si se edita otra vez
+                        //✅ Guardar estado como "viejo" para siguiente edición
                         select.data("old-status", newStatus);
                     } else {
                         alert("Hubo un problema al actualizar el estado.");
@@ -776,44 +788,58 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         };
 
-        // Mostrar confirmación si cumple condiciones
-        // Mostrar confirmación si cumple condiciones
+        // ✅ Confirmación si nuevo estado es 'sent'
+        if (newStatus === "sent") {
+            Swal.fire({
+                title: "¿Are you sure?",
+                text: `Changing the status to '${newStatus}' will remove this order from the table (it will be moved to 'Completed Orders').`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, delete",
+                cancelButtonText: "No, cancel",
+                reverseButtons: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    enviarCambioStatus();
+                } else {
+                    select.val(oldStatus).trigger("change"); // Revertir
+                }
+            });
+            return;
+        }
+
+        // ✅ Confirmación si cambia a 'deburring' o 'shipping' desde 'Yarnell'
         if (
             (newStatus === "deburring" || newStatus === "shipping") &&
             currentLocation.toLowerCase() === "yarnell"
         ) {
             Swal.fire({
-                title: "¿Are you sure??",
+                title: "¿Are you sure?",
                 text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, change",
                 cancelButtonText: "No, cancel",
+                reverseButtons: true,
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // 🔁 Notifica a otras pestañas que esta orden ahora estará en Hearst
                     localStorage.setItem(
                         "location-change",
-                        JSON.stringify({
-                            orderId: orderId,
-                            location: "hearst",
-                        })
+                        JSON.stringify({ orderId, location: "hearst" })
                     );
-
-                    console.log(
-                        "📢 Notificación enviada a pestañas: orden movida a Hearst"
-                    );
-
                     enviarCambioStatus();
                 } else {
-                    // Revertir al estado anterior
-                    select.val(oldStatus);
+                    select.val(oldStatus); // Revertir
                 }
             });
-        } else {
-            enviarCambioStatus();
+            return;
         }
+
+        // ✅ Enviar directamente si no requiere confirmación
+        enviarCambioStatus();
     });
+    //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
+    //-------------------------------------------------END-------------------------------------------------------------//
 
     //-------------------------------------------------
     // Tooltips
