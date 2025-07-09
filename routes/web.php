@@ -74,6 +74,9 @@ Route::post('/orders/{order}/update-report', [Order_ScheduleController::class, '
 Route::post('/orders/{order}/update-source', [Order_ScheduleController::class, 'updateSource']);
 Route::post('/orders/{order}/update-location', [Order_ScheduleController::class, 'updateLocation'])->name('orders.updateLocation');
 Route::post('/orders/{order}/update-date-machining', [Order_ScheduleController::class, 'updateDateMachining']);
+//Route::post('/orders/change-status', [Order_ScheduleController::class, 'changeStatus'])->name('orders.changeStatus');
+
+Route::post('/orders/{order}/return-previous', [Order_ScheduleController::class, 'returnPreviousStatus'])->name('orders.returnPreviousStatus');
 Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);
 Route::post('/orders/{order}/update-notes', [Order_ScheduleController::class, 'updateNotes']);
 Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 'ajaxUpdateWorkId'])->name('orders.ajaxUpdateWorkId');

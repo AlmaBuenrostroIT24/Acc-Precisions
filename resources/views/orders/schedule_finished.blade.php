@@ -13,7 +13,6 @@
             <i class="fas fa-calendar-alt me-2" aria-hidden="true"></i>
             General Schedule
         </h4>
-
         <nav aria-label="breadcrumb" class="mb-0 ml-auto">
             <ol class="breadcrumb mb-0 bg-transparent p-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
@@ -84,6 +83,7 @@
                                 <th>End Date</th>
                                 <th>Target Date</th>
                                 <th>Notes</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
@@ -135,6 +135,14 @@
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
                                         {{ Str::limit($order->notes, 30) }}
                                     </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm toggle-status-btn btn-success"
+                                        title="Return Order"
+                                        data-id="{{ $order->id }}"
+                                        data-status="sent">
+                                        <i class="fas fa-check"></i>
+                                    </button>
                                 </td>
                             </tr>
                             @endforeach
@@ -222,6 +230,46 @@
 
         populateFilterFromColumn(4, '#customerFilter'); // columna 4 = customer
         applyFilter('#customerFilter', 4);
+
+        $('#orders_endscheduleTable').on('click', '.toggle-status-btn', function() {
+            const btn = $(this);
+            const row = btn.closest('tr');
+            const orderId = btn.data('id');
+            const table = $('#orders_endscheduleTable').DataTable();
+
+            Swal.fire({
+                title: '¿Return order?',
+                text: 'This order will return to its previous status.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: "Yes, Return",
+                cancelButtonText: "No, Cancel",
+                reverseButtons: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`/orders/${orderId}/return-previous`, {
+                            _token: '{{ csrf_token() }}'
+                        })
+                        .done(res => {
+                            if (res.success) {
+                                // ✅ Elimina la fila del DataTable
+                                table.row(row).remove().draw(false);
+                                Swal.fire('Done', `The order returned to: ${res.newStatus}`, 'success');
+                            } else {
+                                Swal.fire('Attention', res.message || 'The order could not be returned.', 'warning');
+                            }
+                        })
+                        .fail(() => {
+                            Swal.fire('Error', 'Ocurrió un error al devolver la orden.', 'error');
+                        });
+                }
+            });
+        });
+
+
+
+
+
     });
 </script>
 @endpush

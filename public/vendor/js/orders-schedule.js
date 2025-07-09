@@ -792,10 +792,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (newStatus === "sent") {
             Swal.fire({
                 title: "¿Are you sure?",
-                text: `Changing the status to '${newStatus}' will remove this order from the table (it will be moved to 'Completed Orders').`,
+                text: `Changing the status to '${newStatus}' .It will be moved to 'Completed Orders'.`,
                 icon: "warning",
                 showCancelButton: true,
-                confirmButtonText: "Yes, delete",
+                confirmButtonText: "Yes, Completed",
                 cancelButtonText: "No, cancel",
                 reverseButtons: true,
             }).then((result) => {
@@ -818,8 +818,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
                 icon: "warning",
                 showCancelButton: true,
-                confirmButtonText: "Yes, change",
-                cancelButtonText: "No, cancel",
+                confirmButtonText: "Yes, Change",
+                cancelButtonText: "No, Cancel",
                 reverseButtons: true,
             }).then((result) => {
                 if (result.isConfirmed) {

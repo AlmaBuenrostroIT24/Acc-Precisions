@@ -130,6 +130,30 @@ class Order_ScheduleController extends Controller
         return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
     }
 
+    public function returnPreviousStatus(Request $request, OrderSchedule $order)
+    {
+        try {
+            if (!$order->previous_status) {
+                return response()->json(['success' => false, 'message' => 'No hay estado anterior registrado.'], 400);
+            }
+    
+            $order->status = $order->previous_status;
+            $order->previous_status = null;
+            $order->sent_at = null; // limpiar si lo deseas
+            $order->target_date = null; // limpiar si lo deseas
+            $order->save();
+    
+            return response()->json([
+                'success' => true,
+                'newStatus' => $order->status,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    
+    
+
     //----------------------------------------------------------------------------------------------------------------------------
     //Orders Statistics--------------------------------------------------------------------------------------------------------------
 
@@ -431,7 +455,15 @@ class Order_ScheduleController extends Controller
             ]);
 
             $newStatus = strtolower($request->status);
+            // Captura el estado anterior antes de sobrescribirlo
+            $previousStatus = $order->status;
             $order->status = $newStatus;
+
+            // ✅ Guardar previous_status si se cambia a "sent"
+            if ($newStatus === 'sent') {
+                $order->previous_status = $previousStatus;
+                $order->sent_at = now(); // También mantén esto aquí
+            }
 
             // ✅ Si el status es "deburring" o "shipping", actualizar la location a "hearst"
             if (
@@ -648,7 +680,7 @@ class Order_ScheduleController extends Controller
                     'new_date' => $newDate,
                     'changed_by' => Auth::user()?->name ?? 'sistema',
                 ]);
-    
+
                 $order->machining_date = $newDate;
                 $order->save();
             }
