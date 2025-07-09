@@ -67,23 +67,23 @@
                 <div class="table-responsive">
                     {{-- Tabla --}}
 
-                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap">
-                        <thead class="table-light">
-                            <tr>
-                                <th>LOCATION</th>
-                                <th>Work ID</th>
+                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm ">
+                        <thead class="table-light thead-custom">
+                            <tr class="text-center align-middle">
+                                <th class="text-center align-middle">LOCATION</th>
+                                <th class="text-center align-middle">WORKID</th>
                                 <th>PN</th>
-                                <th>PART/DESCRIPTION</th>
+                                <th style="width: 220px; " >DESCRIPTION</th>
                                 <th>CUSTOMER</th>
-                                <th>CO Qty</th>
-                                <th>WO Qty</th>
-                                <th>Report</th>
-                                <th>Out Source</th>
-                                <th>Due Date</th>
-                                <th>End Date</th>
-                                <th>Target Date</th>
-                                <th>Notes</th>
-                                <th>Status</th>
+                                <th style="width: 55px; ">CO QTY</th>
+                                <th style="width: 55px; ">WO QTY</th>
+                                <th class="text-center align-middle">REPORT</th>
+                                <th class="text-center align-middle">OUT/SRC</th>
+                                <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
+                                <th style="width: 70px; "class="text-center align-middle">END DATE</th>
+                                <th class="text-center align-middle">TARGET</th>
+                                <th class="text-center align-middle">NOTES</th>
+                                <th class="text-center align-middle">STATUS</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
@@ -99,28 +99,28 @@
                                     @endif
                                 </td>
                                 <td>{{ $order->work_id }}</td>
-                                <td style="min-width: 120px;">{{ $order->PN }}</td>
+                                <td>{{ $order->PN }}</td>
                                 <td style="font-size: 12px;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
-                                <td>
+                                <td class="text-center">
                                     <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
                                         data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}">
                                         <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                                     </button>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
                                         data-id="{{ $order->id }}" data-value="{{ $order->our_source }}">
                                         <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                                     </button>
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                                <td>
+                                <td >
                                     {{ $order->sent_at ? $order->sent_at->format('M-d-y H:i') : '' }}
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     @if ($order->target_date < 0)
                                         <span class="badge bg-danger">{{ $order->target_date }} Late</span>
                                         @elseif ($order->target_date == 0)
@@ -131,13 +131,13 @@
                                         <span>-</span> {{-- En caso de que target_date sea null --}}
                                         @endif
                                 </td>
-                                <td>
+                                <td style="font-size: 12px;">
                                     <span class="open-notes-modal" data-id="{{ $order->id }}"
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
-                                        {{ Str::limit($order->notes, 30) }}
+                                        {{ Str::limit($order->notes, 130) }}
                                     </span>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <button class="btn btn-sm toggle-status-btn btn-success"
                                         title="Return Order"
                                         data-id="{{ $order->id }}"

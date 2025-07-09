@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table id="orders_scheduleTable" class="table  table-bordered" style="table-layout: fixed; width: 100%;">
+    <table id="orders_scheduleTable" class="table table-bordered" style="table-layout: fixed; width: 100%;">
         <thead class="table-light thead-custom">
             <tr>
                 <th style="width: 15px; ">Id</th>
