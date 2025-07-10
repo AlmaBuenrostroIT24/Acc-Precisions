@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Función para inicializar DataTable con opciones base + personalizadas
+    // Función para inicializar DataTable Principal con opciones base + personalizadas
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
@@ -107,8 +107,46 @@ document.addEventListener("DOMContentLoaded", () => {
             },
         };
         const config = tableConfigs[path] || {}; // Usa config vacía por defecto
+        config.rowCallback = applyRowLateHighlight; // ✅ inyectamos la función para que se colore en rojo cuando days<0
         window.table = initOrdersTable(tableElement, config);
     }
+
+    function applyRowLateHighlight(row, data, index) {
+        const $row = $(row);
+        const orderId = $row.data("order-id");
+       // console.log("Fila:", data);
+    
+        // Buscar la celda de días restantes dentro de la fila
+        const diasTd = $row.find("td[id^='dias-restantes-']");
+        if (diasTd.length) {
+            const diasText = diasTd.text().trim();
+            const diasMatch = diasText.match(/-?\d+/);
+            if (diasMatch) {
+                const dias = parseInt(diasMatch[0]);
+                const status = (data[2] || "").toLowerCase(); // ⚠️ Ajusta el índice si status no está en columna 2
+    
+                // Limpiar clases de color previas
+                $row.removeClass("row-late");
+    
+                if (dias < 0) {
+                    // Si está vencido, marcar como .row-late y quitar cualquier color de estado
+                    $row.removeClass(function (i, c) {
+                        return (c.match(/bg-status-\S+/g) || []).join(" ");
+                    });
+                    $row.addClass("row-late");
+                } else {
+                    // Si NO está vencido, aplicar clase del status
+                    $row.removeClass(function (i, c) {
+                        return (c.match(/bg-status-\S+/g) || []).join(" ");
+                    });
+                    if (status) {
+                        $row.addClass(`bg-status-${status}`);
+                    }
+                }
+            }
+        }
+    }
+    
 
     // Filtrado con regex exacto
     const applyFilter = (selector, columnIndex) => {
@@ -747,23 +785,39 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
 
                         // ✅Actualizar fondo según estado
-                        $(row).removeClass((i, c) =>
-                            (c.match(/bg-status-\S+/g) || []).join(" ")
-                        );
-                        $(row).addClass(`bg-status-${data.status}`);
-
                         // ✅Actualizar días restantes
                         const diasTd = document.getElementById(
                             `dias-restantes-${orderId}`
                         );
-                        if (diasTd) {
-                            diasTd.textContent = `${data.dias_restantes} days`;
+                        const rowNode = window.table.row(row[0]).node(); // <tr> real de DataTables
+
+                        if (diasTd && rowNode) {
+                            const dias = data.dias_restantes;
+
+                            // Actualizar texto y color de la celda
+                            diasTd.textContent = `${dias} days`;
                             diasTd.className =
-                                data.dias_restantes < 0
+                                dias < 0
                                     ? "text-danger fw-bold"
-                                    : data.dias_restantes <= 2
+                                    : dias <= 2
                                     ? "text-warning fw-bold"
                                     : "text-success fw-bold";
+
+                            // Limpiar clases previas de fondo
+                            $(rowNode).removeClass(function (i, c) {
+                                return (c.match(/bg-status-\S+/g) || []).join(
+                                    " "
+                                );
+                            });
+                            $(rowNode).removeClass("table-danger row-late");
+
+                            // Aplicar clase por status
+                            $(rowNode).addClass(`bg-status-${data.status}`);
+
+                            // Aplicar fondo rojo si vencido
+                            if (dias < 0) {
+                                $(rowNode).addClass("row-late");
+                            }
                         }
 
                         //✅Actualizar alerta

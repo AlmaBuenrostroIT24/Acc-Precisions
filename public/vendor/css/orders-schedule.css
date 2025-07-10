@@ -10,7 +10,7 @@
 .bg-status-deburring      { background-color: #aed6f1 !important; } /* Naranja pastel */
 .bg-status-shipping     { background-color: #85c1e9 !important; } /* Verde menta pastel */
 .bg-status-onhold        { background-color: #ffffff !important; } /* Rosa pastel */
-
+.row-late                   {background-color: #f8d7da !important;}
 
 .select-bold {
     font-weight: bold;
