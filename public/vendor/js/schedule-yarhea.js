@@ -94,12 +94,10 @@ window.addEventListener("DOMContentLoaded", () => {
             window.table.row(row).remove().draw(false);
             return;
         }
-        row.className = row.className
-            .split(" ")
-            .filter((c) => !c.startsWith("bg-status-"))
-            .concat(`bg-status-${status}`)
-            .join(" ");
+        applyRowLateStyle(orderId, dias_restantes, status);
         const rowIdx = window.table.row(row).index();
+
+        // ✅ Actualizar <select> en columna 10 (location)
         const colIdx = 10;
         const optionsHtml = Object.keys(statusLabels)
             .map((s) => {
@@ -115,11 +113,40 @@ window.addEventListener("DOMContentLoaded", () => {
             ${optionsHtml}
         </select>`;
         window.table.cell(rowIdx, colIdx).data(selectHtml).draw(false);
+
+        // ✅ Actualizar estado oculto
         const hidden = document.getElementById(`hidden-status-${orderId}`);
         if (hidden) hidden.textContent = status.toLowerCase();
+
+        // ✅ Actualizar alerta visual
         updateDiasYAlerta(orderId, dias_restantes, alertColor, alertLabel);
     }
 
+    function applyRowLateStyle(orderId, dias, status) {
+        const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+        if (!row) {
+           // console.warn(`❌ No se encontró la fila para orderId=${orderId}`);
+            return;
+        }
+        // Debug: ver qué datos estamos usando
+       // console.log("🔍 applyRowLateStyle", {orderId,dias, status, rowClassList: row.className, });
+        // Limpiar clases previas de estado y de late
+        row.className = row.className
+            .split(" ")
+            .filter((c) => !c.startsWith("bg-status-") && c !== "row-late")
+            .join(" ");
+        if (dias < 0) {
+            row.classList.add("row-late");
+           // console.log(`🔴 Orden ${orderId} marcada como LATE`);
+        } else if (status) {
+            row.classList.add(`bg-status-${status.toLowerCase()}`);
+           // console.log(`🟢 Orden ${orderId} con clase: bg-status-${status.toLowerCase()}`);
+        } else {
+            console.log(`⚠️ No se aplicó clase de estado a la orden ${orderId}`);
+        }
+    }
+    
+    
     //🔁 updateNotes(orderId, notes)
     //Actualiza el contenido de las notas: 1. Muestra el texto corto o el ícono de "Note".
     //2. Agrega evento para abrir el modal con el texto completo al hacer clic. 3. Limpia y escapa caracteres especiales (").
@@ -224,6 +251,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 data.value,
                 event.key === "report-toggle"
             );
+            applyRowLateStyle(data.orderId, data.dias_restantes, ""); // El status no cambia, así que pasa string vacío
             const span = document.querySelector(
                 `.editable-machining-date[data-id="${data.orderId}"]`
             );
@@ -240,6 +268,11 @@ window.addEventListener("DOMContentLoaded", () => {
                     break;
                 case "status-change":
                     updateStatus(data);
+                    applyRowLateStyle(
+                        data.orderId,
+                        data.dias_restantes,
+                        data.status
+                    );
                     break;
                 case "notes-change":
                     updateNotes(data.orderId, data.notes || "");
@@ -254,6 +287,15 @@ window.addEventListener("DOMContentLoaded", () => {
                     const span = document.querySelector(
                         `.editable-machining-date[data-id="${data.orderId}"]`
                     );
+                    const dias = data.dias_restantes;
+                    let status = (data.status || "").trim().toLowerCase(); // ✅ preferencia al status sincronizado
+                
+                    if (!status) {
+                        const statusHidden = document.getElementById(
+                            `hidden-status-${data.orderId}`
+                        );
+                        status = statusHidden ? statusHidden.textContent.trim() : "";
+                    }
                     if (span) {
                         span.dataset.value = data.machining_date;
                         span.innerText = formatShortDate(data.machining_date);
@@ -264,6 +306,8 @@ window.addEventListener("DOMContentLoaded", () => {
                         data.alertColor,
                         data.alertLabel
                     );
+                    // Aplica el estilo correcto usando el estado actual
+                    applyRowLateStyle(data.orderId, dias, status);
                     break;
             }
         }

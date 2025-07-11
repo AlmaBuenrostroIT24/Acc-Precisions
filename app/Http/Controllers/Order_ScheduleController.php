@@ -522,7 +522,7 @@ class Order_ScheduleController extends Controller
                 'dias_restantes' => $dias,
                 'alertColor' => $alertColor,
                 'alertLabel' => $alertLabel,
-                'status' => $order->status,
+                'status' => strtolower($order->status), // ✅ aseguramos el status en minúsculas
                 'location' => $order->location, // 👈 ¡Agrega esto!
                 'last_location' => $order->last_location, // <== Aquí
             ]);
@@ -699,6 +699,7 @@ class Order_ScheduleController extends Controller
                 'dias_restantes' => $dias,
                 'alertColor' => $alertColor,
                 'alertLabel' => $alertLabel,
+                'status' => strtolower($order->status), // ✅ Añadir status en minúsculas
             ]);
         } catch (\Exception $e) {
             return response()->json([

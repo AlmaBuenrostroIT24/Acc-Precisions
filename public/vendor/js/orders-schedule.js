@@ -114,8 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function applyRowLateHighlight(row, data, index) {
         const $row = $(row);
         const orderId = $row.data("order-id");
-       // console.log("Fila:", data);
-    
+        // console.log("Fila:", data);
+
         // Buscar la celda de días restantes dentro de la fila
         const diasTd = $row.find("td[id^='dias-restantes-']");
         if (diasTd.length) {
@@ -124,10 +124,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (diasMatch) {
                 const dias = parseInt(diasMatch[0]);
                 const status = (data[2] || "").toLowerCase(); // ⚠️ Ajusta el índice si status no está en columna 2
-    
+
                 // Limpiar clases de color previas
                 $row.removeClass("row-late");
-    
+
                 if (dias < 0) {
                     // Si está vencido, marcar como .row-late y quitar cualquier color de estado
                     $row.removeClass(function (i, c) {
@@ -146,7 +146,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
-    
 
     // Filtrado con regex exacto
     const applyFilter = (selector, columnIndex) => {
@@ -344,6 +343,32 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     });
 
+    function applyRowLateStyle(orderId, dias, status) {
+        const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+        if (!row) {
+            // console.warn(`❌ No se encontró la fila para orderId=${orderId}`);
+            return;
+        }
+        // Debug: ver qué datos estamos usando
+        // console.log("🔍 applyRowLateStyle", {orderId,dias, status, rowClassList: row.className, });
+        // Limpiar clases previas de estado y de late
+        row.className = row.className
+            .split(" ")
+            .filter((c) => !c.startsWith("bg-status-") && c !== "row-late")
+            .join(" ");
+        if (dias < 0) {
+            row.classList.add("row-late");
+            // console.log(`🔴 Orden ${orderId} marcada como LATE`);
+        } else if (status) {
+            row.classList.add(`bg-status-${status.toLowerCase()}`);
+            // console.log(`🟢 Orden ${orderId} con clase: bg-status-${status.toLowerCase()}`);
+        } else {
+            console.log(
+                `⚠️ No se aplicó clase de estado a la orden ${orderId}`
+            );
+        }
+    }
+
     //-------------------------------------------------START---------------------------------------------------------------
     ///--------------------------------MANEJO DE BOTONES "report & our_source" --------------------------------------------
     //FUNCIONES AUXILIARES
@@ -499,6 +524,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 dias_restantes: data.dias_restantes,
                                 alertColor: data.alertColor,
                                 alertLabel: data.alertLabel,
+                                status: data.status, // ✅ Incluye el estado actual
                                 updatedAt: Date.now(),
                             })
                         );
@@ -530,6 +556,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                 "progress-bar " + data.alertColor;
                             alertaDiv.textContent = data.alertLabel;
                         }
+
+                        // ✅ Aplicar estilo visual correcto a la fila , para cuando se cambie la fecha, me detecte el color segun el estatus
+                        applyRowLateStyle(
+                            orderId,
+                            data.dias_restantes,
+                            data.status || ""
+                        );
                     } else {
                         alert("Error al guardar la fecha.");
                         input.replaceWith(span);
@@ -784,17 +817,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (!inserted) $statusFilter.append(newOption);
                         }
 
-                        // ✅Actualizar fondo según estado
                         // ✅Actualizar días restantes
                         const diasTd = document.getElementById(
                             `dias-restantes-${orderId}`
                         );
-                        const rowNode = window.table.row(row[0]).node(); // <tr> real de DataTables
 
-                        if (diasTd && rowNode) {
+                        if (diasTd) {
                             const dias = data.dias_restantes;
 
-                            // Actualizar texto y color de la celda
                             diasTd.textContent = `${dias} days`;
                             diasTd.className =
                                 dias < 0
@@ -802,23 +832,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                     : dias <= 2
                                     ? "text-warning fw-bold"
                                     : "text-success fw-bold";
-
-                            // Limpiar clases previas de fondo
-                            $(rowNode).removeClass(function (i, c) {
-                                return (c.match(/bg-status-\S+/g) || []).join(
-                                    " "
-                                );
-                            });
-                            $(rowNode).removeClass("table-danger row-late");
-
-                            // Aplicar clase por status
-                            $(rowNode).addClass(`bg-status-${data.status}`);
-
-                            // Aplicar fondo rojo si vencido
-                            if (dias < 0) {
-                                $(rowNode).addClass("row-late");
-                            }
                         }
+
+                        //------------------------------------------------------------------------------
 
                         //✅Actualizar alerta
                         const alertaDiv = document.querySelector(
