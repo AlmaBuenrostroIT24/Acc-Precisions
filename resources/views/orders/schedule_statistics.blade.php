@@ -111,15 +111,11 @@
                     @php
                     if ($grupo->total > 10) {
                     $circleClass = 'bg-success text-white'; // verde
-                    } elseif ($grupo->total >= 5 && $grupo->total <= 10) {
-                        $circleClass='bg-warning text-dark' ; // amarillo
-                        } else {
-                        $circleClass='bg-secondary text-white' ; // gris
-                        }
-                        @endphp
-                        <div class="col-1 d-flex flex-column align-items-center">
+                    } elseif ($grupo->total >= 5 && $grupo->total <= 10) { $circleClass='bg-warning text-dark' ; } else
+                        { $circleClass='bg-secondary text-white' ; } @endphp <div
+                        class="col-1 d-flex flex-column align-items-center">
                         <div class="rounded-circle d-flex justify-content-center align-items-center mx-auto {{ $circleClass }}"
-                            style="width: 50px; height: 50px; font-weight: 600; font-size: 1rem; user-select:none;">
+                            style="width: 50px; height: 50px; font-weight: 600; font-size: 2rem; user-select:none;">
                             {{ $grupo->total }}
                         </div>
                         <small class="text-truncate mt-1" title="{{ ucfirst($grupo->costumer) }}">
@@ -144,17 +140,31 @@
     <div class="row g-4 mb-4">
         {{-- Ordenes esta semana --}}
         <div class="col-lg-6">
+
             <div class="card shadow-sm border-0 rounded-3 h-100">
-                <div class="card-header bg-light d-flex align-items-center">
-                    <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
-                    <h6 class="mb-0 text-success">Orders This Week</h6>
+                <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
+                    {{-- Título a la izquierda --}}
+                    <div class="d-flex align-items-center mb-2 mb-md-0">
+                        <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
+                        <h6 class="mb-0 text-success">Orders This Week</h6>
+                    </div>
+                    {{-- Selector de semana a la derecha --}}
+                    <div class="d-flex align-items-center ml-auto">
+                        <span id="week-display" class="text-dark font-weight-bold small align-middle mr-2"
+                            style="white-space: nowrap;">
+                        </span>
+                        <div class="input-group input-group-sm" style="width: 180px;">
+                            <input type="week" name="week" id="week-filter" class="form-control border-secondary text-dark font-weight-bold"
+                                style="height: 32px;">
+                        </div>
+                    </div>
                 </div>
+
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table id="tableweek" class="table table-hover align-middle mb-0 small datatable-export">
                             <thead class="text-dark">
-                                <tr>
-
+                                <tr class="text-center align-middle">
                                     <th>WORK ID</th>
                                     <th>PN</th>
                                     <th>DESCRIPTION</th>
@@ -164,29 +174,15 @@
                                     <th>DUE DATE</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @forelse ($ordenesSemana as $order)
-                                <tr>
-
-                                    <td>{{ $order->work_id }}</td>
-                                    <td>{{ $order->PN }}</td>
-                                    <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
-                                    <td>{{ ucfirst($order->costumer) }}</td>
-                                    <td>{{ $order->qty }}</td>
-                                    <td><span class="badge bg-info text-dark">{{ $order->status }}</span></td>
-                                    <td><span class="text-primary fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-3">No orders found.</td>
-                                </tr>
-                                @endforelse
+                            <tbody id="tableweek-body">
+                                @include('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenesSemana])
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="card-footer bg-light text-center py-2">
-                    <small class="text-muted">Total orders this week: <strong>{{ $ordenesSemana->count() }}</strong></small>
+                    <small class="text-muted">Total orders: <strong
+                            id="order-count">{{ $ordenesSemana->count() }}</strong></small>
                 </div>
 
             </div>
@@ -219,11 +215,14 @@
                                 <tr>
                                     <td>{{ $order->work_id }}</td>
                                     <td>{{ $order->PN }}</td>
-                                    <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
+                                    <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}
+                                    </td>
                                     <td>{{ ucfirst($order->costumer) }}</td>
                                     <td>{{ $order->qty }}</td>
                                     <td><span class="badge bg-warning text-dark">{{ $order->status }}</span></td>
-                                    <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
+                                    <td><span
+                                            class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span>
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -314,7 +313,8 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')" class="btn btn-secondary mb-2 w-75">
+                        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')"
+                            class="btn btn-secondary mb-2 w-75">
                             Print Order Customer
                         </button>
                     </div>
@@ -330,12 +330,14 @@
         {{-- Card: Clientes con órdenes --}}
         <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
             <div class="card shadow-sm rounded-3 border-0 h-100">
-                <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+                <div
+                    class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
                         <i class="bi bi-people-fill"></i>
                         Customers with Orders
                     </div>
-                    <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span> <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>
+                    <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span> <button
+                        onclick="printCard()" class="btn btn-primary mb-3">Print</button>
                 </div>
                 <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
                     @if ($ordenesPorCliente->isNotEmpty())
@@ -376,8 +378,11 @@
                         @foreach ($ordenesAgregadasSemana as $orden)
                         <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
                             <div class="text-truncate" style="max-width: 65%;">
-                                <strong>{{ ucfirst($orden->costumer) }}</strong> — PN {{ $orden->PN }} ( Qty: {{ $orden->qty }} )<br>
-                                <small class="text-secondary">WORK ID {{ $orden->work_id }} — {{ ucfirst($orden->location) }}. {{ $orden->created_at->format('d M Y') }} </small><br>
+                                <strong>{{ ucfirst($orden->costumer) }}</strong> — PN {{ $orden->PN }} ( Qty:
+                                {{ $orden->qty }} )<br>
+                                <small class="text-secondary">WORK ID {{ $orden->work_id }} —
+                                    {{ ucfirst($orden->location) }}. {{ $orden->created_at->format('d M Y') }}
+                                </small><br>
                             </div>
                             <span class="badge bg-success">{{ $orden->status ?? 'No status' }}</span>
                         </li>
@@ -411,11 +416,11 @@
 
     @section('css')
     <style>
-        .dataTables_wrapper {
-            margin-top: 20px !important;
-            margin-left: 15px !important;
-            margin-right: 15px !important;
-        }
+    .dataTables_wrapper {
+        margin-top: 20px !important;
+        margin-left: 15px !important;
+        margin-right: 15px !important;
+    }
     </style>
 
     <!-- CSS de DataTables + Botones -->
@@ -442,310 +447,75 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
-        $(document).ready(function() {
+    // orders_dashboard.js
 
-            function getFechaHoraActual() {
-                const now = new Date();
-                const fecha = now.toLocaleDateString('en-US');
-                const hora = now.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                return `${fecha} ${hora}`;
-            }
-            // Inicializar DataTables con exportación y buscador
-            const logoBase64 = 'data:image/png;base64,...'; // <-- reemplaza con tu base64 real
-            function initDataTable(selector, tableTitle) {
-                const fechaHora = getFechaHoraActual();
-                $(selector).DataTable({
-                    pageLength: 10,
-                    order: [
-                        [6, 'asc']
-                    ],
-                    dom: "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
-                        "<'row'<'col-12'tr>>" +
-                        "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
-                    buttons: [{
-                            extend: 'excelHtml5',
-                            title: `${tableTitle} - ${fechaHora}`, // <-- Título en archivo Excel
-                            text: '<i class="fas fa-file-excel"></i> Excel',
-                            className: 'btn btn-success btn-sm mx-0',
-                            filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            title: `${tableTitle} - ${fechaHora}`, // <-- Título del PDF
-                            text: '<i class="fas fa-file-pdf"></i> PDF',
-                            className: 'btn btn-danger btn-sm mx-1',
-                            orientation: 'landscape',
-                            pageSize: 'A4',
-                            filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+    Chart.register(ChartDataLabels);
 
-                        },
-                        {
-                            extend: 'print',
-                            title: `${tableTitle} - ${fechaHora}`, // <-- Título al imprimir
-                            text: '<i class="fas fa-print"></i> Print',
-                            className: 'btn btn-primary btn-sm'
-                        }
-                    ],
-                    searching: true,
-                });
-            }
+    function getFechaHoraActual() {
+        const now = new Date();
+        const fecha = now.toLocaleDateString('en-US');
+        const hora = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        return `${fecha} ${hora}`;
+    }
 
-            // Inicializa ambas tablas con títulos PDF personalizados
-            initDataTable('#tableweek', 'ORDERS THIS WEEK');
-            initDataTable('#tablelate', 'LATE ORDERS');
-
-            // Variables para filtros y gráficos
-            let currentFilterText = '';
-
-            const filterType = document.getElementById('filterType');
-            const yearInput = document.getElementById('yearInput');
-            const monthInput = document.getElementById('monthInput');
-            const weekInput = document.getElementById('weekInput');
-            const customerFilter = document.getElementById('customerFilter');
-            const ctx = document.getElementById('ordersChart')?.getContext('2d');
-            let chart;
-
-            const filterTypeCustomer = document.getElementById('filterTypeCustomer');
-            const yearInputCustomer = document.getElementById('yearInputCustomer');
-            const monthInputCustomer = document.getElementById('monthInputCustomer');
-            const weekInputCustomer = document.getElementById('weekInputCustomer');
-            const ctx2 = document.getElementById('byCustomerChart')?.getContext('2d');
-            let customerChart;
-
-            // Función para mostrar/ocultar inputs según filtro seleccionado
-            function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
-                if (!yearInp || !monthInp || !weekInp) return;
-
-                yearInp.classList.add('d-none');
-                monthInp.classList.add('d-none');
-                weekInp.classList.add('d-none');
-
-                if (typeSelect.value === 'year') {
-                    yearInp.classList.remove('d-none');
-                } else if (typeSelect.value === 'month') {
-                    monthInp.classList.remove('d-none');
-                } else if (typeSelect.value === 'week') {
-                    weekInp.classList.remove('d-none');
+    function initDataTable(selector, tableTitle) {
+        const fechaHora = getFechaHoraActual();
+        $(selector).DataTable({
+            pageLength: 10,
+            order: [
+                [6, 'asc']
+            ],
+            dom: "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
+                "<'row'<'col-12'tr>>" +
+                "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
+            buttons: [{
+                    extend: 'excelHtml5',
+                    title: `${tableTitle} - ${fechaHora}`,
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    className: 'btn btn-success btn-sm mx-0',
+                    filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: `${tableTitle} - ${fechaHora}`,
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    className: 'btn btn-danger btn-sm mx-1',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+                },
+                {
+                    extend: 'print',
+                    title: `${tableTitle} - ${fechaHora}`,
+                    text: '<i class="fas fa-print"></i> Print',
+                    className: 'btn btn-primary btn-sm'
                 }
-            }
+            ],
+            searching: true,
+        });
+    }
 
-            // Función para cargar gráfico general de órdenes
-            function loadChart() {
-                if (!filterType || !ctx) return;
+    function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
+        if (!yearInp || !monthInp || !weekInp) return;
+        yearInp.classList.add('d-none');
+        monthInp.classList.add('d-none');
+        weekInp.classList.add('d-none');
 
-                let url = '/orders/summary';
-                currentFilterText = '';
+        if (typeSelect.value === 'year') yearInp.classList.remove('d-none');
+        if (typeSelect.value === 'month') monthInp.classList.remove('d-none');
+        if (typeSelect.value === 'week') weekInp.classList.remove('d-none');
+    }
 
-                if (filterType.value === 'year') {
-                    if (!yearInput?.value) return;
-                    url += `/year/${yearInput.value}`;
-                    currentFilterText = `Year: ${yearInput.value}`;
-                } else if (filterType.value === 'month') {
-                    if (!monthInput?.value) return;
-                    const [year, month] = monthInput.value.split('-');
-                    url += `/month/${year}/${month}`;
-                    currentFilterText = `Month: ${monthInput.value}`;
-                } else if (filterType.value === 'week') {
-                    if (!weekInput?.value) return;
-                    const [year, week] = weekInput.value.split('-W');
-                    url += `/week/${year}/${week}`;
-                    currentFilterText = `Week: ${weekInput.value}`;
-                } else {
-                    currentFilterText = 'Todos los períodos';
-                }
+    function printChart(canvasId, chartTitle, filterText = '') {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
 
-                if (customerFilter?.value) {
-                    const separator = url.includes('?') ? '&' : '?';
-                    url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
-                    currentFilterText += `<br>Customer: ${customerFilter.value}`;
-                }
-
-                fetch(url)
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-                        return res.json();
-                    })
-                    .then(({
-                        labels,
-                        data
-                    }) => {
-                        if (chart) chart.destroy();
-
-                        const totalOrders = data.reduce((acc, val) => acc + val, 0);
-
-                        chart = new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels,
-                                datasets: [{
-                                    label: `ORDERS (Total: ${totalOrders})`,
-                                    data,
-                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                                    borderColor: 'rgba(75, 192, 192, 1)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                plugins: {
-                                    datalabels: {
-                                        anchor: 'end',
-                                        align: 'start',
-                                        color: '#000',
-                                        font: {
-                                            weight: 'bold',
-                                            size: 12
-                                        },
-                                        formatter: value => value
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: {
-                                            stepSize: 1
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: [ChartDataLabels]
-                        });
-                    })
-                    .catch(err => console.error('Error al cargar datos:', err));
-            }
-
-            // Función para cargar gráfico de órdenes por cliente
-            function loadCustomerChart() {
-                if (!filterTypeCustomer || !ctx2) return;
-
-                let url = '/orders/summary/by-customer';
-
-                if (filterTypeCustomer.value === 'year') {
-                    if (!yearInputCustomer?.value) return;
-                    url += `/year/${yearInputCustomer.value}`;
-                } else if (filterTypeCustomer.value === 'month') {
-                    if (!monthInputCustomer?.value) return;
-                    const [year, month] = monthInputCustomer.value.split('-');
-                    url += `/month/${year}/${month}`;
-                } else if (filterTypeCustomer.value === 'week') {
-                    if (!weekInputCustomer?.value) return;
-                    const [year, week] = weekInputCustomer.value.split('-W');
-                    url += `/week/${year}/${week}`;
-                }
-
-                fetch(url)
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-                        return res.json();
-                    })
-                    .then(({
-                        labels,
-                        totals,
-                        totalAll
-                    }) => {
-                        if (customerChart) customerChart.destroy();
-
-                        customerChart = new Chart(ctx2, {
-                            type: 'bar',
-                            data: {
-                                labels,
-                                datasets: [{
-                                    label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
-                                    data: totals,
-                                    backgroundColor: 'rgba(153, 102, 255, 0.7)',
-                                    borderColor: 'rgba(153, 102, 255, 1)',
-                                    borderWidth: 1,
-                                    yAxisID: 'y',
-                                }]
-                            },
-                            options: {
-                                indexAxis: 'y',
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        position: 'left',
-                                        title: {
-                                            display: true,
-                                            text: 'CUSTOMER'
-                                        }
-                                    }
-                                },
-                                plugins: {
-                                    tooltip: {
-                                        mode: 'index',
-                                        intersect: false
-                                    },
-                                    datalabels: {
-                                        anchor: 'end',
-                                        align: 'right',
-                                        color: '#fff',
-                                        font: {
-                                            weight: 'bold',
-                                            size: 12
-                                        },
-                                        formatter: value => value
-                                    }
-                                }
-                            },
-                            plugins: [ChartDataLabels]
-                        });
-                    })
-                    .catch(err => console.error('Error al cargar gráfico por cliente:', err));
-            }
-
-            // Eventos para cambiar inputs visibles y recargar gráficos
-            if (filterType) {
-                filterType.addEventListener('change', () => {
-                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                    loadChart();
-                });
-            }
-            if (filterTypeCustomer) {
-                filterTypeCustomer.addEventListener('change', () => {
-                    updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
-                    loadCustomerChart();
-                });
-            }
-
-            [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
-                if (el) el.addEventListener('change', loadChart);
-            });
-
-            [yearInputCustomer, monthInputCustomer, weekInputCustomer].forEach(el => {
-                if (el) el.addEventListener('change', loadCustomerChart);
-            });
-
-            // Inicializar inputs visibles según filtro y cargar gráficos
-            if (filterType && yearInput && monthInput && weekInput)
-                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-            if (filterTypeCustomer && yearInputCustomer && monthInputCustomer && weekInputCustomer)
-                updateVisibleInputs(filterTypeCustomer, yearInputCustomer, monthInputCustomer, weekInputCustomer);
-
-            loadChart();
-            loadCustomerChart();
-
-            // Botones para imprimir gráficos
-            const printOrdersBtn = document.getElementById('printOrdersChartBtn');
-            if (printOrdersBtn) {
-                printOrdersBtn.addEventListener('click', () => printChart('ordersChart', 'TOTAL ORDERS'));
-            }
-            const printCustomerBtn = document.getElementById('printCustomerChartBtn');
-            if (printCustomerBtn) {
-                printCustomerBtn.addEventListener('click', () => printChart('byCustomerChart', 'ORDERS PER CUSTOMER'));
-            }
-       
-            window.printChart = printChart;
-            // Función para imprimir gráfico dado el ID del canvas
-            function printChart(canvasId, chartTitle) {
-                const canvas = document.getElementById(canvasId);
-                if (!canvas) return;
-
-                const dataUrl = canvas.toDataURL();
-
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
+        const dataUrl = canvas.toDataURL();
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
 <html>
 <head>
     <title>${chartTitle}</title>
@@ -758,19 +528,307 @@
 </head>
 <body>
     <h2>${chartTitle}</h2>
-    <div class="filter-info">${currentFilterText}</div>
+    <div class="filter-info">${filterText}</div>
     <img src="${dataUrl}" />
-    <script>
-        window.onload = () => { window.print(); };
-    <\/script>
+    <script>window.onload = () => { window.print(); };<\/script>
 </body>
 </html>
-        `);
-                printWindow.document.close();
+    `);
+        printWindow.document.close();
+    }
+
+    function loadChartElements() {
+        const filterType = document.getElementById('filterType');
+        const yearInput = document.getElementById('yearInput');
+        const monthInput = document.getElementById('monthInput');
+        const weekInput = document.getElementById('weekInput');
+        const customerFilter = document.getElementById('customerFilter');
+        const ctx = document.getElementById('ordersChart')?.getContext('2d');
+        const chartRef = {
+            chart: null
+        };
+
+        function updateChart() {
+            let url = '/orders/summary';
+            let currentFilterText = '';
+
+            if (filterType.value === 'year') {
+                if (!yearInput?.value) return;
+                url += `/year/${yearInput.value}`;
+                currentFilterText = `Year: ${yearInput.value}`;
+            } else if (filterType.value === 'month') {
+                if (!monthInput?.value) return;
+                const [year, month] = monthInput.value.split('-');
+                url += `/month/${year}/${month}`;
+                currentFilterText = `Month: ${monthInput.value}`;
+            } else if (filterType.value === 'week') {
+                if (!weekInput?.value) return;
+                const [year, week] = weekInput.value.split('-W');
+                url += `/week/${year}/${week}`;
+                currentFilterText = `Week: ${weekInput.value}`;
             }
 
+            if (customerFilter?.value) {
+                const separator = url.includes('?') ? '&' : '?';
+                url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
+                currentFilterText += `<br>Customer: ${customerFilter.value}`;
+            }
 
+            fetch(url)
+                .then(res => res.json())
+                .then(({
+                    labels,
+                    data
+                }) => {
+                    if (chartRef.chart) chartRef.chart.destroy();
+
+                    const totalOrders = data.reduce((acc, val) => acc + val, 0);
+
+                    chartRef.chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: `ORDERS (Total: ${totalOrders})`,
+                                data,
+                                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'start',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 12
+                                    },
+                                    formatter: value => value
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                });
+        }
+
+        if (filterType && yearInput && monthInput && weekInput) {
+            updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+            filterType.addEventListener('change', () => {
+                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                updateChart();
+            });
+        }
+
+        [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
+            if (el) el.addEventListener('change', updateChart);
         });
+
+        updateChart();
+    }
+
+    function loadCustomerChartElements() {
+        const filterType = document.getElementById('filterTypeCustomer');
+        const yearInput = document.getElementById('yearInputCustomer');
+        const monthInput = document.getElementById('monthInputCustomer');
+        const weekInput = document.getElementById('weekInputCustomer');
+        const ctx = document.getElementById('byCustomerChart')?.getContext('2d');
+        const chartRef = {
+            chart: null
+        };
+
+        function updateChart() {
+            let url = '/orders/summary/by-customer';
+
+            if (filterType.value === 'year') {
+                if (!yearInput?.value) return;
+                url += `/year/${yearInput.value}`;
+            } else if (filterType.value === 'month') {
+                if (!monthInput?.value) return;
+                const [year, month] = monthInput.value.split('-');
+                url += `/month/${year}/${month}`;
+            } else if (filterType.value === 'week') {
+                if (!weekInput?.value) return;
+                const [year, week] = weekInput.value.split('-W');
+                url += `/week/${year}/${week}`;
+            }
+
+            fetch(url)
+                .then(res => res.json())
+                .then(({
+                    labels,
+                    totals,
+                    totalAll
+                }) => {
+                    if (chartRef.chart) chartRef.chart.destroy();
+
+                    chartRef.chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
+                                data: totals,
+                                backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                                borderColor: 'rgba(153, 102, 255, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y',
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'start',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 12
+                                    },
+                                    formatter: value => value
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                });
+        }
+
+        if (filterType && yearInput && monthInput && weekInput) {
+            updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+            filterType.addEventListener('change', () => {
+                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                updateChart();
+            });
+        }
+
+        [yearInput, monthInput, weekInput].forEach(el => {
+            if (el) el.addEventListener('change', updateChart);
+        });
+
+        updateChart();
+    }
+
+    $(document).ready(function() {
+        initDataTable('#tableweek', 'ORDERS THIS WEEK');
+        initDataTable('#tablelate', 'LATE ORDERS');
+        loadChartElements();
+        loadCustomerChartElements();
+
+        const weekFilter = document.getElementById('week-filter');
+
+        if (weekFilter) {
+            // ✅ Detectar cambio de semana
+            weekFilter.addEventListener("change", function() {
+                const week = this.value;
+                console.log("Semana seleccionada:", week);
+
+                fetch(`/orders/by-week/ajax?week=${week}`, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                    })
+                    .then((res) => res.json())
+                    .then((data) => {
+                        const tbody = document.getElementById("tableweek-body");
+                        const count = document.getElementById("order-count");
+
+                        if (!tbody || !count) {
+                            console.warn("No se encontró tbody o contador.");
+                            return;
+                        }
+
+                        // 💡 Destruir DataTable anterior si existe
+                        const table = $("#tableweek");
+                        if ($.fn.DataTable.isDataTable(table)) {
+                            table.DataTable().clear().destroy();
+                        }
+
+                        // 💡 Actualizar tbody con nuevas filas
+                        tbody.innerHTML = data.html;
+
+                        // 💡 Actualizar contador
+                        count.textContent = data.count;
+
+                        // 💡 Reinicializar DataTable
+                        initDataTable("#tableweek", "ORDERS THIS WEEK");
+
+                        // 💡 Actualizar texto visible de la semana
+                        const weekDisplay = document.getElementById("week-display");
+                        if (weekDisplay && week) {
+                            const [year, weekNumber] = week.split('-W');
+                            const simpleDate = getFirstDateOfISOWeek(parseInt(weekNumber), parseInt(
+                                year));
+
+                            const options = {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            };
+                            const formatted = simpleDate.toLocaleDateString('en-US', options);
+                            weekDisplay.textContent = `Week starting: ${formatted}`;
+                        }
+
+                        // 👉 Función para obtener lunes de la semana ISO
+                        function getFirstDateOfISOWeek(week, year) {
+                            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+                            const dow = simple.getDay();
+                            if (dow <= 4) {
+                                simple.setDate(simple.getDate() - simple.getDay() + 1);
+                            } else {
+                                simple.setDate(simple.getDate() + 8 - simple.getDay());
+                            }
+                            return simple;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching data:", error);
+                        alert("Error loading data for the selected week.");
+                    });
+
+            });
+
+            // ✅ Al cargar la página, establecer semana actual si no hay valor
+            if (!weekFilter.value) {
+                const today = new Date();
+                const year = today.getFullYear();
+
+                const getISOWeek = date => {
+                    const tmp = new Date(date.getTime());
+                    tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
+                    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+                    const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+                    return weekNo;
+                };
+
+                const week = getISOWeek(today).toString().padStart(2, '0');
+                const value = `${year}-W${week}`;
+                weekFilter.value = value;
+
+                // 💥 Disparar manualmente el evento change
+                weekFilter.dispatchEvent(new Event("change"));
+            }
+        }
+    });
     </script>
 
     @endpush

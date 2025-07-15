@@ -57,30 +57,33 @@ Route::match(['put', 'patch'], '/roles/{id}', [RolePermissionController::class, 
 // Devuelve la lista de permisos (GET)
 Route::get('/roles/{id}/permissions', [RolePermissionController::class, 'getPermissions']);
 
-//--------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------
 Route::resource('schedule/general', Order_ScheduleController::class);
 // Ruta para almacenar la nueva orden
 Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
 
-//Route::resource('/schedule/general', Order_ScheduleController::class);
+//Tabs de vistas
 Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general');
 Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell');
 Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
 
+//Importar archivo en excel
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
+
 Route::post('/orders/{order}/update-status', [Order_ScheduleController::class, 'updateStatus']);
 Route::post('/orders/{order}/update-report', [Order_ScheduleController::class, 'updateReport']);
 Route::post('/orders/{order}/update-source', [Order_ScheduleController::class, 'updateSource']);
 Route::post('/orders/{order}/update-location', [Order_ScheduleController::class, 'updateLocation'])->name('orders.updateLocation');
 Route::post('/orders/{order}/update-date-machining', [Order_ScheduleController::class, 'updateDateMachining']);
-//Route::post('/orders/change-status', [Order_ScheduleController::class, 'changeStatus'])->name('orders.changeStatus');
-
-Route::post('/orders/{order}/return-previous', [Order_ScheduleController::class, 'returnPreviousStatus'])->name('orders.returnPreviousStatus');
-Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);
 Route::post('/orders/{order}/update-notes', [Order_ScheduleController::class, 'updateNotes']);
 Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 'ajaxUpdateWorkId'])->name('orders.ajaxUpdateWorkId');
 Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
+
+Route::post('/orders/{order}/return-previous', [Order_ScheduleController::class, 'returnPreviousStatus'])->name('orders.returnPreviousStatus');
+Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);
+
+//Ventanas de Hearst y Yarnell
 Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
 Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
 
@@ -98,6 +101,11 @@ Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::clas
 Route::get('/orders/summary/by-customer/year/{year}', [Order_ScheduleController::class, 'summaryByCustomerYear']);
 Route::get('/orders/summary/by-customer/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByCustomerMonth']);
 Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByCustomerWeek']);
+
+
+Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersByWeekAjax'])->name('orders.byWeek.ajax');
+
+
 
 
 // -----------------------------------Machines-------------------------------------------------------

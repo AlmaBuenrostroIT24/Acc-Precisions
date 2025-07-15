@@ -136,13 +136,13 @@ class Order_ScheduleController extends Controller
             if (!$order->previous_status) {
                 return response()->json(['success' => false, 'message' => 'No hay estado anterior registrado.'], 400);
             }
-    
+
             $order->status = $order->previous_status;
             $order->previous_status = null;
             $order->sent_at = null; // limpiar si lo deseas
             $order->target_date = null; // limpiar si lo deseas
             $order->save();
-    
+
             return response()->json([
                 'success' => true,
                 'newStatus' => $order->status,
@@ -151,8 +151,8 @@ class Order_ScheduleController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-    
-    
+
+
 
     //----------------------------------------------------------------------------------------------------------------------------
     //Orders Statistics--------------------------------------------------------------------------------------------------------------
@@ -855,7 +855,7 @@ class Order_ScheduleController extends Controller
 
         // Día de la semana en nombre corto (Dom, Lun, ...)
         $labels = $data->pluck('weekday')->map(function ($w) {
-            $days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            $days = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
             return $days[$w - 1] ?? 'Día';
         });
 
@@ -961,6 +961,31 @@ class Order_ScheduleController extends Controller
             'totalAll' => $totalAll,
         ]);
     }
+
+
+
+    public function getOrdersByWeekAjax(Request $request)
+    {
+        $weekInput = $request->query('week'); // ejemplo: "2025-W29"
+
+        if (!$weekInput || !preg_match('/^(\d{4})-W(\d{2})$/', $weekInput, $matches)) {
+            return response()->json(['html' => '', 'count' => 0]);
+        }
+    
+        $year = (int)$matches[1];
+        $week = (int)$matches[2];
+    
+        $start = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
+        $end = $start->copy()->endOfWeek();
+    
+        $ordenes = OrderSchedule::whereBetween('due_date', [$start, $end])->get();
+    
+        return response()->json([
+            'html' => view('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenes])->render(),
+            'count' => $ordenes->count(),
+        ]);
+    }
+
 
     // Función para formatear respuesta JSON para Chart.js
     private function formatChartData($data)
