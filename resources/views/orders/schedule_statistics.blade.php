@@ -373,8 +373,8 @@
                 </div>
                 <div class="card-body text-center py-4">
                     <i class="fas fa-box-open fa-3x text-success mb-3"></i>
-                    <p class="mb-1 text-muted">TOTAL ORDERS: <strong>{{ $resumen['total'] }}</strong></p>
-                    <p class="fs-6 fw-bold text-success mb-0">✅ ¡Everything shipped this week!</p>
+                    <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS: <strong>{{ $resumen['total'] }}</strong></p>
+                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">✅ ¡Everything shipped this week!</p>
                 </div>
                 @else
                 <div class="card-header bg-warning text-dark text-center rounded-top-4">
