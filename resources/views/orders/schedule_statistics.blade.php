@@ -154,8 +154,8 @@
                             style="white-space: nowrap;">
                         </span>
                         <div class="input-group input-group-sm" style="width: 180px;">
-                            <input type="week" name="week" id="week-filter" class="form-control border-secondary text-dark font-weight-bold"
-                                style="height: 32px;">
+                            <input type="week" name="week" id="week-filter"
+                                class="form-control border-secondary text-dark font-weight-bold" style="height: 32px;">
                         </div>
                     </div>
                 </div>
@@ -364,39 +364,106 @@
 
         {{-- Card: Órdenes agregadas esta semana --}}
         <div class="col-md-4 col-sm-6 mb-3">
-            <div class="card shadow-sm rounded-3 border-0 h-100">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
-                        <i class="fas fa-calendar-plus"></i>
-                        Orders Added This Week
-                    </div>
-                    <span class="badge bg-light text-primary fs-6">{{ $totalAgregadasSemana }}</span>
+            <div class="card shadow rounded-4 border-0 h-100">
+                @if ($resumen['all_shipping'])
+                <div class="card-header bg-success text-white text-center rounded-top-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i> PENDING ORDERS THIS WEEK
+                    </h5>
                 </div>
-                <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
-                    @if ($ordenesAgregadasSemana->isNotEmpty())
-                    <ul class="list-group list-group-flush small">
-                        @foreach ($ordenesAgregadasSemana as $orden)
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
-                            <div class="text-truncate" style="max-width: 65%;">
-                                <strong>{{ ucfirst($orden->costumer) }}</strong> — PN {{ $orden->PN }} ( Qty:
-                                {{ $orden->qty }} )<br>
-                                <small class="text-secondary">WORK ID {{ $orden->work_id }} —
-                                    {{ ucfirst($orden->location) }}. {{ $orden->created_at->format('d M Y') }}
-                                </small><br>
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-success mb-3"></i>
+                    <p class="mb-1 text-muted">TOTAL ORDERS: <strong>{{ $resumen['total'] }}</strong></p>
+                    <p class="fs-6 fw-bold text-success mb-0">✅ ¡Everything shipped this week!</p>
+                </div>
+                @else
+                <div class="card-header bg-warning text-dark text-center rounded-top-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i> PENDING ORDERS THIS WEEK
+                    </h5>
+                </div>
+                <div class="card-body py-3">
+                    <div class="row">
+                        {{-- Columna izquierda: resumen --}}
+
+                        <div class="col-4">
+                            <div class="text-start small">
+                                {{-- Cabecera con ícono --}}
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-box fa-2x text-warning mr-3"></i>
+                                    <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
+                                </div>
+
+                                {{-- Línea: Total --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="mr-2" style="width: 28px;">
+                                        <i class="fas fa-list-alt text-muted"></i>
+                                    </div>
+                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
+                                    <span class="font-weight-bold text-dark" style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
+                                </div>
+
+                                {{-- Línea: Pending --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="mr-4" style="width: 28px;">
+                                        <i class="fas fa-clock text-warning"></i>
+                                    </div>
+                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
+                                    <span class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
+                                </div>
+
+                                {{-- Línea: Sent --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="mr-4" style="width: 28px;">
+                                        <i class="fas fa-paper-plane text-success"></i>
+                                    </div>
+                                  <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
+                                    <span class="font-weight-bold text-success" style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
+                                </div>
+
+                                {{-- Mensaje final (solo si hay pendientes) --}}
+                                @if(!$resumen['all_shipping'])
+                                <div class="alert alert-warning py-2 px-3 mt-3 mb-0 d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <span class="font-weight-bold medium">There are still orders to be sent.</span>
+                                </div>
+                                @endif
                             </div>
-                            <span class="badge bg-success">{{ $orden->status ?? 'No status' }}</span>
-                        </li>
-                        @endforeach
-                    </ul>
-                    @else
-                    <div class="text-center text-muted small py-5">
-                        <i class="bi bi-info-circle fs-2 mb-2"></i>
-                        No orders added this week.
-                    </div>
-                    @endif
+                        </div>
+
+                        {{-- Columna derecha: tabla scroll --}}
+                        <div class="col-8">
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered table-striped small mb-0">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ORDER</th>
+                                            <th>PN</th>
+                                            <th>DUE DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($weeklyOrders->where('status', '!=', 'sent') as $order)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $order->work_id ?? 'N/A' }}</td>
+                                            <td>{{ $order->PN ?? 'N/A' }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div> {{-- end row --}}
                 </div>
+                @endif
             </div>
         </div>
+
+
+
 
         {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
         <div class="col-md-4 col-sm-6 mb-3">

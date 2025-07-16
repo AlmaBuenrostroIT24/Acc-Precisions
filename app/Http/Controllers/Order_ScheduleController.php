@@ -210,6 +210,19 @@ class Order_ScheduleController extends Controller
             ->orderBy('costumer')
             ->pluck('costumer');
 
+            $startOfWeek = Carbon::now()->startOfWeek();
+$endOfWeek = Carbon::now()->endOfWeek();
+
+$weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
+    ->orderBy('due_date', 'asc')
+    ->get();
+$resumen = [
+    'total' => $weeklyOrders->count(),
+    'send' => $weeklyOrders->where('status', 'sent')->count(),
+    'pendients' => $weeklyOrders->where('status', '!=', 'sent')->count(),
+    'all_shipping' => $weeklyOrders->every(fn($o) => $o->status === 'sent'),
+];
+
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.schedule_statistics', compact(
             'ordenesSemana',
@@ -223,7 +236,9 @@ class Order_ScheduleController extends Controller
             'ordenesPorCliente',
             'ordenesAgregadasSemana',
             'totalAgregadasSemana',
-            'customers'
+            'customers',
+            'resumen',
+            'weeklyOrders'
         ));
     }
     //----------------------------------------------------------------------------------------------------------------------------
