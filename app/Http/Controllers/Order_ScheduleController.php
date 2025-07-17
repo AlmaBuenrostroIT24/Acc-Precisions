@@ -209,20 +209,50 @@ class Order_ScheduleController extends Controller
             ->distinct()
             ->orderBy('costumer')
             ->pluck('costumer');
+        //-------------------------------------------------------------------------------------------
+        //Utiliza whereBetween con la fecha de due_date o target_date según tu sistema para obtener solo las órdenes de esta semana:
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+        $weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
+            ->orderBy('due_date', 'asc')
+            ->get();
+        // Retornar un resumen
+        $resumen = [
+            'total' => $weeklyOrders->count(),
+            'send' => $weeklyOrders->where('status', 'sent')->count(),
+            'pendients' => $weeklyOrders->where('status', '!=', 'sent')->count(),
+            'all_shipping' => $weeklyOrders->every(fn($o) => $o->status === 'sent'),
+        ];
+        //--------------------------------------------------------------------------------------
+        //Controlador con filtro hasta la semana actual
+        $orders = DB::table('orders_schedule')
+            ->selectRaw('
+        YEARWEEK(due_date, 1) as week,
+        COUNT(*) as total,SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late')
+            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)') //órdenes cuya due_date está hasta la semana actual (inclusive), ignorando futuras semanas.
+            ->groupBy('week')
+            ->orderBy('week', 'desc')
+            ->get();
+        //------------------------------------------------------------------
+        //65% de las semanas cumplieron con todas las órdenes a tiempo
+        $totalWeeks = DB::table('orders_schedule')
+            ->selectRaw('YEARWEEK(due_date, 1) as week')
+            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->groupBy('week')
+            ->get()
+            ->count();
 
-            $startOfWeek = Carbon::now()->startOfWeek();
-$endOfWeek = Carbon::now()->endOfWeek();
+        $weeksOnTime = DB::table('orders_schedule')
+            ->selectRaw('YEARWEEK(due_date, 1) as week')
+            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->groupBy('week')
+            ->havingRaw('SUM(CASE WHEN status != "sent" THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN sent_at > due_date THEN 1 ELSE 0 END) = 0')
+            ->get()
+            ->count();
 
-$weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
-    ->orderBy('due_date', 'asc')
-    ->get();
-$resumen = [
-    'total' => $weeklyOrders->count(),
-    'send' => $weeklyOrders->where('status', 'sent')->count(),
-    'pendients' => $weeklyOrders->where('status', '!=', 'sent')->count(),
-    'all_shipping' => $weeklyOrders->every(fn($o) => $o->status === 'sent'),
-];
-
+        $percentageOnTime = $totalWeeks > 0 ? round(($weeksOnTime / $totalWeeks) * 100) : 0;
+        //-------------------------------------------------------------------------------------
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.schedule_statistics', compact(
             'ordenesSemana',
@@ -238,7 +268,9 @@ $resumen = [
             'totalAgregadasSemana',
             'customers',
             'resumen',
-            'weeklyOrders'
+            'weeklyOrders',
+            'orders',
+            'percentageOnTime'
         ));
     }
     //----------------------------------------------------------------------------------------------------------------------------
@@ -986,15 +1018,15 @@ $resumen = [
         if (!$weekInput || !preg_match('/^(\d{4})-W(\d{2})$/', $weekInput, $matches)) {
             return response()->json(['html' => '', 'count' => 0]);
         }
-    
+
         $year = (int)$matches[1];
         $week = (int)$matches[2];
-    
+
         $start = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
         $end = $start->copy()->endOfWeek();
-    
+
         $ordenes = OrderSchedule::whereBetween('due_date', [$start, $end])->get();
-    
+
         return response()->json([
             'html' => view('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenes])->render(),
             'count' => $ordenes->count(),

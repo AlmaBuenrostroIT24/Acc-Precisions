@@ -336,10 +336,10 @@
                         <i class="bi bi-people-fill"></i>
                         Customers with Orders
                     </div>
-                    <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span> <button
-                        onclick="printCard()" class="btn btn-primary mb-3">Print</button>
+                    <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
+                  {{--   <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>--}}
                 </div>
-                <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
+                <div class="card-body px-3 py-2" style="max-height: 410px; overflow-y: auto;">
                     @if ($ordenesPorCliente->isNotEmpty())
                     <ul class="list-group list-group-flush small">
                         @foreach ($ordenesPorCliente as $grupo)
@@ -373,8 +373,11 @@
                 </div>
                 <div class="card-body text-center py-4">
                     <i class="fas fa-box-open fa-3x text-success mb-3"></i>
-                    <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS: <strong>{{ $resumen['total'] }}</strong></p>
-                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">✅ ¡Everything shipped this week!</p>
+                    <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
+                        <strong>{{ $resumen['total'] }}</strong>
+                    </p>
+                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">✅ ¡Everything shipped this
+                        week!</p>
                 </div>
                 @else
                 <div class="card-header bg-warning text-dark text-center rounded-top-4">
@@ -400,7 +403,8 @@
                                         <i class="fas fa-list-alt text-muted"></i>
                                     </div>
                                     <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
-                                    <span class="font-weight-bold text-dark" style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
+                                    <span class="font-weight-bold text-dark"
+                                        style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
                                 </div>
 
                                 {{-- Línea: Pending --}}
@@ -409,7 +413,8 @@
                                         <i class="fas fa-clock text-warning"></i>
                                     </div>
                                     <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
-                                    <span class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
+                                    <span class="font-weight-bold text-warning"
+                                        style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
                                 </div>
 
                                 {{-- Línea: Sent --}}
@@ -417,8 +422,9 @@
                                     <div class="mr-4" style="width: 28px;">
                                         <i class="fas fa-paper-plane text-success"></i>
                                     </div>
-                                  <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
-                                    <span class="font-weight-bold text-success" style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
+                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
+                                    <span class="font-weight-bold text-success"
+                                        style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
                                 </div>
 
                                 {{-- Mensaje final (solo si hay pendientes) --}}
@@ -433,9 +439,9 @@
 
                         {{-- Columna derecha: tabla scroll --}}
                         <div class="col-8">
-                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <div class="table-responsive" style="max-height: 389px; overflow-y: auto;">
                                 <table class="table table-sm table-bordered table-striped small mb-0">
-                                    <thead class="table-light sticky-top">
+                                    <thead class="thead-light sticky-top">
                                         <tr>
                                             <th>#</th>
                                             <th>ORDER</th>
@@ -468,14 +474,109 @@
         {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
         <div class="col-md-4 col-sm-6 mb-3">
             <div class="card shadow-sm rounded-3 border-0 h-100">
-                <div class="card-header bg-secondary text-white d-flex align-items-center fw-semibold fs-5">
-                    <i class="fas fa-box me-2"></i> Example Third Card
+                {{-- Header --}}
+                <div class="card-header bg-secondary text-white d-flex align-items-center font-weight-semibold">
+                    <i class="fas fa-calendar-week mr-2"></i> Weekly Orders
                 </div>
-                <div class="card-body px-3 py-2 text-muted small">
-                    Content for a third card goes here.
+
+                @php
+                // Dinámica de colores e íconos según el cumplimiento global
+                if ($percentageOnTime >= 90) {
+                $percentColor = 'text-success';
+                $circleColor = 'bg-success';
+                $icon = 'fa-check';
+                } elseif ($percentageOnTime >= 70) {
+                $percentColor = 'text-warning';
+                $circleColor = 'bg-warning';
+                $icon = 'fa-exclamation';
+                } else {
+                $percentColor = 'text-danger';
+                $circleColor = 'bg-danger';
+                $icon = 'fa-times';
+                }
+                @endphp
+
+                {{-- Porcentaje general de cumplimiento --}}
+                <div class="px-3 py-2 border-bottom" style="background-color: #f8f9fa;">
+                    <div class="d-flex justify-content-center align-items-center mb-1">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center {{ $circleColor }} mr-2"
+                            style="width: 20px; height: 20px;">
+                            <i class="fas {{ $icon }} text-white" style="font-size: 0.75rem;"></i>
+                        </div>
+                        <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Based on {{ $orders->count() }} weeks">
+                            <h7 class="font-weight-bold mb-0 {{ $percentColor }}" style="font-size: 1.25rem;">
+                                {{ $percentageOnTime }}%
+                            </h7>
+                        </span>
+                    </div>
+                    <p class="text-dark text-center mb-0 small">Of weeks had 100% of orders completed on time</p>
+                </div>
+
+                {{-- Tabla de órdenes por semana --}}
+                <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-striped small mb-0">
+                        <thead class="thead-light sticky-top">
+                            <tr class="text-center">
+                                <th>Week</th>
+                                <th>Date Range</th>
+                                <th>Total</th>
+                                <th class="text-success">✔ Done</th>
+                                <th class="text-warning">⏱ Late</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($orders as $item)
+                            @php
+                            $year = substr($item->week, 0, 4);
+                            $week = substr($item->week, 4);
+                            $startOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
+                            $endOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->endOfWeek();
+
+                            $completed = $item->completed ?? 0;
+                            $late = $item->late ?? 0;
+                            $total = $item->total ?: 1;
+
+                            $completedPercent = round(($completed / $total) * 100);
+                            $latePercent = round(($late / $total) * 100);
+                            @endphp
+
+                            <tr class="text-center">
+                                <td>{{ $year }} W{{ $week }}</td>
+                                <td>{{ $startOfWeek->format('M d') }} - {{ $endOfWeek->format('M d') }}</td>
+                                <td>{{ $item->total }}</td>
+                                <td class="text-success font-weight-bold">{{ $completed }}</td>
+                                <td class="text-danger font-weight-bold">{{ $late }}</td>
+                                <td>
+                                    <span class="badge badge-pill 
+                                    {{ $completedPercent >= 90 ? 'badge-success' : ($completedPercent >= 70 ? 'badge-warning' : 'badge-danger') }}">
+                                        {{ $completedPercent }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="6" class="p-1">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: {{ $completedPercent }}%;"></div>
+                                        <div class="progress-bar bg-warning" style="width: {{ $latePercent }}%;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No data available</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
+
+
+
+
     </div>
 
 
@@ -483,11 +584,11 @@
 
     @section('css')
     <style>
-    .dataTables_wrapper {
-        margin-top: 20px !important;
-        margin-left: 15px !important;
-        margin-right: 15px !important;
-    }
+        .dataTables_wrapper {
+            margin-top: 20px !important;
+            margin-left: 15px !important;
+            margin-right: 15px !important;
+        }
     </style>
 
     <!-- CSS de DataTables + Botones -->
@@ -514,75 +615,75 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
-    // orders_dashboard.js
+        // orders_dashboard.js
 
-    Chart.register(ChartDataLabels);
+        Chart.register(ChartDataLabels);
 
-    function getFechaHoraActual() {
-        const now = new Date();
-        const fecha = now.toLocaleDateString('en-US');
-        const hora = now.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        return `${fecha} ${hora}`;
-    }
+        function getFechaHoraActual() {
+            const now = new Date();
+            const fecha = now.toLocaleDateString('en-US');
+            const hora = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            return `${fecha} ${hora}`;
+        }
 
-    function initDataTable(selector, tableTitle) {
-        const fechaHora = getFechaHoraActual();
-        $(selector).DataTable({
-            pageLength: 10,
-            order: [
-                [6, 'asc']
-            ],
-            dom: "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
-                "<'row'<'col-12'tr>>" +
-                "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
-            buttons: [{
-                    extend: 'excelHtml5',
-                    title: `${tableTitle} - ${fechaHora}`,
-                    text: '<i class="fas fa-file-excel"></i> Excel',
-                    className: 'btn btn-success btn-sm mx-0',
-                    filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
-                },
-                {
-                    extend: 'pdfHtml5',
-                    title: `${tableTitle} - ${fechaHora}`,
-                    text: '<i class="fas fa-file-pdf"></i> PDF',
-                    className: 'btn btn-danger btn-sm mx-1',
-                    orientation: 'landscape',
-                    pageSize: 'A4',
-                    filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
-                },
-                {
-                    extend: 'print',
-                    title: `${tableTitle} - ${fechaHora}`,
-                    text: '<i class="fas fa-print"></i> Print',
-                    className: 'btn btn-primary btn-sm'
-                }
-            ],
-            searching: true,
-        });
-    }
+        function initDataTable(selector, tableTitle) {
+            const fechaHora = getFechaHoraActual();
+            $(selector).DataTable({
+                pageLength: 10,
+                order: [
+                    [6, 'asc']
+                ],
+                dom: "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
+                    "<'row'<'col-12'tr>>" +
+                    "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
+                buttons: [{
+                        extend: 'excelHtml5',
+                        title: `${tableTitle} - ${fechaHora}`,
+                        text: '<i class="fas fa-file-excel"></i> Excel',
+                        className: 'btn btn-success btn-sm mx-0',
+                        filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        title: `${tableTitle} - ${fechaHora}`,
+                        text: '<i class="fas fa-file-pdf"></i> PDF',
+                        className: 'btn btn-danger btn-sm mx-1',
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+                        filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+                    },
+                    {
+                        extend: 'print',
+                        title: `${tableTitle} - ${fechaHora}`,
+                        text: '<i class="fas fa-print"></i> Print',
+                        className: 'btn btn-primary btn-sm'
+                    }
+                ],
+                searching: true,
+            });
+        }
 
-    function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
-        if (!yearInp || !monthInp || !weekInp) return;
-        yearInp.classList.add('d-none');
-        monthInp.classList.add('d-none');
-        weekInp.classList.add('d-none');
+        function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
+            if (!yearInp || !monthInp || !weekInp) return;
+            yearInp.classList.add('d-none');
+            monthInp.classList.add('d-none');
+            weekInp.classList.add('d-none');
 
-        if (typeSelect.value === 'year') yearInp.classList.remove('d-none');
-        if (typeSelect.value === 'month') monthInp.classList.remove('d-none');
-        if (typeSelect.value === 'week') weekInp.classList.remove('d-none');
-    }
+            if (typeSelect.value === 'year') yearInp.classList.remove('d-none');
+            if (typeSelect.value === 'month') monthInp.classList.remove('d-none');
+            if (typeSelect.value === 'week') weekInp.classList.remove('d-none');
+        }
 
-    function printChart(canvasId, chartTitle, filterText = '') {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
+        function printChart(canvasId, chartTitle, filterText = '') {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
 
-        const dataUrl = canvas.toDataURL();
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
+            const dataUrl = canvas.toDataURL();
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
 <html>
 <head>
     <title>${chartTitle}</title>
@@ -601,301 +702,301 @@
 </body>
 </html>
     `);
-        printWindow.document.close();
-    }
+            printWindow.document.close();
+        }
 
-    function loadChartElements() {
-        const filterType = document.getElementById('filterType');
-        const yearInput = document.getElementById('yearInput');
-        const monthInput = document.getElementById('monthInput');
-        const weekInput = document.getElementById('weekInput');
-        const customerFilter = document.getElementById('customerFilter');
-        const ctx = document.getElementById('ordersChart')?.getContext('2d');
-        const chartRef = {
-            chart: null
-        };
+        function loadChartElements() {
+            const filterType = document.getElementById('filterType');
+            const yearInput = document.getElementById('yearInput');
+            const monthInput = document.getElementById('monthInput');
+            const weekInput = document.getElementById('weekInput');
+            const customerFilter = document.getElementById('customerFilter');
+            const ctx = document.getElementById('ordersChart')?.getContext('2d');
+            const chartRef = {
+                chart: null
+            };
 
-        function updateChart() {
-            let url = '/orders/summary';
-            let currentFilterText = '';
+            function updateChart() {
+                let url = '/orders/summary';
+                let currentFilterText = '';
 
-            if (filterType.value === 'year') {
-                if (!yearInput?.value) return;
-                url += `/year/${yearInput.value}`;
-                currentFilterText = `Year: ${yearInput.value}`;
-            } else if (filterType.value === 'month') {
-                if (!monthInput?.value) return;
-                const [year, month] = monthInput.value.split('-');
-                url += `/month/${year}/${month}`;
-                currentFilterText = `Month: ${monthInput.value}`;
-            } else if (filterType.value === 'week') {
-                if (!weekInput?.value) return;
-                const [year, week] = weekInput.value.split('-W');
-                url += `/week/${year}/${week}`;
-                currentFilterText = `Week: ${weekInput.value}`;
-            }
+                if (filterType.value === 'year') {
+                    if (!yearInput?.value) return;
+                    url += `/year/${yearInput.value}`;
+                    currentFilterText = `Year: ${yearInput.value}`;
+                } else if (filterType.value === 'month') {
+                    if (!monthInput?.value) return;
+                    const [year, month] = monthInput.value.split('-');
+                    url += `/month/${year}/${month}`;
+                    currentFilterText = `Month: ${monthInput.value}`;
+                } else if (filterType.value === 'week') {
+                    if (!weekInput?.value) return;
+                    const [year, week] = weekInput.value.split('-W');
+                    url += `/week/${year}/${week}`;
+                    currentFilterText = `Week: ${weekInput.value}`;
+                }
 
-            if (customerFilter?.value) {
-                const separator = url.includes('?') ? '&' : '?';
-                url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
-                currentFilterText += `<br>Customer: ${customerFilter.value}`;
-            }
+                if (customerFilter?.value) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
+                    currentFilterText += `<br>Customer: ${customerFilter.value}`;
+                }
 
-            fetch(url)
-                .then(res => res.json())
-                .then(({
-                    labels,
-                    data
-                }) => {
-                    if (chartRef.chart) chartRef.chart.destroy();
+                fetch(url)
+                    .then(res => res.json())
+                    .then(({
+                        labels,
+                        data
+                    }) => {
+                        if (chartRef.chart) chartRef.chart.destroy();
 
-                    const totalOrders = data.reduce((acc, val) => acc + val, 0);
+                        const totalOrders = data.reduce((acc, val) => acc + val, 0);
 
-                    chartRef.chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels,
-                            datasets: [{
-                                label: `ORDERS (Total: ${totalOrders})`,
-                                data,
-                                backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            plugins: {
-                                datalabels: {
-                                    anchor: 'end',
-                                    align: 'start',
-                                    color: '#000',
-                                    font: {
-                                        weight: 'bold',
-                                        size: 12
-                                    },
-                                    formatter: value => value
-                                }
+                        chartRef.chart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    label: `ORDERS (Total: ${totalOrders})`,
+                                    data,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }]
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1
+                            options: {
+                                plugins: {
+                                    datalabels: {
+                                        anchor: 'end',
+                                        align: 'start',
+                                        color: '#000',
+                                        font: {
+                                            weight: 'bold',
+                                            size: 12
+                                        },
+                                        formatter: value => value
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            stepSize: 1
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        plugins: [ChartDataLabels]
+                            },
+                            plugins: [ChartDataLabels]
+                        });
                     });
-                });
-        }
-
-        if (filterType && yearInput && monthInput && weekInput) {
-            updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-            filterType.addEventListener('change', () => {
-                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                updateChart();
-            });
-        }
-
-        [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
-            if (el) el.addEventListener('change', updateChart);
-        });
-
-        updateChart();
-    }
-
-    function loadCustomerChartElements() {
-        const filterType = document.getElementById('filterTypeCustomer');
-        const yearInput = document.getElementById('yearInputCustomer');
-        const monthInput = document.getElementById('monthInputCustomer');
-        const weekInput = document.getElementById('weekInputCustomer');
-        const ctx = document.getElementById('byCustomerChart')?.getContext('2d');
-        const chartRef = {
-            chart: null
-        };
-
-        function updateChart() {
-            let url = '/orders/summary/by-customer';
-
-            if (filterType.value === 'year') {
-                if (!yearInput?.value) return;
-                url += `/year/${yearInput.value}`;
-            } else if (filterType.value === 'month') {
-                if (!monthInput?.value) return;
-                const [year, month] = monthInput.value.split('-');
-                url += `/month/${year}/${month}`;
-            } else if (filterType.value === 'week') {
-                if (!weekInput?.value) return;
-                const [year, week] = weekInput.value.split('-W');
-                url += `/week/${year}/${week}`;
             }
 
-            fetch(url)
-                .then(res => res.json())
-                .then(({
-                    labels,
-                    totals,
-                    totalAll
-                }) => {
-                    if (chartRef.chart) chartRef.chart.destroy();
+            if (filterType && yearInput && monthInput && weekInput) {
+                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                filterType.addEventListener('change', () => {
+                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                    updateChart();
+                });
+            }
 
-                    chartRef.chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels,
-                            datasets: [{
-                                label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
-                                data: totals,
-                                backgroundColor: 'rgba(153, 102, 255, 0.7)',
-                                borderColor: 'rgba(153, 102, 255, 1)',
-                                borderWidth: 1,
-                                yAxisID: 'y',
-                            }]
-                        },
-                        options: {
-                            plugins: {
-                                datalabels: {
-                                    anchor: 'end',
-                                    align: 'start',
-                                    color: '#000',
-                                    font: {
-                                        weight: 'bold',
-                                        size: 12
-                                    },
-                                    formatter: value => value
-                                }
+            [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
+                if (el) el.addEventListener('change', updateChart);
+            });
+
+            updateChart();
+        }
+
+        function loadCustomerChartElements() {
+            const filterType = document.getElementById('filterTypeCustomer');
+            const yearInput = document.getElementById('yearInputCustomer');
+            const monthInput = document.getElementById('monthInputCustomer');
+            const weekInput = document.getElementById('weekInputCustomer');
+            const ctx = document.getElementById('byCustomerChart')?.getContext('2d');
+            const chartRef = {
+                chart: null
+            };
+
+            function updateChart() {
+                let url = '/orders/summary/by-customer';
+
+                if (filterType.value === 'year') {
+                    if (!yearInput?.value) return;
+                    url += `/year/${yearInput.value}`;
+                } else if (filterType.value === 'month') {
+                    if (!monthInput?.value) return;
+                    const [year, month] = monthInput.value.split('-');
+                    url += `/month/${year}/${month}`;
+                } else if (filterType.value === 'week') {
+                    if (!weekInput?.value) return;
+                    const [year, week] = weekInput.value.split('-W');
+                    url += `/week/${year}/${week}`;
+                }
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(({
+                        labels,
+                        totals,
+                        totalAll
+                    }) => {
+                        if (chartRef.chart) chartRef.chart.destroy();
+
+                        chartRef.chart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
+                                    data: totals,
+                                    backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                                    borderColor: 'rgba(153, 102, 255, 1)',
+                                    borderWidth: 1,
+                                    yAxisID: 'y',
+                                }]
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1
+                            options: {
+                                plugins: {
+                                    datalabels: {
+                                        anchor: 'end',
+                                        align: 'start',
+                                        color: '#000',
+                                        font: {
+                                            weight: 'bold',
+                                            size: 12
+                                        },
+                                        formatter: value => value
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            stepSize: 1
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        plugins: [ChartDataLabels]
+                            },
+                            plugins: [ChartDataLabels]
+                        });
                     });
-                });
-        }
-
-        if (filterType && yearInput && monthInput && weekInput) {
-            updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-            filterType.addEventListener('change', () => {
-                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                updateChart();
-            });
-        }
-
-        [yearInput, monthInput, weekInput].forEach(el => {
-            if (el) el.addEventListener('change', updateChart);
-        });
-
-        updateChart();
-    }
-
-    $(document).ready(function() {
-        initDataTable('#tableweek', 'ORDERS THIS WEEK');
-        initDataTable('#tablelate', 'LATE ORDERS');
-        loadChartElements();
-        loadCustomerChartElements();
-
-        const weekFilter = document.getElementById('week-filter');
-
-        if (weekFilter) {
-            // ✅ Detectar cambio de semana
-            weekFilter.addEventListener("change", function() {
-                const week = this.value;
-                console.log("Semana seleccionada:", week);
-
-                fetch(`/orders/by-week/ajax?week=${week}`, {
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest"
-                        },
-                    })
-                    .then((res) => res.json())
-                    .then((data) => {
-                        const tbody = document.getElementById("tableweek-body");
-                        const count = document.getElementById("order-count");
-
-                        if (!tbody || !count) {
-                            console.warn("No se encontró tbody o contador.");
-                            return;
-                        }
-
-                        // 💡 Destruir DataTable anterior si existe
-                        const table = $("#tableweek");
-                        if ($.fn.DataTable.isDataTable(table)) {
-                            table.DataTable().clear().destroy();
-                        }
-
-                        // 💡 Actualizar tbody con nuevas filas
-                        tbody.innerHTML = data.html;
-
-                        // 💡 Actualizar contador
-                        count.textContent = data.count;
-
-                        // 💡 Reinicializar DataTable
-                        initDataTable("#tableweek", "ORDERS THIS WEEK");
-
-                        // 💡 Actualizar texto visible de la semana
-                        const weekDisplay = document.getElementById("week-display");
-                        if (weekDisplay && week) {
-                            const [year, weekNumber] = week.split('-W');
-                            const simpleDate = getFirstDateOfISOWeek(parseInt(weekNumber), parseInt(
-                                year));
-
-                            const options = {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            };
-                            const formatted = simpleDate.toLocaleDateString('en-US', options);
-                            weekDisplay.textContent = `Week starting: ${formatted}`;
-                        }
-
-                        // 👉 Función para obtener lunes de la semana ISO
-                        function getFirstDateOfISOWeek(week, year) {
-                            const simple = new Date(year, 0, 1 + (week - 1) * 7);
-                            const dow = simple.getDay();
-                            if (dow <= 4) {
-                                simple.setDate(simple.getDate() - simple.getDay() + 1);
-                            } else {
-                                simple.setDate(simple.getDate() + 8 - simple.getDay());
-                            }
-                            return simple;
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error fetching data:", error);
-                        alert("Error loading data for the selected week.");
-                    });
-
-            });
-
-            // ✅ Al cargar la página, establecer semana actual si no hay valor
-            if (!weekFilter.value) {
-                const today = new Date();
-                const year = today.getFullYear();
-
-                const getISOWeek = date => {
-                    const tmp = new Date(date.getTime());
-                    tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
-                    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
-                    const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
-                    return weekNo;
-                };
-
-                const week = getISOWeek(today).toString().padStart(2, '0');
-                const value = `${year}-W${week}`;
-                weekFilter.value = value;
-
-                // 💥 Disparar manualmente el evento change
-                weekFilter.dispatchEvent(new Event("change"));
             }
+
+            if (filterType && yearInput && monthInput && weekInput) {
+                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                filterType.addEventListener('change', () => {
+                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                    updateChart();
+                });
+            }
+
+            [yearInput, monthInput, weekInput].forEach(el => {
+                if (el) el.addEventListener('change', updateChart);
+            });
+
+            updateChart();
         }
-    });
+
+        $(document).ready(function() {
+            initDataTable('#tableweek', 'ORDERS THIS WEEK');
+            initDataTable('#tablelate', 'LATE ORDERS');
+            loadChartElements();
+            loadCustomerChartElements();
+
+            const weekFilter = document.getElementById('week-filter');
+
+            if (weekFilter) {
+                // ✅ Detectar cambio de semana
+                weekFilter.addEventListener("change", function() {
+                    const week = this.value;
+                    console.log("Semana seleccionada:", week);
+
+                    fetch(`/orders/by-week/ajax?week=${week}`, {
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            },
+                        })
+                        .then((res) => res.json())
+                        .then((data) => {
+                            const tbody = document.getElementById("tableweek-body");
+                            const count = document.getElementById("order-count");
+
+                            if (!tbody || !count) {
+                                console.warn("No se encontró tbody o contador.");
+                                return;
+                            }
+
+                            // 💡 Destruir DataTable anterior si existe
+                            const table = $("#tableweek");
+                            if ($.fn.DataTable.isDataTable(table)) {
+                                table.DataTable().clear().destroy();
+                            }
+
+                            // 💡 Actualizar tbody con nuevas filas
+                            tbody.innerHTML = data.html;
+
+                            // 💡 Actualizar contador
+                            count.textContent = data.count;
+
+                            // 💡 Reinicializar DataTable
+                            initDataTable("#tableweek", "ORDERS THIS WEEK");
+
+                            // 💡 Actualizar texto visible de la semana
+                            const weekDisplay = document.getElementById("week-display");
+                            if (weekDisplay && week) {
+                                const [year, weekNumber] = week.split('-W');
+                                const simpleDate = getFirstDateOfISOWeek(parseInt(weekNumber), parseInt(
+                                    year));
+
+                                const options = {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                };
+                                const formatted = simpleDate.toLocaleDateString('en-US', options);
+                                weekDisplay.textContent = `Week starting: ${formatted}`;
+                            }
+
+                            // 👉 Función para obtener lunes de la semana ISO
+                            function getFirstDateOfISOWeek(week, year) {
+                                const simple = new Date(year, 0, 1 + (week - 1) * 7);
+                                const dow = simple.getDay();
+                                if (dow <= 4) {
+                                    simple.setDate(simple.getDate() - simple.getDay() + 1);
+                                } else {
+                                    simple.setDate(simple.getDate() + 8 - simple.getDay());
+                                }
+                                return simple;
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error fetching data:", error);
+                            alert("Error loading data for the selected week.");
+                        });
+
+                });
+
+                // ✅ Al cargar la página, establecer semana actual si no hay valor
+                if (!weekFilter.value) {
+                    const today = new Date();
+                    const year = today.getFullYear();
+
+                    const getISOWeek = date => {
+                        const tmp = new Date(date.getTime());
+                        tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
+                        const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+                        const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+                        return weekNo;
+                    };
+
+                    const week = getISOWeek(today).toString().padStart(2, '0');
+                    const value = `${year}-W${week}`;
+                    weekFilter.value = value;
+
+                    // 💥 Disparar manualmente el evento change
+                    weekFilter.dispatchEvent(new Event("change"));
+                }
+            }
+        });
     </script>
 
     @endpush
