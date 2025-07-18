@@ -1,21 +1,21 @@
 <div class="table-responsive">
-    <table id="orders_scheduleTable" class="table table-bordered table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
+    <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
         <thead class="table-light thead-custom">
             <tr>
-                <th style="width: 15px; ">Id</th>
+                <th style="display:none;">Id</th>
                 <th style="display:none;">LocationText</th> <!-- índice 1 -->
                 <th style="display:none;">StatusText</th> <!-- índice 2 -->
                 <th style="width: 65px;">LOCATION</th>
                 <th style="width: 55px;">WORK ID</th>
                 <th style="width: 60px;">PN</th>
-                <th style="width: 100px;">PART/DESCRIPTION</th>
+                <th style="width: 190px;">PART/DESCRIPTION</th>
                 <th style="width: 80px;">CUSTOMER</th>
-                <th style="width: 40px;">CO QTY</th>
-                <th style="width: 40px;">WO QTY</th>
+                <th style="width: 30px;">COQTY</th>
+                <th style="width: 30px;">WOQTY</th>
                 <th style="width: 100px;">STATUS</th>
-                <th style="width: 75px;">MACH. DATE</th>
+                <th style="width: 65px;">MACH. DATE</th>
                 <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                <th style="width: 60px;">DUE DATE</th>
+                <th style="width: 50px;">DUE DATE</th>
                 <th style="width: 40px;">DAYS</th>
                 <th style="width: 60px;">ALERT</th>
                 <th style="width: 25px;">REP.</th>
@@ -70,7 +70,7 @@
                     $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
                     @endphp
                     <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
-                    <td>{{ $order->id }}</td>
+                    <td style="display: none;">{{ $order->id }}</td>
                     <!-- Columna oculta solo texto para filtro -->
                     <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
                     <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
@@ -92,7 +92,7 @@
                             @endif
                         </div>
                     </td>
-                    <td style="white-space: nowrap; width: 100px;">
+                    <td style="white-space: nowrap; width: 100px;" class="texsty">
                         @if ($order->was_work_id_null)
                         <span class="editable-work-id text-decoration-underline {{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }}"
                             data-id="{{ $order->id }}"
@@ -104,10 +104,10 @@
                         {{ $order->work_id }}
                         @endif
                     </td>
-                    <td style="min-width: 120px;">{{ $order->PN }}</td>
+                    <td class="texsty" style="min-width: 120px;">{{ $order->PN }}</td>
                     <td style="font-size: 11px;">{{ $order->Part_description }}</td>
-                    <td>{{ $order->costumer }}</td>
-                    <td>{{ $order->qty }}</td>
+                    <td class="texsty">{{ $order->costumer }}</td>
+                    <td class="texsty">{{ $order->qty }}</td>
                     <td>
                         <input value="{{ $order->wo_qty }}"
                             data-id="{{ $order->id }}"
@@ -137,7 +137,7 @@
                         </select>
                     </td>
 
-                    <td>
+                    <td class="texsty">
                         <span class="editable-machining-date text-decoration-underline"
                             data-id="{{ $order->id }}"
                             data-enabled="{{ $order->our_source ? '1' : '0' }}"
@@ -147,8 +147,8 @@
                         </span>
                     </td>
                     <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
-                    <td style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
-                    <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}">
+                    <td class="texsty" style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
+                    <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
                         {{ $dias }} days
                     </td>
 
@@ -174,7 +174,7 @@
                             <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                         </button>
                     </td>
-                    <td style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
+                    <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
                         <span class="editable-station text-decoration-underline {{ $order->station ? 'text-success fw-bold' : 'text-muted' }}"
                             data-id="{{ $order->id }}" style="cursor:pointer;">
                             {{ $order->station ?? 'N/A' }}

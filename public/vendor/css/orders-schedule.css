@@ -77,6 +77,21 @@
     border-left: 4px solid #27ae60;
 }
 
+   table td {
+        color: black !important;
+        font-size: 14px !important;
+       
+    }
+
+    table th {
+    color: black !important;
+    font-size: 14px !important;
+   
+}
+
+table tr {
+    height: 20px; /* o el valor que prefieras */
+}
 
 .select-bold {
     font-weight: bold;
