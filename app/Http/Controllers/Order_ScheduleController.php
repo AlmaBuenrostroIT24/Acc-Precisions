@@ -705,6 +705,16 @@ class Order_ScheduleController extends Controller
         // Retorna la vista y pasa también la variable $location
         return view('orders.schedule_tablehearst', compact('orders', 'location'));
     }
+
+    // detecta la ultima actualizacion de una orden para actualizar vistas en PCS
+    public function lastUpdate()
+    {
+        $last = \App\Models\OrderSchedule::orderByDesc('updated_at')->first();
+        return response()->json([
+            'updated_at' => optional($last)->updated_at?->format('Y-m-d H:i:s'),
+        ]);
+    }
+    //----------------------------------------------------------------------------
     public function updateDateMachining(Request $request, OrderSchedule $order)
     {
 
@@ -775,7 +785,7 @@ class Order_ScheduleController extends Controller
 
         $today = \Carbon\Carbon::today();
         $status = strtolower($status);
-        $especiales = ['outsource', 'qa', 'deburring', 'shipping','assembly'];
+        $especiales = ['outsource', 'qa', 'deburring', 'shipping', 'assembly'];
 
         if (in_array($status, $especiales)) {
             // Cuando el status es especial, cuenta hasta due_date - 1, no cuenta el día objetivo

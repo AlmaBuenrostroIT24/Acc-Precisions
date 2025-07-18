@@ -86,6 +86,8 @@ Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 
 //Ventanas de Hearst y Yarnell
 Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
 Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
+Route::get('/api/schedule-last-update', [Order_ScheduleController::class, 'lastUpdate']); // detecta la ultima actualizacion de una orden para actualizar vistas en PCS
+
 
 Route::post('/orders/{id}/update-wo-qty', [Order_ScheduleController::class, 'updateWoQty']);
 Route::post('/orders/duplicate', [Order_ScheduleController::class, 'duplicate'])->name('orders.duplicate');

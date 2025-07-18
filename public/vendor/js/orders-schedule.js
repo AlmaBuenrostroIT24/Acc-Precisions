@@ -106,6 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 ordering: false,
             },
         };
+        // Detectar ruta actual
+
         const config = tableConfigs[path] || {}; // Usa config vacía por defecto
         config.rowCallback = applyRowLateHighlight; // ✅ inyectamos la función para que se colore en rojo cuando days<0
         window.table = initOrdersTable(tableElement, config);

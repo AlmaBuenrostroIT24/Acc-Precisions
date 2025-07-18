@@ -130,11 +130,11 @@ window.addEventListener("DOMContentLoaded", () => {
     function applyRowLateStyle(orderId, dias, status) {
         const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
         if (!row) {
-           // console.warn(`❌ No se encontró la fila para orderId=${orderId}`);
+            // console.warn(`❌ No se encontró la fila para orderId=${orderId}`);
             return;
         }
         // Debug: ver qué datos estamos usando
-       // console.log("🔍 applyRowLateStyle", {orderId,dias, status, rowClassList: row.className, });
+        // console.log("🔍 applyRowLateStyle", {orderId,dias, status, rowClassList: row.className, });
         // Limpiar clases previas de estado y de late
         row.className = row.className
             .split(" ")
@@ -142,16 +142,17 @@ window.addEventListener("DOMContentLoaded", () => {
             .join(" ");
         if (dias < 0) {
             row.classList.add("row-late");
-           // console.log(`🔴 Orden ${orderId} marcada como LATE`);
+            // console.log(`🔴 Orden ${orderId} marcada como LATE`);
         } else if (status) {
             row.classList.add(`bg-status-${status.toLowerCase()}`);
-           // console.log(`🟢 Orden ${orderId} con clase: bg-status-${status.toLowerCase()}`);
+            // console.log(`🟢 Orden ${orderId} con clase: bg-status-${status.toLowerCase()}`);
         } else {
-            console.log(`⚠️ No se aplicó clase de estado a la orden ${orderId}`);
+            console.log(
+                `⚠️ No se aplicó clase de estado a la orden ${orderId}`
+            );
         }
     }
-    
-    
+
     //🔁 updateNotes(orderId, notes)
     //Actualiza el contenido de las notas: 1. Muestra el texto corto o el ícono de "Note".
     //2. Agrega evento para abrir el modal con el texto completo al hacer clic. 3. Limpia y escapa caracteres especiales (").
@@ -182,7 +183,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 notesModal.show();
             });
     }
-    
 
     //🔢 updateWorkId(orderId, workId)
     //Actualiza visualmente el Work ID: 1. Muestra el nuevo valor o el texto “Click para agregar”.
@@ -295,12 +295,14 @@ window.addEventListener("DOMContentLoaded", () => {
                     );
                     const dias = data.dias_restantes;
                     let status = (data.status || "").trim().toLowerCase(); // ✅ preferencia al status sincronizado
-                
+
                     if (!status) {
                         const statusHidden = document.getElementById(
                             `hidden-status-${data.orderId}`
                         );
-                        status = statusHidden ? statusHidden.textContent.trim() : "";
+                        status = statusHidden
+                            ? statusHidden.textContent.trim()
+                            : "";
                     }
                     if (span) {
                         span.dataset.value = data.machining_date;
@@ -318,4 +320,25 @@ window.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+    //------------------------------------------------------------------------------------------------------
+    //-------------------------SOLUCIÓN para sincronizar entre PCs SIN usar AJAX:----------------------------
+
+    let lastServerUpdate = null;
+
+    setInterval(() => {
+        fetch("/api/schedule-last-update")
+            .then((res) => res.json())
+            .then((data) => {
+                if (!lastServerUpdate) {
+                    lastServerUpdate = data.updated_at;
+                } else if (data.updated_at !== lastServerUpdate) {
+                    //console.log('🟡 Cambio detectado, recargando...');
+                    location.reload(); // recarga la vista completa
+                }
+            })
+            .catch((err) =>
+                console.error("Error verificando actualizaciones:", err)
+            );
+    }, 2000); // cada 3segundos
+    //------------------------------------------------------------------------------------------------------
 });

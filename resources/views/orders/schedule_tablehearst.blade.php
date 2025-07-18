@@ -55,5 +55,6 @@
         <script src="{{ asset('vendor/js/schedule-yarhea.js') }}"></script>
         <script>
             window.currentLocation = '{{ $location }}'; // Ej: 'hearst'
+            
         </script>
         @endpush
