@@ -76,7 +76,7 @@
                     <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
                     <!----------------------------------------->
                     <td style="min-width: 90px;">
-                        <select class="form-control form-control-sm location-select fw-bold text-capitalize"
+                        <select name="location" class="form-control form-control-sm location-select fw-bold text-capitalize"
                             style="width: 80px; font-weight: bold; color: black;"
                             data-id="{{ $order->id }}"
                             data-old-status="{{ strtolower($order->status) }}">

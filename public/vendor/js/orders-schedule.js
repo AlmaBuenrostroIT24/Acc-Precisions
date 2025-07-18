@@ -3,9 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableElement = $("#orders_scheduleTable");
     const csrfToken = $('meta[name="csrf-token"]').attr("content");
     const loadingMessage = document.getElementById("loading-message");
-    //const notesModalElement = document.getElementById("notesModal");
-    //const notesModal = bootstrap.Modal.getOrCreateInstance(notesModalElement);
-    //  const notesModalElement = $('#notesModal');  // usando jQuery
     const inputCsv = document.getElementById("csv_file");
     const labelCsv = document.getElementById("csv_file_label");
 
@@ -1082,8 +1079,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Clonar la fila original (sin eventos)
                 const newRow = row.clone(false);
 
+                copySelectAndInputValues(row, newRow);
+                console.log(
+                    "✔ Location clonada: ",
+                    newRow.find('select[name="location"]').val()
+                );
+
                 // Mostrar cuántas columnas tiene la fila
-                // console.log("Total celdas en la fila:", newRow.find("td").length);
+                console.log(
+                    "Total celdas en la fila:",
+                    newRow.find("td").length
+                );
 
                 // Mostrar el next_id en la primera celda (columna 0)
                 const idCell = newRow.find("td:eq(0)");
@@ -1137,19 +1143,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     newRow.find("td").each(function (index) {
                         const cell = $(this);
-                        const input = cell.find("input");
-                        if (input.length) {
-                            dataToSend[`col_text_${index}`] = input.val();
-                        } else {
-                            let text = cell.text().trim();
+                        //Si existe un input o select:→ Guarda su valor usando .val().
+                        const inputOrSelect = cell.find("input, select");
 
-                            // Si es la columna 17 y tiene el texto por defecto "Note", se guarda vacío
-                            if (index === 17 && text === "Note") {
-                                text = "";
+                        if (inputOrSelect.length) {
+                            dataToSend[`col_text_${index}`] =
+                                inputOrSelect.val();
+                        } else {
+                            let finalText = "";
+
+                            // 📌 Caso especial para columna de Notas (con .open-notes-modal)
+                            const noteSpan = cell.find(".open-notes-modal");
+                            if (noteSpan.length) {
+                                finalText = noteSpan.data("notes") || "";
                             }
 
-                            dataToSend[`col_text_${index}`] = text;
+                            // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            else if (
+                                cell.find(".editable-machining-date").length
+                            ) {
+                                finalText =
+                                    cell
+                                        .find(".editable-machining-date")
+                                        .data("value") || "";
+                            }
+
+                            // 🔄 Caso general (texto visible, sin hijos como select/div/span)
+                            else {
+                                finalText = cell
+                                    .clone()
+                                    .children()
+                                    .remove()
+                                    .end()
+                                    .text()
+                                    .trim();
+                                if (index === 17 && finalText === "Note")
+                                    finalText = "";
+                            }
+
+                            dataToSend[`col_text_${index}`] = finalText;
                         }
+                        //---------------------------------------------------------------------------------
 
                         // También incluir inputs ocultos
                         cell.find('input[type="hidden"]').each(function () {
@@ -1210,4 +1244,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     //-----------------------------------------
+
+    function copySelectAndInputValues(originalRow, clonedRow) {
+        originalRow.find("select").each(function (i) {
+            const value = $(this).val();
+            const className = $(this).attr("class");
+            const name = $(this).attr("name");
+
+            // Encuentra el select correspondiente en la fila clonada
+            const cloned = clonedRow
+                .find(`select.${className.split(" ").join(".")}`)
+                .eq(i);
+            if (cloned.length) {
+                cloned.val(value); // asigna el valor seleccionado real
+            }
+        });
+
+        originalRow.find("input").each(function (i) {
+            const value = $(this).val();
+            const name = $(this).attr("name");
+            const className = $(this).attr("class");
+
+            const cloned = clonedRow
+                .find(`input.${className.split(" ").join(".")}`)
+                .eq(i);
+            if (cloned.length) {
+                cloned.val(value);
+            }
+        });
+    }
 });
