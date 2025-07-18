@@ -42,6 +42,11 @@
             .main-header {
                 display: none !important;
             }
+
+            .letra-grande {
+                font-size: 18px;
+                /* o 20px según prefieras */
+            }
         </style>
         @endsection
 

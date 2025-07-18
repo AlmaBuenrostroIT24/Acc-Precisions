@@ -5,12 +5,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const statusLabels = {
         waitingformaterial: "Wait Material",
+        cutmaterial: "Cut Material",
+        grinding: "Grinding",
         onrack: "OnRack",
+        programming: "Programming",
         setup: "SetUp",
         machining: "Machining",
-        outsource: "OutSource",
-        qa: "QA",
+        marking: "Marking",
         deburring: "Deburring",
+        qa: "QA",
+        outsource: "OutSource",
+        assembly: "Assembly",
         shipping: "Shipping",
         sent: "Sent",
         onhold: "OnHold",
@@ -177,6 +182,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 notesModal.show();
             });
     }
+    
 
     //🔢 updateWorkId(orderId, workId)
     //Actualiza visualmente el Work ID: 1. Muestra el nuevo valor o el texto “Click para agregar”.

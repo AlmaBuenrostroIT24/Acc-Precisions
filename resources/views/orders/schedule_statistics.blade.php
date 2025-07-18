@@ -134,7 +134,6 @@
     </div>
 </div>
 
-
 <div class="container-fluid py-4">
     {{-- Cards con tablas --}}
     <div class="row g-4 mb-4">
@@ -187,7 +186,6 @@
 
             </div>
         </div>
-
 
         {{-- Ordenes atrasadas --}}
         <div class="col-lg-6">
@@ -337,7 +335,7 @@
                         Customers with Orders
                     </div>
                     <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
-                  {{--   <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>--}}
+                    {{-- <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>--}}
                 </div>
                 <div class="card-body px-3 py-2" style="max-height: 410px; overflow-y: auto;">
                     @if ($ordenesPorCliente->isNotEmpty())
