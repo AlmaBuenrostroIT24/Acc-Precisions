@@ -11,15 +11,15 @@
                 <th style="width: 190px;">PART/DESCRIPTION</th>
                 <th style="width: 80px;">CUSTOMER</th>
                 <th style="width: 30px;">COQTY</th>
-                <th style="width: 30px;">WOQTY</th>
+                <th style="width: 50px;">WOQTY</th>
                 <th style="width: 100px;">STATUS</th>
-                <th style="width: 65px;">MACH. DATE</th>
+                <th style="width: 60px;">MACH. DATE</th>
                 <th style="display:none;">StatusText</th> <!-- índice 2 -->
                 <th style="width: 50px;">DUE DATE</th>
                 <th style="width: 40px;">DAYS</th>
-                <th style="width: 60px;">ALERT</th>
-                <th style="width: 25px;">REP.</th>
-                <th style="width: 25px;">OUT</th>
+                <th style="width: 55px;">ALERT</th>
+                <th style="width: 20px;">REP.</th>
+                <th style="width: 20px;">OUT</th>
                 <th style="width: 30px;">STATION</th>
                 <th style="width: 50px;">NOTES</th>
             </tr>
