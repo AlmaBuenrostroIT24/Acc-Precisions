@@ -3,6 +3,7 @@
 {{-- Colapsar u ocultar sidebar --}}
 @section('classes_body', 'sidebar-collapse layout-top-nav') {{-- o 'layout-top-nav' para quitarlo completamente --}}
 
+
 @section('title', 'Schedule Orders Yarnell')
 
 @section('meta') {{-- ✅ Asegura que el token se inyecta en el <head> --}}
@@ -10,26 +11,14 @@
 @endsection
 
 @section('content')
-<div class="tab-content mt-3">
-    {{-- Tab: General Schedule --}}
-    <div class="tab-pane fade show active" id="byMachine">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card mb-4">
+{{-- Filtros dinámicos --}}
+<form id="upload-form" action="{{ route('schedule.orders.import') }}" method="POST" enctype="multipart/form-data">
+    @csrf
+</form>
 
-                    <div class="card-body">
-                        {{-- Filtros dinámicos --}}
-                        <form id="upload-form" action="{{ route('schedule.orders.import') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                        </form>
-                        @include('orders.schedule_table')
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Modal Bootstrap para editar notas -->
-        @include('orders.schedule_modaltable')
-        @endsection
+@include('orders.schedule_table')
+@include('orders.schedule_modaltable')
+@endsection
 
         @section('css')
         <link rel="stylesheet" href="{{ asset('vendor/css/orders-schedule.css') }}">
@@ -38,6 +27,21 @@
             .main-header {
                 display: none !important;
             }
+
+            .letra-grande {
+                font-size: 18px;
+                /* o 20px según prefieras */
+            }
+
+            .texsty {
+                color: black !important;
+                font-size: 16px !important;
+
+            }
+
+            table th {
+                color: black !important;
+                font-size: 16px !important;
         </style>
         @endsection
 
