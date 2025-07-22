@@ -1116,14 +1116,31 @@ document.addEventListener("DOMContentLoaded", () => {
                     .find('input[name="col_text_6"]')
                     .on("keydown", function (e) {
                         if (e.key === "Enter" && !guardado) {
+                            e.preventDefault(); // Evita que el Enter dispare el submit
+                            e.stopPropagation(); // Evita burbujas
+
                             const val6 = $(this).val().trim();
                             if (val6) {
-                                if (confirm("¿Save this new record?")) {
-                                    guardado = true;
-                                    checkInputsAndSend();
-                                }
+                                Swal.fire({
+                                    title: "¿Save Order?",
+                                    icon: "question",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, Save",
+                                    cancelButtonText: "Cancel",
+                                    reverseButtons: true,
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        guardado = true;
+                                        checkInputsAndSend();
+                                    }
+                                });
                             } else {
-                                //alert("Debes capturar al menos el campo de Cantidad (columna 6).");
+                                Swal.fire({
+                                    title: "Campo requerido",
+                                    text: "Debes capturar al menos el campo de Cantidad (columna 6).",
+                                    icon: "warning",
+                                    confirmButtonText: "Ok",
+                                });
                             }
                         }
                     });
