@@ -987,21 +987,36 @@ document.addEventListener("DOMContentLoaded", () => {
     $(document).on("blur", ".wo-qty-input", function () {
         const input = $(this);
         const original = input.data("original");
-        const newVal = input.val();
 
-        if (original == newVal) return;
+        let newVal = input.val().trim();
+
+        if (newVal === "") {
+            newVal = 0; // puedes cambiarlo a `null` si tu backend lo acepta
+        }
+
+        const qty = parseInt(newVal, 10);
+        if (isNaN(qty) || qty < 0) {
+            Swal.fire(
+                "⚠️ Cantidad inválida",
+                "Ingresa un número válido",
+                "warning"
+            );
+            return;
+        }
+
+        if (original == qty) return;
 
         const orderId = input.data("id");
 
         handlePostJsonWithAlerts(
             `/orders/${orderId}/update-wo-qty`,
-            { wo_qty: newVal },
+            { wo_qty: qty },
             (data) => {
                 localStorage.setItem(
                     "wo-qty-change",
                     JSON.stringify({
                         orderId,
-                        wo_qty: newVal,
+                        wo_qty: qty,
                     })
                 );
                 localStorage.removeItem("wo-qty-change");
