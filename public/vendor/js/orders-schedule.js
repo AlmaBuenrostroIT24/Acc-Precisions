@@ -989,7 +989,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const original = input.data("original");
 
         let newVal = input.val().trim();
-
+           //Para cuando se borra WO
         if (newVal === "") {
             newVal = 0; // puedes cambiarlo a `null` si tu backend lo acepta
         }

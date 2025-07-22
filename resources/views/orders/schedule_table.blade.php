@@ -109,8 +109,10 @@
                     <td class="texsty">{{ $order->costumer }}</td>
                     <td class="texsty">{{ $order->qty }}</td>
                     <td>
-                        <input value="{{ $order->wo_qty }}"
+                        <input
+                            value="{{ $order->wo_qty == 0 || is_null($order->wo_qty) ? '' : $order->wo_qty }}"
                             data-id="{{ $order->id }}"
+                            data-original="{{ $order->wo_qty }}"
                             class="wo-qty-input form-control form-control-sm"
                             style="width: 60px; font-weight: bold; color: black;">
                     </td>
