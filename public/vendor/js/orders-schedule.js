@@ -1136,8 +1136,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 });
                             } else {
                                 Swal.fire({
-                                    title: "Campo requerido",
-                                    text: "Debes capturar al menos el campo de Cantidad (columna 6).",
+                                    title: "Required WO QTY",
+                                    text: "You must capture at least the WO QTY",
                                     icon: "warning",
                                     confirmButtonText: "Ok",
                                 });
