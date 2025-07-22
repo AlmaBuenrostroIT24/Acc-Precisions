@@ -997,8 +997,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const qty = parseInt(newVal, 10);
         if (isNaN(qty) || qty < 0) {
             Swal.fire(
-                "⚠️ Cantidad inválida",
-                "Ingresa un número válido",
+                "⚠️ Invalid quantity",
+                "Enter a valid number",
                 "warning"
             );
             return;
