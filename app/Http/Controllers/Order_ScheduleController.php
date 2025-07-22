@@ -43,7 +43,7 @@ class Order_ScheduleController extends Controller
         // 👇 Filtrar automáticamente solo si estamos en /schedule/general y el usuario tiene un rol específico
         //Agrega una verificación con auth()->check() antes de llamar a hasRole():
         if ($request->is('schedule/general') && auth()->check() && auth()->user()->hasRole('QAdmin')) {
-            $query->where('location', 'yarnell');
+            $query->whereIn('location', ['yarnell', 'floor']);
         }
 
         $orders = $query->get();
