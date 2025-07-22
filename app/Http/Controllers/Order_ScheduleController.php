@@ -785,7 +785,7 @@ class Order_ScheduleController extends Controller
 
         $today = \Carbon\Carbon::today();
         $status = strtolower($status);
-        $especiales = ['outsource', 'qa', 'deburring', 'shipping', 'assembly'];
+        $especiales = ['outsource', 'qa', 'deburring', 'shipping', 'assembly', 'ready'];
 
         if (in_array($status, $especiales)) {
             // Cuando el status es especial, cuenta hasta due_date - 1, no cuenta el día objetivo
