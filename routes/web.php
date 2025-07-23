@@ -67,6 +67,7 @@ Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->nam
 Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell');
 Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
+Route::get('/schedule/workhearst', [Order_ScheduleController::class, 'workhearst'])->name('schedule.workhearst');
 
 //Importar archivo en excel
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');

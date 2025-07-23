@@ -65,6 +65,34 @@ class Order_ScheduleController extends Controller
     }
 
     //----------------------------------------------------------------------------------------------------------------------------
+    public function workhearst(Request $request)
+    {
+        $query = OrderSchedule::latest()
+            ->where('location', 'Hearst') // solo órdenes que están en Hearst
+            ->whereIn('status', ['pending', 'ontrack', 'machining']); // 👉 filtrar por múltiples estados
+
+        // Si además quieres aplicar un filtro por status específico desde el request:
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->get();
+
+        // Obtenemos valores únicos para filtros en la vista
+        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+        foreach ($orders as $order) {
+            $order->dias_restantes = $this->calcularDiasInterno(
+                $order->status,
+                $order->due_date,
+                $order->machining_date
+            );
+        }
+
+        return view('orders.schedule_workhearst', compact('orders', 'statuses', 'customers'));
+    }
+
     //Orders Yarnell--------------------------------------------------------------------------------------------------------------
 
     public function endyarnell(Request $request)
