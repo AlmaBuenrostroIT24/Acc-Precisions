@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Actualizar Location
     tableElement.on("change", ".location-select", function () {
-        const scrollTopBefore = $(window).scrollTop(); // 🧠 guarda scroll
+        const scrollTopBefore = $(window).scrollTop(); // 🧠 guarda scroll para que no de el error que al actualizar se vaya hacia arriba
 
         const select = $(this);
         const orderId = select.data("id");
@@ -714,6 +714,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Actualizar Status con confirmación SweetAlert
     tableElement.on("change", ".status-select", function () {
+        const scrollTopBefore = $(window).scrollTop();
         const select = $(this);
         const orderId = select.data("id");
 
@@ -792,6 +793,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 .cell(rowIndex, 2)
                                 .data(data.status.toLowerCase())
                                 .draw(false);
+                            $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
+                            select.blur(); // quita foco
                         }
 
                         // ✅Agregar nuevo valor al filtro si no existe
