@@ -33,40 +33,9 @@
     <div class="col-md-12">
         <div class="card mb-4">
             <div class="card-body">
-                {{-- Filtros dinámicos --}}
-                <div class="row mb-4">
-                    <!-- Formulario de carga -->
-
-                    <!-- Filtros -->
-                    <div class="col-md-8">
-                        <div class="card shadow">
-                            <div class="card-body row">
-                                <div class="form-group col-md-12">
-                                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
-                                        <div class="form-group col-md-4">
-                                            <label for="customerFilter">Customer</label>
-                                            <select id="customerFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-4">
-                                            <label for="locationFilter">Status</label>
-                                            <select name="location" id="locationFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
-                            <i class="fas fa-plus"></i> New Order
-                        </button> -->
                 <div class="table-responsive">
                     {{-- Tabla --}}
-                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap">
+                    <table id="workhearst_Table" class="table table-bordered  table-sm nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th>LOCATION</th>
@@ -79,22 +48,45 @@
                                 <th>STATUS</th>
                                 <th>REPORT</th>
                                 <th>OUT</th>
-                                <th>DUE DATE</th>
                                 <th>MACH DATE</th>
+                                <th>DUE DATE</th>
                                 <th>NOTES</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
                             @foreach($orders as $order)
-                            <tr data-status="{{ $order->status }}">
+
+                            @php
+                            $status = strtolower($order->status);
+                            $statusClass = match($status) {
+                            'pending' => 'bg-status-pending',
+                            'waitingformaterial' => 'bg-status-waitingformaterial',
+                            'cutmaterial' => 'bg-status-cutmaterial',
+                            'grinding' => 'bg-status-grinding',
+                            'onrack' => 'bg-status-onrack',
+                            'programming' => 'bg-status-programming',
+                            'setup' => 'bg-status-setup',
+                            'machining' => 'bg-status-machining',
+                            'marking' => 'bg-status-marking',
+                            'deburring' => 'bg-status-deburring',
+                            'qa' => 'bg-status-qa',
+                            'outsource' => 'bg-status-outsource',
+                            'assembly' => 'bg-status-assembly',
+                            'shipping' => 'bg-status-shipping',
+                            'sent' => 'bg-status-sent',
+                            'ready' => 'bg-status-ready',
+                            'onhold' => 'bg-status-onhold',
+                            default => '',
+                            };
+                            @endphp
+                            <tr class="{{ $statusClass }}" data-status="{{ $order->status }}">
                                 <td>
                                     @if ($order->last_location === 'Yarnell')
-                                    <span style="color: black; font-weight: bold;">Yarnell</span>
+                                    <span class="fw-bold text-dark">Yarnell</span>
                                     @endif
-                                    <span class="badge bg-warning text-dark d-inline-flex align-items-center">
+                                    <span class="badge bg-warning text-dark">
                                         <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
                                     </span>
-
                                 </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td style="min-width: 120px;">{{ $order->PN }}</td>
@@ -102,21 +94,26 @@
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
-                                <td>{{ $order->status }}</td>
+                                <td>
+                                    <span class="badge bg-secondary text-white">{{ ucfirst($status) }}</span>
+
+                                </td>
                                 <td>
                                     <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}">
+                                        data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}"
+                                        style="cursor: default; pointer-events: none;">
                                         <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                                     </button>
                                 </td>
                                 <td>
                                     <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->our_source }}">
+                                        data-id="{{ $order->id }}" data-value="{{ $order->our_source }}"
+                                        style="cursor: default; pointer-events: none;">
                                         <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                                     </button>
                                 </td>
-                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
+                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td>
                                     <span class="open-notes-modal" data-id="{{ $order->id }}"
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
@@ -133,11 +130,354 @@
     </div>
 </div>
 
+<div class="row">
+    {{-- Tarjeta 1 --}}
+    {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
+    <div class="col-md-6 col-sm-6 mb-3">
+        <div class="card shadow-sm rounded-3 border-0 h-100">
+            {{-- Header --}}
+            <div class="card-header bg-secondary text-white d-flex align-items-center font-weight-semibold">
+                <i class="fas fa-calendar-week mr-2"></i> READY TO DELIVER
+            </div>
+            <div class="card-body">
+                {{-- Tabla de órdenes por semana --}}
+                <div class="table-responsive">
+                    <table id="ordersReady_Table"
+                        class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle"
+                        style="table-layout: fixed; width: 100%;">
+                        <thead class="table-light text-center small">
+                            <tr class="text-center">
+                                <th style="width: 40px;">LOC.</th>
+                                <th style="width: 50px;">WORK ID</th>
+                                <th style="width: 80px;">PN</th>
+                                <th style="width: 110px;">PART</th>
+                                <th style="width: 70px;">CUSTOMER</th>
+                                <th style="width: 45px;">CO QTY</th>
+                                <th style="width: 45px;">WO QTY</th>
+                                <th style="width: 30px;">STATUS</th>
+                                <th style="width: 60px;">DUE DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusTable">
+                            @foreach($ordersReady as $order)
+                            @php
+                            $status = strtolower($order->status);
+                            $statusClass = match($status) {
+                            'pending' => 'bg-status-pending',
+                            'waitingformaterial' => 'bg-status-waitingformaterial',
+                            'cutmaterial' => 'bg-status-cutmaterial',
+                            'grinding' => 'bg-status-grinding',
+                            'onrack' => 'bg-status-onrack',
+                            'programming' => 'bg-status-programming',
+                            'setup' => 'bg-status-setup',
+                            'machining' => 'bg-status-machining',
+                            'marking' => 'bg-status-marking',
+                            'deburring' => 'bg-status-deburring',
+                            'qa' => 'bg-status-qa',
+                            'outsource' => 'bg-status-outsource',
+                            'assembly' => 'bg-status-assembly',
+                            'shipping' => 'bg-status-shipping',
+                            'sent' => 'bg-status-sent',
+                            'ready' => 'bg-status-ready',
+                            'onhold' => 'bg-status-onhold',
+                            default => '',
+                            };
+                            @endphp
+                            <tr class="{{ $statusClass }} text-nowrap align-middle small">
+                                <td>
+                                    @if ($order->last_location === 'Yarnell')
+                                    <span class="fw-bold text-dark d-block">Yarnell</span>
+                                    @endif
+                                    <span class="badge bg-warning text-dark d-block mt-1">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
+                                    </span>
+                                </td>
+                                <td>{{ $order->work_id }}</td>
+                                <td>{{ $order->PN }}</td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    {{ $order->Part_description }}
+                                </td>
+                                <td>{{ $order->costumer }}</td>
+                                <td>{{ $order->qty }}</td>
+                                <td>{{ $order->wo_qty }}</td>
+                                <td>
+                                    <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
+                                </td>
+                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
+    <div class="col-md-6 col-sm-6 mb-3">
+        <div class="card shadow-sm rounded-3 border-0 h-100">
+            {{-- Header --}}
+            <div class="card-header bg-secondary text-white d-flex align-items-center font-weight-semibold">
+                <i class="fas fa-calendar-week mr-2"></i> ORDERS IN DEBURRING
+            </div>
+            <div class="card-body">
+                {{-- Tabla de órdenes por semana --}}
+                <div class="table-responsive">
+                    <table id="ordersDeburring_Table"
+                        class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle"
+                        style="table-layout: fixed; width: 100%;">
+                        <thead class="table-light text-center small">
+                            <tr class="text-center">
+                                <th style="width: 40px;">LOC</th>
+                                <th style="width: 50px;">WORK ID</th>
+                                <th style="width: 80px;">PN</th>
+                                <th style="width: 100px;">PART</th>
+                                <th style="width: 70px;">CUSTOMER</th>
+                                <th style="width: 45px;">CO QTY</th>
+                                <th style="width: 45px;">WO QTY</th>
+                                <th style="width: 50px;">STATUS</th>
+                                <th style="width: 50px;">DUE DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusTable">
+                            @foreach($ordersDeburring as $order)
+                            @php
+                            $status = strtolower($order->status);
+                            $statusClass = match($status) {
+                            'pending' => 'bg-status-pending',
+                            'waitingformaterial' => 'bg-status-waitingformaterial',
+                            'cutmaterial' => 'bg-status-cutmaterial',
+                            'grinding' => 'bg-status-grinding',
+                            'onrack' => 'bg-status-onrack',
+                            'programming' => 'bg-status-programming',
+                            'setup' => 'bg-status-setup',
+                            'machining' => 'bg-status-machining',
+                            'marking' => 'bg-status-marking',
+                            'deburring' => 'bg-status-deburring',
+                            'qa' => 'bg-status-qa',
+                            'outsource' => 'bg-status-outsource',
+                            'assembly' => 'bg-status-assembly',
+                            'shipping' => 'bg-status-shipping',
+                            'sent' => 'bg-status-sent',
+                            'ready' => 'bg-status-ready',
+                            'onhold' => 'bg-status-onhold',
+                            default => '',
+                            };
+                            @endphp
+                            <tr class="{{ $statusClass }} text-nowrap align-middle small">
+                                <td>
+                                    @if ($order->last_location === 'Yarnell')
+                                    <span class="fw-bold text-dark d-block">Yarnell</span>
+                                    @endif
+                                    <span class="badge bg-warning text-dark d-block mt-1">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
+                                    </span>
+                                </td>
+                                <td>{{ $order->work_id }}</td>
+                                <td>{{ $order->PN }}</td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    {{ $order->Part_description }}
+                                </td>
+                                <td>{{ $order->costumer }}</td>
+                                <td>{{ $order->qty }}</td>
+                                <td>{{ $order->wo_qty }}</td>
+                                <td>
+                                    <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
+                                </td>
+                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
+<div class="col-md-6 col-sm-6 mb-3">
+    <div class="card shadow-sm rounded-3 border-0 h-100">
+        {{-- Header --}}
+        <div class="card-header bg-success text-white d-flex align-items-center font-weight-semibold">
+            <i class="fas fa-calendar-week mr-2"></i> Orders Ready
+        </div>
+
+        {{-- Tabla de órdenes por semana --}}
+        <div class="table-responsive">
+            <table id="workhearst_Table"
+                class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle"
+                style="table-layout: fixed; width: 100%;">
+                <thead class="table-light text-center small">
+                    <tr class="text-center">
+                        <th style="width: 60px;">LOCATION</th>
+                        <th style="width: 70px;">WORK ID</th>
+                        <th style="width: 90px;">PN</th>
+                        <th style="width: 120px;">PART</th>
+                        <th style="width: 100px;">CUSTOMER</th>
+                        <th style="width: 50px;">CO QTY</th>
+                        <th style="width: 50px;">WO QTY</th>
+                        <th style="width: 50px;">STATUS</th>
+                        <th style="width: 70px;">DUE DATE</th>
+                        <th style="width: 100px;">NOTES</th>
+                    </tr>
+                </thead>
+                <tbody id="statusTable">
+                    @foreach($ordersReady as $order)
+                    @php
+                    $status = strtolower($order->status);
+                    $statusClass = match($status) {
+                    'pending' => 'bg-status-pending',
+                    'waitingformaterial' => 'bg-status-waitingformaterial',
+                    'cutmaterial' => 'bg-status-cutmaterial',
+                    'grinding' => 'bg-status-grinding',
+                    'onrack' => 'bg-status-onrack',
+                    'programming' => 'bg-status-programming',
+                    'setup' => 'bg-status-setup',
+                    'machining' => 'bg-status-machining',
+                    'marking' => 'bg-status-marking',
+                    'deburring' => 'bg-status-deburring',
+                    'qa' => 'bg-status-qa',
+                    'outsource' => 'bg-status-outsource',
+                    'assembly' => 'bg-status-assembly',
+                    'shipping' => 'bg-status-shipping',
+                    'sent' => 'bg-status-sent',
+                    'ready' => 'bg-status-ready',
+                    'onhold' => 'bg-status-onhold',
+                    default => '',
+                    };
+                    @endphp
+                    <tr class="{{ $statusClass }} text-nowrap align-middle small">
+                        <td>
+                            @if ($order->last_location === 'Yarnell')
+                            <span class="fw-bold text-dark">Yarnell</span>
+                            @endif
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
+                            </span>
+                        </td>
+                        <td>{{ $order->work_id }}</td>
+                        <td>{{ $order->PN }}</td>
+                        <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                            {{ $order->Part_description }}
+                        </td>
+                        <td>{{ $order->costumer }}</td>
+                        <td>{{ $order->qty }}</td>
+                        <td>{{ $order->wo_qty }}</td>
+                        <td>
+                            <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
+
+                        </td>
+
+                        <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+                        <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                            {{ $order->notes}}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
+<div class="col-md-6 col-sm-6 mb-3">
+    <div class="card shadow-sm rounded-3 border-0 h-100">
+        {{-- Header --}}
+        <div class="card-header bg-success text-white d-flex align-items-center font-weight-semibold">
+            <i class="fas fa-calendar-week mr-2"></i> Orders Ready
+        </div>
+
+        {{-- Tabla de órdenes por semana --}}
+        <div class="table-responsive">
+            <table id="workhearst_Table"
+                class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle"
+                style="table-layout: fixed; width: 100%;">
+                <thead class="table-light text-center small">
+                    <tr class="text-center">
+                        <th style="width: 60px;">LOCATION</th>
+                        <th style="width: 70px;">WORK ID</th>
+                        <th style="width: 90px;">PN</th>
+                        <th style="width: 120px;">PART</th>
+                        <th style="width: 100px;">CUSTOMER</th>
+                        <th style="width: 50px;">CO QTY</th>
+                        <th style="width: 50px;">WO QTY</th>
+                        <th style="width: 50px;">STATUS</th>
+                        <th style="width: 70px;">DUE DATE</th>
+                        <th style="width: 100px;">NOTES</th>
+                    </tr>
+                </thead>
+                <tbody id="statusTable">
+                    @foreach($ordersReady as $order)
+                    @php
+                    $status = strtolower($order->status);
+                    $statusClass = match($status) {
+                    'pending' => 'bg-status-pending',
+                    'waitingformaterial' => 'bg-status-waitingformaterial',
+                    'cutmaterial' => 'bg-status-cutmaterial',
+                    'grinding' => 'bg-status-grinding',
+                    'onrack' => 'bg-status-onrack',
+                    'programming' => 'bg-status-programming',
+                    'setup' => 'bg-status-setup',
+                    'machining' => 'bg-status-machining',
+                    'marking' => 'bg-status-marking',
+                    'deburring' => 'bg-status-deburring',
+                    'qa' => 'bg-status-qa',
+                    'outsource' => 'bg-status-outsource',
+                    'assembly' => 'bg-status-assembly',
+                    'shipping' => 'bg-status-shipping',
+                    'sent' => 'bg-status-sent',
+                    'ready' => 'bg-status-ready',
+                    'onhold' => 'bg-status-onhold',
+                    default => '',
+                    };
+                    @endphp
+                    <tr class="{{ $statusClass }} text-nowrap align-middle small">
+                        <td>
+                            @if ($order->last_location === 'Yarnell')
+                            <span class="fw-bold text-dark">Yarnell</span>
+                            @endif
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
+                            </span>
+                        </td>
+                        <td>{{ $order->work_id }}</td>
+                        <td>{{ $order->PN }}</td>
+                        <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                            {{ $order->Part_description }}
+                        </td>
+                        <td>{{ $order->costumer }}</td>
+                        <td>{{ $order->qty }}</td>
+                        <td>{{ $order->wo_qty }}</td>
+                        <td>
+                            <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
+
+                        </td>
+
+                        <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+                        <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                            {{ $order->notes}}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+
 @endsection
 
 @section('css')
-
+<link rel="stylesheet" href="{{ asset('vendor/css/orders-schedule.css') }}">
 @endsection
+
 
 @push('js')
 
@@ -145,69 +485,30 @@
     $(document).ready(function() {
 
         // Agrega un filtro personalizado para mostrar solo los status diferentes a "sent"
-      /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            const row = settings.aoData[dataIndex].nTr;
-            const status = $(row).data('status');
-            return status !== 'sent'; // cambia esta línea
-        });*/
+        /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+              const row = settings.aoData[dataIndex].nTr;
+              const status = $(row).data('status');
+              return status !== 'sent'; // cambia esta línea
+          });*/
 
         // Inicializa la tabla con DataTables
-        window.table = $('#orders_endscheduleTable').DataTable({
-            scrollX: false,
-            autoWidth: false,
-            pageLength: 10,
-            order: [
-                [10, 'desc'] // corregí 'des' por 'desc'
-            ],
-            columnDefs: [{
-                targets: [6, 7, 11],
-                orderable: false
-            }],
-        });
-
-        /**
-         * Extrae valores únicos de una columna específica y los usa para llenar un <select>
-         * @param {number} columnIndex - Índice de la columna en la tabla
-         * @param {string} selectId - ID del <select> para llenar (ej: #locationFilter)
-         */
-        function populateFilterFromColumn(columnIndex, selectId) {
-            const unique = new Set();
-
-            $('#orders_endscheduleTable tbody tr').each(function() {
-                const value = $(this).find('td').eq(columnIndex).text().trim().toLowerCase();
-                if (value) unique.add(value);
-            });
-
-            const values = [...unique].sort();
-            const $select = $(selectId);
-            $select.find('option:not(:first)').remove(); // mantener "-- All --"
-
-            values.forEach(value => {
-                const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
-                $select.append(`<option value="${value}">${capitalized}</option>`);
+        function initTable(selector, orderColumnIndex = 0, orderDir = 'asc') {
+            return $(selector).DataTable({
+                scrollX: false,
+                autoWidth: false,
+                pageLength: 10,
+                order: [
+                    [orderColumnIndex, orderDir]
+                ]
             });
         }
 
-        /**
-         * Aplica el filtro exacto con regex a una columna
-         * @param {string} selector - Selector del <select>
-         * @param {number} columnIndex - Índice de la columna a filtrar
-         */
-        function applyFilter(selector, columnIndex) {
-            $(selector).on("change", function() {
-                const val = $(this).val()?.toLowerCase() || "";
-                window.table
-                    .column(columnIndex)
-                    .search(val ? `^${val}$` : "", true, false)
-                    .draw();
-            });
-        }
-        // Aplica filtros para location y customer
-        populateFilterFromColumn(0, '#locationFilter'); // columna 0 = location
-        applyFilter('#locationFilter', 0);
+        // Inicializa varias
+        window.table1 = initTable('#workhearst_Table', 10, 'desc');
+        window.table2 = initTable('#ordersReady_Table', 7, 'desc');
+        window.table3 = initTable('#ordersDeburring_Table', 7, 'desc');
 
-        populateFilterFromColumn(4, '#customerFilter'); // columna 4 = customer
-        applyFilter('#customerFilter', 4);
+
     });
 </script>
 @endpush
