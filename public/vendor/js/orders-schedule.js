@@ -271,6 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Actualizar Location
     tableElement.on("change", ".location-select", function () {
+        const scrollTopBefore = $(window).scrollTop(); // 🧠 guarda scroll
+
         const select = $(this);
         const orderId = select.data("id");
         const newLocation = select.val();
@@ -334,6 +336,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Actualizamos la variable local para el próximo cambio
                     lastLocations[orderId] = newLocation;
+                    $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
+                    select.blur(); // quita foco
                 } else {
                     alert("Hubo un problema al actualizar la ubicación.");
                 }
@@ -989,18 +993,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const original = input.data("original");
 
         let newVal = input.val().trim();
-           //Para cuando se borra WO
+        //Para cuando se borra WO
         if (newVal === "") {
             newVal = 0; // puedes cambiarlo a `null` si tu backend lo acepta
         }
 
         const qty = parseInt(newVal, 10);
         if (isNaN(qty) || qty < 0) {
-            Swal.fire(
-                "⚠️ Invalid quantity",
-                "Enter a valid number",
-                "warning"
-            );
+            Swal.fire("⚠️ Invalid quantity", "Enter a valid number", "warning");
             return;
         }
 
