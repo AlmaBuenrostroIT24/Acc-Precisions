@@ -75,6 +75,10 @@ class Order_ScheduleController extends Controller
                 'cutmaterial',
                 'grinding',
                 'onrack',
+                'programming',
+                'setup',
+                'machining',
+                'marking'
             ])
             ->get();
 
@@ -88,9 +92,26 @@ class Order_ScheduleController extends Controller
             ->where('status', 'deburring')
             ->get();
 
+        $ordersReady = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'ready')
+            ->get();
 
+        $ordersOutsource = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'outsource')
+            ->get();
 
-        return view('orders.schedule_workhearst', compact('orders', 'ordersReady','ordersDeburring'));
+        $ordersProcessend = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', [
+                'assembly',
+                'shipping',
+                'onhold'
+            ])
+            ->get();
+
+        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource','ordersProcessend'));
     }
 
     //Orders Yarnell--------------------------------------------------------------------------------------------------------------
