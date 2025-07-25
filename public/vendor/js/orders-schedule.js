@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 pageLength: 40,
                 searching: false,
             },
-            "/ruta-vista-3": {
+            "/schedule/workhearst": {
                 pageLength: 10,
                 lengthChange: true,
                 ordering: false,

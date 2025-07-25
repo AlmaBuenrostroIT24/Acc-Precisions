@@ -110,8 +110,10 @@ class Order_ScheduleController extends Controller
                 'onhold'
             ])
             ->get();
+                   // Define la ubicación para la sincronización
+        $location = 'workhearst';
 
-        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource','ordersProcessend'));
+        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource','ordersProcessend','location'));
     }
 
     //Orders Yarnell--------------------------------------------------------------------------------------------------------------

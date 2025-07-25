@@ -1,6 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
     const currentLocation = window.currentLocation;
-    const validLocations = ["hearst", "yarnell"];
+    const validLocations = ["hearst", "yarnell","workhearst"];
     if (!validLocations.includes(currentLocation)) return;
 
     const statusLabels = {

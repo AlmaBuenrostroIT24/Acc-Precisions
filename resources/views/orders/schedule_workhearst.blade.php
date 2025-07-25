@@ -412,7 +412,7 @@
                         <thead class="table-light text-center small">
                             <tr class="text-center">
                                 <th style="width: 35px;">LOC</th>
-                                <th style="width: 55px;">WORK ID</th>
+                                <th style="width: 45px;">WORK ID</th>
                                 <th style="width: 60px;">PN</th>
                                 <th style="width: 100px;">PART</th>
                                 <th style="width: 100px;">CUSTOMER</th>
