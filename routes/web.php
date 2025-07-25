@@ -63,11 +63,11 @@ Route::resource('schedule/general', Order_ScheduleController::class);
 Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
 
 //Tabs de vistas
-Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general');
-Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell');
-Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished');
-Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics');
-Route::get('/schedule/workhearst', [Order_ScheduleController::class, 'workhearst'])->name('schedule.workhearst');
+Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general')->middleware('auth');
+Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell')->middleware('auth');
+Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished')->middleware('auth');
+Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics')->middleware('auth');
+Route::get('/schedule/workhearst', [Order_ScheduleController::class, 'workhearst'])->name('schedule.workhearst')->middleware('auth');
 
 //Importar archivo en excel
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
