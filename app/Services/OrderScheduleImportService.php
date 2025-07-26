@@ -172,7 +172,7 @@ class OrderScheduleImportService
             'machines'        => $row['machines'] ?? 'default_value',
             'done'            => $row['done'] ?? '1',
             'status'          => $row['status'] ?? 'pending',
-            'machining_date' => isset($row['due_date']) ? Carbon::parse($row['due_date'])->copy()->subWeekdays(3) : null,
+            'machining_date' => isset($row['due_date']) ? Carbon::parse($row['due_date'])->copy()->subWeekdays(5) : null,
             'due_date'        => $row['due_date'],
             'days'            => $days,
             'alert'           => $alert,
