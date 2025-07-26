@@ -1,207 +1,208 @@
-<div class="table-responsive">
-    <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
-        <thead class="table-light thead-custom">
-            <tr>
-                <th style="display:none;">Id</th>
-                <th style="display:none;">LocationText</th> <!-- índice 1 -->
-                <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                <th style="width: 65px;">LOCATION</th>
-                <th style="width: 55px;">WORK ID</th>
-                <th style="width: 60px;">PN</th>
-                <th style="width: 190px;">PART/DESCRIPTION</th>
-                <th style="width: 80px;">CUSTOMER</th>
-                <th style="width: 30px;">COQTY</th>
-                <th style="width: 50px;">WOQTY</th>
-                <th style="width: 100px;">STATUS</th>
-                <th style="width: 60px;">MACH. DATE</th>
-                <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                <th style="width: 50px;">DUE DATE</th>
-                <th style="width: 40px;">DAYS</th>
-                <th style="width: 55px;">ALERT</th>
-                <th style="width: 20px;">REP.</th>
-                <th style="width: 20px;">OUT</th>
-                <th style="width: 30px;">STATION</th>
-                <th style="width: 50px;">NOTES</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($orders as $order)
-            @php
-            $machining_date = $order->machining_date;
-            $days = $machining_date ? \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($machining_date), false) : null;
-            $alert = $days !== null && $days < 0 ? 1 : 0;
+<div id="table-wrapper" style="display: none;">
+    <div class="table-responsive">
+        <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
+            <thead class="table-light thead-custom">
+                <tr>
+                    <th style="display:none;">Id</th>
+                    <th style="display:none;">LocationText</th> <!-- índice 1 -->
+                    <th style="display:none;">StatusText</th> <!-- índice 2 -->
+                    <th style="width: 65px;">LOCATION</th>
+                    <th style="width: 55px;">WORK ID</th>
+                    <th style="width: 60px;">PN</th>
+                    <th style="width: 190px;">PART/DESCRIPTION</th>
+                    <th style="width: 80px;">CUSTOMER</th>
+                    <th style="width: 30px;">COQTY</th>
+                    <th style="width: 50px;">WOQTY</th>
+                    <th style="width: 100px;">STATUS</th>
+                    <th style="width: 60px;">MACH. DATE</th>
+                    <th style="display:none;">DueDateText</th> <!-- índice 2 -->
+                    <th style="width: 50px;">DUE DATE</th>
+                    <th style="width: 40px;">DAYS</th>
+                    <th style="width: 55px;">ALERT</th>
+                    <th style="width: 20px;">REP.</th>
+                    <th style="width: 20px;">OUT</th>
+                    <th style="width: 30px;">STATION</th>
+                    <th style="width: 50px;">NOTES</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($orders as $order)
+                @php
+                $machining_date = $order->machining_date;
+                $days = $machining_date ? \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($machining_date), false) : null;
+                $alert = $days !== null && $days < 0 ? 1 : 0;
 
 
-                $date=\Carbon\Carbon::parse($order->due_date)->copy();
-                $days = 3;
-                while ($days > 0) {
-                $date->subDay();
-                if (!$date->isWeekend()) {
-                $days--;
-                }
-                }
+                    $date=\Carbon\Carbon::parse($order->due_date)->copy();
+                    $days = 3;
+                    while ($days > 0) {
+                    $date->subDay();
+                    if (!$date->isWeekend()) {
+                    $days--;
+                    }
+                    }
 
 
-                $status = strtolower($order->status);
-                $rowClass = match($status) {
-                'pending' => 'bg-status-pending',
-                'waitingformaterial' => 'bg-status-waitingformaterial',
-                'cutmaterial' => 'bg-status-cutmaterial',
-                'grinding' => 'bg-status-grinding',
-                'onrack' => 'bg-status-onrack',
-                'programming' => 'bg-status-programming',
-                'setup' => 'bg-status-setup',
-                'machining' => 'bg-status-machining',
-                'marking' => 'bg-status-marking',
-                'deburring' => 'bg-status-deburring',
-                'qa' => 'bg-status-qa',
-                'outsource' => 'bg-status-outsource',
-                'assembly' => 'bg-status-assembly',
-                'shipping' => 'bg-status-shipping',
-                'ready' => 'bg-status-ready',
-                'onhold' => 'bg-status-onhold',
-                default => '',
-                };
+                    $status = strtolower($order->status);
+                    $rowClass = match($status) {
+                    'pending' => 'bg-status-pending',
+                    'waitingformaterial' => 'bg-status-waitingformaterial',
+                    'cutmaterial' => 'bg-status-cutmaterial',
+                    'grinding' => 'bg-status-grinding',
+                    'onrack' => 'bg-status-onrack',
+                    'programming' => 'bg-status-programming',
+                    'setup' => 'bg-status-setup',
+                    'machining' => 'bg-status-machining',
+                    'marking' => 'bg-status-marking',
+                    'deburring' => 'bg-status-deburring',
+                    'qa' => 'bg-status-qa',
+                    'outsource' => 'bg-status-outsource',
+                    'assembly' => 'bg-status-assembly',
+                    'shipping' => 'bg-status-shipping',
+                    'ready' => 'bg-status-ready',
+                    'onhold' => 'bg-status-onhold',
+                    default => '',
+                    };
 
 
-                $dias = $order->dias_restantes;
-                $color = $dias < 0 ? 'text-danger fw-bold' : ($dias <=2 ? 'text-warning fw-bold' : 'text-success fw-bold' );
-                    $alertColor=$dias < 0 ? 'bg-danger' : ($dias <=2 ? 'bg-warning' : 'bg-success' );
-                    $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
-                    @endphp
-                    <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
-                    <td style="display: none;">{{ $order->id }}</td>
-                    <!-- Columna oculta solo texto para filtro -->
-                    <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
-                    <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
-                    <!----------------------------------------->
-                    <td style="min-width: 90px;">
-                        <select name="location" class="form-control form-control-sm location-select fw-bold text-capitalize"
-                            style="width: 80px; font-weight: bold; color: black;"
-                            data-id="{{ $order->id }}"
-                            data-old-status="{{ strtolower($order->status) }}">
-                            <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
-                            <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
-                            <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
-                        </select>
-                        <div class="last-location-label mt-1">
-                            @if ($order->last_location === 'Yarnell')
-                            <span class="badge bg-warning text-dark">
-                                <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                    $dias = $order->dias_restantes;
+                    $color = $dias < 0 ? 'text-danger fw-bold' : ($dias <=2 ? 'text-warning fw-bold' : 'text-success fw-bold' );
+                        $alertColor=$dias < 0 ? 'bg-danger' : ($dias <=2 ? 'bg-warning' : 'bg-success' );
+                        $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
+                        @endphp
+                        <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
+                        <td style="display: none;">{{ $order->id }}</td>
+                        <!-- Columna oculta solo texto para filtro -->
+                        <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
+                        <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
+                        <!----------------------------------------->
+                        <td style="min-width: 90px;">
+                            <select name="location" class="form-control form-control-sm location-select fw-bold text-capitalize"
+                                style="width: 80px; font-weight: bold; color: black;"
+                                data-id="{{ $order->id }}"
+                                data-old-status="{{ strtolower($order->status) }}">
+                                <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
+                                <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
+                                <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
+                            </select>
+                            <div class="last-location-label mt-1">
+                                @if ($order->last_location === 'Yarnell')
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                </span>
+                                @endif
+                            </div>
+                        </td>
+                        <td style="white-space: nowrap; width: 100px;" class="texsty">
+                            @if ($order->was_work_id_null)
+                            <span class="editable-work-id text-decoration-underline {{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }}"
+                                data-id="{{ $order->id }}"
+                                data-value="{{ $order->work_id ?? '' }}"
+                                style="cursor:pointer;">
+                                {{ $order->work_id ?? 'Add' }}
+                            </span>
+                            @else
+                            {{ $order->work_id }}
+                            @endif
+                        </td>
+                        <td class="texsty" style="min-width: 120px;">{{ $order->PN }}</td>
+                        <td style="font-size: 11px;">{{ $order->Part_description }}</td>
+                        <td class="texsty">{{ $order->costumer }}</td>
+                        <td class="texsty">{{ $order->qty }}</td>
+                        <td>
+                            <input
+                                value="{{ $order->wo_qty == 0 || is_null($order->wo_qty) ? '' : $order->wo_qty }}"
+                                data-id="{{ $order->id }}"
+                                data-original="{{ $order->wo_qty }}"
+                                class="wo-qty-input form-control form-control-sm"
+                                style="width: 60px; font-weight: bold; color: black;">
+                        </td>
+                        <td style="min-width: 120px;">
+                            <select class="form-control form-control-sm status-select"
+                                style=" font-weight: bold; color: black;" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
+                                <option value="pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="waitingformaterial" {{ strtolower($order->status) === 'waitingformaterial' ? 'selected' : '' }}>Wait Material</option>
+                                <option value="cutmaterial" {{ strtolower($order->status) === 'cutmaterial' ? 'selected' : '' }}>Cut Material</option>
+                                <option value="grinding" {{ strtolower($order->status) === 'grinding' ? 'selected' : '' }}>Grinding</option>
+                                <option value="onrack" {{ strtolower($order->status) === 'onrack' ? 'selected' : '' }}>OnRack</option>
+                                <option value="programming" {{ strtolower($order->status) === 'programming' ? 'selected' : '' }}>Programming</option>
+                                <option value="setup" {{ strtolower($order->status) === 'setup' ? 'selected' : '' }}>SetUp</option>
+                                <option value="machining" {{ strtolower($order->status) === 'machining' ? 'selected' : '' }}>Machining</option>
+                                <option value="marking" {{ strtolower($order->status) === 'marking' ? 'selected' : '' }}>Marking</option>
+                                <option value="deburring" {{ strtolower($order->status) === 'deburring' ? 'selected' : '' }}>Deburring</option>
+                                <option value="qa" {{ strtolower($order->status) === 'qa' ? 'selected' : '' }}>QA</option>
+                                <option value="outsource" {{ strtolower($order->status) === 'outsource' ? 'selected' : '' }}>OutSource</option>
+                                <option value="assembly" {{ strtolower($order->status) === 'assembly' ? 'selected' : '' }}>Assembly</option>
+                                <option value="shipping" {{ strtolower($order->status) === 'shipping' ? 'selected' : '' }}>Shipping</option>
+                                <option value="sent" {{ strtolower($order->status) === 'sent' ? 'selected' : '' }}>Sent</option>
+                                <option value="onhold" {{ strtolower($order->status) === 'onhold' ? 'selected' : '' }}>OnHold</option>
+                                <option value="ready" {{ strtolower($order->status) === 'ready' ? 'selected' : '' }}>Ready</option>
+                            </select>
+                        </td>
+
+                        <td class="texsty">
+                            <span class="editable-machining-date text-decoration-underline"
+                                data-id="{{ $order->id }}"
+                                data-enabled="{{ $order->our_source ? '1' : '0' }}"
+                                data-value="{{ optional($order->machining_date)->format('Y-m-d') }}"
+                                style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
+                                {{ optional($order->machining_date)->format('M-d-y') ?? 'Click to set' }}
+                            </span>
+                        </td>
+                        <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
+                        <td class="texsty" style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
+                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
+                            {{ $dias }} days
+                        </td>
+
+                        <td>
+                            <div id="alerta-{{ $order->id }}" class="progress" style="width: 80px; height: 30px;">
+                                <div class="progress-bar {{ $alertColor }}" role="progressbar"
+                                    style="width: 100%; height: 30px; line-height: 30px; font-size: 18px; font-weight: bold;">
+                                    {{ $alertLabel }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
+                                data-id="{{ $order->id }}"
+                                data-value="{{ $order->report ? 1 : 0 }}">
+                                <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
+                                data-id="{{ $order->id }}"
+                                data-value="{{ $order->our_source }}">
+                                <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                            </button>
+                        </td>
+                        <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
+                            <span class="editable-station text-decoration-underline {{ $order->station ? 'text-success fw-bold' : 'text-muted' }}"
+                                data-id="{{ $order->id }}" style="cursor:pointer;">
+                                {{ $order->station ?? 'N/A' }}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px;" class="notes-cell" data-id="{{ $order->id }}">
+                            @if (!empty($order->notes))
+                            <span class="open-notes-modal" data-id="{{ $order->id }}" data-notes="{{ $order->notes }}" style="cursor:pointer;" title="{{ $order->notes }}" data-bs-toggle="tooltip" data-bs-placement="left">
+                                {{ \Illuminate\Support\Str::limit($order->notes, 30) }}
+                            </span>
+                            @else
+                            <span class="open-notes-modal text-muted fst-italic"
+                                data-id="{{ $order->id }}" data-notes="" style="cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="left">
+                                <i class="fas fa-plus-circle me-1"></i>
+                                Note
                             </span>
                             @endif
-                        </div>
-                    </td>
-                    <td style="white-space: nowrap; width: 100px;" class="texsty">
-                        @if ($order->was_work_id_null)
-                        <span class="editable-work-id text-decoration-underline {{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }}"
-                            data-id="{{ $order->id }}"
-                            data-value="{{ $order->work_id ?? '' }}"
-                            style="cursor:pointer;">
-                            {{ $order->work_id ?? 'Add' }}
-                        </span>
-                        @else
-                        {{ $order->work_id }}
-                        @endif
-                    </td>
-                    <td class="texsty" style="min-width: 120px;">{{ $order->PN }}</td>
-                    <td style="font-size: 11px;">{{ $order->Part_description }}</td>
-                    <td class="texsty">{{ $order->costumer }}</td>
-                    <td class="texsty">{{ $order->qty }}</td>
-                    <td>
-                        <input
-                            value="{{ $order->wo_qty == 0 || is_null($order->wo_qty) ? '' : $order->wo_qty }}"
-                            data-id="{{ $order->id }}"
-                            data-original="{{ $order->wo_qty }}"
-                            class="wo-qty-input form-control form-control-sm"
-                            style="width: 60px; font-weight: bold; color: black;">
-                    </td>
-                    <td style="min-width: 120px;">
-                        <select class="form-control form-control-sm status-select"
-                            style=" font-weight: bold; color: black;" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
-                            <option value="pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="waitingformaterial" {{ strtolower($order->status) === 'waitingformaterial' ? 'selected' : '' }}>Wait Material</option>
-                            <option value="cutmaterial" {{ strtolower($order->status) === 'cutmaterial' ? 'selected' : '' }}>Cut Material</option>
-                            <option value="grinding" {{ strtolower($order->status) === 'grinding' ? 'selected' : '' }}>Grinding</option>
-                            <option value="onrack" {{ strtolower($order->status) === 'onrack' ? 'selected' : '' }}>OnRack</option>
-                            <option value="programming" {{ strtolower($order->status) === 'programming' ? 'selected' : '' }}>Programming</option>
-                            <option value="setup" {{ strtolower($order->status) === 'setup' ? 'selected' : '' }}>SetUp</option>
-                            <option value="machining" {{ strtolower($order->status) === 'machining' ? 'selected' : '' }}>Machining</option>
-                            <option value="marking" {{ strtolower($order->status) === 'marking' ? 'selected' : '' }}>Marking</option>
-                            <option value="deburring" {{ strtolower($order->status) === 'deburring' ? 'selected' : '' }}>Deburring</option>
-                            <option value="qa" {{ strtolower($order->status) === 'qa' ? 'selected' : '' }}>QA</option>
-                            <option value="outsource" {{ strtolower($order->status) === 'outsource' ? 'selected' : '' }}>OutSource</option>
-                            <option value="assembly" {{ strtolower($order->status) === 'assembly' ? 'selected' : '' }}>Assembly</option>
-                            <option value="shipping" {{ strtolower($order->status) === 'shipping' ? 'selected' : '' }}>Shipping</option>
-                            <option value="sent" {{ strtolower($order->status) === 'sent' ? 'selected' : '' }}>Sent</option>
-                            <option value="onhold" {{ strtolower($order->status) === 'onhold' ? 'selected' : '' }}>OnHold</option>
-                            <option value="ready" {{ strtolower($order->status) === 'ready' ? 'selected' : '' }}>Ready</option>
-                        </select>
-                    </td>
-
-                    <td class="texsty">
-                        <span class="editable-machining-date text-decoration-underline"
-                            data-id="{{ $order->id }}"
-                            data-enabled="{{ $order->our_source ? '1' : '0' }}"
-                            data-value="{{ optional($order->machining_date)->format('Y-m-d') }}"
-                            style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
-                            {{ optional($order->machining_date)->format('M-d-y') ?? 'Click to set' }}
-                        </span>
-                    </td>
-                    <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
-                    <td class="texsty" style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
-                    <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
-                        {{ $dias }} days
-                    </td>
-
-                    <td>
-                        <div id="alerta-{{ $order->id }}" class="progress" style="width: 80px; height: 30px;">
-                            <div class="progress-bar {{ $alertColor }}" role="progressbar"
-                                style="width: 100%; height: 30px; line-height: 30px; font-size: 18px; font-weight: bold;">
-                                {{ $alertLabel }}
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                            data-id="{{ $order->id }}"
-                            data-value="{{ $order->report ? 1 : 0 }}">
-                            <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                        </button>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                            data-id="{{ $order->id }}"
-                            data-value="{{ $order->our_source }}">
-                            <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                        </button>
-                    </td>
-                    <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
-                        <span class="editable-station text-decoration-underline {{ $order->station ? 'text-success fw-bold' : 'text-muted' }}"
-                            data-id="{{ $order->id }}" style="cursor:pointer;">
-                            {{ $order->station ?? 'N/A' }}
-                        </span>
-                    </td>
-                    <td style="font-size: 12px;" class="notes-cell" data-id="{{ $order->id }}">
-                        @if (!empty($order->notes))
-                        <span class="open-notes-modal" data-id="{{ $order->id }}" data-notes="{{ $order->notes }}" style="cursor:pointer;" title="{{ $order->notes }}" data-bs-toggle="tooltip" data-bs-placement="left">
-                            {{ \Illuminate\Support\Str::limit($order->notes, 30) }}
-                        </span>
-                        @else
-                        <span class="open-notes-modal text-muted fst-italic"
-                            data-id="{{ $order->id }}" data-notes="" style="cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="left">
-                            <i class="fas fa-plus-circle me-1"></i>
-                            Note
-                        </span>
-                        @endif
-                    </td>
-
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="25" class="text-center">No hay órdenes registradas.</td>
-                    </tr>
-                    @endforelse
-        </tbody>
-    </table>
+                        </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="25" class="text-center">No hay órdenes registradas.</td>
+                        </tr>
+                        @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>

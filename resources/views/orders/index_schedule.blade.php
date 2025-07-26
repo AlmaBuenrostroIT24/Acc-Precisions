@@ -128,9 +128,7 @@
                 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
                             <i class="fas fa-plus"></i> New Order
                         </button> -->
-                <div class="table-responsive">
                     @include('orders.schedule_table')
-                </div>
             </div>
         </div>
     </div>

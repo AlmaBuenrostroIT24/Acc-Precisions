@@ -56,26 +56,41 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingMessage.style.display = "block";
         });
     }
-
-    // Función para inicializar DataTable Principal con opciones base + personalizadas
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [[12, "asc"]], // asc = más antigua primero
+            order: [[12, "asc"]], // ✅ DUE DATE está en índice 13
             info: true,
             autoWidth: false,
             columnDefs: [
-                { targets: 1, visible: false, searchable: true },
-                { targets: 2, visible: false, searchable: true },
+                { targets: 0, visible: false, searchable: false }, // ID
+                { targets: 1, visible: false, searchable: true }, // LocationText
+                { targets: 2, visible: false, searchable: true }, // StatusText
+                { targets: 12, visible: false, searchable: false }, // DueDateText
             ],
+            initComplete: function () {
+                const wrapper = document.getElementById("table-wrapper");
+                const loader = document.getElementById("loader");
+
+                if (loader) loader.style.display = "none";
+                if (wrapper) {
+                    wrapper.style.display = "block";
+                    console.log("✔️ Forzando mostrar wrapper");
+                }
+
+                // 👇 Ajusta columnas si el contenedor estaba oculto
+                this.api().columns.adjust().draw();
+
+                console.log("✅ DataTable completamente inicializada");
+            },
         };
+
         const finalOptions = { ...baseOptions, ...options };
         const dataTableInstance = tableElement.DataTable(finalOptions);
 
-        // Aplicar el estilo al thead después de inicializar la tabla
         tableElement.find("thead").css({
             "background-color": "#d5d8dc",
             color: "black",
@@ -84,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return dataTableInstance;
     }
 
-    // --- Inicialización condicional según la ruta o variable global ---
+    // 🚦 Inicialización condicional por ruta
     if (tableElement.length) {
         const path = window.location.pathname;
 
@@ -103,11 +118,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 ordering: false,
             },
         };
-        // Detectar ruta actual
 
-        const config = tableConfigs[path] || {}; // Usa config vacía por defecto
-        config.rowCallback = applyRowLateHighlight; // ✅ inyectamos la función para que se colore en rojo cuando days<0
+        const config = tableConfigs[path] || {};
+        config.rowCallback = applyRowLateHighlight;
+
+        // ⏳ Mostrar loader antes de inicializar
+        const loader = document.getElementById("loader");
+        const wrapper = document.getElementById("table-wrapper");
+        if (loader) loader.style.display = "block";
+        if (wrapper) wrapper.style.display = "none";
+
+        // ✅ Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
+    } else {
+        console.error("❌ No se encontró #orders_scheduleTable");
+        F;
     }
 
     function applyRowLateHighlight(row, data, index) {
