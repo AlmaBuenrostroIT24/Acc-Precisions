@@ -69,6 +69,15 @@ Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])-
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics')->middleware('auth');
 Route::get('/schedule/workhearst', [Order_ScheduleController::class, 'workhearst'])->name('schedule.workhearst')->middleware('auth');
 
+// Partials para recarga dinámica de secciones en schedule_workhearst
+Route::get('/workhearst/deburring/partial', [Order_ScheduleController::class, 'partialDeburring']);
+Route::get('/workhearst/ready/partial', [Order_ScheduleController::class, 'partialReady']);
+Route::get('/workhearst/outsource/partial', [Order_ScheduleController::class, 'partialOutsource']);
+Route::get('/workhearst/processend/partial', [Order_ScheduleController::class, 'partialProcessend']);
+Route::get('/workhearst/workinprocess/partial', [Order_ScheduleController::class, 'partialWorkhearst']);
+
+
+
 //Importar archivo en excel
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
 

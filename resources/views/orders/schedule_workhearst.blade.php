@@ -47,13 +47,13 @@
                         <thead class="table-light text-center small">
                             <tr>
                                 <th style="width: 80px;">LOCATION</th>
-                                <th>WORK ID</th>
-                                <th>PN</th>
+                                <th style="width: 40px;">WORK ID</th>
+                                <th style="width: 60px;">PN</th>
                                 <th style="width: 300px;">PART/DESCRIPTION</th>
-                                <th>CUSTOMER</th>
+                                <th style="width: 85px;">CUSTOMER</th>
                                 <th style="width: 40px;">CO QTY</th>
                                 <th style="width: 40px;">WO QTY</th>
-                                <th>STATUS</th>
+                                <th style="width: 110px;">STATUS</th>
                                 <th style="width: 60px;">REPORT</th>
                                 <th style="width: 40px;">OUT</th>
                                 <th style="width: 70px;">MACH DATE</th>
@@ -61,77 +61,8 @@
                                 <th style="width: 100px;">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody id="statusTable">
-                            @foreach($orders as $order)
-
-                            @php
-                            $status = strtolower($order->status);
-                            $statusClass = match($status) {
-                            'pending' => 'bg-status-pending',
-                            'waitingformaterial' => 'bg-status-waitingformaterial',
-                            'cutmaterial' => 'bg-status-cutmaterial',
-                            'grinding' => 'bg-status-grinding',
-                            'onrack' => 'bg-status-onrack',
-                            'programming' => 'bg-status-programming',
-                            'setup' => 'bg-status-setup',
-                            'machining' => 'bg-status-machining',
-                            'marking' => 'bg-status-marking',
-                            'deburring' => 'bg-status-deburring',
-                            'qa' => 'bg-status-qa',
-                            'outsource' => 'bg-status-outsource',
-                            'assembly' => 'bg-status-assembly',
-                            'shipping' => 'bg-status-shipping',
-                            'sent' => 'bg-status-sent',
-                            'ready' => 'bg-status-ready',
-                            'onhold' => 'bg-status-onhold',
-                            default => '',
-                            };
-                            @endphp
-                            <tr class="{{ $statusClass }}" data-status="{{ $order->status }}">
-                                <td>
-                                    @if ($order->last_location === 'Yarnell')
-                                    <span class="fw-bold text-dark">Yarnell</span>
-                                    @endif
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                                    </span>
-                                </td>
-                                <td>{{ $order->work_id }}</td>
-                                <td style="min-width: 120px;">{{ $order->PN }}</td>
-                                <td style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->Part_description }}
-                                </td>
-                                <td>{{ $order->costumer }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ $order->wo_qty }}</td>
-                                <td>
-                                    <span class="badge bg-secondary text-white">{{ ucfirst($status) }}</span>
-
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}"
-                                        style="cursor: default; pointer-events: none;">
-                                        <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->our_source }}"
-                                        style="cursor: default; pointer-events: none;">
-                                        <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                                    </button>
-                                </td>
-                                <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
-                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                                <td>
-                                    <span class="open-notes-modal" data-id="{{ $order->id }}"
-                                        data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
-                                        {{ Str::limit($order->notes, 30) }}
-                                    </span>
-                                </td>
-                            </tr>
-                            @endforeach
+                        <tbody id="workhearst_TableBody">
+                            @include('orders.partials.workhearst_table_body')
                         </tbody>
                     </table>
                 </div>
@@ -162,60 +93,14 @@
                                 <th style="width: 80px;">PN</th>
                                 <th style="width: 110px;">PART</th>
                                 <th style="width: 70px;">CUSTOMER</th>
-                                <th style="width: 45px;">CO QTY</th>
-                                <th style="width: 45px;">WO QTY</th>
-                                <th style="width: 30px;">STATUS</th>
+                                <th style="width: 30px;">C QTY</th>
+                                <th style="width: 25px;">W QTY</th>
+                                <th style="width: 65px;">STATUS</th>
                                 <th style="width: 60px;">DUE DATE</th>
                             </tr>
                         </thead>
-                        <tbody id="statusTable">
-                            @foreach($ordersReady as $order)
-                            @php
-                            $status = strtolower($order->status);
-                            $statusClass = match($status) {
-                            'pending' => 'bg-status-pending',
-                            'waitingformaterial' => 'bg-status-waitingformaterial',
-                            'cutmaterial' => 'bg-status-cutmaterial',
-                            'grinding' => 'bg-status-grinding',
-                            'onrack' => 'bg-status-onrack',
-                            'programming' => 'bg-status-programming',
-                            'setup' => 'bg-status-setup',
-                            'machining' => 'bg-status-machining',
-                            'marking' => 'bg-status-marking',
-                            'deburring' => 'bg-status-deburring',
-                            'qa' => 'bg-status-qa',
-                            'outsource' => 'bg-status-outsource',
-                            'assembly' => 'bg-status-assembly',
-                            'shipping' => 'bg-status-shipping',
-                            'sent' => 'bg-status-sent',
-                            'ready' => 'bg-status-ready',
-                            'onhold' => 'bg-status-onhold',
-                            default => '',
-                            };
-                            @endphp
-                            <tr class="{{ $statusClass }} text-nowrap align-middle small">
-                                <td>
-                                    @if ($order->last_location === 'Yarnell')
-                                    <span class="fw-bold text-dark d-block">Yarnell</span>
-                                    @endif
-                                    <span class="badge bg-warning text-dark d-block mt-1">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                                    </span>
-                                </td>
-                                <td>{{ $order->work_id }}</td>
-                                <td>{{ $order->PN }}</td>
-                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->Part_description }}
-                                </td>
-                                <td>{{ $order->costumer }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ $order->wo_qty }}</td>
-                                <td>
-                                    <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
-                                </td>
-                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                            </tr>
-                            @endforeach
+                        <tbody id="readyTableBody">
+                            @include('orders.partials.ready_table_body')
                         </tbody>
                     </table>
                 </div>
@@ -243,61 +128,14 @@
                                 <th style="width: 80px;">PN</th>
                                 <th style="width: 100px;">PART</th>
                                 <th style="width: 70px;">CUSTOMER</th>
-                                <th style="width: 45px;">CO QTY</th>
-                                <th style="width: 45px;">WO QTY</th>
-                                <th style="width: 50px;">STATUS</th>
+                                <th style="width: 30px;">C QTY</th>
+                                <th style="width: 25px;">W QTY</th>
+                                <th style="width: 85px;">STATUS</th>
                                 <th style="width: 50px;">DUE DATE</th>
                             </tr>
                         </thead>
-                        <tbody id="statusTable">
-                            @foreach($ordersDeburring as $order)
-                            @php
-                            $status = strtolower($order->status);
-                            $statusClass = match($status) {
-                            'pending' => 'bg-status-pending',
-                            'waitingformaterial' => 'bg-status-waitingformaterial',
-                            'cutmaterial' => 'bg-status-cutmaterial',
-                            'grinding' => 'bg-status-grinding',
-                            'onrack' => 'bg-status-onrack',
-                            'programming' => 'bg-status-programming',
-                            'setup' => 'bg-status-setup',
-                            'machining' => 'bg-status-machining',
-                            'marking' => 'bg-status-marking',
-                            'deburring' => 'bg-status-deburring',
-                            'qa' => 'bg-status-qa',
-                            'outsource' => 'bg-status-outsource',
-                            'assembly' => 'bg-status-assembly',
-                            'shipping' => 'bg-status-shipping',
-                            'sent' => 'bg-status-sent',
-                            'ready' => 'bg-status-ready',
-                            'onhold' => 'bg-status-onhold',
-                            default => '',
-                            };
-                            @endphp
-                            <tr class="{{ $statusClass }} text-nowrap align-middle small">
-                                <td>
-                                    @if ($order->last_location === 'Yarnell')
-                                    <span class="fw-bold text-dark d-block">Yarnell</span>
-                                    @endif
-                                    <span class="badge bg-warning text-dark d-block mt-1">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                                    </span>
-                                </td>
-                                <td>{{ $order->work_id }}</td>
-                                <td>{{ $order->PN }}</td>
-                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->Part_description }}
-                                </td>
-                                <td>{{ $order->costumer }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ $order->wo_qty }}</td>
-                                <td>
-                                    <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
-                                </td>
-                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-
-                            </tr>
-                            @endforeach
+                        <tbody id="deburringTableBody">
+                            @include('orders.partials.deburring_table_body')
                         </tbody>
                     </table>
                 </div>
@@ -328,67 +166,15 @@
                                 <th style="width: 60px;">PN</th>
                                 <th style="width: 60px;">PART</th>
                                 <th style="width: 65px;">CUSTOMER</th>
-                                <th style="width: 35px;">CO QTY</th>
-                                <th style="width: 35px;">WO QTY</th>
-                                <th style="width: 50px;">STATUS</th>
+                                <th style="width: 20px;">C QTY</th>
+                                <th style="width: 20px;">W QTY</th>
+                                <th style="width: 90px;">STATUS</th>
                                 <th style="width: 45px;">DUE DATE</th>
                                 <th style="width: 50px;">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody id="statusTable">
-                            @foreach($ordersOutsource as $order)
-                            @php
-                            $status = strtolower($order->status);
-                            $statusClass = match($status) {
-                            'pending' => 'bg-status-pending',
-                            'waitingformaterial' => 'bg-status-waitingformaterial',
-                            'cutmaterial' => 'bg-status-cutmaterial',
-                            'grinding' => 'bg-status-grinding',
-                            'onrack' => 'bg-status-onrack',
-                            'programming' => 'bg-status-programming',
-                            'setup' => 'bg-status-setup',
-                            'machining' => 'bg-status-machining',
-                            'marking' => 'bg-status-marking',
-                            'deburring' => 'bg-status-deburring',
-                            'qa' => 'bg-status-qa',
-                            'outsource' => 'bg-status-outsource',
-                            'assembly' => 'bg-status-assembly',
-                            'shipping' => 'bg-status-shipping',
-                            'sent' => 'bg-status-sent',
-                            'ready' => 'bg-status-ready',
-                            'onhold' => 'bg-status-onhold',
-                            default => '',
-                            };
-                            @endphp
-                            <tr class="{{ $statusClass }} text-nowrap align-middle small">
-                                <td>
-                                    @if ($order->last_location === 'Yarnell')
-                                    <span class="fw-bold text-dark d-block">Yarnell</span>
-                                    @endif
-                                    <span class="badge bg-warning text-dark d-block mt-1">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                                    </span>
-                                </td>
-                                <td>{{ $order->work_id }}</td>
-                                <td style="font-size: 12px !important;">
-                                    {{ $order->PN }}
-                                </td>
-                                <td style="font-size: 10px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->Part_description }}
-                                </td>
-                                <td>{{ $order->costumer }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ $order->wo_qty }}</td>
-                                <td>
-                                    <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
-                                </td>
-
-                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->notes}}
-                                </td>
-                            </tr>
-                            @endforeach
+                        <tbody id="outsourceTableBody">
+                            @include('orders.partials.outsource_table_body')
                         </tbody>
                     </table>
                 </div>
@@ -416,61 +202,14 @@
                                 <th style="width: 60px;">PN</th>
                                 <th style="width: 100px;">PART</th>
                                 <th style="width: 100px;">CUSTOMER</th>
-                                <th style="width: 45px;">CO QTY</th>
-                                <th style="width: 45px;">WO QTY</th>
-                                <th style="width: 40px;">STATUS</th>
+                                <th style="width: 25px;">C QTY</th>
+                                <th style="width: 25px;">W QTY</th>
+                                <th style="width: 85px;">STATUS</th>
                                 <th style="width: 50px;">DUE DATE</th>
                             </tr>
                         </thead>
-                        <tbody id="statusTable">
-                            @foreach($ordersProcessend as $order)
-                            @php
-                            $status = strtolower($order->status);
-                            $statusClass = match($status) {
-                            'pending' => 'bg-status-pending',
-                            'waitingformaterial' => 'bg-status-waitingformaterial',
-                            'cutmaterial' => 'bg-status-cutmaterial',
-                            'grinding' => 'bg-status-grinding',
-                            'onrack' => 'bg-status-onrack',
-                            'programming' => 'bg-status-programming',
-                            'setup' => 'bg-status-setup',
-                            'machining' => 'bg-status-machining',
-                            'marking' => 'bg-status-marking',
-                            'deburring' => 'bg-status-deburring',
-                            'qa' => 'bg-status-qa',
-                            'outsource' => 'bg-status-outsource',
-                            'assembly' => 'bg-status-assembly',
-                            'shipping' => 'bg-status-shipping',
-                            'sent' => 'bg-status-sent',
-                            'ready' => 'bg-status-ready',
-                            'onhold' => 'bg-status-onhold',
-                            default => '',
-                            };
-                            @endphp
-                            <tr class="{{ $statusClass }} text-nowrap align-middle small">
-                                <td>
-                                    @if ($order->last_location === 'Yarnell')
-                                    <span class="fw-bold text-dark d-block">Yarnell</span>
-                                    @endif
-                                    <span class="badge bg-warning text-dark d-block mt-1">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                                    </span>
-                                </td>
-                                <td>{{ $order->work_id }}</td>
-                                <td>{{ $order->PN }}</td>
-                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->Part_description }}
-                                </td>
-                                <td>{{ $order->costumer }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ $order->wo_qty }}</td>
-                                <td>
-                                    <span class="badge bg-success text-white">{{ ucfirst($status) }}</span>
-
-                                </td>
-                                <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                            </tr>
-                            @endforeach
+                        <tbody id="processendTableBody">
+                            @include('orders.partials.processend_table_body')
                         </tbody>
                     </table>
                 </div>
@@ -492,35 +231,138 @@
 @push('js')
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
 
-        // Agrega un filtro personalizado para mostrar solo los status diferentes a "sent"
-        /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-              const row = settings.aoData[dataIndex].nTr;
-              const status = $(row).data('status');
-              return status !== 'sent'; // cambia esta línea
-          });*/
+        // 🔁 Inicializar tablas
+        const tablesConfig = {
+            '#workhearst_Table': [11, 'desc'],
+            '#ordersReady_Table': [7, 'desc'],
+            '#ordersDeburring_Table': [7, 'desc'],
+            '#ordersOutsource_Table': [8, 'desc'],
+            '#ordersProcessend_Table': [7, 'desc'],
+        };
 
-        // Inicializa la tabla con DataTables
-        function initTable(selector, orderColumnIndex = 0, orderDir = 'asc') {
+        const dataTables = {};
+
+        function initTable(selector, orderIndex, orderDir) {
             return $(selector).DataTable({
+                destroy: true,
                 scrollX: false,
                 autoWidth: false,
                 pageLength: 10,
                 order: [
-                    [orderColumnIndex, orderDir]
-                ]
+                    [orderIndex, orderDir]
+                ],
             });
         }
 
-        // Inicializa varias 
-        window.table1 = initTable('#workhearst_Table', 11, 'desc');
-        window.table2 = initTable('#ordersReady_Table', 7, 'desc');
-        window.table3 = initTable('#ordersDeburring_Table', 7, 'desc');
-        window.table4 = initTable('#ordersOutsource_Table', 8, 'desc');
-        window.table4 = initTable('#ordersProcessend_Table', 7, 'desc');
+        for (const [selector, [orderIndex, orderDir]] of Object.entries(tablesConfig)) {
+            dataTables[selector] = initTable(selector, orderIndex, orderDir);
+        }
+
+        // 🔁 Mapas para recarga de tablas por estado
+        const statusToTableMap = new Map([
+            ['deburring', ['#ordersDeburring_Table', '#deburringTableBody', '/workhearst/deburring/partial', 7]],
+            ['ready', ['#ordersReady_Table', '#readyTableBody', '/workhearst/ready/partial', 7]],
+            ['outsource', ['#ordersOutsource_Table', '#outsourceTableBody', '/workhearst/outsource/partial', 8]],
+            ['assembly', ['#ordersProcessend_Table', '#processendTableBody', '/workhearst/processend/partial', 7]],
+            ['shipping', ['#ordersProcessend_Table', '#processendTableBody', '/workhearst/processend/partial', 7]],
+            ['onhold', ['#ordersProcessend_Table', '#processendTableBody', '/workhearst/processend/partial', 7]],
+            ['pending', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['waitingformaterial', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['cutmaterial', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['grinding', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['programming', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['setup', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['onrack', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['machining', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+            ['marking', ['#workhearst_Table', '#workhearst_TableBody', '/workhearst/workinprocess/partial', 11]],
+        ]);
+
+        // 🧠 Actualiza estado
+        function actualizarStatus(orderId, status, row, select, token, currentTableSelector) {
+            $.ajax({
+                url: `/orders/${orderId}/update-status`,
+                method: 'POST',
+                data: {
+                    status,
+                    _token: token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        row.removeClass(function(i, cls) {
+                            return (cls.match(/(^|\s)bg-status-\S+/g) || []).join(' ');
+                        }).addClass(`bg-status-${response.status}`);
+
+                        // 🔁 Eliminar esa orden de TODAS las tablas
+                        for (const [selector, dt] of Object.entries(dataTables)) {
+                            const table = dt;
+                            table.rows().every(function() {
+                                const rowNode = $(this.node());
+                                const rowId = rowNode.find('.status-select').data('id');
+                                if (rowId == orderId) {
+                                    this.remove();
+                                }
+                            });
+                            table.draw(false);
+                        }
+
+                        // 🔁 Recargar tabla destino si aplica
+                        const reloadConfig = statusToTableMap.get(response.status);
+                        if (reloadConfig) {
+                            const [selector, tbody, url, orderIndex] = reloadConfig;
+                            dataTables[selector].destroy();
+                            $(tbody).load(url, function() {
+                                dataTables[selector] = initTable(selector, orderIndex, 'desc');
+                            });
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error(xhr.responseText);
+                    alert('❌ Error al actualizar el estado.');
+                }
+            });
+        }
 
 
+        // 🧠 Manejo de eventos genérico
+        Object.keys(tablesConfig).forEach((selector) => {
+            const table = $(selector);
+
+            table.on('focus', '.status-select', function() {
+                $(this).data('old-status', $(this).val());
+            });
+
+            table.on('change', '.status-select', function() {
+                const select = $(this);
+                const orderId = select.data('id');
+                const newStatus = select.val().toLowerCase();
+                const oldStatus = select.data('old-status');
+                const row = select.closest('tr');
+                const token = '{{ csrf_token() }}';
+
+                if (newStatus === 'sent') {
+                    Swal.fire({
+                        title: "¿Are you sure?",
+                        text: `Changing the status to '${newStatus}' .It will be moved to 'Completed Orders'.`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, Completed",
+                        cancelButtonText: "No, cancel",
+                        reverseButtons: true,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            actualizarStatus(orderId, newStatus, row, select, token, selector);
+                        } else {
+                            select.val(oldStatus);
+                        }
+                    });
+                } else {
+                    actualizarStatus(orderId, newStatus, row, select, token, selector);
+                }
+            });
+        });
     });
 </script>
 @endpush

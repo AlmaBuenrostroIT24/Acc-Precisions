@@ -110,11 +110,73 @@ class Order_ScheduleController extends Controller
                 'onhold'
             ])
             ->get();
-                   // Define la ubicación para la sincronización
+        // Define la ubicación para la sincronización
         $location = 'workhearst';
 
-        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource','ordersProcessend','location'));
+        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource', 'ordersProcessend', 'location'));
     }
+
+    public function partialDeburring()
+    {
+        $ordersDeburring = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'deburring')
+            ->get();
+
+        return view('orders.partials.deburring_table_body', compact('ordersDeburring'));
+    }
+
+    public function partialReady()
+    {
+        $ordersReady = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'ready')
+            ->get();
+
+        return view('orders.partials.ready_table_body', compact('ordersReady'));
+    }
+
+    public function partialOutsource()
+    {
+        $ordersOutsource = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'outsource')
+            ->get();
+
+        return view('orders.partials.outsource_table_body', compact('ordersOutsource'));
+    }
+
+    public function partialProcessend()
+    {
+        $ordersProcessend = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', ['assembly', 'shipping', 'onhold'])
+            ->get();
+
+        return view('orders.partials.processend_table_body', compact('ordersProcessend'));
+    }
+
+    public function partialWorkhearst()
+    {
+        $orders = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', [
+                'pending',
+                'waitingformaterial',
+                'cutmaterial',
+                'grinding',
+                'onrack',
+                'programming',
+                'setup',
+                'machining',
+                'marking',
+            ])
+            ->get();
+
+        return view('orders.partials.workhearst_table_body', compact('orders'));
+    }
+
+
 
     //Orders Yarnell--------------------------------------------------------------------------------------------------------------
 
