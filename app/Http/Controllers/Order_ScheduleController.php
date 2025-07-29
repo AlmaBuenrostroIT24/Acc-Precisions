@@ -774,8 +774,9 @@ class Order_ScheduleController extends Controller
 
         // Filtra solo las órdenes con location 'yarnell'
         $orders = OrderSchedule::where('location', 'yarnell')
-            ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
-            ->latest()
+            ->where('status', '!=', 'sent')
+                 ->orderByRaw("FIELD(LOWER(status), 'deburring', 'ready','qa', 'assembly','shipping', 'outsource','onhold')")
+            ->orderBy('due_date') // opcional: orden secundario
             ->get();
 
         // Si necesitas calcular días restantes como en index()
@@ -797,13 +798,12 @@ class Order_ScheduleController extends Controller
     public function hearstSchedule(Request $request)
     {
 
-        // Filtra solo las órdenes con location 'hw'
         $orders = OrderSchedule::where('location', 'hearst')
-            ->where('status', '!=', 'sent')  // 👈 Agrega este filtro
-            ->latest()
+            ->where('status', '!=', 'sent')
+            ->orderByRaw("FIELD(LOWER(status), 'deburring', 'ready','qa', 'assembly','shipping', 'outsource','onhold')")
+            ->orderBy('due_date') // opcional: orden secundario
             ->get();
 
-        // Si necesitas calcular días restantes como en index()
         foreach ($orders as $order) {
             $order->dias_restantes = $this->calcularDiasInterno(
                 $order->status,
@@ -814,7 +814,7 @@ class Order_ScheduleController extends Controller
 
         // Define la ubicación para la sincronización
         $location = 'hearst';
-
+        //dd($orders->pluck('status'));
         // Retorna la vista y pasa también la variable $location
         return view('orders.schedule_tablehearst', compact('orders', 'location'));
     }

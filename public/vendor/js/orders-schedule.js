@@ -107,10 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
             "/scheduley": {
                 pageLength: 40,
                 searching: false,
+                order: [], // aquí respetas el orden del backend (status personalizado)
             },
             "/scheduleh": {
                 pageLength: 40,
                 searching: false,
+                order: [], // aquí respetas el orden del backend (status personalizado)
             },
             "/schedule/workhearst": {
                 pageLength: 10,
