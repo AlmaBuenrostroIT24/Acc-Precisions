@@ -77,7 +77,10 @@
                        </button>
                    </td>
                    <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
-                   <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+                   <td>
+                       <span style="display: none">{{ \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') }}</span>
+                       {{ \Carbon\Carbon::parse($order->due_date)->format('m/d/Y') }}
+                   </td>
                    <td style="white-space: normal !important; word-break: break-word;" title="{{ $order->notes }}">
                        {{ $order->notes}}
                    </td>

@@ -235,11 +235,11 @@
 
         // 🔁 Inicializar tablas
         const tablesConfig = {
-            '#workhearst_Table': [11, 'desc'],
-            '#ordersReady_Table': [7, 'desc'],
-            '#ordersDeburring_Table': [7, 'desc'],
-            '#ordersOutsource_Table': [8, 'desc'],
-            '#ordersProcessend_Table': [7, 'desc'],
+            '#workhearst_Table': [11, 'asc'],
+            '#ordersReady_Table': [8, 'asc'],
+            '#ordersDeburring_Table': [8, 'asc'],
+            '#ordersOutsource_Table': [8, 'asc'],
+            '#ordersProcessend_Table': [8, 'asc'],
         };
 
         const dataTables = {};

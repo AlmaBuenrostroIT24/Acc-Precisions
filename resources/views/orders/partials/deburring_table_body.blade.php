@@ -61,7 +61,10 @@
              <option value="ready" {{ strtolower($order->status) === 'ready' ? 'selected' : '' }}>Ready</option>
          </select>
      </td>
-     <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
+     <td>
+         <span style="display: none">{{ \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') }}</span>
+         {{ \Carbon\Carbon::parse($order->due_date)->format('m/d/Y') }}
+     </td>
 
  </tr>
  @endforeach
