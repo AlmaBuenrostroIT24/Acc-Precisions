@@ -10,14 +10,14 @@
                     <th style="width: 55px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
                     <th style="width: 190px;">PART/DESCRIPTION</th>
-                    <th style="width: 80px;">CUSTOMER</th>
+                    <th style="width: 70px;">CUSTOMER</th>
                     <th style="width: 30px;">COQTY</th>
-                    <th style="width: 50px;">WOQTY</th>
+                    <th style="width: 40px;">WOQTY</th>
                     <th style="width: 100px;">STATUS</th>
-                    <th style="width: 60px;">MACH. DATE</th>
+                    <th style="width: 70px;">MACH. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
-                    <th style="width: 50px;">DUE DATE</th>
-                    <th style="width: 40px;">DAYS</th>
+                    <th style="width: 70px;">DUE DATE</th>
+                    <th style="width: 30px;">DAYS</th>
                     <th style="width: 55px;">ALERT</th>
                     <th style="width: 20px;">REP.</th>
                     <th style="width: 20px;">OUT</th>
@@ -139,7 +139,6 @@
                                 <option value="ready" {{ strtolower($order->status) === 'ready' ? 'selected' : '' }}>Ready</option>
                             </select>
                         </td>
-
                         <td class="texsty">
                             <span class="editable-machining-date text-decoration-underline"
                                 data-id="{{ $order->id }}"
@@ -150,11 +149,18 @@
                             </span>
                         </td>
                         <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
-                        <td class="texsty" style="min-width: 70px;">{{ strtolower(optional($order->due_date)->format('M-d-y')) }}</td>
+                        <td>
+                            <span class="editable-due-date  text-decoration-underline"
+                                data-id="{{ $order->id }}"
+                                  data-enabled="{{ $order->status === 'onhold' ? 1 : 0 }}"
+                                data-value="{{ \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') }}"
+                                style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
+                                {{ optional($order->due_date)->format('M-d-y') ?? 'Click to set' }}
+                            </span>
+                        </td>
                         <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
                             {{ $dias }} days
                         </td>
-
                         <td>
                             <div id="alerta-{{ $order->id }}" class="progress" style="width: 80px; height: 30px;">
                                 <div class="progress-bar {{ $alertColor }}" role="progressbar"

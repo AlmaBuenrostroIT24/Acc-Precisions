@@ -78,13 +78,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (loader) loader.style.display = "none";
                 if (wrapper) {
                     wrapper.style.display = "block";
-                    console.log("✔️ Forzando mostrar wrapper");
+                    //console.log("✔️ Forzando mostrar wrapper");
                 }
 
                 // 👇 Ajusta columnas si el contenedor estaba oculto
                 this.api().columns.adjust().draw();
 
-                console.log("✅ DataTable completamente inicializada");
+                //console.log("✅ DataTable completamente inicializada");
             },
         };
 
@@ -438,26 +438,42 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     //✅ 4. Evita crear HTML con strings largos: usa plantillas
-    function createEditableDateSpan(orderId, date) {
-        const [year, month, day] = date.split("-"); // "2025-07-11" → ["2025", "07", "11"]
-        const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
-        const shortMonth = dateObj.toLocaleString("en-US", { month: "short" }); // "Jul"
-        const twoDigitYear = year.slice(-2); // "25"
+    function createEditableDateSpan(orderId, date, options = {}) {
+        const {
+            cssClass = "editable-date", // clase personalizada
+            enabled = true,
+            underline = true,
+            bold = true,
+        } = options;
 
+        // Formatear fecha como "Jul-11-25"
+        const [year, month, day] = date.split("-");
+        const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
+        const shortMonth = dateObj.toLocaleString("en-US", { month: "short" });
+        const twoDigitYear = year.slice(-2);
         const formatted = `${shortMonth}-${day.padStart(
             2,
             "0"
-        )}-${twoDigitYear}`; // "Jul-11-25"
+        )}-${twoDigitYear}`;
+
+        // Armar clases
+        const classes = [
+            cssClass,
+            underline ? "text-decoration-underline" : "",
+            bold ? "fw-bold" : "",
+        ]
+            .filter(Boolean)
+            .join(" ");
 
         return $(`
-            <span class="editable-machining-date text-decoration-underline"
-                  data-id="${orderId}"
-                  data-enabled="1"
-                  data-value="${date}"
-                  style="cursor:pointer;">
-                ${formatted}
-            </span>
-        `);
+        <span class="${classes}"
+              data-id="${orderId}"
+              data-enabled="${enabled ? 1 : 0}"
+              data-value="${date}"
+              style="cursor:${enabled ? "pointer" : "default"};">
+            ${formatted}
+        </span>
+    `);
     }
 
     // ✅ Main: toggle de botones y edición de fecha
@@ -561,8 +577,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         const newSpan = createEditableDateSpan(
                             orderId,
-                            newDate
+                            newDate,
+                            {
+                                cssClass: "editable-machining-date",
+                                underline: true,
+                                bold: true,
+                            }
                         );
+
                         input.replaceWith(newSpan);
                         // ✅ Actualizar visualmente días restantes y alerta
                         const diasTd = document.getElementById(
@@ -911,6 +933,26 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // ✅ Activar edición del due_date si es "onhold"
+        const dueSpan = row.find(`.editable-due-date[data-id="${orderId}"]`);
+
+        if (newStatus === "onhold") {
+            // 🔓 Activar edición
+            if (dueSpan.length) {
+                dueSpan.attr("data-enabled", "1");
+                dueSpan.css("cursor", "pointer");
+                dueSpan.addClass("fw-bold");
+                 triggerEditableDueDate(orderId); // ✅ aquí sí debe abrirse
+            }
+        } else {
+            // 🔒 Desactivar edición
+            if (dueSpan.length) {
+                dueSpan.attr("data-enabled", "0");
+                dueSpan.css("cursor", "default");
+                dueSpan.removeClass("fw-bold");
+            }
+        }
+
         // ✅ Confirmación si cambia a 'deburring' o 'shipping' desde 'Yarnell'
         if (
             (newStatus === "deburring" || newStatus === "shipping") &&
@@ -941,6 +983,129 @@ document.addEventListener("DOMContentLoaded", () => {
         // ✅ Enviar directamente si no requiere confirmación
         enviarCambioStatus();
     });
+
+
+    //----
+   function triggerEditableDueDate(orderId) {
+    const dateSpan = $(`.editable-due-date[data-id="${orderId}"]`);
+    console.log("🟢 triggerEditableDueDate llamado para:", orderId);
+
+    if (dateSpan.length > 0) {
+        console.log("✅ Span encontrado:", dateSpan[0]);
+        dateSpan.attr("data-enabled", "1");
+
+        setTimeout(() => {
+            console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
+            dateSpan.trigger("click");
+        }, 100);
+    } else {
+        console.warn("⚠️ No se encontró due-date editable para la orden:", orderId);
+    }
+}
+    //----------
+    tableElement.on("click", ".editable-due-date", function () {
+        const span = $(this);
+        console.log("📌 Click en due-date span", span[0]);
+        const orderId = span.data("id");
+        const isEnabled = parseInt(span.data("enabled")) === 1;
+        const currentValue = span.data("value") || "";
+
+        console.log(
+            "✔️ isEnabled:",
+            isEnabled,
+            "| orderId:",
+            orderId,
+            "| value:",
+            currentValue
+        );
+
+        if (!isEnabled) {
+            console.log("⛔ Edición deshabilitada para este campo.");
+            return;
+        }
+
+        const input = $(
+            `<input type="date" class="form-control form-control-sm due-date-input">`
+        ).val(currentValue);
+
+        console.log("🆕 Input generado:", input[0]);
+        
+        span.replaceWith(input);
+        input.focus();
+
+        input.on("blur", function () {
+            const newDate = input.val();
+            if (!newDate || newDate === currentValue) {
+                input.replaceWith(span);
+                return;
+            }
+
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-date-due`,
+                { due_date: newDate },
+                (data) => {
+                    if (data.success) {
+                        localStorage.setItem(
+                            "date-due-change",
+                            JSON.stringify({
+                                orderId,
+                                due_date: newDate,
+                                dias_restantes: data.dias_restantes,
+                                alertColor: data.alertColor,
+                                alertLabel: data.alertLabel,
+                                status: data.status,
+                                updatedAt: Date.now(),
+                            })
+                        );
+
+                        const newSpan = createEditableDateSpan(
+                            orderId,
+                            newDate,
+                            {
+                                cssClass: "editable-due-date",
+                                underline: false,
+                                bold: true,
+                            }
+                        );
+
+                        input.replaceWith(newSpan);
+
+                        const diasTd = document.getElementById(
+                            `dias-restantes-${orderId}`
+                        );
+                        if (diasTd) {
+                            diasTd.textContent = `${data.dias_restantes} days`;
+                            diasTd.className =
+                                data.dias_restantes < 0
+                                    ? "text-danger fw-bold"
+                                    : data.dias_restantes <= 2
+                                    ? "text-warning fw-bold"
+                                    : "text-success fw-bold";
+                        }
+
+                        const alertaDiv = document.querySelector(
+                            `#alerta-${orderId} .progress-bar`
+                        );
+                        if (alertaDiv) {
+                            alertaDiv.className =
+                                "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
+
+                        applyRowLateStyle(
+                            orderId,
+                            data.dias_restantes,
+                            data.status || ""
+                        );
+                    } else {
+                        alert("Error al guardar due_date.");
+                        input.replaceWith(span);
+                    }
+                }
+            );
+        });
+    });
+
     //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
     //-------------------------------------------------END-------------------------------------------------------------//
 
