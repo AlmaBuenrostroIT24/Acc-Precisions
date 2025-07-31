@@ -324,6 +324,69 @@
         </div>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Next Orders</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+
+                <!-- Columna derecha: segundo filtro + botón + gráfica -->
+                <div class="col-md-6" style="padding-left: 20px;">
+                    <div class="mb-3">
+                        <h5 class="text-center font-weight-bold">
+                            Orders Due - Next 8 Weeks
+                        </h5>
+                    </div>
+
+                    <div class="col-md-4">
+                        <button onclick="printChart('nextWeeksChart', 'ORDERS NEXT 8 WEEKS')"
+                            class="btn btn-secondary mb-2 w-100">
+                            Print Chart
+                        </button>
+                    </div>
+
+                    <div class="d-flex flex-column align-items-center">
+                        <canvas id="nextWeeksChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <!-- Columna derecha: segundo filtro + botón + gráfica -->
+                <div class="col-md-6" style="padding-left: 20px;">
+                    <!-- Segundo bloque de filtros -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="filterTypeCustomer">Year / Month / Week:</label>
+                            <select id="filterTypeCustomer" class="form-control">
+                                <option value="year" selected>Year</option>
+                                <option value="month">Month</option>
+                                <option value="week">Week</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="yearInputCustomer">Date:</label>
+                            <select id="yearInputCustomer" class="form-control">
+                                @for ($y = date('Y'); $y >= 2020; $y--)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                                @endfor
+                            </select>
+                            <input type="month" id="monthInputCustomer" class="form-control d-none">
+                            <input type="week" id="weekInputCustomer" class="form-control d-none">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')"
+                            class="btn btn-secondary mb-2 w-75">
+                            Print Order Customer
+                        </button>
+                    </div>
+                    <div class="d-flex flex-column align-items-center">
+                        <canvas id="byCustomerChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-2">
         {{-- Card: Clientes con órdenes --}}
         <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
@@ -893,6 +956,75 @@
 
             updateChart();
         }
+
+        //-----------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('nextWeeksChart')?.getContext('2d');
+            const chartRef = {
+                chart: null
+            };
+
+            if (!ctx) return;
+
+            fetch('/orders/summary/next-weeks/8')
+                .then(res => res.json())
+                .then(({
+                    labels,
+                    total,
+                    sent
+                }) => {
+                    const totalOrders = total.reduce((acc, val) => acc + val, 0);
+
+                    if (chartRef.chart) chartRef.chart.destroy();
+
+                    chartRef.chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                    label: `Total Orders`,
+                                    data: total,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Sent Orders',
+                                    data: sent,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            plugins: {
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'start',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 12
+                                    },
+                                    formatter: value => value
+                                }
+                            },
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                })
+        });;
+
 
         $(document).ready(function() {
             initDataTable('#tableweek', 'ORDERS THIS WEEK');
