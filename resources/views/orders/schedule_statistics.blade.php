@@ -302,7 +302,7 @@
                         <div class="col-md-6">
                             <label for="yearInputCustomer">Date:</label>
                             <select id="yearInputCustomer" class="form-control">
-                                @for ($y = date('Y'); $y >= 2020; $y--)
+                                @for ($y = date('Y'); $y >= 2025; $y--)
                                 <option value="{{ $y }}">{{ $y }}</option>
                                 @endfor
                             </select>
@@ -332,7 +332,7 @@
             <div class="row">
 
                 <!-- Columna derecha: segundo filtro + botón + gráfica -->
-                <div class="col-md-6" style="padding-left: 20px;">
+                <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
                     <div class="mb-3">
                         <h5 class="text-center font-weight-bold">
                             Orders Due - Next 8 Weeks
@@ -350,39 +350,48 @@
                         <canvas id="nextWeeksChart" width="400" height="200"></canvas>
                     </div>
                 </div>
-                <!-- Columna derecha: segundo filtro + botón + gráfica -->
-                <div class="col-md-6" style="padding-left: 20px;">
-                    <!-- Segundo bloque de filtros -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="filterTypeCustomer">Year / Month / Week:</label>
-                            <select id="filterTypeCustomer" class="form-control">
-                                <option value="year" selected>Year</option>
-                                <option value="month">Month</option>
-                                <option value="week">Week</option>
-                            </select>
+                <!-- Columna derecha: gráfica de entregas a tiempo vs tarde -->
+                <div class="col-md-4" style="padding-left: 20px;">
+                    <div class="mb-2">
+                        <h5 class="text-center font-weight-bold">On Time vs Late Deliveries</h5>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="row mb-2">
+                        <div class="col-4">
+                            <input type="month" id="monthFilter" class="form-control form-control-sm" title="Filter by Month">
                         </div>
-                        <div class="col-md-6">
-                            <label for="yearInputCustomer">Date:</label>
-                            <select id="yearInputCustomer" class="form-control">
-                                @for ($y = date('Y'); $y >= 2020; $y--)
+                        <div class="col-4">
+                            <select id="yearFilter" class="form-control form-control-sm" title="Filter by Year">
+                                <option value="">-- Year --</option>
+                                @for ($y = now()->year; $y >= 2025; $y--)
                                 <option value="{{ $y }}">{{ $y }}</option>
                                 @endfor
                             </select>
-                            <input type="month" id="monthInputCustomer" class="form-control d-none">
-                            <input type="week" id="weekInputCustomer" class="form-control d-none">
+                        </div>
+                        <div class="col-4">
+                            <select id="customerFilterOnTime" class="form-control form-control-sm" title="Filter by Customer">
+                                <option value="">-- All --</option>
+                                @foreach ($customers as $customer)
+                                <option value="{{ $customer }}">{{ $customer }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')"
-                            class="btn btn-secondary mb-2 w-75">
-                            Print Order Customer
+
+                    <div class="col-12">
+                        <button onclick="printChart('onTimeChart', 'ON TIME VS LATE')"
+                            class="btn btn-secondary btn-sm mb-2 w-100">
+                            Print Chart
                         </button>
                     </div>
+
                     <div class="d-flex flex-column align-items-center">
-                        <canvas id="byCustomerChart"></canvas>
+                        <canvas id="onTimeChart" style="width: 250%; height: 500px;"></canvas>
                     </div>
                 </div>
+
+
             </div>
         </div>
     </div>
@@ -1005,7 +1014,7 @@
                                     color: '#000',
                                     font: {
                                         weight: 'bold',
-                                        size: 12
+                                        size: 14
                                     },
                                     formatter: value => value
                                 }
@@ -1023,6 +1032,138 @@
                         plugins: [ChartDataLabels]
                     });
                 })
+
+            // 🔵 Nuevo gráfico: entregas a tiempo vs tarde con filtros
+            const onTimeCtx = document.getElementById('onTimeChart')?.getContext('2d');
+            const monthFilter = document.getElementById('monthFilter');
+            const yearFilter = document.getElementById('yearFilter'); // 🆕
+            const customerFilterOnTime = document.getElementById('customerFilterOnTime');
+            const onTimeChartRef = {
+                chart: null
+            };
+
+            function loadOnTimeChart() {
+                if (!onTimeCtx) return;
+
+                const month = monthFilter?.value;
+                const year = yearFilter?.value;
+                const customer = customerFilterOnTime?.value;
+
+                let displayMonth = '';
+
+                if (month) {
+                    const [year, monthNum] = month.split('-'); // ejemplo: "2025-07" → ["2025", "07"]
+                    const monthNames = [
+                        'January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'
+                    ];
+                    const index = parseInt(monthNum, 10) - 1;
+
+                    if (index >= 0 && index < 12) {
+                        displayMonth = monthNames[index];
+                    }
+                }
+
+                let url = '/orders/summary/on-time-filtered';
+                const params = new URLSearchParams();
+
+                if (month) params.append('month', month);
+                if (year) params.append('year', year); // 🆕
+                if (customer) params.append('customer', customer);
+
+                if (params.toString()) url += `?${params.toString()}`;
+                console.log("🔗 URL:", url);
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(({
+                        labels,
+                        data,
+                        total,
+                        selectedCustomer,
+                        selectedYear
+                    }) => {
+                        if (onTimeChartRef.chart) onTimeChartRef.chart.destroy();
+
+                        const colorMap = {
+                            'Early': '#007bff',
+                            'On Time': '#28a745',
+                            'Late': '#dc3545'
+                        };
+
+                        const totalOrders = total ?? data.reduce((a, b) => a + b, 0);
+
+                        const displayCustomer = selectedCustomer ?
+                            selectedCustomer.charAt(0).toUpperCase() + selectedCustomer.slice(1).toLowerCase() :
+                            'All';
+
+                        const displayYear = selectedYear || '';
+                        const titleParts = [`Total Orders: ${totalOrders}`];
+                        if (displayCustomer !== 'All') titleParts.push(`Customer: ${displayCustomer}`);
+                        if (displayYear) titleParts.push(`Year: ${displayYear}`);
+                        if (displayMonth) titleParts.push(`Month: ${displayMonth}`);
+                        const fullTitle = titleParts.join(' | ');
+
+                        const colors = labels.map(label => colorMap[label] || '#999');
+                        onTimeChartRef.chart = new Chart(onTimeCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    data,
+                                    backgroundColor: colors,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: fullTitle,
+                                        font: {
+                                            size: 18,
+                                            weight: 'bold'
+                                        },
+                                        color: '#333'
+                                    },
+                                    datalabels: {
+                                        color: '#000',
+                                        font: {
+                                            weight: 'bold',
+                                            size: 14
+                                        },
+                                        formatter: (value, context) => {
+                                            const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percent = sum ? Math.round((value / sum) * 100) : 0;
+                                            return `${value} (${percent}%)`;
+                                        }
+                                    },
+                                    legend: {
+                                        labels: {
+                                            color: '#000',
+                                            font: {
+                                                size: 14
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: [ChartDataLabels]
+                        });
+                    });
+            }
+
+            // 👉 Cargar al iniciar
+            if (onTimeCtx) loadOnTimeChart();
+
+            // 👉 Escuchar cambios en filtros
+            monthFilter?.addEventListener('change', loadOnTimeChart);
+            yearFilter?.addEventListener('change', loadOnTimeChart); // 🆕
+            customerFilterOnTime?.addEventListener('change', loadOnTimeChart);
+
+
         });;
 
 
