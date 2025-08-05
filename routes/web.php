@@ -114,7 +114,8 @@ Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::clas
 Route::get('/orders/summary/by-customer/year/{year}', [Order_ScheduleController::class, 'summaryByCustomerYear']);
 Route::get('/orders/summary/by-customer/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByCustomerMonth']);
 Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByCustomerWeek']);
-
+Route::get('/orders/summary/next-weeks/{weeks}', [Order_ScheduleController::class, 'summaryNextWeeks']);
+Route::get('/orders/summary/on-time-filtered', [Order_ScheduleController::class, 'summaryOnTimeFiltered']);
 
 Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersByWeekAjax'])->name('orders.byWeek.ajax');
 

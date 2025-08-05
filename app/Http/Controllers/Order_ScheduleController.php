@@ -886,7 +886,7 @@ class Order_ScheduleController extends Controller
     {
         Log::info('Entró al método updateDueDate', [
             'id' => $order->id,
-             'anterior' => $order->due_date,
+            'anterior' => $order->due_date,
             'nueva_fecha' => $request->due_date
         ]);
 
@@ -1206,6 +1206,101 @@ class Order_ScheduleController extends Controller
             'count' => $ordenes->count(),
         ]);
     }
+
+
+    ///-----------------------------------------------------
+    public function summaryNextWeeks($weeks = 8)
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $endDate = $startOfWeek->copy()->addWeeks($weeks);
+
+        // Agrupar por semana y contar total y enviados
+        $ordersByWeek = DB::table('orders_schedule')
+            ->selectRaw("YEARWEEK(due_date, 1) as yearweek")
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent_count")
+            ->whereBetween('due_date', [$startOfWeek, $endDate])
+            ->whereNotNull('due_date')
+            ->groupBy('yearweek')
+            ->orderBy('yearweek')
+            ->get();
+
+        $labels = [];
+        $totalData = [];
+        $sentData = [];
+
+        foreach ($ordersByWeek as $row) {
+            $year = substr($row->yearweek, 0, 4);
+            $week = substr($row->yearweek, 4);
+
+            $monday = Carbon::now()->setISODate($year, $week)->format('M d');
+
+            $labels[] = "Week $week\n($monday)";
+            $totalData[] = $row->total;
+            $sentData[] = $row->sent_count;
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'total' => $totalData,
+            'sent' => $sentData,
+        ]);
+    }
+    //--------------------------------------------------------------------
+
+
+    public function summaryOnTimeFiltered(Request $request)
+    {
+        $query = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereNotNull('sent_at');
+
+        if ($request->filled('month')) {
+            $month = $request->input('month'); // formato YYYY-MM
+            $query->whereRaw("DATE_FORMAT(due_date, '%Y-%m') = ?", [$month]);
+        }
+
+        if ($request->filled('year')) {
+            $year = $request->input('year');
+            $query->whereYear('due_date', $year);
+        }
+
+        if ($request->filled('customer')) {
+            $query->where('costumer', $request->customer); // 👈 sigue usando la columna 'costumer'
+        }
+
+        $result = $query
+            ->selectRaw("
+                SUM(CASE 
+                WHEN sent_at IS NOT NULL AND due_date IS NOT NULL AND DATE(sent_at) < DATE(due_date) THEN 1 
+                ELSE 0 
+            END) as early,
+            SUM(CASE 
+                WHEN sent_at IS NOT NULL AND due_date IS NOT NULL AND DATE(sent_at) = DATE(due_date) THEN 1 
+                ELSE 0 
+            END) as on_time,
+            SUM(CASE 
+                WHEN sent_at IS NOT NULL AND due_date IS NOT NULL AND DATE(sent_at) > DATE(due_date) THEN 1 
+                ELSE 0 
+            END) as late
+        ")
+            ->first();
+
+        return response()->json([
+            'labels' => ['Early', 'On Time', 'Late'],
+            'data' => [
+                $result->early ?? 0,
+                $result->on_time ?? 0,
+                $result->late ?? 0
+            ],
+            'total' => ($result->early ?? 0) + ($result->on_time ?? 0) + ($result->late ?? 0),
+            'selectedCustomer' => $request->input('customer') ?? 'All',
+            'selectedYear' => $request->year ?? '',
+        ]);
+    }
+
+
+    ///-----------------------------------------------------
 
 
     // Función para formatear respuesta JSON para Chart.js

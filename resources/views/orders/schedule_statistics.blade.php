@@ -161,16 +161,17 @@
 
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table id="tableweek" class="table table-hover align-middle mb-0 small datatable-export">
-                            <thead class="text-dark">
-                                <tr class="text-center align-middle">
-                                    <th>WORK ID</th>
-                                    <th>PN</th>
-                                    <th>DESCRIPTION</th>
-                                    <th>CUSTOMER</th>
-                                    <th>QTY</th>
-                                    <th>STATUS</th>
-                                    <th>DUE DATE</th>
+                        <table id="tableweek" class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle datatable-export"
+                            style="table-layout: fixed; width: 100%;">
+                            <thead class="table-light">
+                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    <th style="width: 40px;">WORK ID</th>
+                                    <th style="width: 50px;">PN</th>
+                                    <th style="width: 150px;">DESCRIPTION</th>
+                                    <th style="width: 70px;">CUSTOMER</th>
+                                    <th style="width: 30px;">QTY</th>
+                                    <th style="width: 50px;">STATUS</th>
+                                    <th style="width: 70px;">DUE DATE</th>
                                 </tr>
                             </thead>
                             <tbody id="tableweek-body">
@@ -196,16 +197,18 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table id="tablelate" class="table table-hover align-middle mb-0 small datatable-export">
-                            <thead class="text-dark">
-                                <tr>
-                                    <th>WORK ID</th>
-                                    <th>PN</th>
-                                    <th>DESCRIPTION</th>
-                                    <th>CUSTOMER</th>
-                                    <th>QTY</th>
-                                    <th>STATUS</th>
-                                    <th>DUE DATE</th>
+                        <table id="tablelate" class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle datatable-export"
+                            style="table-layout: fixed; width: 100%;">
+                            <thead class="table-light">
+                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    <th style="width: 40px;">WORK ID</th>
+                                    <th style="width: 50px;">PN</th>
+                                    <th style="width: 150px;">DESCRIPTION</th>
+                                    <th style="width: 70px;">CUSTOMER</th>
+                                    <th style="width: 30px;">QTY</th>
+                                    <th style="width: 50px;">STATUS</th>
+                                    <th style="width: 70px;">DUE DATE</th>
+                                    <th style="width: 80px;">NOTES</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -213,13 +216,15 @@
                                 <tr>
                                     <td>{{ $order->work_id }}</td>
                                     <td>{{ $order->PN }}</td>
-                                    <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}
+                                    <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                        {{ $order->Part_description }}
                                     </td>
                                     <td>{{ ucfirst($order->costumer) }}</td>
                                     <td>{{ $order->qty }}</td>
                                     <td><span class="badge bg-warning text-dark">{{ $order->status }}</span></td>
-                                    <td><span
-                                            class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span>
+                                    <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
+                                    <td style="white-space: normal !important; word-break: break-word;" title="{{ $order->notes }}">
+                                        {{ $order->notes}}
                                     </td>
                                 </tr>
                                 @empty
@@ -302,7 +307,7 @@
                         <div class="col-md-6">
                             <label for="yearInputCustomer">Date:</label>
                             <select id="yearInputCustomer" class="form-control">
-                                @for ($y = date('Y'); $y >= 2020; $y--)
+                                @for ($y = date('Y'); $y >= 2025; $y--)
                                 <option value="{{ $y }}">{{ $y }}</option>
                                 @endfor
                             </select>
@@ -320,6 +325,78 @@
                         <canvas id="byCustomerChart"></canvas>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Next Orders and Deliveries</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+
+                <!-- Columna derecha: segundo filtro + botón + gráfica -->
+                <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
+                    <div class="mb-3">
+                        <h5 class="text-center font-weight-bold">
+                            Orders Due - Next 8 Weeks
+                        </h5>
+                    </div>
+
+                    <div class="col-md-4">
+                        <button onclick="printChart('nextWeeksChart', 'ORDERS NEXT 8 WEEKS')"
+                            class="btn btn-secondary mb-2 w-100">
+                            Print Chart
+                        </button>
+                    </div>
+
+                    <div class="d-flex flex-column align-items-center">
+                        <canvas id="nextWeeksChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <!-- Columna derecha: gráfica de entregas a tiempo vs tarde -->
+                <div class="col-md-4" style="padding-left: 20px;">
+                    <div class="mb-2">
+                        <h5 class="text-center font-weight-bold">On Time vs Late Deliveries</h5>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="row mb-2">
+                        <div class="col-4">
+                            <input type="month" id="monthFilter" class="form-control form-control-sm" title="Filter by Month">
+                        </div>
+                        <div class="col-4">
+                            <select id="yearFilter" class="form-control form-control-sm" title="Filter by Year">
+                                <option value="">-- Year --</option>
+                                @for ($y = now()->year; $y >= 2025; $y--)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <select id="customerFilterOnTime" class="form-control form-control-sm" title="Filter by Customer">
+                                <option value="">-- All --</option>
+                                @foreach ($customers as $customer)
+                                <option value="{{ $customer }}">{{ $customer }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <button onclick="printChart('onTimeChart', 'ON TIME VS LATE')"
+                            class="btn btn-secondary btn-sm mb-2 w-100">
+                            Print Chart
+                        </button>
+                    </div>
+
+                    <div class="d-flex flex-column align-items-center">
+                        <canvas id="onTimeChart" style="width: 250%; height: 500px;"></canvas>
+                    </div>
+                </div>
+
+
             </div>
         </div>
     </div>
@@ -893,6 +970,207 @@
 
             updateChart();
         }
+
+        //-----------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('nextWeeksChart')?.getContext('2d');
+            const chartRef = {
+                chart: null
+            };
+
+            if (!ctx) return;
+
+            fetch('/orders/summary/next-weeks/8')
+                .then(res => res.json())
+                .then(({
+                    labels,
+                    total,
+                    sent
+                }) => {
+                    const totalOrders = total.reduce((acc, val) => acc + val, 0);
+
+                    if (chartRef.chart) chartRef.chart.destroy();
+
+                    chartRef.chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                    label: `Total Orders`,
+                                    data: total,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Sent Orders',
+                                    data: sent,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            plugins: {
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'start',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    },
+                                    formatter: value => value
+                                }
+                            },
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                })
+
+            // 🔵 Nuevo gráfico: entregas a tiempo vs tarde con filtros
+            const onTimeCtx = document.getElementById('onTimeChart')?.getContext('2d');
+            const monthFilter = document.getElementById('monthFilter');
+            const yearFilter = document.getElementById('yearFilter'); // 🆕
+            const customerFilterOnTime = document.getElementById('customerFilterOnTime');
+            const onTimeChartRef = {
+                chart: null
+            };
+
+            function loadOnTimeChart() {
+                if (!onTimeCtx) return;
+
+                const month = monthFilter?.value;
+                const year = yearFilter?.value;
+                const customer = customerFilterOnTime?.value;
+
+                let displayMonth = '';
+
+                if (month) {
+                    const [year, monthNum] = month.split('-'); // ejemplo: "2025-07" → ["2025", "07"]
+                    const monthNames = [
+                        'January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'
+                    ];
+                    const index = parseInt(monthNum, 10) - 1;
+
+                    if (index >= 0 && index < 12) {
+                        displayMonth = monthNames[index];
+                    }
+                }
+
+                let url = '/orders/summary/on-time-filtered';
+                const params = new URLSearchParams();
+
+                if (month) params.append('month', month);
+                if (year) params.append('year', year); // 🆕
+                if (customer) params.append('customer', customer);
+
+                if (params.toString()) url += `?${params.toString()}`;
+                console.log("🔗 URL:", url);
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(({
+                        labels,
+                        data,
+                        total,
+                        selectedCustomer,
+                        selectedYear
+                    }) => {
+                        if (onTimeChartRef.chart) onTimeChartRef.chart.destroy();
+
+                        const colorMap = {
+                            'Early': '#007bff',
+                            'On Time': '#28a745',
+                            'Late': '#dc3545'
+                        };
+
+                        const totalOrders = total ?? data.reduce((a, b) => a + b, 0);
+
+                        const displayCustomer = selectedCustomer ?
+                            selectedCustomer.charAt(0).toUpperCase() + selectedCustomer.slice(1).toLowerCase() :
+                            'All';
+
+                        const displayYear = selectedYear || '';
+                        const titleParts = [`Total Orders: ${totalOrders}`];
+                        if (displayCustomer !== 'All') titleParts.push(`Customer: ${displayCustomer}`);
+                        if (displayYear) titleParts.push(`Year: ${displayYear}`);
+                        if (displayMonth) titleParts.push(`Month: ${displayMonth}`);
+                        const fullTitle = titleParts.join(' | ');
+
+                        const colors = labels.map(label => colorMap[label] || '#999');
+                        onTimeChartRef.chart = new Chart(onTimeCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    data,
+                                    backgroundColor: colors,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: fullTitle,
+                                        font: {
+                                            size: 18,
+                                            weight: 'bold'
+                                        },
+                                        color: '#333'
+                                    },
+                                    datalabels: {
+                                        color: '#000',
+                                        font: {
+                                            weight: 'bold',
+                                            size: 14
+                                        },
+                                        formatter: (value, context) => {
+                                            const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percent = sum ? Math.round((value / sum) * 100) : 0;
+                                            return `${value} (${percent}%)`;
+                                        }
+                                    },
+                                    legend: {
+                                        labels: {
+                                            color: '#000',
+                                            font: {
+                                                size: 14
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: [ChartDataLabels]
+                        });
+                    });
+            }
+
+            // 👉 Cargar al iniciar
+            if (onTimeCtx) loadOnTimeChart();
+
+            // 👉 Escuchar cambios en filtros
+            monthFilter?.addEventListener('change', loadOnTimeChart);
+            yearFilter?.addEventListener('change', loadOnTimeChart); // 🆕
+            customerFilterOnTime?.addEventListener('change', loadOnTimeChart);
+
+
+        });;
+
 
         $(document).ready(function() {
             initDataTable('#tableweek', 'ORDERS THIS WEEK');

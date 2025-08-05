@@ -34,32 +34,15 @@
         <div class="card mb-4">
             <div class="card-body">
                 {{-- Filtros dinámicos --}}
-                <div class="row mb-4">
-                    <!-- Formulario de carga -->
-
-                    <!-- Filtros -->
-                    <div class="col-md-8">
-                        <div class="card shadow">
-                            <div class="card-body row">
-                                <div class="form-group col-md-12">
-                                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
-                                        <div class="form-group col-md-4">
-                                            <label for="customerFilter">Customer</label>
-                                            <select id="customerFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-4">
-                                            <label for="locationFilter">Status</label>
-                                            <select name="location" id="locationFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+                <div class="form-group col-md-12">
+                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
+                        <div class="form-group col-md-2">
+                            <label for="customerFilter">Customer</label>
+                            <select id="customerFilter" class="form-control auto-submit">
+                                <option value="">-- All --</option>
+                            </select>
                         </div>
-                    </div>
+                    </form>
                 </div>
                 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
                             <i class="fas fa-plus"></i> New Order
@@ -99,7 +82,7 @@
                                 </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td style="min-width: 120px;">{{ $order->PN }}</td>
-                                  <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->Part_description }}</td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
@@ -117,7 +100,7 @@
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
-                                <td>
+                                <td data-order="{{ $order->endate_mach ? $order->endate_mach->format('Y-m-d H:i:s') : '' }}">
                                     {{ $order->endate_mach ? $order->endate_mach->format('M-d-y H:i') : '' }}
                                 </td>
                                 <td>
@@ -171,7 +154,7 @@
             autoWidth: false,
             pageLength: 25,
             order: [
-                [10, 'desc'] // corregí 'des' por 'desc'
+                [11, 'desc'] // corregí 'des' por 'desc'
             ],
             columnDefs: [{
                 targets: [6, 7, 11],
