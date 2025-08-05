@@ -2,8 +2,10 @@
 <tr>
 
     <td>{{ $order->work_id }}</td>
-    <td>{{ $order->PN }}</td>
-    <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}</td>
+      <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->PN }}</td>
+    <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+        {{ $order->Part_description }}
+    </td>
     <td>{{ ucfirst($order->costumer) }}</td>
     <td>{{ $order->qty }}</td>
     <td><span class="badge bg-info text-dark">{{ $order->status }}</span></td>

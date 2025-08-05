@@ -161,16 +161,17 @@
 
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table id="tableweek" class="table table-hover align-middle mb-0 small datatable-export">
-                            <thead class="text-dark">
-                                <tr class="text-center align-middle">
-                                    <th>WORK ID</th>
-                                    <th>PN</th>
-                                    <th>DESCRIPTION</th>
-                                    <th>CUSTOMER</th>
-                                    <th>QTY</th>
-                                    <th>STATUS</th>
-                                    <th>DUE DATE</th>
+                        <table id="tableweek" class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle datatable-export"
+                            style="table-layout: fixed; width: 100%;">
+                            <thead class="table-light">
+                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    <th style="width: 40px;">WORK ID</th>
+                                    <th style="width: 50px;">PN</th>
+                                    <th style="width: 150px;">DESCRIPTION</th>
+                                    <th style="width: 70px;">CUSTOMER</th>
+                                    <th style="width: 30px;">QTY</th>
+                                    <th style="width: 50px;">STATUS</th>
+                                    <th style="width: 70px;">DUE DATE</th>
                                 </tr>
                             </thead>
                             <tbody id="tableweek-body">
@@ -196,16 +197,18 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table id="tablelate" class="table table-hover align-middle mb-0 small datatable-export">
-                            <thead class="text-dark">
-                                <tr>
-                                    <th>WORK ID</th>
-                                    <th>PN</th>
-                                    <th>DESCRIPTION</th>
-                                    <th>CUSTOMER</th>
-                                    <th>QTY</th>
-                                    <th>STATUS</th>
-                                    <th>DUE DATE</th>
+                        <table id="tablelate" class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle datatable-export"
+                            style="table-layout: fixed; width: 100%;">
+                            <thead class="table-light">
+                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    <th style="width: 40px;">WORK ID</th>
+                                    <th style="width: 50px;">PN</th>
+                                    <th style="width: 150px;">DESCRIPTION</th>
+                                    <th style="width: 70px;">CUSTOMER</th>
+                                    <th style="width: 30px;">QTY</th>
+                                    <th style="width: 50px;">STATUS</th>
+                                    <th style="width: 70px;">DUE DATE</th>
+                                    <th style="width: 80px;">NOTES</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -213,13 +216,15 @@
                                 <tr>
                                     <td>{{ $order->work_id }}</td>
                                     <td>{{ $order->PN }}</td>
-                                    <td class="text-truncate" style="max-width: 160px;">{{ $order->Part_description }}
+                                    <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                        {{ $order->Part_description }}
                                     </td>
                                     <td>{{ ucfirst($order->costumer) }}</td>
                                     <td>{{ $order->qty }}</td>
                                     <td><span class="badge bg-warning text-dark">{{ $order->status }}</span></td>
-                                    <td><span
-                                            class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span>
+                                    <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
+                                    <td style="white-space: normal !important; word-break: break-word;" title="{{ $order->notes }}">
+                                        {{ $order->notes}}
                                     </td>
                                 </tr>
                                 @empty
@@ -326,7 +331,7 @@
 
     <div class="card mb-4">
         <div class="card-header">
-            <h5>Next Orders</h5>
+            <h5>Next Orders and Deliveries</h5>
         </div>
         <div class="card-body">
             <div class="row">
