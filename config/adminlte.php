@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => 'AccPrecision',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -30,7 +30,7 @@ return [
     |
     */
 
-    'use_ico_only' => false,
+    'use_ico_only' => true,
     'use_full_favicon' => false,
 
     /*
@@ -63,9 +63,9 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo' => '<b>Acc</b>Precision',
+    'logo_img' => 'vendor/adminlte/dist/img/accl.png',
+    'logo_img_class' => 'brand-image img-circle elevation-4',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
     'logo_img_alt' => 'Admin Logo',
@@ -338,7 +338,7 @@ return [
                     'text' => 'Calibration',
                     'url' => 'QA/Calibrations',
                 ],
-    
+
                 [
                     'text' => 'Instrument',
                     'url' => 'QA/Instruments',
@@ -348,7 +348,7 @@ return [
         [
             'text' => 'Machines',
             'icon' => 'nav-icon fas fa-industry',
-            'can' => ['machines/machinery', 'machines/otherequipment','machines/maintenance','machines/batteries','machines/manuals','machines/codes'], // <- este es el truco
+            'can' => ['machines/machinery', 'machines/otherequipment', 'machines/maintenance', 'machines/batteries', 'machines/manuals', 'machines/codes'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Machinery',
@@ -403,7 +403,7 @@ return [
                     'url' => 'users',
                     'can' => 'users',
                 ],
-    
+
                 [
                     'text' => 'Roles & Permissions',
                     'url' => 'roles',
@@ -414,7 +414,7 @@ return [
         [
             'text' => 'IT Department',
             'icon' => 'nav-icon fas fa-desktop',
-            'can' => ['it/cameras', 'it/computers','it/nas','it/pdf','it/phones','it/printers','it/red','it/systems','it/timeClock'], // <- este es el truco
+            'can' => ['it/cameras', 'it/computers', 'it/nas', 'it/pdf', 'it/phones', 'it/printers', 'it/red', 'it/systems', 'it/timeClock'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Cameras',
@@ -522,7 +522,7 @@ return [
                 ],
                 [
                     'type' => 'css',
-                    'asset' =>true,
+                    'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.css',
                 ],
             ],
@@ -557,7 +557,7 @@ return [
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => true,  
+                    'asset' => true,
                     'location' => 'vendor/select2/select2.min.js',
                 ],
                 [
