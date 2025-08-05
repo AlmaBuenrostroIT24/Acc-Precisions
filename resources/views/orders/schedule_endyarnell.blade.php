@@ -99,7 +99,7 @@
                                 </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td style="min-width: 120px;">{{ $order->PN }}</td>
-                                  <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->Part_description }}</td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
@@ -117,7 +117,7 @@
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
-                                <td>
+                                <td data-order="{{ $order->endate_mach ? $order->endate_mach->format('Y-m-d H:i:s') : '' }}">
                                     {{ $order->endate_mach ? $order->endate_mach->format('M-d-y H:i') : '' }}
                                 </td>
                                 <td>
@@ -171,7 +171,7 @@
             autoWidth: false,
             pageLength: 25,
             order: [
-                [10, 'desc'] // corregí 'des' por 'desc'
+                [11, 'desc'] // corregí 'des' por 'desc'
             ],
             columnDefs: [{
                 targets: [6, 7, 11],
