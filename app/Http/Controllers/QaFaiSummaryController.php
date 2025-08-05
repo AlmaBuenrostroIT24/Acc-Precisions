@@ -21,7 +21,7 @@ class QaFaiSummaryController extends Controller
     public function partsrevision()
     {
 
-        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation','wo_qty')->get();
+        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')->get();
 
 
         return view('qa.faisummary.faisummary_partsrevision', compact('orders'));
@@ -56,7 +56,7 @@ class QaFaiSummaryController extends Controller
     public function storeSingle(Request $request)
     {
         Log::info('storeSingle called', $request->all());
-    
+
         $validated = $request->validate([
             'order_schedule_id' => 'required|exists:orders_schedule,id',
             'date' => 'required|date',
@@ -73,7 +73,7 @@ class QaFaiSummaryController extends Controller
             'job' => 'required|string',
             'num_operation' => 'required|string',
         ]);
-    
+
         if ($request->has('id')) {
             $row = \App\Models\QaFaiSummary::find($request->id);
             if (!$row) {
@@ -83,10 +83,10 @@ class QaFaiSummaryController extends Controller
         } else {
             $row = \App\Models\QaFaiSummary::create($validated);
         }
-    
+
         return response()->json(['success' => true, 'id' => $row->id]);
     }
-    
+
 
     public function getByOrder($orderScheduleId)
     {
@@ -102,7 +102,7 @@ class QaFaiSummaryController extends Controller
         $plan = QaSamplingPlan::where('min_qty', '<=', $lotSize)
             ->where(function ($q) use ($lotSize) {
                 $q->where('max_qty', '>=', $lotSize)
-                  ->orWhereNull('max_qty');
+                    ->orWhereNull('max_qty');
             })
             ->first();
 
@@ -127,5 +127,18 @@ class QaFaiSummaryController extends Controller
             'surface_qty' => $surfaceQty,
             'plan_id' => $plan->id,
         ]);
+    }
+
+    public function destroy($id)
+    {
+        $row = QaFaiSummary::find($id);
+
+        if (!$row) {
+            return response()->json(['error' => 'Fila no encontrada'], 404);
+        }
+
+        $row->delete();
+
+        return response()->json(['success' => true]);
     }
 }

@@ -109,6 +109,7 @@ Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics']
 Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
 Route::post('/qa/faisummary/store-single', [QaFAiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
+Route::delete('/qa/faisummary/delete/{id}', [QaFaiSummaryController::class, 'destroy']);
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
