@@ -80,7 +80,7 @@
                                 <th class="text-center align-middle">REPORT</th>
                                 <th class="text-center align-middle">OUT/SRC</th>
                                 <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
-                                <th style="width: 70px; " class="text-center align-middle">END DATE</th>
+                                <th style="width: 70px;">END DATE</th>
                                 <th class="text-center align-middle">TARGET</th>
                                 <th class="text-center align-middle">NOTES</th>
                                 <th class="text-center align-middle">STATUS</th>
@@ -117,7 +117,7 @@
                                     </button>
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                                <td>
+                                <td data-order="{{ $order->sent_at ? $order->sent_at->format('Y-m-d H:i:s') : '' }}">
                                     {{ $order->sent_at ? $order->sent_at->format('M-d-y H:i') : '' }}
                                 </td>
                                 <td class="text-center">
