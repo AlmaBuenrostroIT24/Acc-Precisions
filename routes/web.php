@@ -106,6 +106,9 @@ Route::get('/orders/next-id', function () {
     $lastId = \App\Models\OrderSchedule::max('id') ?? 0;
     return response()->json(['next_id' => $lastId + 1]);
 });
+Route::post('/orders/{order}/deactivate', [Order_ScheduleController::class, 'deactivate'])->name('orders.deactivate');
+Route::get('/orders/search', [Order_ScheduleController::class, 'search'])->name('orders.search');
+
 
 
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);

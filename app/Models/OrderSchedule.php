@@ -25,6 +25,7 @@ class OrderSchedule extends Model
         'machines',
         'done',
         'status',
+        'status_order',
         'sent_at',
         'target_date',
         'enddate_mach',

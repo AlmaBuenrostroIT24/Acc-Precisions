@@ -68,14 +68,7 @@
                             <div id="loading-message" style="display:none; text-align: center; padding: 20px; font-size: 16px; color: #007bff;">
                                 <i class="fas fa-spinner fa-spin"></i> Uploading file, please wait...
                             </div>
-                            @if (session('success'))
-                            <div id="success-message" class="alert alert-success alert-message mt-3">
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                                {{ session('success') }}
-                            </div>
-                            @endif
+
                         </div>
                     </div>
                     <!-- Filtros -->
@@ -84,7 +77,7 @@
                             <div class="card-body row">
                                 <div class="form-group col-md-12">
                                     <form method="GET" action="{{ route('schedule.general') }}" id="filterForm" class="row g-3 mb-3">
-                                        <div class="form-group col-md-4">
+                                        <div class="form-group col-md-2">
                                             <label for="locationFilter">Location</label>
                                             <select name="location" id="locationFilter" class="form-control auto-submit">
                                                 <option value="">-- All --</option>
@@ -96,7 +89,7 @@
                                             </select>
                                         </div>
 
-                                        <div class="form-group col-md-4">
+                                        <div class="form-group col-md-3">
                                             <label for="statusFilter">Status</label>
                                             <select name="status" id="statusFilter" class="form-control auto-submit">
                                                 <option value="">-- All --</option>
@@ -108,7 +101,7 @@
                                             </select>
                                         </div>
 
-                                        <div class="form-group col-md-4">
+                                        <div class="form-group col-md-3">
                                             <label for="customerFilter">Customer</label>
                                             <select id="customerFilter" class="form-control auto-submit">
                                                 <option value="">-- All --</option>
@@ -119,6 +112,16 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                        <div class="form-group col-md-2 align-self-end">
+                                            <button type="button" class="btn btn-danger w-100" data-toggle="modal" data-target="#deleteModal">
+                                                <i class="fas fa-trash-alt"></i> Delete Order
+                                            </button>
+                                        </div>
+                                        <div class="form-group col-md-2 align-self-end">
+                                            <button class="btn btn-info w-100" data-toggle="modal" data-target="#priorityModal">
+                                                <i class="fas fa-star"></i> Priority
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -128,7 +131,7 @@
                 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
                             <i class="fas fa-plus"></i> New Order
                         </button> -->
-                    @include('orders.schedule_table')
+                @include('orders.schedule_table')
             </div>
         </div>
     </div>
@@ -140,7 +143,7 @@
 
 <!-- Modal -->
 @include('orders.schedule_modaltable')
-
+@include('orders.schedule_deletemodalregister')
 @endsection
 
 
@@ -154,6 +157,96 @@
 
 
 <script>
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const term = this.value.trim();
 
+        if (term.length < 2) {
+            document.querySelector('#searchTable tbody').innerHTML = '';
+            return;
+        }
+
+        fetch(`/orders/search?term=${encodeURIComponent(term)}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#searchTable tbody');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Sin resultados</td></tr>`;
+                    return;
+                }
+
+                data.forEach(order => {
+                    const row = document.createElement('tr');
+                    const dueDate = order.due_date ?
+                        new Date(order.due_date) :
+                        null;
+
+                    // 👉 Mostrar como "Aug-06-25"
+                    const formattedDueDate = dueDate ?
+                        dueDate.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: '2-digit',
+                            year: '2-digit'
+                        }) :
+                        '';
+
+                    // 👉 data-order en formato "YYYY-MM-DD" para ordenamiento
+                    const orderDueDate = dueDate ?
+                        dueDate.toISOString().slice(0, 10) :
+                        '';
+                    row.innerHTML = `
+                    <td>${order.work_id ?? ''}</td>
+                    <td>${order.PN ?? ''}</td>
+                    <td>${order.Part_description ?? ''}</td>
+                    <td>${order.costumer ?? ''}</td>
+                    <td data-order="${orderDueDate}">${formattedDueDate}</td>
+                    <td>
+                          <form method="POST" action="/orders/${order.id}/deactivate" class="form-deactivate">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                           <button type="button" class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                `;
+                    tbody.appendChild(row);
+                    // Agregar SweetAlert a cada botón delete generado
+                    row.querySelector('.btn-delete').addEventListener('click', function() {
+                        const form = this.closest('form');
+
+                        Swal.fire({
+                            title: '¿Are you sure??',
+                            text: 'This will mark the order as deleted.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, delete',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit(); // ✅ Enviar el formulario
+                            }
+                        });
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error al buscar órdenes:', error);
+            });
+    });
 </script>
+
+@if(session('success'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Success!',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+        });
+    });
+</script>
+@endif
 @endpush

@@ -30,7 +30,9 @@ class Order_ScheduleController extends Controller
         // $orders = OrderSchedule::latest()->get();
         //return view('orders.index_schedule', compact('orders'));
 
-        $query = OrderSchedule::whereRaw('LOWER(status) != ?', ['sent']); // excluye "sent"
+        $query = OrderSchedule::whereRaw('LOWER(status) != ?', ['sent'])
+            ->where('status_order', 'active'); // 👈 Agregado
+
         if ($request->filled('location')) {
             $query->where('location', $request->location);
         }
@@ -1310,5 +1312,36 @@ class Order_ScheduleController extends Controller
             'labels' => $data->pluck('costumer'),
             'data' => $data->pluck('total'),
         ]);
+    }
+
+    public function deactivate(OrderSchedule $order)
+    {
+        $order->status_order = 'inactive';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Order deleted.');
+    }
+
+    public function search(Request $request)
+    {
+        $search = $request->input('term');
+
+        $orders = OrderSchedule::query()
+            ->where(function ($q) {
+                $q->whereNull('status_order')
+                    ->orWhere('status_order', 'active');
+            })
+            ->whereNull('sent_at') // 🛑 Asegura que no se haya enviado
+            ->where(function ($query) use ($search) {
+                $query->where('work_id', 'LIKE', "%{$search}%")
+                    ->orWhere('PN', 'LIKE', "%{$search}%")
+                    ->orWhere('Part_description', 'LIKE', "%{$search}%")
+                    ->orWhere('costumer', 'LIKE', "%{$search}%")
+                    ->orWhereDate('due_date', $search);
+            })
+            ->limit(20)
+            ->get();
+
+        return response()->json($orders);
     }
 }
