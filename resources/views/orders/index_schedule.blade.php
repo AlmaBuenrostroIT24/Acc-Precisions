@@ -118,7 +118,7 @@
                                             </button>
                                         </div>
                                         <div class="form-group col-md-2 align-self-end">
-                                            <button class="btn btn-info w-100" data-toggle="modal" data-target="#priorityModal">
+                                            <button type="button" class="btn btn-info w-100" data-toggle="modal" data-target="#priorityModal">
                                                 <i class="fas fa-star"></i> Priority
                                             </button>
                                         </div>
@@ -144,6 +144,7 @@
 <!-- Modal -->
 @include('orders.schedule_modaltable')
 @include('orders.schedule_deletemodalregister')
+@include('orders.schedule_prioritymodalorder')
 @endsection
 
 
