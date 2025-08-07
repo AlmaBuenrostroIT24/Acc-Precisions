@@ -776,11 +776,16 @@ class Order_ScheduleController extends Controller
     public function yarnellSchedule(Request $request)
     {
 
-        // Filtra solo las órdenes con location 'yarnell'
+        // Filtra solo las órdenes activas en location 'yarnell'
         $orders = OrderSchedule::where('location', 'yarnell')
             ->where('status', '!=', 'sent')
+            ->where(function ($q) {
+                $q->whereNull('status_order') // 🧠 permite nulos o explícitamente activos
+                    ->orWhere('status_order', 'active');
+            })
+            ->orderByRaw("CASE WHEN priority = 'yes' THEN 0 ELSE 1 END") // ✔️ Primero las 'yes'
             ->orderByRaw("FIELD(LOWER(status), 'deburring', 'ready','qa', 'assembly','shipping', 'outsource','onhold')")
-            ->orderBy('due_date') // opcional: orden secundario
+            ->orderBy('due_date')
             ->get();
 
         // Si necesitas calcular días restantes como en index()
@@ -804,8 +809,13 @@ class Order_ScheduleController extends Controller
 
         $orders = OrderSchedule::where('location', 'hearst')
             ->where('status', '!=', 'sent')
+            ->where(function ($q) {
+                $q->whereNull('status_order') // 🧠 permite nulos o explícitamente activos
+                    ->orWhere('status_order', 'active');
+            })
+            ->orderByRaw("CASE WHEN priority = 'yes' THEN 0 ELSE 1 END") // ✔️ Primero las 'yes'
             ->orderByRaw("FIELD(LOWER(status), 'deburring', 'ready','qa', 'assembly','shipping', 'outsource','onhold')")
-            ->orderBy('due_date') // opcional: orden secundario
+            ->orderBy('due_date')
             ->get();
 
         foreach ($orders as $order) {
