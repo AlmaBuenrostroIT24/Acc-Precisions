@@ -113,12 +113,14 @@
                                             </select>
                                         </div>
                                         <div class="form-group col-md-2 align-self-end">
-                                            <button type="button" class="btn btn-danger w-100" data-toggle="modal" data-target="#deleteModal">
+                                            <!-- Botón Delete -->
+                                            <button type="button" class="btn btn-danger w-100" data-toggle="modal" data-target="#deleteModal" data-mode="delete">
                                                 <i class="fas fa-trash-alt"></i> Delete Order
                                             </button>
                                         </div>
                                         <div class="form-group col-md-2 align-self-end">
-                                            <button type="button" class="btn btn-info w-100" data-toggle="modal" data-target="#priorityModal">
+                                            <!-- Botón Priority -->
+                                            <button type="button" class="btn btn-info w-100" data-toggle="modal" data-target="#deleteModal" data-mode="priority">
                                                 <i class="fas fa-star"></i> Priority
                                             </button>
                                         </div>
@@ -143,8 +145,7 @@
 
 <!-- Modal -->
 @include('orders.schedule_modaltable')
-@include('orders.schedule_deletemodalregister')
-@include('orders.schedule_prioritymodalorder')
+@include('orders.schedule_deleteprioritymodalorder')
 @endsection
 
 
@@ -158,6 +159,31 @@
 
 
 <script>
+    let currentActionMode = 'delete'; // default
+
+    // 🟢 Detectar qué botón abre el modal y actualizar contenido
+    document.querySelectorAll('[data-toggle="modal"][data-target="#deleteModal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            currentActionMode = this.getAttribute('data-mode');
+
+            const modalTitle = document.getElementById('modalTitle');
+            const searchInput = document.getElementById('searchInput');
+
+            if (currentActionMode === 'delete') {
+                modalTitle.textContent = 'Search and delete Order';
+                searchInput.placeholder = 'Search by Work ID, PN, Description, Client...';
+            } else if (currentActionMode === 'priority') {
+                modalTitle.textContent = 'Search and prioritize Order';
+                searchInput.placeholder = 'Search to mark as priority...';
+            }
+
+            // Limpiar campo y tabla
+            searchInput.value = '';
+            document.querySelector('#searchTable tbody').innerHTML = '';
+        });
+    });
+
+    // 🔍 Buscar órdenes según input
     document.getElementById('searchInput').addEventListener('input', function() {
         const term = this.value.trim();
 
@@ -179,61 +205,98 @@
 
                 data.forEach(order => {
                     const row = document.createElement('tr');
-                    const dueDate = order.due_date ?
-                        new Date(order.due_date) :
-                        null;
+                    const dueDate = order.due_date ? new Date(order.due_date) : null;
 
-                    // 👉 Mostrar como "Aug-06-25"
                     const formattedDueDate = dueDate ?
                         dueDate.toLocaleDateString('en-US', {
                             month: 'short',
                             day: '2-digit',
                             year: '2-digit'
-                        }) :
-                        '';
+                        }) : '';
 
-                    // 👉 data-order en formato "YYYY-MM-DD" para ordenamiento
-                    const orderDueDate = dueDate ?
-                        dueDate.toISOString().slice(0, 10) :
-                        '';
+                    const orderDueDate = dueDate ? dueDate.toISOString().slice(0, 10) : '';
+
                     row.innerHTML = `
                     <td>${order.work_id ?? ''}</td>
                     <td>${order.PN ?? ''}</td>
                     <td>${order.Part_description ?? ''}</td>
                     <td>${order.costumer ?? ''}</td>
                     <td data-order="${orderDueDate}">${formattedDueDate}</td>
-                    <td>
-                          <form method="POST" action="/orders/${order.id}/deactivate" class="form-deactivate">
-                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                           <button type="button" class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash-alt"></i></button>
-                        </form>
-                    </td>
                 `;
-                    tbody.appendChild(row);
-                    // Agregar SweetAlert a cada botón delete generado
-                    row.querySelector('.btn-delete').addEventListener('click', function() {
-                        const form = this.closest('form');
 
-                        Swal.fire({
-                            title: '¿Are you sure??',
-                            text: 'This will mark the order as deleted.',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Yes, delete',
-                            cancelButtonText: 'Cancel'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                form.submit(); // ✅ Enviar el formulario
-                            }
-                        });
-                    });
+                    // 🔁 Acción dinámica según modo
+                    if (currentActionMode === 'delete') {
+                        row.innerHTML += `
+                        <td>
+                            <form method="POST" action="/orders/${order.id}/deactivate" class="form-action">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <button type="button" class="btn btn-sm btn-danger btn-action">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                    `;
+                    } else if (currentActionMode === 'priority') {
+                        const isPrioritized = order.priority === 'yes';
+
+                        const formAction = `/orders/${order.id}/toggle-priority`; // Nueva ruta toggle
+                        const buttonClass = isPrioritized ? 'btn-secondary' : 'btn-info';
+                        const buttonIcon = isPrioritized ?
+                            '<i class="fas fa-star text-warning"></i>' // llena
+                            :
+                            '<i class="far fa-star"></i>'; // vacía
+
+                        const confirmText = isPrioritized ?
+                            'This will remove priority from the order.' :
+                            'This will mark the order as priority.';
+
+                        row.innerHTML += `
+        <td>
+            <form method="POST" action="${formAction}" class="form-action">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <button type="button" class="btn btn-sm ${buttonClass} btn-action" data-confirm="${confirmText}">
+                    ${buttonIcon}
+                </button>
+            </form>
+        </td>
+    `;
+                    }
+
+                    tbody.appendChild(row);
                 });
             })
             .catch(error => {
                 console.error('Error al buscar órdenes:', error);
             });
+    });
+
+    // ✅ Delegación única de eventos para confirmaciones
+    document.getElementById('searchTable').addEventListener('click', function(e) {
+        const button = e.target.closest('.btn-action');
+        if (!button) return;
+
+        const form = button.closest('form');
+        if (!form) return;
+
+        const isDelete = button.classList.contains('btn-danger');
+        const confirmText = isDelete ?
+            'This will mark the order as deleted.' :
+            'This will mark the order as priority.';
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: confirmText,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, confirm',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
     });
 </script>
 

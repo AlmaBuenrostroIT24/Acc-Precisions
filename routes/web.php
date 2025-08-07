@@ -108,6 +108,8 @@ Route::get('/orders/next-id', function () {
 });
 Route::post('/orders/{order}/deactivate', [Order_ScheduleController::class, 'deactivate'])->name('orders.deactivate');
 Route::get('/orders/search', [Order_ScheduleController::class, 'search'])->name('orders.search');
+Route::post('/orders/{order}/priority', [Order_ScheduleController::class, 'setPriority']);
+Route::post('/orders/{order}/toggle-priority', [Order_ScheduleController::class, 'togglePriority'])->name('orders.toggle-priority');
 
 
 

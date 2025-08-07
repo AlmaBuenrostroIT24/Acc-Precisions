@@ -2,14 +2,14 @@
   <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
       <div class="modal-header bg-light text-white">
-        <h5 class="modal-title" id="deleteModalLabel">Search and delete Order</h5>
+        <h5 class="modal-title" id="modalTitle">Search and delete Order</h5>
         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
 
       <div class="modal-body">
-        <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search by Work IS, ON, Description, Client...">
+        <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search by Work ID, PN, Description, Client...">
 
         <div class="table-responsive">
           <table class="table table-bordered table-hover table-sm" id="searchTable">
@@ -23,7 +23,7 @@
                 <th>ACTION</th>
               </tr>
             </thead>
-            <tbody></tbody> <!-- Se llena con JS -->
+            <tbody></tbody>
           </table>
         </div>
       </div>

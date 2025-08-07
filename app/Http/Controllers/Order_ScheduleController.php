@@ -1313,7 +1313,7 @@ class Order_ScheduleController extends Controller
             'data' => $data->pluck('total'),
         ]);
     }
-
+    //------------------------------------------------------------------------------------------------
     public function deactivate(OrderSchedule $order)
     {
         $order->status_order = 'inactive';
@@ -1321,6 +1321,27 @@ class Order_ScheduleController extends Controller
 
         return redirect()->back()->with('success', 'Order deleted.');
     }
+
+    public function setPriority(OrderSchedule $order)
+    {
+        $order->priority = 'yes';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Orden marcada como prioridad.');
+    }
+
+    public function togglePriority(OrderSchedule $order)
+    {
+        $order->priority = $order->priority === 'yes' ? 'no' : 'yes'; // ✅ evita null
+        $order->save();
+
+        $message = $order->priority === 'yes'
+            ? 'Order marked as priority.'
+            : 'Priority removed from order.';
+
+        return redirect()->back()->with('success', $message);
+    }
+
 
     public function search(Request $request)
     {
@@ -1339,9 +1360,21 @@ class Order_ScheduleController extends Controller
                     ->orWhere('costumer', 'LIKE', "%{$search}%")
                     ->orWhereDate('due_date', $search);
             })
-            ->limit(20)
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'due_date',
+                'priority', // ✅ Necesario para saber si ya está priorizado
+            ])
+            ->limit(10)
             ->get();
 
         return response()->json($orders);
     }
+
+
+    //------------------------------------------------------------------------------------------------
 }
