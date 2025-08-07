@@ -1226,12 +1226,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function agregarBotonesKit() {
         tableElement.find("tbody tr").each(function (index) {
-            const partDescCell = $(this).find("td").eq(4); // columna PART/DESCRIPTION
+            const partDescCell = $(this).find("td").eq(3); // columna PART/DESCRIPTION
             partDescCell.css("position", "relative"); // para posicionar el botón dentro
 
             const texto = partDescCell.text().toLowerCase();
 
-            //console.log(`🔍 Fila ${index} - Texto: ${texto}`);
+            console.log(`🔍 Fila ${index} - Texto: ${texto}`);
             const keywords = [
                 "kit",
                 "asy",
@@ -1260,7 +1260,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </button>`
                     );
                     partDescCell.append(btn);
-                    //console.log(`✅ Botón agregado en fila ${index}`);
+                    console.log(`✅ Botón agregado en fila ${index}`);
                 }
             }
         });
@@ -1271,7 +1271,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Re-ejecutar cada vez que se redibuja la tabla
     tableElement.on("draw.dt", function () {
-        //console.log("📢 Evento draw.dt disparado");
+        console.log("📢 Evento draw.dt disparado");
         agregarBotonesKit();
     });
 
