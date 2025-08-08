@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
         postJson(url, body)
             .then((response) => {
-                console.log("Respuesta recibida:", response); // Para debug
+                //console.log("Respuesta recibida:", response); // Para debug
                 onSuccess(response);
             })
             .catch((error) => {
@@ -989,14 +989,14 @@ document.addEventListener("DOMContentLoaded", () => {
     //----
     function triggerEditableDueDate(orderId) {
         const dateSpan = $(`.editable-due-date[data-id="${orderId}"]`);
-        console.log("🟢 triggerEditableDueDate llamado para:", orderId);
+        //console.log("🟢 triggerEditableDueDate llamado para:", orderId);
 
         if (dateSpan.length > 0) {
-            console.log("✅ Span encontrado:", dateSpan[0]);
+           // console.log("✅ Span encontrado:", dateSpan[0]);
             dateSpan.attr("data-enabled", "1");
 
             setTimeout(() => {
-                console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
+                //console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
                 dateSpan.trigger("click");
             }, 100);
         } else {
@@ -1009,22 +1009,15 @@ document.addEventListener("DOMContentLoaded", () => {
     //----------
     tableElement.on("click", ".editable-due-date", function () {
         const span = $(this);
-        console.log("📌 Click en due-date span", span[0]);
+       //console.log("📌 Click en due-date span", span[0]);
         const orderId = span.data("id");
         const isEnabled = parseInt(span.data("enabled")) === 1;
         const currentValue = span.data("value") || "";
 
-        console.log(
-            "✔️ isEnabled:",
-            isEnabled,
-            "| orderId:",
-            orderId,
-            "| value:",
-            currentValue
-        );
+      // console.log( "✔️ isEnabled:", isEnabled,"| orderId:",orderId, "| value:",currentValue );
 
         if (!isEnabled) {
-            console.log("⛔ Edición deshabilitada para este campo.");
+           // console.log("⛔ Edición deshabilitada para este campo.");
             return;
         }
 
@@ -1032,7 +1025,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `<input type="date" class="form-control form-control-sm due-date-input">`
         ).val(currentValue);
 
-        console.log("🆕 Input generado:", input[0]);
+       // console.log("🆕 Input generado:", input[0]);
 
         span.replaceWith(input);
         input.focus();
@@ -1139,7 +1132,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Guardar notas
     $("#notesForm").submit(function (e) {
-        console.log("Interceptando submit del formulario de notas"); // 👈 esto
+        //console.log("Interceptando submit del formulario de notas"); // 👈 esto
         e.preventDefault(); // Esto evita que el form se envíe "normalmente"
         const orderId = $("#notesOrderId").val();
         const notes = $("#notesTextarea").val();
@@ -1148,7 +1141,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `/orders/${orderId}/update-notes`,
             { notes },
             (data) => {
-                console.log("Respuesta del servidor:", data);
+                //console.log("Respuesta del servidor:", data);
                 if (!data.success) return alert("Error al guardar la nota.");
 
                 localStorage.setItem(
@@ -1235,7 +1228,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const texto = partDescCell.text().toLowerCase();
 
-            console.log(`🔍 Fila ${index} - Texto: ${texto}`);
+            //console.log(`🔍 Fila ${index} - Texto: ${texto}`);
             const keywords = [
                 "kit",
                 "asy",
@@ -1275,7 +1268,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Re-ejecutar cada vez que se redibuja la tabla
     tableElement.on("draw.dt", function () {
-        console.log("📢 Evento draw.dt disparado");
+        //console.log("📢 Evento draw.dt disparado");
         agregarBotonesKit();
     });
 
@@ -1294,16 +1287,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const newRow = row.clone(false);
 
                 copySelectAndInputValues(row, newRow);
-                console.log(
-                    "✔ Location clonada: ",
-                    newRow.find('select[name="location"]').val()
-                );
+               // console.log("✔ Location clonada: ",newRow.find('select[name="location"]').val());
 
                 // Mostrar cuántas columnas tiene la fila
-                console.log(
-                    "Total celdas en la fila:",
-                    newRow.find("td").length
-                );
+               // console.log( "Total celdas en la fila:",newRow.find("td").length);
 
                 // Mostrar el next_id en la primera celda (columna 0)
                 // const idCell = newRow.find("td:eq(0)");
@@ -1430,7 +1417,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 hiddenInput.val();
                         });
                     });
-                    console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+                    //console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
 
                     handlePostJsonWithAlerts(
                         "/orders",
