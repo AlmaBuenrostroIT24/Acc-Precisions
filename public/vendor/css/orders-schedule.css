@@ -63,9 +63,8 @@
 }
 
 .row-priority {
-    border-left: 4px solid gold !important;
     font-weight: bold;
-    background-color: #d64d91 !important; /* optional: light gold */
+    background-color: #a662f9 !important; /* optional: light gold */
 }
 
 .bg-status-ready {

@@ -139,38 +139,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function applyRowLateHighlight(row, data, index) {
         const $row = $(row);
-        const orderId = $row.data("order-id");
-        // console.log("Fila:", data);
+        const priority = String($row.data("priority") || "").toLowerCase();
 
-        // Buscar la celda de días restantes dentro de la fila
         const diasTd = $row.find("td[id^='dias-restantes-']");
-        if (diasTd.length) {
-            const diasText = diasTd.text().trim();
-            const diasMatch = diasText.match(/-?\d+/);
-            if (diasMatch) {
-                const dias = parseInt(diasMatch[0]);
-                const status = (data[2] || "").toLowerCase(); // ⚠️ Ajusta el índice si status no está en columna 2
+        if (!diasTd.length) return;
 
-                // Limpiar clases de color previas
-                $row.removeClass("row-late");
+        const diasMatch = (diasTd.text().trim().match(/-?\d+/) || [])[0];
+        if (diasMatch == null) return;
 
-                if (dias < 0) {
-                    // Si está vencido, marcar como .row-late y quitar cualquier color de estado
-                    $row.removeClass(function (i, c) {
-                        return (c.match(/bg-status-\S+/g) || []).join(" ");
-                    });
-                    $row.addClass("row-late");
-                } else {
-                    // Si NO está vencido, aplicar clase del status
-                    $row.removeClass(function (i, c) {
-                        return (c.match(/bg-status-\S+/g) || []).join(" ");
-                    });
-                    if (status) {
-                        $row.addClass(`bg-status-${status}`);
-                    }
-                }
-            }
+        const dias = parseInt(diasMatch, 10);
+        const status = (data[2] || "").toLowerCase(); // ajusta si cambia
+
+        // limpiar
+        $row.removeClass("row-late row-priority");
+        $row.removeClass((i, c) => (c.match(/bg-status-\S+/g) || []).join(" "));
+
+        // precedencia: late > priority > status
+        if (dias < 0) {
+            $row.addClass("row-late");
+            // si quieres borde dorado incluso cuando está late:
+            if (priority === "yes") $row.addClass("row-priority");
+            return;
         }
+
+        if (priority === "yes") {
+            $row.addClass("row-priority");
+            return;
+        }
+
+        if (status) $row.addClass(`bg-status-${status}`);
     }
 
     // Filtrado con regex exacto
@@ -384,7 +381,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // Limpiar clases previas de estado y de late
         row.className = row.className
             .split(" ")
-            .filter(c => !c.startsWith("bg-status-") && c !== "row-late" && c !== "row-priority")
+            .filter(
+                (c) =>
+                    !c.startsWith("bg-status-") &&
+                    c !== "row-late" &&
+                    c !== "row-priority"
+            )
             .join(" ");
         if (dias < 0) {
             row.classList.add("row-late");
@@ -942,7 +944,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 dueSpan.attr("data-enabled", "1");
                 dueSpan.css("cursor", "pointer");
                 dueSpan.addClass("fw-bold");
-                 triggerEditableDueDate(orderId); // ✅ aquí sí debe abrirse
+                triggerEditableDueDate(orderId); // ✅ aquí sí debe abrirse
             }
         } else {
             // 🔒 Desactivar edición
@@ -984,24 +986,26 @@ document.addEventListener("DOMContentLoaded", () => {
         enviarCambioStatus();
     });
 
-
     //----
-   function triggerEditableDueDate(orderId) {
-    const dateSpan = $(`.editable-due-date[data-id="${orderId}"]`);
-    console.log("🟢 triggerEditableDueDate llamado para:", orderId);
+    function triggerEditableDueDate(orderId) {
+        const dateSpan = $(`.editable-due-date[data-id="${orderId}"]`);
+        console.log("🟢 triggerEditableDueDate llamado para:", orderId);
 
-    if (dateSpan.length > 0) {
-        console.log("✅ Span encontrado:", dateSpan[0]);
-        dateSpan.attr("data-enabled", "1");
+        if (dateSpan.length > 0) {
+            console.log("✅ Span encontrado:", dateSpan[0]);
+            dateSpan.attr("data-enabled", "1");
 
-        setTimeout(() => {
-            console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
-            dateSpan.trigger("click");
-        }, 100);
-    } else {
-        console.warn("⚠️ No se encontró due-date editable para la orden:", orderId);
+            setTimeout(() => {
+                console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
+                dateSpan.trigger("click");
+            }, 100);
+        } else {
+            console.warn(
+                "⚠️ No se encontró due-date editable para la orden:",
+                orderId
+            );
+        }
     }
-}
     //----------
     tableElement.on("click", ".editable-due-date", function () {
         const span = $(this);
@@ -1029,7 +1033,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ).val(currentValue);
 
         console.log("🆕 Input generado:", input[0]);
-        
+
         span.replaceWith(input);
         input.focus();
 
@@ -1302,11 +1306,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
                 // Mostrar el next_id en la primera celda (columna 0)
-               // const idCell = newRow.find("td:eq(0)");
-               // idCell.text(nextId);
-              //  idCell.append(
-                 //   `<input type="hidden" name="id" value="${nextId}">`
-              //  );
+                // const idCell = newRow.find("td:eq(0)");
+                // idCell.text(nextId);
+                //  idCell.append(
+                //   `<input type="hidden" name="id" value="${nextId}">`
+                //  );
 
                 // En las columnas 2, 4 y 6 ponemos inputs vacíos
                 [1, 3, 5].forEach((index) => {
@@ -1394,10 +1398,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                         .find(".editable-machining-date")
                                         .data("value") || "";
                             }
-                             // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
-                            else if (
-                                cell.find(".editable-due-date").length
-                            ) {
+                            // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            else if (cell.find(".editable-due-date").length) {
                                 finalText =
                                     cell
                                         .find(".editable-due-date")
@@ -1428,7 +1430,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 hiddenInput.val();
                         });
                     });
-                     console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+                    console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
 
                     handlePostJsonWithAlerts(
                         "/orders",

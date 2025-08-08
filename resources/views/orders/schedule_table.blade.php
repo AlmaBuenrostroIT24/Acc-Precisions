@@ -70,7 +70,7 @@
                         $alertColor=$dias < 0 ? 'bg-danger' : ($dias <=2 ? 'bg-warning' : 'bg-success' );
                         $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
                         @endphp
-                        <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}">
+                        <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}"  data-priority="{{ $order->priority === 'yes' ? 'yes' : 'no' }}">
                         <td style="display: none;">{{ $order->id }}</td>
                         <!-- Columna oculta solo texto para filtro -->
                         <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
