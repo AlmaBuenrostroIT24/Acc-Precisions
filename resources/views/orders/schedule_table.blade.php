@@ -3,7 +3,7 @@
         <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
             <thead class="table-light thead-custom">
                 <tr>
-                    <th style="display:none;">Id</th>
+                    <th>Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
                     <th style="width: 65px;">LOCATION</th>
@@ -145,17 +145,17 @@
                                 data-enabled="{{ $order->our_source ? '1' : '0' }}"
                                 data-value="{{ optional($order->machining_date)->format('Y-m-d') }}"
                                 style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
-                                {{ optional($order->machining_date)->format('M-d-y') ?? 'Click to set' }}
+                                {{ optional($order->machining_date)->format('M-d-y') }}
                             </span>
                         </td>
                         <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
                         <td>
-                            <span class="editable-due-date  text-decoration-underline"
+                            <span class="editable-due-date text-decoration-underline"
                                 data-id="{{ $order->id }}"
-                                  data-enabled="{{ $order->status === 'onhold' ? 1 : 0 }}"
-                                data-value="{{ \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') }}"
-                                style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
-                                {{ optional($order->due_date)->format('M-d-y') ?? 'Click to set' }}
+                                data-enabled="{{ $order->status === 'onhold' ? 1 : 0 }}"
+                                data-value="{{ optional($order->due_date)->format('Y-m-d') }}"
+                                style="{{ $order->status === 'onhold' ? 'cursor:pointer;' : '' }}">
+                                {{ optional($order->due_date)->format('M-d-y') }}
                             </span>
                         </td>
                         <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">

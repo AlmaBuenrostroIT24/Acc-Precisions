@@ -393,25 +393,25 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-        // Log::info('Request completo:', $request->all());
+         Log::info('Request completo:', $request->all());
 
         $mapping = [
-            'col_text_1'  => 'location',
-            'col_text_2'  => 'work_id',
-            'col_text_3'  => 'PN',
-            'col_text_4'  => 'Part_description',
-            'col_text_5'  => 'costumer',
-            'col_text_6'  => 'qty',
-            'col_text_7'  => 'wo_qty',
-            'col_text_8'  => 'status',
-            'col_text_9'  => 'machining_date',
-            'col_text_10' => 'due_date',
-            'col_text_12' => 'days',
-            'col_text_13' => 'alert',
-            'col_text_14' => 'report',
-            'col_text_15' => 'our_source',
-            'col_text_16' => 'station',
-            'col_text_17' => 'notes',
+            'col_text_0'  => 'location',
+            'col_text_1'  => 'work_id',
+            'col_text_2'  => 'PN',
+            'col_text_3'  => 'Part_description',
+            'col_text_4'  => 'costumer',
+            'col_text_5'  => 'qty',
+            'col_text_6'  => 'wo_qty',
+            'col_text_7'  => 'status',
+            'col_text_8'  => 'machining_date',
+            'col_text_9' => 'due_date',
+            'col_text_10' => 'days',
+            'col_text_11' => 'alert',
+            'col_text_12' => 'report',
+            'col_text_13' => 'our_source',
+            'col_text_14' => 'station',
+            'col_text_15' => 'notes',
         ];
 
         try {
@@ -458,6 +458,12 @@ class Order_ScheduleController extends Controller
             if (empty($data['alert'])) {
                 $data['alert'] = '';
             }
+            if (!isset($data['priority'])) {
+                $data['priority'] = 'no'; // o 'normal', o lo que uses
+            }
+            if (!isset($data['status_order'])) {
+                $data['status_order'] = 'active'; // o 'normal', o lo que uses
+            }
 
             $validatedData = validator($data, [
                 'work_id'        => 'nullable|string|max:255',
@@ -476,6 +482,8 @@ class Order_ScheduleController extends Controller
                 'station'        => 'nullable|string|max:255',
                 'notes'          => 'nullable|string',
                 'location'       => 'nullable|string|max:255',
+                'priority'       => 'nullable|string|max:10',
+                'status_order'       => 'nullable|string|max:10',
             ])->validate();
 
             $order = OrderSchedule::create($validatedData);

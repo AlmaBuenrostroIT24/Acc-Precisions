@@ -384,7 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Limpiar clases previas de estado y de late
         row.className = row.className
             .split(" ")
-            .filter((c) => !c.startsWith("bg-status-") && c !== "row-late")
+            .filter(c => !c.startsWith("bg-status-") && c !== "row-late" && c !== "row-priority")
             .join(" ");
         if (dias < 0) {
             row.classList.add("row-late");
@@ -1260,7 +1260,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </button>`
                     );
                     partDescCell.append(btn);
-                    console.log(`✅ Botón agregado en fila ${index}`);
+                    //console.log(`✅ Botón agregado en fila ${index}`);
                 }
             }
         });
@@ -1302,14 +1302,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
                 // Mostrar el next_id en la primera celda (columna 0)
-                const idCell = newRow.find("td:eq(0)");
-                idCell.text(nextId);
-                idCell.append(
-                    `<input type="hidden" name="id" value="${nextId}">`
-                );
+               // const idCell = newRow.find("td:eq(0)");
+               // idCell.text(nextId);
+              //  idCell.append(
+                 //   `<input type="hidden" name="id" value="${nextId}">`
+              //  );
 
                 // En las columnas 2, 4 y 6 ponemos inputs vacíos
-                [2, 4, 6].forEach((index) => {
+                [1, 3, 5].forEach((index) => {
                     const cell = newRow.find(`td:eq(${index})`);
                     cell.html(
                         `<input type="text" name="col_text_${index}" class="form-control form-control-sm" value="">`
@@ -1323,7 +1323,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Guardar solo al presionar Enter en input col_text_6
                 newRow
-                    .find('input[name="col_text_6"]')
+                    .find('input[name="col_text_5"]')
                     .on("keydown", function (e) {
                         if (e.key === "Enter" && !guardado) {
                             e.preventDefault(); // Evita que el Enter dispare el submit
@@ -1357,7 +1357,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 function checkInputsAndSend() {
                     const val6 = newRow
-                        .find('input[name="col_text_6"]')
+                        .find('input[name="col_text_5"]')
                         .val()
                         .trim();
 
@@ -1394,6 +1394,15 @@ document.addEventListener("DOMContentLoaded", () => {
                                         .find(".editable-machining-date")
                                         .data("value") || "";
                             }
+                             // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            else if (
+                                cell.find(".editable-due-date").length
+                            ) {
+                                finalText =
+                                    cell
+                                        .find(".editable-due-date")
+                                        .data("value") || "";
+                            }
 
                             // 🔄 Caso general (texto visible, sin hijos como select/div/span)
                             else {
@@ -1404,7 +1413,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     .end()
                                     .text()
                                     .trim();
-                                if (index === 17 && finalText === "Note")
+                                if (index === 15 && finalText === "Note")
                                     finalText = "";
                             }
 
@@ -1419,7 +1428,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 hiddenInput.val();
                         });
                     });
-                    // console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+                     console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
 
                     handlePostJsonWithAlerts(
                         "/orders",
@@ -1430,7 +1439,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             // Actualizar visualmente la fila: eliminar inputs excepto columna 7 y dejar texto plano
                             newRow.find("td").each(function (index) {
                                 const cell = $(this);
-                                if (index === 7) return; // No tocar input en columna 7
+                                if (index === 6) return; // No tocar input en columna 7
                                 const input = cell.find("input");
                                 if (input.length) {
                                     const value = input.val();
@@ -1450,7 +1459,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <i class="fas fa-plus-circle me-1 text-muted"></i> Note</span>`;
 
                             // Insertar en la columna 18 (si existe)
-                            const notesCell = newRow.find("td:eq(17)");
+                            const notesCell = newRow.find("td:eq(15)");
                             if (notesCell.length) {
                                 notesCell.html(newNotesHtml);
                             } else {
