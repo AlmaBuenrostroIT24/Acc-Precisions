@@ -27,30 +27,41 @@ class Order_ScheduleController extends Controller
 
     public function index(Request $request)
     {
-        // $orders = OrderSchedule::latest()->get();
-        //return view('orders.index_schedule', compact('orders'));
+        $base = OrderSchedule::query()
+            ->where('status', '!=', 'sent')
+            ->where(function ($q) {
+                $q->whereNull('status_order')->orWhere('status_order', 'active');
+            });
 
-        $query = OrderSchedule::whereRaw('LOWER(status) != ?', ['sent']); // excluye "sent"
-        if ($request->filled('location')) {
-            $query->where('location', $request->location);
+        // 👇 Filtros por request (sin duplicar)
+        $base->when($request->filled('location'), function ($q) use ($request) {
+            $q->where('location', $request->location);
+        });
+
+        $base->when($request->filled('status'), function ($q) use ($request) {
+            $q->where('status', $request->status);
+        });
+
+        // 👇 Regla especial para /schedule/general + QAdmin (solo si NO se pasó location explícita)
+        if (
+            !$request->filled('location')
+            && $request->is('schedule/general')
+            && auth()->check()
+            && auth()->user()->hasRole('QAdmin')
+        ) {
+            $base->whereIn('location', ['yarnell', 'floor']);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        // Ordenar por due_date descendente (más reciente primero)
+        // 👇 Prioridad primero, luego due_date (NULLs al final)
+        $base->orderByRaw("CASE WHEN COALESCE(priority,'no') = 'yes' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END")
+            ->orderBy('due_date', 'asc'); // ← si realmente quieres descendente, cambia a 'desc'
 
-        // 👇 Filtrar automáticamente solo si estamos en /schedule/general y el usuario tiene un rol específico
-        //Agrega una verificación con auth()->check() antes de llamar a hasRole():
-        if ($request->is('schedule/general') && auth()->check() && auth()->user()->hasRole('QAdmin')) {
-            $query->whereIn('location', ['yarnell', 'floor']);
-        }
+        $orders = $base->get();
 
-        $orders = $query->get();
-
-        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
+        // Estos catálogos se obtienen aparte (no afectan la consulta principal)
         $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
         foreach ($orders as $order) {
@@ -60,9 +71,10 @@ class Order_ScheduleController extends Controller
                 $order->machining_date
             );
         }
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
+
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
+
 
     //----------------------------------------------------------------------------------------------------------------------------
     public function workhearst(Request $request)
@@ -391,25 +403,25 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-        // Log::info('Request completo:', $request->all());
+        Log::info('Request completo:', $request->all());
 
         $mapping = [
-            'col_text_1'  => 'location',
-            'col_text_2'  => 'work_id',
-            'col_text_3'  => 'PN',
-            'col_text_4'  => 'Part_description',
-            'col_text_5'  => 'costumer',
-            'col_text_6'  => 'qty',
-            'col_text_7'  => 'wo_qty',
-            'col_text_8'  => 'status',
-            'col_text_9'  => 'machining_date',
-            'col_text_10' => 'due_date',
-            'col_text_12' => 'days',
-            'col_text_13' => 'alert',
-            'col_text_14' => 'report',
-            'col_text_15' => 'our_source',
-            'col_text_16' => 'station',
-            'col_text_17' => 'notes',
+            'col_text_0'  => 'location',
+            'col_text_1'  => 'work_id',
+            'col_text_2'  => 'PN',
+            'col_text_3'  => 'Part_description',
+            'col_text_4'  => 'costumer',
+            'col_text_5'  => 'qty',
+            'col_text_6'  => 'wo_qty',
+            'col_text_7'  => 'status',
+            'col_text_8'  => 'machining_date',
+            'col_text_9' => 'due_date',
+            'col_text_10' => 'days',
+            'col_text_11' => 'alert',
+            'col_text_12' => 'report',
+            'col_text_13' => 'our_source',
+            'col_text_14' => 'station',
+            'col_text_15' => 'notes',
         ];
 
         try {
@@ -456,6 +468,12 @@ class Order_ScheduleController extends Controller
             if (empty($data['alert'])) {
                 $data['alert'] = '';
             }
+            if (!isset($data['priority'])) {
+                $data['priority'] = 'no'; // o 'normal', o lo que uses
+            }
+            if (!isset($data['status_order'])) {
+                $data['status_order'] = 'active'; // o 'normal', o lo que uses
+            }
 
             $validatedData = validator($data, [
                 'work_id'        => 'nullable|string|max:255',
@@ -474,6 +492,8 @@ class Order_ScheduleController extends Controller
                 'station'        => 'nullable|string|max:255',
                 'notes'          => 'nullable|string',
                 'location'       => 'nullable|string|max:255',
+                'priority'       => 'nullable|string|max:10',
+                'status_order'       => 'nullable|string|max:10',
             ])->validate();
 
             $order = OrderSchedule::create($validatedData);
@@ -774,11 +794,16 @@ class Order_ScheduleController extends Controller
     public function yarnellSchedule(Request $request)
     {
 
-        // Filtra solo las órdenes con location 'yarnell'
+        // Filtra solo las órdenes activas en location 'yarnell'
         $orders = OrderSchedule::where('location', 'yarnell')
             ->where('status', '!=', 'sent')
+            ->where(function ($q) {
+                $q->whereNull('status_order') // 🧠 permite nulos o explícitamente activos
+                    ->orWhere('status_order', 'active');
+            })
+            ->orderByRaw("CASE WHEN priority = 'yes' THEN 0 ELSE 1 END") // ✔️ Primero las 'yes'
             ->orderByRaw("FIELD(LOWER(status), 'deburring', 'ready','qa', 'assembly','shipping', 'outsource','onhold')")
-            ->orderBy('due_date') // opcional: orden secundario
+            ->orderBy('due_date')
             ->get();
 
         // Si necesitas calcular días restantes como en index()
@@ -802,8 +827,13 @@ class Order_ScheduleController extends Controller
 
         $orders = OrderSchedule::where('location', 'hearst')
             ->where('status', '!=', 'sent')
+            ->where(function ($q) {
+                $q->whereNull('status_order') // 🧠 permite nulos o explícitamente activos
+                    ->orWhere('status_order', 'active');
+            })
+            ->orderByRaw("CASE WHEN priority = 'yes' THEN 0 ELSE 1 END") // ✔️ Primero las 'yes'
             ->orderByRaw("FIELD(LOWER(status), 'deburring', 'ready','qa', 'assembly','shipping', 'outsource','onhold')")
-            ->orderBy('due_date') // opcional: orden secundario
+            ->orderBy('due_date')
             ->get();
 
         foreach ($orders as $order) {
@@ -1311,4 +1341,68 @@ class Order_ScheduleController extends Controller
             'data' => $data->pluck('total'),
         ]);
     }
+    //------------------------------------------------------------------------------------------------
+    public function deactivate(OrderSchedule $order)
+    {
+        $order->status_order = 'inactive';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Order deleted.');
+    }
+
+    public function setPriority(OrderSchedule $order)
+    {
+        $order->priority = 'yes';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Orden marcada como prioridad.');
+    }
+
+    public function togglePriority(OrderSchedule $order)
+    {
+        $order->priority = $order->priority === 'yes' ? 'no' : 'yes'; // ✅ evita null
+        $order->save();
+
+        $message = $order->priority === 'yes'
+            ? 'Order marked as priority.'
+            : 'Priority removed from order.';
+
+        return redirect()->back()->with('success', $message);
+    }
+
+
+    public function search(Request $request)
+    {
+        $search = $request->input('term');
+
+        $orders = OrderSchedule::query()
+            ->where(function ($q) {
+                $q->whereNull('status_order')
+                    ->orWhere('status_order', 'active');
+            })
+            ->whereNull('sent_at') // 🛑 Asegura que no se haya enviado
+            ->where(function ($query) use ($search) {
+                $query->where('work_id', 'LIKE', "%{$search}%")
+                    ->orWhere('PN', 'LIKE', "%{$search}%")
+                    ->orWhere('Part_description', 'LIKE', "%{$search}%")
+                    ->orWhere('costumer', 'LIKE', "%{$search}%")
+                    ->orWhereDate('due_date', $search);
+            })
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'due_date',
+                'priority', // ✅ Necesario para saber si ya está priorizado
+            ])
+            ->limit(10)
+            ->get();
+
+        return response()->json($orders);
+    }
+
+
+    //------------------------------------------------------------------------------------------------
 }

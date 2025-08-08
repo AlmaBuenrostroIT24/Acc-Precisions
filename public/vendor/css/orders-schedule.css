@@ -62,6 +62,11 @@
     background-color: #f8d7da !important; /* Rojo claro para atraso */
 }
 
+.row-priority {
+    font-weight: bold;
+    background-color: #a662f9 !important; /* optional: light gold */
+}
+
 .bg-status-ready {
     background-color: #c8f7c5 !important;
     border-left: 5px solid #27ae60 !important;
