@@ -27,32 +27,41 @@ class Order_ScheduleController extends Controller
 
     public function index(Request $request)
     {
-        // $orders = OrderSchedule::latest()->get();
-        //return view('orders.index_schedule', compact('orders'));
+        $base = OrderSchedule::query()
+            ->where('status', '!=', 'sent')
+            ->where(function ($q) {
+                $q->whereNull('status_order')->orWhere('status_order', 'active');
+            });
 
-        $query = OrderSchedule::whereRaw('LOWER(status) != ?', ['sent'])
-            ->where('status_order', 'active'); // 👈 Agregado
+        // 👇 Filtros por request (sin duplicar)
+        $base->when($request->filled('location'), function ($q) use ($request) {
+            $q->where('location', $request->location);
+        });
 
-        if ($request->filled('location')) {
-            $query->where('location', $request->location);
+        $base->when($request->filled('status'), function ($q) use ($request) {
+            $q->where('status', $request->status);
+        });
+
+        // 👇 Regla especial para /schedule/general + QAdmin (solo si NO se pasó location explícita)
+        if (
+            !$request->filled('location')
+            && $request->is('schedule/general')
+            && auth()->check()
+            && auth()->user()->hasRole('QAdmin')
+        ) {
+            $base->whereIn('location', ['yarnell', 'floor']);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        // Ordenar por due_date descendente (más reciente primero)
+        // 👇 Prioridad primero, luego due_date (NULLs al final)
+        $base->orderByRaw("CASE WHEN COALESCE(priority,'no') = 'yes' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END")
+            ->orderBy('due_date', 'asc'); // ← si realmente quieres descendente, cambia a 'desc'
 
-        // 👇 Filtrar automáticamente solo si estamos en /schedule/general y el usuario tiene un rol específico
-        //Agrega una verificación con auth()->check() antes de llamar a hasRole():
-        if ($request->is('schedule/general') && auth()->check() && auth()->user()->hasRole('QAdmin')) {
-            $query->whereIn('location', ['yarnell', 'floor']);
-        }
+        $orders = $base->get();
 
-        $orders = $query->get();
-
-        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
+        // Estos catálogos se obtienen aparte (no afectan la consulta principal)
         $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
         foreach ($orders as $order) {
@@ -62,9 +71,10 @@ class Order_ScheduleController extends Controller
                 $order->machining_date
             );
         }
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
+
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
+
 
     //----------------------------------------------------------------------------------------------------------------------------
     public function workhearst(Request $request)
@@ -393,7 +403,7 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-         Log::info('Request completo:', $request->all());
+        Log::info('Request completo:', $request->all());
 
         $mapping = [
             'col_text_0'  => 'location',

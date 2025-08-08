@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [[12, "asc"]], // ✅ DUE DATE está en índice 13
+            order: [], // aquí respetas el orden del backend (status personalizado)
             info: true,
             autoWidth: false,
             columnDefs: [
