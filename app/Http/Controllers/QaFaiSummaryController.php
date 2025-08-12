@@ -21,16 +21,29 @@ class QaFaiSummaryController extends Controller
     public function partsrevision()
     {
         // Consulta para 'operation' con 'default_value' o NULL
-        $ordersempty = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
-            ->where('status', '<>', 'sent')  // Filtra las órdenes cuyo estado no sea 'sent'
+        $ordersempty = OrderSchedule::select(
+            'id',
+            'work_id',
+            'PN',
+            'Part_description',
+            'operation',
+            'wo_qty',
+            'was_work_id_null',
+            'co'
+        )
+            ->where('status', '<>', 'sent')
             ->where(function ($query) {
-                $query->where('operation', '=', 'default_value')  // Filtra donde operation es 'default_value'
-                    ->orWhereNull('operation');  // O también donde operation es NULL
+                $query->where('was_work_id_null', 0)
+                    ->orWhereNull('co');
+            })
+            ->where(function ($query) {
+                $query->where('operation', 'default_value')
+                    ->orWhereNull('operation');
             })
             ->get();
 
         // Consulta para 'orderprocess' diferente de NULL y 'default_value'
-             $ordersprocess= OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
+        $ordersprocess = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
             ->where('status', '<>', 'sent')  // Filtra las órdenes cuyo estado no sea 'sent'
             ->where(function ($query) {
                 $query->where('operation', '<>', 'default_value')  // Filtra donde orderprocess no sea 'default_value'
