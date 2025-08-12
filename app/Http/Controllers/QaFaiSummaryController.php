@@ -18,7 +18,7 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.index_faisummary');
     }
     // Mostrar listado de registros
-    public function partsrevision()
+    public function partsrevision(Request $request)
     {
         // Consulta para 'operation' con 'default_value' o NULL
         $ordersempty = OrderSchedule::select(
@@ -41,6 +41,10 @@ class QaFaiSummaryController extends Controller
                     ->orWhereNull('operation');
             })
             ->get();
+
+        if ($request->is('qa/partsrevision') && auth()->check() && auth()->user()->hasRole('QAdmin')) {
+            $ordersempty->where('location', 'yarnell');
+        }
 
         // Consulta para 'orderprocess' diferente de NULL y 'default_value'
         $ordersprocess = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
