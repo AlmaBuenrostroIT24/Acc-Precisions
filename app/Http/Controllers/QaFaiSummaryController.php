@@ -20,11 +20,25 @@ class QaFaiSummaryController extends Controller
     // Mostrar listado de registros
     public function partsrevision()
     {
+        // Consulta para 'operation' con 'default_value' o NULL
+        $ordersempty = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
+            ->where('status', '<>', 'sent')  // Filtra las órdenes cuyo estado no sea 'sent'
+            ->where(function ($query) {
+                $query->where('operation', '=', 'default_value')  // Filtra donde operation es 'default_value'
+                    ->orWhereNull('operation');  // O también donde operation es NULL
+            })
+            ->get();
 
-        $orders = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')->get();
+        // Consulta para 'orderprocess' diferente de NULL y 'default_value'
+             $ordersprocess= OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
+            ->where('status', '<>', 'sent')  // Filtra las órdenes cuyo estado no sea 'sent'
+            ->where(function ($query) {
+                $query->where('operation', '<>', 'default_value')  // Filtra donde orderprocess no sea 'default_value'
+                    ->whereNotNull('operation');  // Y también donde orderprocess no sea NULL
+            })
+            ->get();
 
-
-        return view('qa.faisummary.faisummary_partsrevision', compact('orders'));
+        return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
     }
 
     // Mostrar listado de registros

@@ -28,10 +28,10 @@
 
 
 <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-body">
-                <table class="table table-bordered table-striped">
+                <table id="ordersTableEmpty" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>PART/DESCRIPCION</th>
@@ -40,7 +40,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($orders as $order)
+                        @foreach($ordersempty as $order)
                         <tr>
                             <td>{{ $order->PN }} - {{ Str::before($order->Part_description, ',') }}</td>
                             <td>{{ $order->work_id }}</td>
@@ -65,14 +65,74 @@
                         </button> -->
 
                 <!-- Modal de edición -->
-                @include('qa.faisummary.faisummary_modal')
+
+
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <table id="ordersTableProcess" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>PART/DESCRIPCION</th>
+                            <th>JOB</th>
+                            <th>Progress</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($ordersprocess as $order)
+                        <tr>
+                            <td>{{ $order->PN }} - {{ Str::before($order->Part_description, ',') }}</td>
+                            <td>{{ $order->work_id }}</td>
+
+                            {{-- Placeholder progreso (JS lo llenará) --}}
+                            <td>
+                                <div class="progress" data-order-id="{{ $order->id }}" style="height: 18px;">
+                                    <div class="progress-bar bg-secondary" role="progressbar"
+                                        style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        0%
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block">
+                                    <span class="badge bg-light text-dark me-1">FAI + IPI</span>
+                                </small>
+                            </td>
+
+                            <td>
+                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal"
+                                    data-id="{{ $order->id }}"
+                                    data-pn="{{ $order->PN }}"
+                                    data-description="{{ $order->Part_description }}"
+                                    data-workid="{{ $order->work_id }}"
+                                    data-woqty="{{ $order->wo_qty }}"
+                                    data-operation="{{ $order->operation ?? '' }}"> {{-- aquí guardas el # de ops --}}
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+
+                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
+                            <i class="fas fa-plus"></i> New Order
+                        </button> -->
+
+                <!-- Modal de edición -->
+
 
 
             </div>
         </div>
     </div>
 </div>
-
+@include('qa.faisummary.faisummary_modal')
 
 <!--  {{-- Tab: By End Schedule --}}-->
 
@@ -95,6 +155,46 @@
     const $operationInput = $('#operationInput');
 
     $(document).ready(function() {
+
+        // ---------------- DataTables ----------------
+        const dtOptions = {
+            responsive: true,
+            deferRender: true,
+            stateSave: true,
+            lengthMenu: [5, 10, 25, 50, 100],
+            pageLength: 10,
+            columnDefs: [{
+                    targets: -1,
+                    orderable: false,
+                    searchable: false
+                }, // Acciones
+                {
+                    targets: 0,
+                    width: "45%"
+                }, // PART/DESCRIPCION
+                {
+                    targets: 1,
+                    width: "15%"
+                }, // JOB
+                {
+                    targets: 2,
+                    width: "25%"
+                } // Progreso
+            ],
+            order: [
+                [0, 'asc']
+            ]
+        };
+
+        ['#ordersTableEmpty', '#ordersTableProcess'].forEach(sel => {
+            const $t = $(sel);
+            if ($.fn.DataTable.isDataTable($t)) {
+                $t.DataTable().columns.adjust().responsive.recalc();
+            } else {
+                $t.DataTable(dtOptions);
+            }
+        });
+
         // Mostrar datos al abrir modal
         $('#editModal').on('show.bs.modal', function(event) {
             const button = $(event.relatedTarget);
@@ -110,14 +210,25 @@
             const description = button.data('description') || '';
             $('#edit-fullpart').val(`${pn} - ${description.split(',')[0]}`);
 
-            loadFaiRows(id, updateInspectionMissing);
-            updateInspectionMissing(); // Asegura que se muestre el resumen aunque no haya filas cargadas
-            updateSamplingQty();
+            // Limpia tabla y crea fila nueva
             $('#dynamicTable tbody').empty().append(createRow());
+
+            // 1) Carga filas
+            loadFaiRows(id, function() {
+                // 2) Calcula resumen con filas reales
+                updateInspectionMissing();
+
+                // 3) Calcula muestreo (esto ahora dentro llamará refreshProgress con ipiRequired correcto)
+                updateSamplingQty();
+            });
         });
 
+
+
+        // ----------- Cambios en sampling -----------
         $('#edit-sampling-type, #edit-woqty').on('change input', updateSamplingQty);
 
+        // ----------- Guardar número de operaciones -----------
         $('#addOperationBtn').on('click', function() {
             const operation = $operationInput.val().trim();
             const orderId = $('#order-id').val();
@@ -135,6 +246,11 @@
                 });
                 $operationInput.val(operation);
                 $(`button[data-id="${orderId}"]`).attr('data-operation', operation);
+
+                // Refrescar progreso tras cambiar ops
+                const ipiNow = parseInt($samplingResult.val()) || 0;
+                refreshProgress(orderId, parseInt(operation) || 0, ipiNow);
+
             }).fail(function() {
                 Swal.fire({
                     icon: 'error',
@@ -144,6 +260,7 @@
             });
         });
 
+        // ----------- Agregar fila (validando # ops) -----------
         $('#addRowBtn').on('click', function() {
             if ($operationInput.val().trim() === '') {
                 Swal.fire({
@@ -156,11 +273,13 @@
             $('#dynamicTable tbody').append(createRow());
         });
 
+        // ----------- Quitar fila nueva sin guardar -----------
         $('#dynamicTable').on('click', '.removeRowBtn', function() {
             $(this).closest('tr').remove();
             updateInspectionMissing();
         });
 
+        // ----------- Editar fila guardada -----------
         $(document).on('click', '.editRowBtn', function() {
             const row = $(this).closest('tr');
             row.find('input, select').prop('disabled', false);
@@ -170,6 +289,7 @@
         `);
         });
 
+        // ----------- Guardar fila (create/update) -----------
         $(document).on('click', '.saveRowBtn', function() {
             const row = $(this).closest('tr');
             const token = $('input[name="_token"]').val();
@@ -214,6 +334,10 @@
                 <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
                 <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
             `);
+                // Refrescar progreso
+                const opsNow = parseInt($operationInput.val()) || 0;
+                const ipiNow = parseInt($samplingResult.val()) || 0;
+                refreshProgress(orderScheduleId, opsNow, ipiNow);
             }).fail(function(xhr) {
                 const msg = xhr.responseJSON?.error ? 'Error: ' + xhr.responseJSON.error : 'Error al guardar la fila';
                 Swal.fire({
@@ -239,7 +363,15 @@
         if (!lotSize || lotSize < 1) return $samplingResult.val('');
 
         $.getJSON(`/sampling-plan?lot_size=${lotSize}&sampling_type=${type}`, function(data) {
-            $samplingResult.val(data.sample_qty !== undefined ? data.sample_qty : '—');
+            const sample = (data.sample_qty !== undefined ? data.sample_qty : 0);
+            $samplingResult.val(sample);
+
+            // ✅ Refrescar progreso AHORA que ya tenemos ipiRequired correcto
+            const currentOrderId = $('#order-id').val();
+            const opsNow = parseInt($operationInput.val()) || 0;
+            if (currentOrderId && opsNow) {
+                refreshProgress(currentOrderId, opsNow, sample);
+            }
         });
     }
 
@@ -420,6 +552,7 @@
     }
 
 
+    // ----------- Eliminar fila guardada -----------
     $(document).on('click', '.deleteRowBtn', function() {
         const row = $(this).closest('tr');
         const rowId = row.data('id');
@@ -434,21 +567,20 @@
         }).then((result) => {
             if (!result.isConfirmed) return;
 
-            // 🔁 Si la fila no está guardada aún, solo quitarla
+            // Si no está guardada aún
             if (!rowId) {
                 row.remove();
                 updateInspectionMissing();
                 return;
             }
 
-            // 🧠 Si tiene ID, borrar de DB también
             $.ajax({
                 url: `/qa/faisummary/delete/${rowId}`,
                 method: 'DELETE',
                 data: {
                     _token: $('input[name="_token"]').val()
                 },
-                success: function(res) {
+                success: function() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Eliminado',
@@ -458,6 +590,12 @@
                     });
                     row.remove();
                     updateInspectionMissing();
+
+                    // Refrescar progreso
+                    const currentOrderId = $('#order-id').val();
+                    const opsNow = parseInt($operationInput.val()) || 0;
+                    const ipiNow = parseInt($samplingResult.val()) || 0;
+                    if (currentOrderId) refreshProgress(currentOrderId, opsNow, ipiNow);
                 },
                 error: function() {
                     Swal.fire({
@@ -470,6 +608,83 @@
         });
     });
 
+    // ----------- (Opcional) Inicializar progreso al cargar la página -----------
+    // Recorre cada botón de la tabla de proceso y calcula progreso inicial si tienes #ops y woqty
+    $('#ordersTableProcess button[data-id]').each(function() {
+        const $btn = $(this);
+        const orderId = $btn.data('id');
+        const operations = parseInt($btn.data('operation')) || 0; // si guardas # operaciones aquí
+        const woqty = parseInt($btn.data('woqty')) || 0;
+        if (!orderId || !operations || !woqty) return;
+
+        const samplingType = 'Normal'; // Ajusta si tienes uno por orden (puedes poner data-sampling-type)
+        $.getJSON(`/sampling-plan?lot_size=${woqty}&sampling_type=${samplingType}`, function(data) {
+            const ipiRequired = (data.sample_qty !== undefined ? data.sample_qty : 0);
+            refreshProgress(orderId, operations, ipiRequired);
+        });
+    });
+
+    // ===================== Progreso por orden =====================
+
+    // Calcula % progreso usando filas (rows) + #ops + IPI requerido
+    function computeProgressFromRows(rows, operations, ipiRequired) {
+        if (!operations || operations < 1) return 0;
+
+        const faiMap = new Map(); // op -> FAI pass
+        const ipiMap = new Map(); // op -> IPI pass
+
+        rows.forEach(r => {
+            const type = (r.insp_type || '').toUpperCase();
+            const op = r.operation;
+            const res = (r.results || '').toLowerCase();
+            if (res !== 'pass') return;
+
+            if (type === 'FAI') {
+                faiMap.set(op, (faiMap.get(op) || 0) + 1);
+            } else if (type === 'IPI') {
+                ipiMap.set(op, (ipiMap.get(op) || 0) + 1);
+            }
+        });
+
+        const perOpRequired = 1 + (parseInt(ipiRequired, 10) || 0); // 1 FAI + N IPI
+        const totalRequired = operations * perOpRequired;
+
+        let done = 0;
+        for (let i = 1; i <= operations; i++) {
+            const op = ordinalSuffix(i);
+            const faiCount = faiMap.get(op) || 0;
+            const ipiCount = ipiMap.get(op) || 0;
+            done += Math.min(faiCount, 1) + Math.min(ipiCount, ipiRequired || 0);
+        }
+
+        const pct = totalRequired > 0 ? Math.round((done / totalRequired) * 100) : 0;
+        return Math.max(0, Math.min(pct, 100));
+    }
+
+    // Pinta la barra de progreso
+    function renderOrderProgress(orderId, percent) {
+        const $wrap = $(`.progress[data-order-id="${orderId}"]`);
+        const $bar = $wrap.find('.progress-bar');
+        $bar.attr('aria-valuenow', percent).css('width', percent + '%').text(percent + '%');
+
+        $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
+        if (percent >= 100) $bar.addClass('bg-success');
+        else if (percent >= 50) $bar.addClass('bg-warning');
+        else $bar.addClass('bg-danger');
+    }
+
+    // Consulta filas y refresca barra
+    function refreshProgress(orderId, operations, ipiRequired) {
+        if (!operations) operations = parseInt($('#operationInput').val()) || 0;
+        if (ipiRequired === undefined || ipiRequired === null) {
+            ipiRequired = parseInt($('#edit-sampling-result').val()) || 0;
+        }
+
+        $.get(`/qa/faisummary/by-order/${orderId}`, function(rows) {
+            const percent = computeProgressFromRows(rows, operations, ipiRequired);
+            renderOrderProgress(orderId, percent);
+        });
+    }
 
 
     //----------------------------------------------------------------------------------------------------------------------
