@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\OrdMachiningDateLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Validators\ValidationException as ExcelValidationException;
+use Maatwebsite\Excel\HeadingRowImport;
 
 class Order_ScheduleController extends Controller
 {
@@ -1012,21 +1014,93 @@ class Order_ScheduleController extends Controller
     }
     public function import(Request $request)
     {
+        // 0) Validación flexible para CSV/XLS/XLSX
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,xlsx,xls',
+            // sube el máximo si tus archivos pesan más
+            'csv_file' => 'required|file|max:20480|mimes:csv,txt,xlsx,xls',
         ]);
 
-        // Ahora pasas el servicio al importador cuando lo creas
-        $importer = new OrderScheduleImport($this->service);
+        // 1) Asegura que el archivo realmente llegó
+        if (!$request->hasFile('csv_file')) {
+            return back()->withErrors(['csv_file' => 'No llegó ningún archivo (hasFile=false).']);
+        }
 
-        // Usar el importador para importar el archivo
-        Excel::import($importer, $request->file('csv_file'));
+        $file = $request->file('csv_file');
 
-        // Acceder al contador de registros importados
-        $count = $this->service->importedCount;
+        if (!$file->isValid()) {
+            Log::error('Upload inválido', ['error_code' => $file->getError()]);
+            return back()->withErrors(['csv_file' => 'El archivo subido no es válido. Código: ' . $file->getError()]);
+        }
 
-        return redirect()->route('schedule.general')
-            ->with('success', "$count records were imported successfully.");
+        // 2) Log de metadatos del archivo
+        //--------------------------------------------
+        /*Log::info('📦 Archivo recibido', [
+            'client_name' => $file->getClientOriginalName(),
+            'mime'        => $file->getMimeType(),
+            'size_kb'     => round($file->getSize() / 1024, 1),
+            'ext'         => $file->getClientOriginalExtension(),
+        ]);*/
+        //--------------------------------------------
+
+        // 3) Guarda una copia para depurar e impórtala desde storage (evita issues de stream)
+        $storedPath = $file->storeAs(
+            'tmp_imports',
+            now()->format('Ymd_His') . '__' . $file->getClientOriginalName()
+        );
+        $absPath = storage_path('app/' . $storedPath);
+        //--------------------------------------------
+        // Log::info('📁 Copia guardada', ['path' => $storedPath]);
+        //--------------------------------------------
+
+        // 4) (Opcional pero útil) Ver los encabezados que Laravel-Excel detecta
+        try {
+            $heads = (new HeadingRowImport)->toArray($absPath);
+            //--------------------------------------------
+            /*Log::info('🧾 Encabezados detectados (primera hoja)', [
+                'headings' => $heads[0][0] ?? [],
+            ]);*/
+            //--------------------------------------------
+        } catch (\Throwable $e) {
+            Log::warning('No se pudieron leer encabezados', ['msg' => $e->getMessage()]);
+        }
+
+        // 5) Ejecuta el import con try/catch para ver VALIDACIONES de filas y otros errores
+        try {
+            $importer = new OrderScheduleImport($this->service);
+
+            // 👇 Importa desde el path guardado (más estable que pasar UploadedFile)
+            Excel::import($importer, $absPath);
+
+            $count = $this->service->importedCount ?? 0;
+           // Log::info('✅ Import finalizado', ['importedCount' => $count]);
+
+            // Si count=0, probablemente TODAS las filas fueron descartadas por tu service:
+            // - due_date no parseada
+            // - faltan part_id / misc_reference / due_date
+            // - duplicados
+            if ($count === 0) {
+                Log::warning('⚠️ Import terminó con 0 filas. Revisa logs del servicio: ' .
+                    'parseo de due_date, claves de encabezado, y columnas unset.');
+            }
+
+            return redirect()->route('schedule.general')
+                ->with('success', "$count records were imported successfully.");
+        } catch (ExcelValidationException $e) {
+            // Validaciones por fila (si usas WithValidation)
+            $msgs = collect($e->failures())->map(
+                fn($f) =>
+                "Row {$f->row()}: " . implode(', ', $f->errors())
+            )->take(20)->implode(' | ');
+
+            Log::warning('❌ Fallos de validación por fila', ['count' => count($e->failures())]);
+            return back()->withErrors(['import' => 'Errores de validación: ' . $msgs]);
+        } catch (\Throwable $e) {
+           /* Log::error('💥 Excepción durante import', [
+                'msg' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);*/
+            return back()->with('error', 'No se pudo importar: ' . $e->getMessage());
+        }
     }
 
     //--------------------------------------------------------------------------------------------------------------

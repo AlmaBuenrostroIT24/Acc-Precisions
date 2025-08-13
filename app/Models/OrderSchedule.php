@@ -16,6 +16,8 @@ class OrderSchedule extends Model
     protected $fillable = [
         'work_id',
         'was_work_id_null',
+        'co',
+        'cust_po',
         'PN',
         'Part_description',
         'costumer',
