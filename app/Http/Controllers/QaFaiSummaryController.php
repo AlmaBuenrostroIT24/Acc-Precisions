@@ -18,45 +18,54 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.index_faisummary');
     }
     // Mostrar listado de registros
-    public function partsrevision(Request $request)
+    public function partsrevision()
     {
-        // Consulta para 'operation' con 'default_value' o NULL
-        $ordersempty = OrderSchedule::select(
+        $user = auth()->user();
+        $select = [
             'id',
             'work_id',
             'PN',
             'Part_description',
             'operation',
-            'wo_qty',
-            'was_work_id_null',
-            'co'
-        )
+            'wo_qty'
+        ];
+
+        // Base común con la condición:
+        // (was_work_id_null = 0 AND co NOT NULL) OR (was_work_id_null = 1 AND co IS NULL)
+        $base = OrderSchedule::select($select)
             ->where('status', '<>', 'sent')
-            ->where(function ($query) {
-                $query->where('was_work_id_null', 0)
-                    ->orWhereNull('co');
+            ->where(function ($q) {
+                $q->where(function ($x) {
+                    $x->where('was_work_id_null', 0)
+                        ->whereNotNull('co');
+                })->orWhere(function ($x) {
+                    $x->where('was_work_id_null', 1)
+                        ->whereNull('co');
+                });
             })
-            ->where(function ($query) {
-                $query->where('operation', 'default_value')
+            // Filtro por ubicación según rol (Admin no filtra)
+            ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->where('location', 'yarnell'))
+            ->when($user && $user->hasRole('QA'),     fn($q) => $q->where('location', 'hearst'));
+        // Admin no filtra
+
+        $ordersempty = (clone $base)
+            ->where(function ($q) {
+                $q->where('operation', 'default_value')
                     ->orWhereNull('operation');
             })
             ->get();
 
-        if ($request->is('qa/partsrevision') && auth()->check() && auth()->user()->hasRole('QAdmin')) {
-            $ordersempty->where('location', 'yarnell');
-        }
-
-        // Consulta para 'orderprocess' diferente de NULL y 'default_value'
-        $ordersprocess = OrderSchedule::select('id', 'work_id', 'PN', 'Part_description', 'operation', 'wo_qty')
-            ->where('status', '<>', 'sent')  // Filtra las órdenes cuyo estado no sea 'sent'
-            ->where(function ($query) {
-                $query->where('operation', '<>', 'default_value')  // Filtra donde orderprocess no sea 'default_value'
-                    ->whereNotNull('operation');  // Y también donde orderprocess no sea NULL
+        $ordersprocess = (clone $base)
+            ->whereNotNull('work_id')
+            ->where(function ($q) {
+                $q->where('operation', '<>', 'default_value')
+                    ->whereNotNull('operation');
             })
             ->get();
 
         return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
     }
+
 
     // Mostrar listado de registros
     public function faicompleted()

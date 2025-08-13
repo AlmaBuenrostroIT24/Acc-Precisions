@@ -34,4 +34,6 @@ class QaFaiSummary extends Model
     {
         return $this->belongsTo(OrderSchedule::class);
     }
+
+    
 }

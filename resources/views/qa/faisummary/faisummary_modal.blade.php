@@ -82,7 +82,7 @@
                     <button type="button" class="btn btn-primary mb-3" id="addRowBtn">Add OP Inspection</button>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Save Inspection</button>
+                   <!-- <button type="submit" class="btn btn-success">Save Inspection</button>-->
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
                 </div>
             </div>

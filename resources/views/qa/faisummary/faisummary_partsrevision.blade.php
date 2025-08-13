@@ -210,17 +210,16 @@
             const description = button.data('description') || '';
             $('#edit-fullpart').val(`${pn} - ${description.split(',')[0]}`);
 
-            // Limpia tabla y crea fila nueva
+            loadFaiRows(id, updateInspectionMissing);
+            updateInspectionMissing(); // Asegura que se muestre el resumen aunque no haya filas cargadas
+            updateSamplingQty();
             $('#dynamicTable tbody').empty().append(createRow());
 
-            // 1) Carga filas
-            loadFaiRows(id, function() {
-                // 2) Calcula resumen con filas reales
-                updateInspectionMissing();
+            // Refrescar progreso para esta orden usando valores actuales del modal
+            const opsNow = parseInt($operationInput.val()) || 0;
+            const ipiNow = parseInt($samplingResult.val()) || 0;
+            refreshProgress(id, opsNow, ipiNow);
 
-                // 3) Calcula muestreo (esto ahora dentro llamará refreshProgress con ipiRequired correcto)
-                updateSamplingQty();
-            });
         });
 
 
