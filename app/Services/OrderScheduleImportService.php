@@ -12,8 +12,6 @@ class OrderScheduleImportService
     protected $columnsToRemove = [
         'company_name',
         'run_comments',
-        'order_id',
-        'customer_po_ref',
         'customer_name',
         'part_product_code',
         'sales_rep',
@@ -168,6 +166,8 @@ class OrderScheduleImportService
             'Part_description' => $row['misc_reference'],
             'costumer'        => $row['customer_id'],
             'qty'             => $row['line_qty'],
+            'co'             => $row['order_id'],
+            'cust_po'             => $row['customer_po_ref'],
             'operation'       => $row['operation'] ?? 'default_value',
             'machines'        => $row['machines'] ?? 'default_value',
             'done'            => $row['done'] ?? '1',
