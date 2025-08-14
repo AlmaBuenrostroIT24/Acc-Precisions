@@ -149,13 +149,19 @@
 
 @push('js')
 <script>
-    // === Variables comunes ===
-    const $rowsContainer = $('#rowsContainer');
-    const $samplingResult = $('#edit-sampling-result');
-    const $operationInput = $('#operationInput');
+    // ================== FAI Summary UI Script (globals + modal activo) ==================
+
+    // Globals re-asignables por cada modal abierto
+    let $rowsContainer; // tbody del modal actual
+    let $samplingResult; // #edit-sampling-result del modal actual
+    let $operationInput; // #operationInput del modal actual
+    let $reportPre; // #inspection-missing del modal actual
+    let $reportBox; // #inspection-missing-container del modal actual
+
+    let faiDoneOps = new Set();
+    let ipiCountMap = new Map();
 
     $(document).ready(function() {
-
         // ---------------- DataTables ----------------
         const dtOptions = {
             responsive: true,
@@ -163,29 +169,10 @@
             stateSave: true,
             lengthMenu: [5, 10, 25, 50, 100],
             pageLength: 10,
-            columnDefs: [{
-                    targets: -1,
-                    orderable: false,
-                    searchable: false
-                }, // Acciones
-                {
-                    targets: 0,
-                    width: "45%"
-                }, // PART/DESCRIPCION
-                {
-                    targets: 1,
-                    width: "15%"
-                }, // JOB
-                {
-                    targets: 2,
-                    width: "25%"
-                } // Progreso
-            ],
             order: [
                 [0, 'asc']
             ]
         };
-
         ['#ordersTableEmpty', '#ordersTableProcess'].forEach(sel => {
             const $t = $(sel);
             if ($.fn.DataTable.isDataTable($t)) {
@@ -195,62 +182,85 @@
             }
         });
 
-        // Mostrar datos al abrir modal
+        // ---------------- Abrir modal ----------------
         $('#editModal').on('show.bs.modal', function(event) {
+            const $modal = $(this);
             const button = $(event.relatedTarget);
             const id = button.data('id');
             const operation = button.data('operation') === 'default_value' ? '' : (button.data('operation') || '');
 
-            $('#edit-id, #order-id').val(id);
-            $('#edit-workid').val(button.data('workid'));
-            $('#edit-woqty').val(button.data('woqty'));
+            // 🔗 Re-enlazar globals al DOM del modal activo
+            $rowsContainer = $modal.find('#dynamicTable tbody');
+            $samplingResult = $modal.find('#edit-sampling-result');
+            $operationInput = $modal.find('#operationInput');
+            $reportPre = $modal.find('#inspection-missing');
+            $reportBox = $modal.find('#inspection-missing-container');
+
+            // Campos base
+            $modal.find('#edit-id, #order-id').val(id);
+            $modal.find('#edit-workid').val(button.data('workid'));
+            $modal.find('#edit-woqty').val(button.data('woqty'));
             $operationInput.val(operation);
 
             const pn = button.data('pn');
             const description = button.data('description') || '';
-            $('#edit-fullpart').val(`${pn} - ${description.split(',')[0]}`);
+            $modal.find('#edit-fullpart').val(`${pn} - ${description.split(',')[0]}`);
 
-            loadFaiRows(id, updateInspectionMissing);
-            updateInspectionMissing(); // Asegura que se muestre el resumen aunque no haya filas cargadas
+            // 1) Limpiar y crear fila borrador ARRIBA
+            $rowsContainer.empty();
+            /*Crear fila en automaticamente
+             const draftRow = createRow();
+             if (draftRow) $rowsContainer.prepend(draftRow);*/
+
+            // 2) Cargar filas guardadas DEBAJO (sin limpiar otra vez)
+            loadFaiRows(id, function() {
+                updateInspectionMissing(); // al terminar de cargar
+            });
+
+            // 3) Recalcular sampling + progreso + reporte
             updateSamplingQty();
-            $('#dynamicTable tbody').empty().append(createRow());
+            updateInspectionMissing();
 
-            // Refrescar progreso para esta orden usando valores actuales del modal
             const opsNow = parseInt($operationInput.val()) || 0;
             const ipiNow = parseInt($samplingResult.val()) || 0;
             refreshProgress(id, opsNow, ipiNow);
-
         });
 
+        // ---------------- Eventos (globales, usan las globals re-enlazadas) ----------------
 
+        // Cambios en sampling (tipo/cantidad)
+        $('#edit-sampling-type, #edit-woqty').on('change input', function() {
+            updateSamplingQty();
+        });
 
-        // ----------- Cambios en sampling -----------
-        $('#edit-sampling-type, #edit-woqty').on('change input', updateSamplingQty);
-
-        // ----------- Guardar número de operaciones -----------
+        // Guardar # de operaciones
         $('#addOperationBtn').on('click', function() {
-            const operation = $operationInput.val().trim();
+            const operation = parseInt($operationInput.val().trim()) || 0;
             const orderId = $('#order-id').val();
+            const sampling = parseInt($samplingResult.val()) || 0;
+
+            const total_fai = operation * 1; // 1 FAI por operación
+            const total_ipi = operation * sampling; // IPI = ops * sampling
 
             $.post(`/orders-schedule/${orderId}/update-operation`, {
-                _token: '{{ csrf_token() }}',
-                operation
-            }).done(function() {
+                _token: $('input[name="_token"]').val(),
+                operation,
+                sampling,
+                total_fai,
+                total_ipi
+            }).done(() => {
                 Swal.fire({
                     icon: 'success',
                     title: '¡Actualizado!',
-                    text: 'Operación guardada correctamente',
+                    text: 'Operación y totales guardados correctamente',
                     timer: 1200,
                     showConfirmButton: false
                 });
                 $operationInput.val(operation);
                 $(`button[data-id="${orderId}"]`).attr('data-operation', operation);
-
-                // Refrescar progreso tras cambiar ops
-                const ipiNow = parseInt($samplingResult.val()) || 0;
-                refreshProgress(orderId, parseInt(operation) || 0, ipiNow);
-
-            }).fail(function() {
+                refreshProgress(orderId, operation, sampling);
+                updateInspectionMissing();
+            }).fail(() => {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -259,9 +269,10 @@
             });
         });
 
-        // ----------- Agregar fila (validando # ops) -----------
+        // Agregar fila (validando #ops)
         $('#addRowBtn').on('click', function() {
-            if ($operationInput.val().trim() === '') {
+            const opsVal = ($operationInput.val() || '').trim();
+            if (!opsVal) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Required information',
@@ -269,26 +280,29 @@
                 });
                 return;
             }
-            $('#dynamicTable tbody').append(createRow());
+            const newRow = createRow();
+            if (!newRow) return;
+            $rowsContainer.prepend(newRow);
+            newRow.find('input,select').filter(':visible:not([disabled])').first().focus();
         });
 
-        // ----------- Quitar fila nueva sin guardar -----------
+        // Quitar fila nueva sin guardar
         $('#dynamicTable').on('click', '.removeRowBtn', function() {
             $(this).closest('tr').remove();
             updateInspectionMissing();
         });
 
-        // ----------- Editar fila guardada -----------
+        // Editar fila guardada
         $(document).on('click', '.editRowBtn', function() {
             const row = $(this).closest('tr');
             row.find('input, select').prop('disabled', false);
             row.find('td:last').html(`
-            <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-            <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-        `);
+      <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
+      <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+    `);
         });
 
-        // ----------- Guardar fila (create/update) -----------
+        // Guardar fila (create/update)
         $(document).on('click', '.saveRowBtn', function() {
             const row = $(this).closest('tr');
             const token = $('input[name="_token"]').val();
@@ -307,17 +321,12 @@
                 observation: row.find('input[name="observation[]"]').val()?.trim(),
                 station: row.find('input[name="station[]"]').val()?.trim(),
                 method: row.find('select[name="method[]"]').val(),
-                num_operation: $operationInput.val(),
                 inspector: $('#edit-inspector').val(),
-                part_rev: $('#edit-fullpart').val(),
-                job: $('#edit-workid').val()
             };
-
             if (rowId) data.id = rowId;
 
-            $.post('/qa/faisummary/store-single', data).done(function(response) {
-                if (response.id) row.attr('data-id', response.id);
-
+            $.post('/qa/faisummary/store-single', data).done(function(resp) {
+                if (resp.id) row.attr('data-id', resp.id);
                 Swal.fire({
                     icon: 'success',
                     title: '¡Guardado!',
@@ -325,15 +334,16 @@
                     timer: 1500,
                     showConfirmButton: false
                 });
-                row.find('input, select, .saveRowBtn').prop('disabled', true);
-                updateInspectionMissing(); // Asegura que se muestre el resumen aunque no haya filas cargadas
 
+                row.find('input, select, .saveRowBtn').prop('disabled', true);
                 row.find('td:last').html(`
-                <span class="text-success me-2">✔️</span>
-                <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-                <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-            `);
-                // Refrescar progreso
+         <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
+        <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
+        <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+      `);
+
+                updateInspectionMissing();
+
                 const opsNow = parseInt($operationInput.val()) || 0;
                 const ipiNow = parseInt($samplingResult.val()) || 0;
                 refreshProgress(orderScheduleId, opsNow, ipiNow);
@@ -346,16 +356,93 @@
                 });
             });
         });
-    });
 
+        // Eliminar fila guardada
+        $(document).on('click', '.deleteRowBtn', function() {
+            const row = $(this).closest('tr');
+            const rowId = row.data('id');
+
+            Swal.fire({
+                icon: 'warning',
+                title: '¿Eliminar fila?',
+                text: 'Esta acción no se puede deshacer',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                // Si no está guardada
+                if (!rowId) {
+                    row.remove();
+                    updateInspectionMissing();
+                    return;
+                }
+
+                $.ajax({
+                    url: `/qa/faisummary/delete/${rowId}`,
+                    method: 'DELETE',
+                    data: {
+                        _token: $('input[name="_token"]').val()
+                    }
+                }).done(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminado',
+                        text: 'La fila ha sido eliminada',
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+                    row.remove();
+                    updateInspectionMissing();
+
+                    const currentOrderId = $('#order-id').val();
+                    const opsNow = parseInt($operationInput.val()) || 0;
+                    const ipiNow = parseInt($samplingResult.val()) || 0;
+                    if (currentOrderId) refreshProgress(currentOrderId, opsNow, ipiNow);
+                }).fail(() => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar la fila'
+                    });
+                });
+            });
+        });
+
+        // ----------- Progreso inicial (fuera del modal) -----------
+        $('#ordersTableProcess button[data-id]').each(function() {
+            const $btn = $(this);
+            const orderId = $btn.data('id');
+            const operations = parseInt($btn.data('operation')) || 0;
+            const woqty = parseInt($btn.data('woqty')) || 0;
+            if (!orderId || !operations || !woqty) return;
+
+            const samplingType = 'Normal'; // Ajusta si lo manejas por orden
+            $.getJSON(`/sampling-plan?lot_size=${woqty}&sampling_type=${samplingType}`, function(data) {
+                const ipiRequired = (data.sample_qty !== undefined ? data.sample_qty : 0);
+                refreshProgress(orderId, operations, ipiRequired);
+            });
+        });
+    }); // document.ready
+
+    // ================== Funciones (usan las globals re-enlazadas) ==================
+
+    // Cargar filas guardadas (JSON) SIN vaciar el tbody (preserva borrador arriba)
     function loadFaiRows(orderScheduleId, callback) {
-        $.get(`/qa/faisummary/by-order/${orderScheduleId}`, function(rows) {
-            $rowsContainer.empty();
+        $.getJSON(`/qa/faisummary/by-order/${orderScheduleId}`, function(rows) {
+            rows = Array.isArray(rows) ? rows : [];
+
+            // Si el backend no ordena, descomenta:
+            // rows.sort((a,b)=> new Date(b.date) - new Date(a.date) || (b.id||0) - (a.id||0));
+
             rows.forEach(row => $rowsContainer.append(createRowFromData(row)));
+
             if (typeof callback === 'function') callback();
         });
     }
 
+    // Recalcular sampling y refrescar progreso + reporte
     function updateSamplingQty() {
         const lotSize = parseInt($('#edit-woqty').val());
         const type = $('#edit-sampling-type').val();
@@ -365,42 +452,45 @@
             const sample = (data.sample_qty !== undefined ? data.sample_qty : 0);
             $samplingResult.val(sample);
 
-            // ✅ Refrescar progreso AHORA que ya tenemos ipiRequired correcto
             const currentOrderId = $('#order-id').val();
             const opsNow = parseInt($operationInput.val()) || 0;
             if (currentOrderId && opsNow) {
                 refreshProgress(currentOrderId, opsNow, sample);
+                updateInspectionMissing();
             }
         });
     }
 
-    let faiDoneOps = new Set(); // global o accesible a createRow()
-    let ipiCountMap = new Map();
-
+    // Construye el resumen/report y mapas para selects
     function updateInspectionMissing() {
-        const sampling = parseInt($samplingResult.val());
-        const operations = parseInt($operationInput.val());
-        if (!operations) return $('#inspection-missing').text('');
+        const sampling = parseInt($samplingResult.val()) || 0;
+        const operations = parseInt($operationInput.val()) || 0;
 
-        const faiMap = new Map();
-        const ipiMap = new Map();
-        faiDoneOps = new Set(); // ← Limpiar antes de procesar
-        ipiCountMap = new Map(); // ← Nuevo mapa para conteo de IPI por operación
+        if (!operations) {
+            $reportPre.text('');
+            $reportBox.removeClass('bg-light bg-success bg-danger text-white');
+            return;
+        }
 
-        $rowsContainer.find('tr').each(function() {
+        const faiMap = new Map(),
+            ipiMap = new Map();
+        faiDoneOps = new Set();
+        ipiCountMap = new Map();
+
+        // Contar SOLO filas guardadas (evita la fila borrador)
+        $rowsContainer.find('tr[data-id]').each(function() {
             const $row = $(this);
-            const type = $row.find('select[name="insp_type[]"]').val();
-            const operation = $row.find('select[name="operation[]"], input[name="operation[]"]').val();
-            const result = $row.find('select[name="results[]"]').val();
+            const type = String($row.find('select[name="insp_type[]"]').val() || '').trim().toUpperCase(); // FAI | IPI
+            const operation = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+            const result = String($row.find('select[name="results[]"]').val() || '').trim().toLowerCase(); // pass | no pass
+            if (!operation) return;
 
-            addToMapIfPass(faiMap, type, 'FAI', operation, result);
-            addToMapIfPass(ipiMap, type, 'IPI', operation, result);
-
-            // ✅ Si ya existe FAI aprobado, lo marcamos
             if (type === 'FAI' && result === 'pass') {
+                faiMap.set(operation, (faiMap.get(operation) || 0) + 1);
                 faiDoneOps.add(operation);
             }
             if (type === 'IPI' && result === 'pass') {
+                ipiMap.set(operation, (ipiMap.get(operation) || 0) + 1);
                 ipiCountMap.set(operation, (ipiCountMap.get(operation) || 0) + 1);
             }
         });
@@ -413,13 +503,19 @@
             const faiCount = faiMap.get(op) || 0;
             const ipiCount = ipiMap.get(op) || 0;
 
-            const faiRequired = 1; // ✅ solo se necesita 1 FAI
-            const ipiRequired = sampling || 0;
+            const faiRequired = 1; // 1 FAI por operación
+            const ipiRequired = sampling; // IPI requeridos por operación
 
-            const faiStatus = faiCount >= faiRequired ? `FAI: OK (${faiCount}/${faiRequired})` : `FAI: Need ${faiRequired - faiCount} (${faiCount}/${faiRequired})`;
-            const ipiStatus = ipiCount >= ipiRequired ? `IPI: OK (${ipiCount}/${ipiRequired})` : `IPI: ❌ Need ${ipiRequired - ipiCount} (${ipiCount}/${ipiRequired})`;
+            const faiStatus = (faiCount >= faiRequired) ?
+                `FAI: OK (${faiCount}/${faiRequired})` :
+                `FAI: Need ${faiRequired - faiCount} (${faiCount}/${faiRequired})`;
 
-            const linea = (faiCount >= faiRequired && ipiCount >= ipiRequired) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
+            const ipiStatus = (ipiCount >= ipiRequired) ?
+                `IPI: OK (${ipiCount}/${ipiRequired})` :
+                `IPI: ❌ Need ${Math.max(ipiRequired - ipiCount, 0)} (${ipiCount}/${ipiRequired})`;
+
+            const linea =
+                (faiCount >= faiRequired && ipiCount >= ipiRequired) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
                 (faiCount < faiRequired && ipiCount < ipiRequired) ? `❌ ${op} → ${faiStatus} | ${ipiStatus}` :
                 `⚠️ ${op} → ${faiStatus} | ${ipiStatus}`;
 
@@ -427,13 +523,15 @@
             if (faiCount < faiRequired || ipiCount < ipiRequired) hayFaltantes = true;
         }
 
-        $('#inspection-missing').text(resumen.trim());
-        const contenedor = $('#inspection-missing-container').removeClass('bg-light bg-success bg-danger');
-        contenedor.addClass(hayFaltantes ? 'bg-light text-white' : 'bg-success text-white');
+        // Pintar en el REPORT del modal ACTIVO
+        $reportPre.text(resumen.trim());
+        $reportBox.removeClass('bg-light bg-success bg-danger text-white');
+        $reportBox.addClass(hayFaltantes ? 'bg-light text-white' : 'bg-success text-white');
     }
 
-
+    // Helpers
     function addToMapIfPass(map, type, targetType, operation, result) {
+        if (!operation) return;
         if (type === targetType && result === 'pass') {
             map.set(operation, (map.get(operation) || 0) + 1);
         }
@@ -446,28 +544,24 @@
         return `${n}th Op`;
     }
 
+    // Select de operaciones disponibles según FAI/IPI ya cumplidos
     function createOperationSelect(count, inspType = 'FAI') {
         const select = $('<select name="operation[]" class="form-control"></select>');
         const sampling = parseInt($samplingResult.val()) || 0;
 
         for (let i = 1; i <= count; i++) {
             const value = ordinalSuffix(i);
-
             if (inspType === 'FAI' && faiDoneOps.has(value)) continue;
-
             if (inspType === 'IPI') {
                 const ipiCount = ipiCountMap.get(value) || 0;
-                if (ipiCount >= sampling) continue; // ❌ Ya se cumplió el muestreo para esta operación
+                if (ipiCount >= sampling) continue;
             }
-
             select.append(`<option value="${value}">${value}</option>`);
         }
-
         return select;
     }
 
-
-    // Esta función genera una fila editable en blanco para una nueva inspección
+    // Fila editable (borrador)
     function createRow() {
         const today = new Date().toISOString().split('T')[0];
         const operationValue = parseInt($operationInput.val());
@@ -477,25 +571,21 @@
         row.append(`<td><input type="date" name="date[]" class="form-control" value="${today}"></td>`);
 
         const $inspType = $(`
-        <select name="insp_type[]" class="form-control">
-            <option value="FAI">FAI</option>
-            <option value="IPI">IPI</option>
-        </select>
-    `);
+    <select name="insp_type[]" class="form-control">
+      <option value="FAI">FAI</option>
+      <option value="IPI">IPI</option>
+    </select>
+  `);
         row.append($('<td></td>').append($inspType));
 
         const $operationCell = $('<td></td>');
         let defaultType = 'FAI';
 
         if (isNumber) {
-            // 🧠 Intentar crear primero FAI
             let operationSelect = createOperationSelect(operationValue, 'FAI');
-
             if (operationSelect.children().length === 0) {
-                // 👉 Ya no hay FAI disponible → intentar IPI
                 operationSelect = createOperationSelect(operationValue, 'IPI');
                 defaultType = 'IPI';
-
                 if (operationSelect.children().length === 0) {
                     Swal.fire({
                         icon: 'info',
@@ -505,8 +595,6 @@
                     return null;
                 }
             }
-
-            // Establecer el tipo por defecto según disponibilidad
             $inspType.val(defaultType);
             $operationCell.append(operationSelect);
         } else {
@@ -515,14 +603,30 @@
 
         row.append($operationCell);
         row.append(`<td><input type="text" name="operator[]" class="form-control"></td>`);
-        row.append(`<td><select name="results[]" class="form-control"><option value="pass">Pass</option><option value="no pass">No Pass</option></select></td>`);
+        row.append(`<td>
+    <select name="results[]" class="form-control">
+      <option value="pass">Pass</option>
+      <option value="no pass">No Pass</option>
+    </select>
+  </td>`);
         row.append(`<td><input type="text" name="sb_is[]" class="form-control"></td>`);
         row.append(`<td><input type="text" name="observation[]" class="form-control"></td>`);
         row.append(`<td><input type="text" name="station[]" class="form-control"></td>`);
-        row.append(`<td><select name="method[]" class="form-control"><option value="Manual">Manual</option><option value="Vmm/Manual">Vmm/Manual</option><option value="Visual">Visual</option><option value="Vmm">Vmm</option><option value="Keyence">Keyence</option><option value="Keyence/Manual">Keyence/Manual</option></select></td>`);
-        row.append(`<td><button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button><button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button></td>`);
+        row.append(`<td>
+    <select name="method[]" class="form-control">
+      <option value="Manual">Manual</option>
+      <option value="Vmm/Manual">Vmm/Manual</option>
+      <option value="Visual">Visual</option>
+      <option value="Vmm">Vmm</option>
+      <option value="Keyence">Keyence</option>
+      <option value="Keyence/Manual">Keyence/Manual</option>
+    </select>
+  </td>`);
+        row.append(`<td>
+    <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
+    <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
+  </td>`);
 
-        // 🔄 Cuando cambie tipo (FAI/IPI), actualizar operaciones válidas
         $inspType.on('change', function() {
             if (!isNumber) return;
             const newType = $(this).val();
@@ -533,99 +637,46 @@
         return row;
     }
 
-
-
+    // Fila solo-lectura desde DB
     function createRowFromData(data) {
         const row = $('<tr></tr>').attr('data-id', data.id);
-        row.append(`<td><input type="date" name="date[]" class="form-control" value="${data.date}" disabled></td>`);
-        row.append(`<td><select name="insp_type[]" class="form-control" disabled><option value="FAI" ${data.insp_type === 'FAI' ? 'selected' : ''}>FAI</option><option value="IPI" ${data.insp_type === 'IPI' ? 'selected' : ''}>IPI</option></select></td>`);
-        row.append(`<td><input type="text" name="operation[]" class="form-control" value="${data.operation}" disabled></td>`);
-        row.append(`<td><input type="text" name="operator[]" class="form-control" value="${data.operator}" disabled></td>`);
-        row.append(`<td><select name="results[]" class="form-control" disabled><option value="pass" ${data.results === 'pass' ? 'selected' : ''}>Pass</option><option value="no pass" ${data.results === 'no pass' ? 'selected' : ''}>No Pass</option></select></td>`);
+        row.append(`<td><input type="date" name="date[]" class="form-control" value="${data.date || ''}" disabled></td>`);
+        row.append(`<td>
+    <select name="insp_type[]" class="form-control" disabled>
+      <option value="FAI" ${data.insp_type === 'FAI' ? 'selected' : ''}>FAI</option>
+      <option value="IPI" ${data.insp_type === 'IPI' ? 'selected' : ''}>IPI</option>
+    </select>
+  </td>`);
+        row.append(`<td><input type="text" name="operation[]" class="form-control" value="${data.operation || ''}" disabled></td>`);
+        row.append(`<td><input type="text" name="operator[]" class="form-control" value="${data.operator || ''}" disabled></td>`);
+        const results = (data.results || '').toLowerCase();
+        row.append(`<td>
+    <select name="results[]" class="form-control" disabled>
+      <option value="pass" ${results === 'pass' ? 'selected' : ''}>Pass</option>
+      <option value="no pass" ${results === 'no pass' ? 'selected' : ''}>No Pass</option>
+    </select>
+  </td>`);
         row.append(`<td><input type="text" name="sb_is[]" class="form-control" value="${data.sb_is || ''}" disabled></td>`);
         row.append(`<td><input type="text" name="observation[]" class="form-control" value="${data.observation || ''}" disabled></td>`);
         row.append(`<td><input type="text" name="station[]" class="form-control" value="${data.station || ''}" disabled></td>`);
-        row.append(`<td><select name="method[]" class="form-control" disabled><option value="Manual" ${data.method === 'Manual' ? 'selected' : ''}>Manual</option><option value="Vmm/Manual" ${data.method === 'Vmm/Manual' ? 'selected' : ''}>Vmm/Manual</option><option value="Visual" ${data.method === 'Visual' ? 'selected' : ''}>Visual</option><option value="Vmm" ${data.method === 'Vmm' ? 'selected' : ''}>Vmm</option><option value="Keyence" ${data.method === 'Keyence' ? 'selected' : ''}>Keyence</option><option value="Keyence/Manual" ${data.method === 'Keyence/Manual' ? 'selected' : ''}>Keyence/Manual</option></select></td>`);
-        row.append(`<td><span class="text-success me-2">✔️</span><button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button></td>`);
+        row.append(`<td>
+    <select name="method[]" class="form-control" disabled>
+      ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m =>
+        `<option value="${m}" ${data.method === m ? 'selected' : ''}>${m}</option>`).join('')}
+    </select>
+  </td>`);
+        row.append(`
+    <td>
+     <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
+      <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
+      <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+    </td>
+  `);
         return row;
     }
 
+    // ================== Progreso (lista + modal) ==================
 
-    // ----------- Eliminar fila guardada -----------
-    $(document).on('click', '.deleteRowBtn', function() {
-        const row = $(this).closest('tr');
-        const rowId = row.data('id');
-
-        Swal.fire({
-            icon: 'warning',
-            title: '¿Eliminar fila?',
-            text: 'Esta acción no se puede deshacer',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (!result.isConfirmed) return;
-
-            // Si no está guardada aún
-            if (!rowId) {
-                row.remove();
-                updateInspectionMissing();
-                return;
-            }
-
-            $.ajax({
-                url: `/qa/faisummary/delete/${rowId}`,
-                method: 'DELETE',
-                data: {
-                    _token: $('input[name="_token"]').val()
-                },
-                success: function() {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Eliminado',
-                        text: 'La fila ha sido eliminada',
-                        timer: 1200,
-                        showConfirmButton: false
-                    });
-                    row.remove();
-                    updateInspectionMissing();
-
-                    // Refrescar progreso
-                    const currentOrderId = $('#order-id').val();
-                    const opsNow = parseInt($operationInput.val()) || 0;
-                    const ipiNow = parseInt($samplingResult.val()) || 0;
-                    if (currentOrderId) refreshProgress(currentOrderId, opsNow, ipiNow);
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'No se pudo eliminar la fila'
-                    });
-                }
-            });
-        });
-    });
-
-    // ----------- (Opcional) Inicializar progreso al cargar la página -----------
-    // Recorre cada botón de la tabla de proceso y calcula progreso inicial si tienes #ops y woqty
-    $('#ordersTableProcess button[data-id]').each(function() {
-        const $btn = $(this);
-        const orderId = $btn.data('id');
-        const operations = parseInt($btn.data('operation')) || 0; // si guardas # operaciones aquí
-        const woqty = parseInt($btn.data('woqty')) || 0;
-        if (!orderId || !operations || !woqty) return;
-
-        const samplingType = 'Normal'; // Ajusta si tienes uno por orden (puedes poner data-sampling-type)
-        $.getJSON(`/sampling-plan?lot_size=${woqty}&sampling_type=${samplingType}`, function(data) {
-            const ipiRequired = (data.sample_qty !== undefined ? data.sample_qty : 0);
-            refreshProgress(orderId, operations, ipiRequired);
-        });
-    });
-
-    // ===================== Progreso por orden =====================
-
-    // Calcula % progreso usando filas (rows) + #ops + IPI requerido
     function computeProgressFromRows(rows, operations, ipiRequired) {
         if (!operations || operations < 1) return 0;
 
@@ -660,7 +711,6 @@
         return Math.max(0, Math.min(pct, 100));
     }
 
-    // Pinta la barra de progreso
     function renderOrderProgress(orderId, percent) {
         const $wrap = $(`.progress[data-order-id="${orderId}"]`);
         const $bar = $wrap.find('.progress-bar');
@@ -672,18 +722,19 @@
         else $bar.addClass('bg-danger');
     }
 
-    // Consulta filas y refresca barra
     function refreshProgress(orderId, operations, ipiRequired) {
         if (!operations) operations = parseInt($('#operationInput').val()) || 0;
         if (ipiRequired === undefined || ipiRequired === null) {
             ipiRequired = parseInt($('#edit-sampling-result').val()) || 0;
         }
-
         $.get(`/qa/faisummary/by-order/${orderId}`, function(rows) {
             const percent = computeProgressFromRows(rows, operations, ipiRequired);
             renderOrderProgress(orderId, percent);
         });
     }
+
+    // ================== /FAI Summary UI Script ==================
+
 
 
     //----------------------------------------------------------------------------------------------------------------------

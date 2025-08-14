@@ -50,7 +50,7 @@ class QaFaiSummaryController extends Controller
 
         $ordersempty = (clone $base)
             ->where(function ($q) {
-                $q->where('operation', 'default_value')
+                $q->where('operation', '0')
                     ->orWhereNull('operation');
             })
             ->get();
@@ -58,7 +58,7 @@ class QaFaiSummaryController extends Controller
         $ordersprocess = (clone $base)
             ->whereNotNull('work_id')
             ->where(function ($q) {
-                $q->where('operation', '<>', 'default_value')
+                $q->where('operation', '<>', '0')
                     ->whereNotNull('operation');
             })
             ->get();
@@ -86,13 +86,36 @@ class QaFaiSummaryController extends Controller
     public function updateOperation(Request $request, $id)
     {
         $request->validate([
-            'operation' => 'required|string|max:255',
+            'operation' => 'required|numeric|min:0', // numérico, al menos 1
+            'sampling'  => 'required|numeric|min:0', // valor de sampling
         ]);
+
         $order = OrderSchedule::findOrFail($id);
-        $order->operation = $request->operation;
+
+        $operation = (int) $request->operation;
+        $sampling  = (int) $request->sampling;
+
+        // Cálculos
+        $total_fai = $operation * 1;
+        $total_ipi = $operation * $sampling;
+
+        // Guardar
+        $order->operation  = $operation;
+        $order->sampling  = $sampling;
+        $order->total_fai  = $total_fai;
+        $order->total_ipi  = $total_ipi;
+
         $order->save();
-        return response()->json(['success' => true, 'message' => 'Operation updated.']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Operation and totals updated.',
+            'total_fai' => $total_fai,
+            'total_ipi' => $total_ipi
+        ]);
     }
+
+
     public function storeSingle(Request $request)
     {
         Log::info('storeSingle called', $request->all());
@@ -109,9 +132,6 @@ class QaFaiSummaryController extends Controller
             'station' => 'nullable|string',
             'method' => 'required|in:Manual,Vmm/Manual,Visual,Vmm,Keyence,Keyence/Manual',
             'inspector' => 'required|string',
-            'part_rev' => 'required|string',
-            'job' => 'required|string',
-            'num_operation' => 'required|string',
         ]);
 
         if ($request->has('id')) {
@@ -127,10 +147,14 @@ class QaFaiSummaryController extends Controller
         return response()->json(['success' => true, 'id' => $row->id]);
     }
 
-
+    // ordenar los FAI summary registrados
     public function getByOrder($orderScheduleId)
     {
-        $rows = \App\Models\QaFaiSummary::where('order_schedule_id', $orderScheduleId)->get();
+        $rows = \App\Models\QaFaiSummary::where('order_schedule_id', $orderScheduleId)
+            ->orderBy('date', 'desc')   // más recientes primero
+            ->orderBy('id', 'desc')     // desempate estable
+            ->get();
+
         return response()->json($rows);
     }
 
