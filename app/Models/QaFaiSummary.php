@@ -13,7 +13,6 @@ class QaFaiSummary extends Model
 
     protected $fillable = [
         'date',
-        'num_operation',
         'insp_type',
         'operation',
         'operator',
@@ -23,8 +22,6 @@ class QaFaiSummary extends Model
         'station',
         'method',
         'inspector',
-        'part_rev',
-        'job',
         'status_operation',
         'order_schedule_id',
     ];

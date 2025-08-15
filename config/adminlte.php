@@ -344,7 +344,7 @@ return [
                 ],
                 [
                     'text' => 'FAI Summary',
-                    'url' => 'qa/faisummary',
+                    'url' => 'qa/partsrevision',
                 ],
             ],
         ],

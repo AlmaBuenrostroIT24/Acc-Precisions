@@ -12,13 +12,9 @@ use Illuminate\Support\Facades\DB; // si no tienes modelo Status
 
 class QaFaiSummaryController extends Controller
 {
-    // Mostrar listado de registros
-    public function index()
-    {
-
-
-        return view('qa.faisummary.index_faisummary');
-    }
+    /*===========================================================================================================================
+                                            Todo el tab relacionado a parts revision
+    ============================================================================================================================*/
     // Mostrar listado de registros
     public function partsrevision()
     {
@@ -32,7 +28,6 @@ class QaFaiSummaryController extends Controller
             'wo_qty',
             'location'
         ];
-
         // Log para ver el array de select
         Log::info('Campos SELECT en partsrevision:', $select);
         // Base común con la condición:
@@ -52,14 +47,12 @@ class QaFaiSummaryController extends Controller
             ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->where('location', 'yarnell'))
             ->when($user && $user->hasRole('QA'),     fn($q) => $q->where('location', 'hearst'));
         // Admin no filtra
-
         $ordersempty = (clone $base)
             ->where(function ($q) {
                 $q->where('operation', '0')
                     ->orWhereNull('operation');
             })
             ->get();
-
         $ordersprocess = (clone $base)
             ->whereNotNull('work_id')
             ->where(function ($q) {
@@ -67,26 +60,9 @@ class QaFaiSummaryController extends Controller
                     ->whereNotNull('operation');
             })
             ->get();
-
         return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
     }
 
-
-    // Mostrar listado de registros
-    public function faicompleted()
-    {
-
-
-        return view('qa.faisummary.faisummary_completed');
-    }
-
-    // Mostrar listado de registros
-    public function faistatistics()
-    {
-
-
-        return view('qa.faisummary.faisummary_statistics');
-    }
 
     public function updateOperation(Request $request, $id)
     {
@@ -94,24 +70,18 @@ class QaFaiSummaryController extends Controller
             'operation' => 'required|numeric|min:0', // numérico, al menos 1
             'sampling'  => 'required|numeric|min:0', // valor de sampling
         ]);
-
         $order = OrderSchedule::findOrFail($id);
-
         $operation = (int) $request->operation;
         $sampling  = (int) $request->sampling;
-
         // Cálculos
         $total_fai = $operation * 1;
         $total_ipi = $operation * $sampling;
-
         // Guardar
         $order->operation  = $operation;
         $order->sampling  = $sampling;
         $order->total_fai  = $total_fai;
         $order->total_ipi  = $total_ipi;
-
         $order->save();
-
         return response()->json([
             'success' => true,
             'message' => 'Operation and totals updated.',
@@ -120,11 +90,9 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 
-
     public function storeSingle(Request $request)
     {
         Log::info('storeSingle called', $request->all());
-
         $validated = $request->validate([
             'order_schedule_id' => 'required|exists:orders_schedule,id',
             'date' => 'required|date',
@@ -138,7 +106,6 @@ class QaFaiSummaryController extends Controller
             'method' => 'required|in:Manual,Vmm/Manual,Visual,Vmm,Keyence,Keyence/Manual',
             'inspector' => 'required|string',
         ]);
-
         if ($request->has('id')) {
             $row = \App\Models\QaFaiSummary::find($request->id);
             if (!$row) {
@@ -148,18 +115,16 @@ class QaFaiSummaryController extends Controller
         } else {
             $row = \App\Models\QaFaiSummary::create($validated);
         }
-
         return response()->json(['success' => true, 'id' => $row->id]);
     }
 
-    // ordenar los FAI summary registrados
+    /*========== ordenar los FAI summary registrados==========*/
     public function getByOrder($orderScheduleId)
     {
         $rows = \App\Models\QaFaiSummary::where('order_schedule_id', $orderScheduleId)
             ->orderBy('date', 'desc')   // más recientes primero
             ->orderBy('id', 'desc')     // desempate estable
             ->get();
-
         return response()->json($rows);
     }
 
@@ -174,20 +139,16 @@ class QaFaiSummaryController extends Controller
                     ->orWhereNull('max_qty');
             })
             ->first();
-
         if (!$plan) {
             return response()->json(['error' => 'No se encontró plan de muestreo para este lote.'], 404);
         }
         $qtyField = $type === 'tightened' ? 'tightened_qty' : 'normal_qty';
-
         $sampleQty = $plan->is_percent
             ? ceil($lotSize * ($plan->$qtyField / 100))
             : (int) $plan->$qtyField;
-
         $surfaceQty = $plan->is_percent
             ? ceil($lotSize * ($plan->surface_qty / 100))
             : (int) $plan->surface_qty;
-
         return response()->json([
             'lot_size' => $lotSize,
             'sampling_type' => $type,
@@ -200,17 +161,14 @@ class QaFaiSummaryController extends Controller
     public function destroy($id)
     {
         $row = QaFaiSummary::find($id);
-
         if (!$row) {
             return response()->json(['error' => 'Fila no encontrada'], 404);
         }
-
         $row->delete();
-
         return response()->json(['success' => true]);
     }
 
-    public function byOrder($orderScheduleId)
+    public function byOrderStation($orderScheduleId)
     {
         $order = OrderSchedule::select('id', 'location')->findOrFail($orderScheduleId);
         $loc = strtolower($order->location ?? '');
@@ -240,5 +198,59 @@ class QaFaiSummaryController extends Controller
             ->get();
 
         return response()->json($rows);
+    }
+    //===========================================================================================================================
+    /*===========================================================================================================================
+         Todo el tab relacionado a parts summary
+    ============================================================================================================================*/
+
+    // Mostrar listado de registros
+    public function summary(Request $request)
+    {
+
+        $q = QaFaiSummary::query()
+            ->with(['orderSchedule:id,work_id,location,PN']) // para mostrar work_id/location
+
+            // búsqueda libre
+            ->when($request->filled('search'), function ($qq) use ($request) {
+                $s = $request->string('search');
+                $qq->where(function ($w) use ($s) {
+                    $w->where('operation', 'like', "%{$s}%")
+                        ->orWhere('operator', 'like', "%{$s}%")
+                        ->orWhere('station',  'like', "%{$s}%")
+                        ->orWhere('insp_type', 'like', "%{$s}%")
+                        ->orWhere('inspector', 'like', "%{$s}%")
+                        ->orWhere('results',  'like', "%{$s}%");
+                });
+            })
+
+            // filtro por location (yarnell/hearst)
+            ->when($request->filled('location'), function ($qq) use ($request) {
+                $loc = $request->string('location');
+                $qq->whereHas('orderSchedule', fn($os) => $os->where('location', $loc));
+            });
+
+        // Orden por fecha desc, luego id desc
+        $inspections = $q->orderBy('date', 'desc')->orderBy('id', 'desc')
+            ->paginate(25)->withQueryString();
+
+
+        return view('qa.faisummary.faisummary_summary', compact('inspections'));
+    }
+
+    // Mostrar listado de registros
+    public function faicompleted()
+    {
+
+
+        return view('qa.faisummary.faisummary_completed');
+    }
+
+    // Mostrar listado de registros
+    public function faistatistics()
+    {
+
+
+        return view('qa.faisummary.faisummary_statistics');
     }
 }

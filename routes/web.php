@@ -68,7 +68,7 @@ Route::resource('schedule/general', Order_ScheduleController::class);
 Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
 
 //Route::resource('/schedule/general', Order_ScheduleController::class); VISTAS
-Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general')->middleware('auth'); ;
+Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general')->middleware('auth');
 Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell')->middleware('auth');
 Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished')->middleware('auth');
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics')->middleware('auth');
@@ -101,17 +101,17 @@ Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleCont
 
 // -----------------------------------QA FAI-------------------------------------------------------
 
-Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'index'])->name('faisummary.general');
-Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision');
-Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
-Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
+Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general')->middleware('auth');
+Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision')->middleware('auth');
+Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed')->middleware('auth');
+Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics')->middleware('auth');
 
 Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
 Route::post('/qa/faisummary/store-single', [QaFAiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
 Route::delete('/qa/faisummary/delete/{id}', [QaFaiSummaryController::class, 'destroy']);
 
-Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrder']);
+Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderStation']);
 Route::get('/operators/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderOperator']);
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
