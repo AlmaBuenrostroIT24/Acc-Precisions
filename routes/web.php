@@ -111,6 +111,9 @@ Route::post('/qa/faisummary/store-single', [QaFAiSummaryController::class, 'stor
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
 Route::delete('/qa/faisummary/delete/{id}', [QaFaiSummaryController::class, 'destroy']);
 
+Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrder']);
+Route::get('/operators/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderOperator']);
+
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
 // -----------------------------------Machines-------------------------------------------------------

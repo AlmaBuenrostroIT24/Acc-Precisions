@@ -1,0 +1,14 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Stations extends Model
+{
+    use HasFactory;
+    protected $table = 'station';
+
+    protected $fillable = ['station', 'location']; // ajusta si tienes más columnas
+}

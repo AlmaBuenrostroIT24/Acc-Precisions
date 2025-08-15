@@ -566,6 +566,7 @@
         const today = new Date().toISOString().split('T')[0];
         const operationValue = parseInt($operationInput.val());
         const isNumber = !isNaN(operationValue) && operationValue > 0;
+        const orderId = $('#order-id').val();
 
         const row = $('<tr></tr>');
         row.append(`<td><input type="date" name="date[]" class="form-control" value="${today}"></td>`);
@@ -602,7 +603,7 @@
         }
 
         row.append($operationCell);
-        row.append(`<td><input type="text" name="operator[]" class="form-control"></td>`);
+        row.append(buildOperatorInputCell(orderId));
         row.append(`<td>
     <select name="results[]" class="form-control">
       <option value="pass">Pass</option>
@@ -611,7 +612,8 @@
   </td>`);
         row.append(`<td><input type="text" name="sb_is[]" class="form-control"></td>`);
         row.append(`<td><input type="text" name="observation[]" class="form-control"></td>`);
-        row.append(`<td><input type="text" name="station[]" class="form-control"></td>`);
+        // ✅ Station como input con datalist, usando **data**, no rowData
+        row.append(buildStationInputCell(orderId));
         row.append(`<td>
     <select name="method[]" class="form-control">
       <option value="Manual">Manual</option>
@@ -735,6 +737,174 @@
 
     // ================== /FAI Summary UI Script ==================
 
+    // ===== Helpers para Station (input + datalist) =====
+    /***************** Config *****************/
+    const ROUTES_BY_KIND = {
+        stations: '/stations/by-order', // ajusta si tu endpoint es otro
+        operators: '/operators/by-order', // ajusta si tu endpoint es otro
+    };
+
+    const FIELD_BY_KIND = {
+        stations: 'station',
+        operators: 'operator',
+    };
+
+    const INPUT_NAME_BY_KIND = {
+        stations: 'station[]',
+        operators: 'operator[]',
+    };
+
+    const MAX_OPTIONS = 50;
+    const COLLATOR = new Intl.Collator('es', {
+        sensitivity: 'base',
+        numeric: true
+    });
+
+    /*************** Utilidades ***************/
+    let __DL_COUNTER = 0;
+    const debounce = (fn, ms = 150) => {
+        let t;
+        return (...args) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn(...args), ms);
+        };
+    };
+
+    /*************** Cachés por tipo ***************/
+    const RAW_CACHE = {
+        stations: new Map(),
+        operators: new Map()
+    }; // orderId -> [{...}]
+    const UNIQ_CACHE = {
+        stations: new Map(),
+        operators: new Map()
+    }; // orderId -> ['A','B',...]
+    const INFLIGHT = {
+        stations: new Map(),
+        operators: new Map()
+    }; // orderId -> Promise
+
+    /** Obtiene (y cachea) la lista cruda para un tipo/kind y orderId */
+    function fetchListByOrder(kind, orderId) {
+        if (!orderId) return Promise.resolve([]);
+
+        const raw = RAW_CACHE[kind];
+        const inflight = INFLIGHT[kind];
+        if (raw.has(orderId)) return Promise.resolve(raw.get(orderId));
+        if (inflight.has(orderId)) return inflight.get(orderId);
+
+        const url = `${ROUTES_BY_KIND[kind]}/${encodeURIComponent(orderId)}`;
+
+        const p = $.ajax({
+                url,
+                method: 'GET',
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then((list) => {
+                const arr = Array.isArray(list) ? list : [];
+                raw.set(orderId, arr);
+
+                // precalcula strings únicos/ordenados para el datalist
+                const field = FIELD_BY_KIND[kind];
+                const uniq = [...new Set(arr.map(r => (r[field] || '').trim()))]
+                    .filter(Boolean)
+                    .sort(COLLATOR.compare);
+                UNIQ_CACHE[kind].set(orderId, uniq);
+
+                return arr;
+            })
+            .catch((xhr) => {
+                console.error(`fetchListByOrder(${kind}) error:`, {
+                    url,
+                    orderId,
+                    status: xhr?.status,
+                    responseText: xhr?.responseText
+                });
+                raw.set(orderId, []);
+                UNIQ_CACHE[kind].set(orderId, []);
+                return [];
+            })
+            .always(() => {
+                inflight.delete(orderId);
+            });
+
+        inflight.set(orderId, p);
+        return p;
+    }
+
+    /** Devuelve strings únicos/ordenados (cacheados) para un tipo/kind y orderId */
+    function getUniqStrings(kind, orderId) {
+        const uniqCache = UNIQ_CACHE[kind];
+        if (uniqCache.has(orderId)) return uniqCache.get(orderId);
+
+        const raw = RAW_CACHE[kind].get(orderId) || [];
+        const field = FIELD_BY_KIND[kind];
+        const uniq = [...new Set(raw.map(r => (r[field] || '').trim()))]
+            .filter(Boolean)
+            .sort(COLLATOR.compare);
+        uniqCache.set(orderId, uniq);
+        return uniq;
+    }
+
+    /**
+     * Fábrica de celdas <td> con <input list=...> + <datalist> (autocomplete “contiene”)
+     * @param {'stations'|'operators'} kind
+     * @returns (orderId, value?:string, disabled?:boolean) => JQuery<td>
+     */
+    function makeDatalistCellFactory(kind) {
+        return function buildDatalistCell(orderId, value = '', disabled = false) {
+            const dlId = `${kind}-${orderId}-${++__DL_COUNTER}`; // ID único por celda
+            const $td = $('<td></td>');
+            const $in = $(`<input name="${INPUT_NAME_BY_KIND[kind]}" class="form-control" list="${dlId}">`)
+                .val(value || '')
+                .prop('disabled', !!disabled);
+            const $dl = $(`<datalist id="${dlId}"></datalist>`);
+            $td.append($in, $dl);
+
+            if (!orderId) {
+                $in.prop('disabled', true).attr('placeholder', 'Sin orden');
+                return $td;
+            }
+
+            // Render de opciones usando DOM (seguro)
+            const renderList = (arr) => {
+                const frag = document.createDocumentFragment();
+                (arr || []).slice(0, MAX_OPTIONS).forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    frag.appendChild(opt);
+                });
+                $dl.empty()[0].appendChild(frag);
+            };
+
+            // Pinta desde caché si ya existe
+            const cached = getUniqStrings(kind, orderId);
+            if (cached.length) renderList(cached);
+
+            // Asegura datos (y cache) desde backend; activa filtro “contiene”
+            fetchListByOrder(kind, orderId).then(() => {
+                const all = getUniqStrings(kind, orderId);
+                renderList(all);
+
+                const onInput = debounce(() => {
+                    const term = ($in.val() || '').toLowerCase();
+                    if (!term) return renderList(all);
+                    renderList(all.filter(s => s.toLowerCase().includes(term)));
+                }, 120);
+
+                $in.off(`input.__${kind}`).on(`input.__${kind}`, onInput);
+            });
+
+            return $td;
+        };
+    }
+
+    /*************** Constructores específicos ***************/
+    const buildStationInputCell = makeDatalistCellFactory('stations');
+    const buildOperatorInputCell = makeDatalistCellFactory('operators');
 
 
     //----------------------------------------------------------------------------------------------------------------------

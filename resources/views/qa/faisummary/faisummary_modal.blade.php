@@ -13,7 +13,6 @@
                 </div>
                 <div class="modal-body">
                     <!-- Campos fijos -->
-
                     <div class="row">
                         <!-- Columna izquierda: primer filtro + botón + gráfica -->
                         <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
@@ -82,10 +81,10 @@
                         <table class="table table-bordered" id="dynamicTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 7%;">DATE</th>
+                                    <th style="width: 5%;">DATE</th>
                                     <th style="width: 8%;">INSP TYPE</th>
-                                    <th style="width: 8%;">OPERATION</th>
-                                    <th style="width: 8%;">OPERATOR</th>
+                                    <th style="width: 9%;">OPERATION</th>
+                                    <th style="width: 9%;">OPERATOR</th>
                                     <th style="width: 8%;">RESULTS</th>
                                     <th style="width: 11%;">SB/IS</th>
                                     <th style="width: 20%;">OBSERVATION</th>

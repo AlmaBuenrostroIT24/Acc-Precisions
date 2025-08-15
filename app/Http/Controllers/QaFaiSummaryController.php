@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\QaFaiSummary;
 use Illuminate\Http\Request;
 use App\Models\OrderSchedule;
+use App\Models\Stations;
 use Illuminate\Support\Facades\Log;
 use App\Models\QaSamplingPlan;
+use Illuminate\Support\Facades\DB; // si no tienes modelo Status
 
 class QaFaiSummaryController extends Controller
 {
@@ -27,9 +29,12 @@ class QaFaiSummaryController extends Controller
             'PN',
             'Part_description',
             'operation',
-            'wo_qty'
+            'wo_qty',
+            'location'
         ];
 
+        // Log para ver el array de select
+        Log::info('Campos SELECT en partsrevision:', $select);
         // Base común con la condición:
         // (was_work_id_null = 0 AND co NOT NULL) OR (was_work_id_null = 1 AND co IS NULL)
         $base = OrderSchedule::select($select)
@@ -173,7 +178,6 @@ class QaFaiSummaryController extends Controller
         if (!$plan) {
             return response()->json(['error' => 'No se encontró plan de muestreo para este lote.'], 404);
         }
-
         $qtyField = $type === 'tightened' ? 'tightened_qty' : 'normal_qty';
 
         $sampleQty = $plan->is_percent
@@ -204,5 +208,37 @@ class QaFaiSummaryController extends Controller
         $row->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function byOrder($orderScheduleId)
+    {
+        $order = OrderSchedule::select('id', 'location')->findOrFail($orderScheduleId);
+        $loc = strtolower($order->location ?? '');
+
+        // usando query builder por si no tienes modelo:
+        $rows = DB::table('gen_stations as s')
+            ->join('gen_location as l', 'l.id', '=', 's.location_id')
+            ->select('s.id', 's.station', 'l.location as location')
+            ->whereRaw('LOWER(l.location) = ?', [strtolower($loc)])
+            ->orderBy('s.station')
+            ->get();
+
+        return response()->json($rows);
+    }
+
+    public function byOrderOperator($orderScheduleId)
+    {
+        $order = OrderSchedule::select('id', 'location')->findOrFail($orderScheduleId);
+        $loc = strtolower($order->location ?? '');
+
+        // usando query builder por si no tienes modelo:
+        $rows = DB::table('gen_operators as o')
+            ->join('gen_location as l', 'l.id', '=', 'o.location_id')
+            ->select('o.id', 'o.operator', 'l.location as location')
+            ->whereRaw('LOWER(l.location) = ?', [strtolower($loc)])
+            ->orderBy('o.operator')
+            ->get();
+
+        return response()->json($rows);
     }
 }
