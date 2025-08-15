@@ -9,6 +9,7 @@ use App\Models\Stations;
 use Illuminate\Support\Facades\Log;
 use App\Models\QaSamplingPlan;
 use Illuminate\Support\Facades\DB; // si no tienes modelo Status
+use Illuminate\Support\Carbon;
 
 class QaFaiSummaryController extends Controller
 {
@@ -208,32 +209,32 @@ class QaFaiSummaryController extends Controller
     public function summary(Request $request)
     {
 
-        $q = QaFaiSummary::query()
-            ->with(['orderSchedule:id,work_id,location,PN']) // para mostrar work_id/location
+        // Rango del mes actual
+        $start = Carbon::now()->startOfMonth();
+        $end   = Carbon::now()->endOfMonth();
 
-            // búsqueda libre
+        $q = QaFaiSummary::query()
+            ->with(['orderSchedule:id,work_id,location,PN'])
+            ->whereBetween('date', [$start, $end])
+
             ->when($request->filled('search'), function ($qq) use ($request) {
-                $s = $request->string('search');
+                $s = (string) $request->string('search');
                 $qq->where(function ($w) use ($s) {
                     $w->where('operation', 'like', "%{$s}%")
                         ->orWhere('operator', 'like', "%{$s}%")
                         ->orWhere('station',  'like', "%{$s}%")
                         ->orWhere('insp_type', 'like', "%{$s}%")
                         ->orWhere('inspector', 'like', "%{$s}%")
-                        ->orWhere('results',  'like', "%{$s}%");
+                        ->orWhere('results', 'like', "%{$s}%");
                 });
             })
-
-            // filtro por location (yarnell/hearst)
             ->when($request->filled('location'), function ($qq) use ($request) {
-                $loc = $request->string('location');
+                $loc = (string) $request->string('location');
                 $qq->whereHas('orderSchedule', fn($os) => $os->where('location', $loc));
             });
 
-        // Orden por fecha desc, luego id desc
         $inspections = $q->orderBy('date', 'desc')->orderBy('id', 'desc')
-            ->paginate(25)->withQueryString();
-
+            ->paginate(100)->withQueryString();
 
         return view('qa.faisummary.faisummary_summary', compact('inspections'));
     }

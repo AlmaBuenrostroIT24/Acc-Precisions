@@ -88,7 +88,6 @@
                                 <td>{{ $inspection->method }}</td>
                                 <td>{{ $inspection->inspector }}</td>
                                 <td>{{ $inspection->orderSchedule->location ?? '' }}</td>
-
                             </tr>
                             @empty
                             <tr>
