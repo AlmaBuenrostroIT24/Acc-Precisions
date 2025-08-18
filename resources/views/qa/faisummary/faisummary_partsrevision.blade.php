@@ -327,26 +327,51 @@
 
             $.post('/qa/faisummary/store-single', data).done(function(resp) {
                 if (resp.id) row.attr('data-id', resp.id);
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Guardado!',
-                    text: 'La fila se ha guardado correctamente',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
 
+                //===== Bloquea edición y botones=====*/
                 row.find('input, select, .saveRowBtn').prop('disabled', true);
+                updateInspectionMissing();
+
+                /*====== Acciones en la última celda=====*/
                 row.find('td:last').html(`
          <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
         <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
         <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
       `);
 
-                updateInspectionMissing();
 
+                // ---- Calcular progreso con datos frescos y mostrar SOLO un mensaje ----
                 const opsNow = parseInt($operationInput.val()) || 0;
                 const ipiNow = parseInt($samplingResult.val()) || 0;
+
                 refreshProgress(orderScheduleId, opsNow, ipiNow);
+
+                $.get(`/qa/faisummary/by-order/${orderScheduleId}`, function(rows) {
+                    const pct = computeProgressFromRows(rows, opsNow, ipiNow);
+
+                    // Actualiza barra usando el mismo cálculo (evita hacer otra petición)
+                    renderOrderProgress(orderScheduleId, pct);
+
+                    if (pct >= 100) {
+                        // ✅ Ya se completó TODO: 1 FAI + N IPI en cada operación → SOLO este alerta
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Inspección completada!',
+                            text: `Se cumplieron 1 FAI y ${ipiNow} IPI por cada una de las ${opsNow} operaciones.`,
+                            timer: 1700,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        // Caso normal: fila guardada, todavía faltan inspecciones
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Guardado!',
+                            text: 'La fila se ha guardado correctamente',
+                            timer: 1200,
+                            showConfirmButton: false
+                        });
+                    }
+                });
             }).fail(function(xhr) {
                 const msg = xhr.responseJSON?.error ? 'Error: ' + xhr.responseJSON.error : 'Error al guardar la fila';
                 Swal.fire({
@@ -676,6 +701,9 @@
   `);
         return row;
     }
+
+
+
 
     // ================== Progreso (lista + modal) ==================
 
