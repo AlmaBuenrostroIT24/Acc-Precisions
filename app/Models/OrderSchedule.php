@@ -48,6 +48,11 @@ class OrderSchedule extends Model
         'canceled',
         'tracking_number',
         'revision',
+        'total_fai',
+        'total_ipi',
+        'sampling',
+        'status_inspection',
+
     ];
 
     // Casts para manejar tipos de datos correctamente

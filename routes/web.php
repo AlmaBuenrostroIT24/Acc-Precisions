@@ -110,6 +110,7 @@ Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::c
 Route::post('/qa/faisummary/store-single', [QaFAiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
 Route::delete('/qa/faisummary/delete/{id}', [QaFaiSummaryController::class, 'destroy']);
+Route::put('/orders-schedule/{order}/status-inspection', [QaFaiSummaryController::class, 'updateStatusInspection'])->name('orders.statusInspection.update');
 
 Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderStation']);
 Route::get('/operators/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderOperator']);

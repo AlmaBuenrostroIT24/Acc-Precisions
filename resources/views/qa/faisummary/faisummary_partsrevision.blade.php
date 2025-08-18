@@ -302,7 +302,7 @@
     `);
         });
 
-        // Guardar fila (create/update)
+        /**==========================GUARDAR FILA (CREATE/UPDATE)============================================= */
         $(document).on('click', '.saveRowBtn', function() {
             const row = $(this).closest('tr');
             const token = $('input[name="_token"]').val();
@@ -339,30 +339,59 @@
         <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
       `);
 
-
                 // ---- Calcular progreso con datos frescos y mostrar SOLO un mensaje ----
                 const opsNow = parseInt($operationInput.val()) || 0;
                 const ipiNow = parseInt($samplingResult.val()) || 0;
-
-                refreshProgress(orderScheduleId, opsNow, ipiNow);
 
                 $.get(`/qa/faisummary/by-order/${orderScheduleId}`, function(rows) {
                     const pct = computeProgressFromRows(rows, opsNow, ipiNow);
 
                     // Actualiza barra usando el mismo cálculo (evita hacer otra petición)
                     renderOrderProgress(orderScheduleId, pct);
-
+                    // ✅ COMPLETED: solo botón Aceptar → cambia a completed
                     if (pct >= 100) {
-                        // ✅ Ya se completó TODO: 1 FAI + N IPI en cada operación → SOLO este alerta
                         Swal.fire({
                             icon: 'success',
                             title: '¡Inspección completada!',
                             text: `Se cumplieron 1 FAI y ${ipiNow} IPI por cada una de las ${opsNow} operaciones.`,
-                            timer: 1700,
-                            showConfirmButton: false
+                            confirmButtonText: 'Aceptar',
+                            showCancelButton: false,
+                            showCloseButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false //bloquea cerrar por fuera/ESC.
+                        }).then((result) => {
+                            setInspectionStatus(orderScheduleId, 'completed')
+                                .done(() => {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Orden marcada como completada',
+                                        timer: 1700,
+                                        showConfirmButton: false
+                                    });
+                                    // (Opcional) actualizar UI:
+                                    const $r = $(`#ordersTableProcess button[data-id="${orderScheduleId}"]`).closest('tr');
+                                    $r.find('.status-inspection-badge')
+                                        .text('completed')
+                                        .removeClass('bg-warning bg-secondary')
+                                        .addClass('bg-success');
+                                    $('#editModal').modal('hide');
+                                })
+                                .fail(xhr => {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'No se pudo marcar como completada',
+                                        text: xhr.responseJSON?.message || 'Error inesperado'
+                                    });
+                                });
                         });
                     } else {
-                        // Caso normal: fila guardada, todavía faltan inspecciones
+                        // ★ PROCESO: si hay al menos UNA fila (FAI o IPI), marcar como 'process'
+                        if (Array.isArray(rows) && rows.length > 0) {
+                            setInspectionStatus(orderScheduleId, 'in_progress')
+                                .fail(xhr => console.warn('No se pudo marcar process:', xhr?.status, xhr?.responseText));
+                        }
+
+                        // Mensaje normal de guardado
                         Swal.fire({
                             icon: 'success',
                             title: '¡Guardado!',
@@ -372,6 +401,7 @@
                         });
                     }
                 });
+
             }).fail(function(xhr) {
                 const msg = xhr.responseJSON?.error ? 'Error: ' + xhr.responseJSON.error : 'Error al guardar la fila';
                 Swal.fire({
@@ -382,6 +412,22 @@
             });
         });
 
+        /** 
+         * Marca la orden como process en cuanto exista al menos una inspección (FAI o IPI) guardada,
+         * y conserva el flujo de completed cuando llegas al 100%.
+         */
+        function setInspectionStatus(orderId, status) {
+            return $.ajax({
+                url: `/orders-schedule/${orderId}/status-inspection`,
+                method: 'PUT',
+                data: {
+                    _token: $('input[name="_token"]').val() || $('meta[name="csrf-token"]').attr('content'),
+                    status_inspection: status
+                }
+            });
+        }
+
+        // Eliminar fila guardada
         // Eliminar fila guardada
         $(document).on('click', '.deleteRowBtn', function() {
             const row = $(this).closest('tr');
@@ -418,13 +464,31 @@
                         timer: 1200,
                         showConfirmButton: false
                     });
+
+                    // Quitar la fila y actualizar reporte
                     row.remove();
                     updateInspectionMissing();
 
+                    // ⇩⇩ NUEVO: recalcular y actualizar status
                     const currentOrderId = $('#order-id').val();
                     const opsNow = parseInt($operationInput.val()) || 0;
                     const ipiNow = parseInt($samplingResult.val()) || 0;
-                    if (currentOrderId) refreshProgress(currentOrderId, opsNow, ipiNow);
+
+                    if (currentOrderId) {
+                        $.get(`/qa/faisummary/by-order/${currentOrderId}`, function(rows) {
+                            const pct = computeProgressFromRows(rows, opsNow, ipiNow);
+                            renderOrderProgress(currentOrderId, pct);
+
+                            const newStatus = (rows.length === 0) ?
+                                'pending' :
+                                (pct >= 100 ? 'completed' : 'in_progress');
+
+                            setInspectionStatus(currentOrderId, newStatus)
+                                .fail(xhr => console.warn('No se pudo actualizar status:', xhr?.status, xhr?.responseText));
+                        });
+                    }
+                    // ⇧⇧ FIN NUEVO
+
                 }).fail(() => {
                     Swal.fire({
                         icon: 'error',
@@ -434,6 +498,7 @@
                 });
             });
         });
+
 
         // ----------- Progreso inicial (fuera del modal) -----------
         $('#ordersTableProcess button[data-id]').each(function() {

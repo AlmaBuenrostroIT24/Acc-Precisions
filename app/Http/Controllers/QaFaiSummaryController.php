@@ -17,52 +17,48 @@ class QaFaiSummaryController extends Controller
                                             Todo el tab relacionado a parts revision
     ============================================================================================================================*/
     // Mostrar listado de registros
-    public function partsrevision()
-    {
-        $user = auth()->user();
-        $select = [
-            'id',
-            'work_id',
-            'PN',
-            'Part_description',
-            'operation',
-            'wo_qty',
-            'location'
-        ];
-        // Log para ver el array de select
-        Log::info('Campos SELECT en partsrevision:', $select);
-        // Base común con la condición:
-        // (was_work_id_null = 0 AND co NOT NULL) OR (was_work_id_null = 1 AND co IS NULL)
-        $base = OrderSchedule::select($select)
-            ->where('status', '<>', 'sent')
-            ->where(function ($q) {
-                $q->where(function ($x) {
-                    $x->where('was_work_id_null', 0)
-                        ->whereNotNull('co');
-                })->orWhere(function ($x) {
-                    $x->where('was_work_id_null', 1)
-                        ->whereNull('co');
-                });
-            })
-            // Filtro por ubicación según rol (Admin no filtra)
-            ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->where('location', 'yarnell'))
-            ->when($user && $user->hasRole('QA'),     fn($q) => $q->where('location', 'hearst'));
-        // Admin no filtra
-        $ordersempty = (clone $base)
-            ->where(function ($q) {
-                $q->where('operation', '0')
-                    ->orWhereNull('operation');
-            })
-            ->get();
-        $ordersprocess = (clone $base)
-            ->whereNotNull('work_id')
-            ->where(function ($q) {
-                $q->where('operation', '<>', '0')
-                    ->whereNotNull('operation');
-            })
-            ->get();
-        return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
-    }
+// Mostrar listado de registros
+public function partsrevision()
+{
+    $user = auth()->user();
+
+    $select = [
+        'id', 'work_id', 'PN', 'Part_description', 'operation',
+        'wo_qty', 'location', 'status_inspection'
+    ];
+
+    $base = \App\Models\OrderSchedule::query()
+        ->select($select)
+        ->where('status', '<>', 'sent')
+        ->where(function ($q) {
+            $q->where(function ($x) {
+                $x->where('was_work_id_null', 0)->whereNotNull('co');
+            })->orWhere(function ($x) {
+                $x->where('was_work_id_null', 1)->whereNull('co');
+            });
+        })
+        // Filtro por ubicación según rol (Admin no filtra)
+        ->when($user && $user->hasRole('QAdmin'), fn ($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
+        ->when($user && $user->hasRole('QA'),     fn ($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
+
+    // Pendientes: null o 'pending'
+    $ordersempty = (clone $base)
+        ->where(function ($q) {
+            $q->whereNull('status_inspection')
+              ->orWhere('status_inspection', 'pending');
+        })
+        ->orderByDesc('id')
+        ->get();
+
+    // En proceso
+    $ordersprocess = (clone $base)
+        ->where('status_inspection', 'in_progress')
+        ->orderByDesc('id')
+        ->get();
+
+    return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
+}
+
 
 
     public function updateOperation(Request $request, $id)
@@ -200,6 +196,21 @@ class QaFaiSummaryController extends Controller
 
         return response()->json($rows);
     }
+
+    /**Inspection COMPLETED */
+    public function updateStatusInspection(Request $request, $id)
+    {
+        $request->validate([
+            'status_inspection' => 'required|in:pending,in_progress,completed'
+        ]);
+
+        $order = OrderSchedule::findOrFail($id);
+        $order->status_inspection = $request->status_inspection;
+        $order->save();
+
+        return response()->json(['success' => true]);
+    }
+
     //===========================================================================================================================
     /*===========================================================================================================================
          Todo el tab relacionado a parts summary
