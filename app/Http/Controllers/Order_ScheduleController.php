@@ -435,6 +435,18 @@ class Order_ScheduleController extends Controller
                     $data[$mapping[$key]] = $value;
                 }
             }
+            // 🔎 DEBUG: original_id recibido
+            Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
+            // --- 👇 Aquí inyectamos co y cust_po desde la orden original ---
+            if ($request->filled('original_id')) {
+                $orig = OrderSchedule::select('co', 'cust_po')
+                    ->find($request->input('original_id'));
+                if ($orig) {
+                    $data['co']      = $orig->co;
+                    $data['cust_po'] = $orig->cust_po;
+                }
+            }
+            // ---------------------------------------------------------------
 
             // Limpiar cadenas
             foreach ($data as $field => &$value) {
@@ -466,16 +478,16 @@ class Order_ScheduleController extends Controller
                 $data['due_date'] = null;
             }
 
-            // Asegurar que alert NO sea nulo
-            if (empty($data['alert'])) {
-                $data['alert'] = '';
-            }
-            if (!isset($data['priority'])) {
-                $data['priority'] = 'no'; // o 'normal', o lo que uses
-            }
-            if (!isset($data['status_order'])) {
-                $data['status_order'] = 'active'; // o 'normal', o lo que uses
-            }
+            // Defaults
+            $data['alert']             = $data['alert'] ?? '';
+            $data['priority']          = $data['priority'] ?? 'no';
+            $data['status_order']      = $data['status_order'] ?? 'active';
+            $data['operation']         = $data['operation'] ?? '0';
+            $data['total_fai']         = $data['total_fai'] ?? '0';
+            $data['total_ipi']         = $data['total_ipi'] ?? '0';
+            $data['sampling']          = $data['sampling'] ?? '0';
+            $data['status_inspection'] = $data['status_inspection'] ?? 'pending';
+
 
             $validatedData = validator($data, [
                 'work_id'        => 'nullable|string|max:255',
@@ -495,7 +507,14 @@ class Order_ScheduleController extends Controller
                 'notes'          => 'nullable|string',
                 'location'       => 'nullable|string|max:255',
                 'priority'       => 'nullable|string|max:10',
-                'status_order'       => 'nullable|string|max:10',
+                'status_order'   => 'nullable|string|max:10',
+                'operation'      => 'nullable|string|max:255',
+                'total_fai'      => 'nullable|integer',
+                'total_ipi'      => 'nullable|integer',
+                'sampling'       => 'nullable|integer',
+                'status_inspection'  => 'nullable|string|max:50',
+                'co'             => 'nullable|string|max:255',
+                'cust_po'        => 'nullable|string|max:255',
             ])->validate();
 
             $order = OrderSchedule::create($validatedData);
@@ -1072,7 +1091,7 @@ class Order_ScheduleController extends Controller
             Excel::import($importer, $absPath);
 
             $count = $this->service->importedCount ?? 0;
-           // Log::info('✅ Import finalizado', ['importedCount' => $count]);
+            // Log::info('✅ Import finalizado', ['importedCount' => $count]);
 
             // Si count=0, probablemente TODAS las filas fueron descartadas por tu service:
             // - due_date no parseada
@@ -1095,7 +1114,7 @@ class Order_ScheduleController extends Controller
             Log::warning('❌ Fallos de validación por fila', ['count' => count($e->failures())]);
             return back()->withErrors(['import' => 'Errores de validación: ' . $msgs]);
         } catch (\Throwable $e) {
-           /* Log::error('💥 Excepción durante import', [
+            /* Log::error('💥 Excepción durante import', [
                 'msg' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);*/
