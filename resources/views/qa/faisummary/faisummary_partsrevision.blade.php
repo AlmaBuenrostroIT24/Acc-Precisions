@@ -428,7 +428,6 @@
         }
 
         // Eliminar fila guardada
-        // Eliminar fila guardada
         $(document).on('click', '.deleteRowBtn', function() {
             const row = $(this).closest('tr');
             const rowId = row.data('id');

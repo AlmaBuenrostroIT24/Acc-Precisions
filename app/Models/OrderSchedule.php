@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
 class OrderSchedule extends Model
 {
     use HasFactory;
@@ -26,6 +27,7 @@ class OrderSchedule extends Model
         'machines',
         'done',
         'status',
+        'status_order',
         'sent_at',
         'target_date',
         'enddate_mach',
@@ -51,8 +53,7 @@ class OrderSchedule extends Model
         'total_fai',
         'total_ipi',
         'sampling',
-        'status_inspection',
-
+        'status_inspection'
     ];
 
     // Casts para manejar tipos de datos correctamente
@@ -76,4 +77,10 @@ class OrderSchedule extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+
+    public function machiningDateLogs()
+{
+    return $this->hasMany(OrdMachiningDateLog::class, 'order_schedule_id');
+}
+
 }

@@ -351,7 +351,7 @@ return [
         [
             'text' => 'Machines',
             'icon' => 'nav-icon fas fa-industry',
-            'can' => ['machines/machinery', 'machines/otherequipment','machines/maintenance','machines/batteries','machines/manuals','machines/codes'], // <- este es el truco
+            'can' => ['machines/machinery', 'machines/otherequipment', 'machines/maintenance', 'machines/batteries', 'machines/manuals', 'machines/codes'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Machinery',
@@ -407,7 +407,7 @@ return [
                     'url' => 'users',
                     'can' => 'users',
                 ],
-    
+
                 [
                     'text' => 'Roles & Permissions',
                     'url' => 'roles',
@@ -418,7 +418,7 @@ return [
         [
             'text' => 'IT Department',
             'icon' => 'nav-icon fas fa-desktop',
-            'can' => ['it/cameras', 'it/computers','it/nas','it/pdf','it/phones','it/printers','it/red','it/systems','it/timeClock'], // <- este es el truco
+            'can' => ['it/cameras', 'it/computers', 'it/nas', 'it/pdf', 'it/phones', 'it/printers', 'it/red', 'it/systems', 'it/timeClock'], // <- este es el truco
             'submenu' => [
                 [
                     'text' => 'Cameras',
@@ -554,7 +554,7 @@ return [
 
                 [
                     'type' => 'css',
-                    'asset' =>true,
+                    'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.css',
                 ],
             ],
@@ -589,7 +589,7 @@ return [
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => true,  
+                    'asset' => true,
                     'location' => 'vendor/select2/select2.min.js',
                 ],
                 [

@@ -3,9 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableElement = $("#orders_scheduleTable");
     const csrfToken = $('meta[name="csrf-token"]').attr("content");
     const loadingMessage = document.getElementById("loading-message");
-    //const notesModalElement = document.getElementById("notesModal");
-    //const notesModal = bootstrap.Modal.getOrCreateInstance(notesModalElement);
-    //  const notesModalElement = $('#notesModal');  // usando jQuery
     const inputCsv = document.getElementById("csv_file");
     const labelCsv = document.getElementById("csv_file_label");
 
@@ -59,26 +56,41 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingMessage.style.display = "block";
         });
     }
-
-    // Función para inicializar DataTable con opciones base + personalizadas
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [[12, "asc"]], // asc = más antigua primero
+            order: [], // aquí respetas el orden del backend (status personalizado)
             info: true,
             autoWidth: false,
             columnDefs: [
-                { targets: 1, visible: false, searchable: true },
-                { targets: 2, visible: false, searchable: true },
+                { targets: 0, visible: false, searchable: false }, // ID
+                { targets: 1, visible: false, searchable: true }, // LocationText
+                { targets: 2, visible: false, searchable: true }, // StatusText
+                { targets: 12, visible: false, searchable: false }, // DueDateText
             ],
+            initComplete: function () {
+                const wrapper = document.getElementById("table-wrapper");
+                const loader = document.getElementById("loader");
+
+                if (loader) loader.style.display = "none";
+                if (wrapper) {
+                    wrapper.style.display = "block";
+                    //console.log("✔️ Forzando mostrar wrapper");
+                }
+
+                // 👇 Ajusta columnas si el contenedor estaba oculto
+                this.api().columns.adjust().draw();
+
+                //console.log("✅ DataTable completamente inicializada");
+            },
         };
+
         const finalOptions = { ...baseOptions, ...options };
         const dataTableInstance = tableElement.DataTable(finalOptions);
 
-        // Aplicar el estilo al thead después de inicializar la tabla
         tableElement.find("thead").css({
             "background-color": "#d5d8dc",
             color: "black",
@@ -87,32 +99,75 @@ document.addEventListener("DOMContentLoaded", () => {
         return dataTableInstance;
     }
 
-    // --- Inicialización condicional según la ruta o variable global ---
-    // Ejemplo con window.location.pathname, cámbialo según tu necesidad
+    // 🚦 Inicialización condicional por ruta
     if (tableElement.length) {
-        switch (window.location.pathname) {
-            case "/scheduley":
-                window.table = initOrdersTable(tableElement, {
-                    pageLength: 40,
-                    searching: false,
-                });
-                break;
-            case "/scheduleh":
-                window.table = initOrdersTable(tableElement, {
-                    pageLength: 40,
-                    searching: false,
-                });
-                break;
-            case "/ruta-vista-3":
-                window.table = initOrdersTable(tableElement, {
-                    pageLength: 10,
-                    lengthChange: true,
-                    ordering: false,
-                });
-                break;
-            default:
-                window.table = initOrdersTable(tableElement);
+        const path = window.location.pathname;
+
+        const tableConfigs = {
+            "/scheduley": {
+                pageLength: 40,
+                searching: false,
+                order: [], // aquí respetas el orden del backend (status personalizado)
+            },
+            "/scheduleh": {
+                pageLength: 40,
+                searching: false,
+                order: [], // aquí respetas el orden del backend (status personalizado)
+            },
+            "/schedule/workhearst": {
+                pageLength: 10,
+                lengthChange: true,
+                ordering: false,
+            },
+        };
+
+        const config = tableConfigs[path] || {};
+        config.rowCallback = applyRowLateHighlight;
+
+        // ⏳ Mostrar loader antes de inicializar
+        const loader = document.getElementById("loader");
+        const wrapper = document.getElementById("table-wrapper");
+        if (loader) loader.style.display = "block";
+        if (wrapper) wrapper.style.display = "none";
+
+        // ✅ Inicializar tabla
+        window.table = initOrdersTable(tableElement, config);
+    } else {
+        console.error("❌ No se encontró #orders_scheduleTable");
+        F;
+    }
+
+    function applyRowLateHighlight(row, data, index) {
+        const $row = $(row);
+        const priority = String($row.data("priority") || "").toLowerCase();
+
+        const diasTd = $row.find("td[id^='dias-restantes-']");
+        if (!diasTd.length) return;
+
+        const diasMatch = (diasTd.text().trim().match(/-?\d+/) || [])[0];
+        if (diasMatch == null) return;
+
+        const dias = parseInt(diasMatch, 10);
+        const status = (data[2] || "").toLowerCase(); // ajusta si cambia
+
+        // limpiar
+        $row.removeClass("row-late row-priority");
+        $row.removeClass((i, c) => (c.match(/bg-status-\S+/g) || []).join(" "));
+
+        // precedencia: late > priority > status
+        if (dias < 0) {
+            $row.addClass("row-late");
+            // si quieres borde dorado incluso cuando está late:
+            if (priority === "yes") $row.addClass("row-priority");
+            return;
         }
+
+        if (priority === "yes") {
+            $row.addClass("row-priority");
+            return;
+        }
+
+        if (status) $row.addClass(`bg-status-${status}`);
     }
 
     // Filtrado con regex exacto
@@ -168,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
         postJson(url, body)
             .then((response) => {
-                console.log("Respuesta recibida:", response); // Para debug
+                //console.log("Respuesta recibida:", response); // Para debug
                 onSuccess(response);
             })
             .catch((error) => {
@@ -240,6 +295,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Actualizar Location
     tableElement.on("change", ".location-select", function () {
+        const scrollTopBefore = $(window).scrollTop(); // 🧠 guarda scroll para que no de el error que al actualizar se vaya hacia arriba
+
         const select = $(this);
         const orderId = select.data("id");
         const newLocation = select.val();
@@ -303,6 +360,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Actualizamos la variable local para el próximo cambio
                     lastLocations[orderId] = newLocation;
+                    $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
+                    select.blur(); // quita foco
                 } else {
                     alert("Hubo un problema al actualizar la ubicación.");
                 }
@@ -311,7 +370,116 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     });
 
-    // Toggle report/source buttons
+    function applyRowLateStyle(orderId, dias, status) {
+        const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+        if (!row) {
+            // console.warn(`❌ No se encontró la fila para orderId=${orderId}`);
+            return;
+        }
+        // Debug: ver qué datos estamos usando
+        // console.log("🔍 applyRowLateStyle", {orderId,dias, status, rowClassList: row.className, });
+        // Limpiar clases previas de estado y de late
+        row.className = row.className
+            .split(" ")
+            .filter(
+                (c) =>
+                    !c.startsWith("bg-status-") &&
+                    c !== "row-late" &&
+                    c !== "row-priority"
+            )
+            .join(" ");
+        if (dias < 0) {
+            row.classList.add("row-late");
+            // console.log(`🔴 Orden ${orderId} marcada como LATE`);
+        } else if (status) {
+            row.classList.add(`bg-status-${status.toLowerCase()}`);
+            // console.log(`🟢 Orden ${orderId} con clase: bg-status-${status.toLowerCase()}`);
+        } else {
+            console.log(
+                `⚠️ No se aplicó clase de estado a la orden ${orderId}`
+            );
+        }
+    }
+
+    //-------------------------------------------------START---------------------------------------------------------------
+    ///--------------------------------MANEJO DE BOTONES "report & our_source" --------------------------------------------
+    //FUNCIONES AUXILIARES
+    // ✅ 1. Centralizar alertas te ayuda a cambiar el comportamiento fácilmente más adelante
+    function showSourceAlert(currentValue) {
+        if (currentValue === 1) {
+            alert(
+                "¡Atención! Estás desactivando 'our_source' para esta orden."
+            );
+        } else {
+            alert("Estás activando 'our_source' para esta orden.");
+        }
+    }
+    //✅ 2. Evita duplicar lógica de clases e íconos con una función
+    function updateToggleButton(button, newValue) {
+        button.data("value", newValue);
+        button.toggleClass("btn-primary", newValue === 1);
+        button.toggleClass("btn-secondary", newValue === 0);
+        button
+            .find("i")
+            .attr(
+                "class",
+                `fas ${newValue === 1 ? "fa-check-circle" : "fa-times-circle"}`
+            );
+    }
+    //✅ 3. Extrae función para activar edición de fecha
+    function triggerEditableMachiningDate(orderId) {
+        const dateSpan = $(`.editable-machining-date[data-id="${orderId}"]`);
+        if (dateSpan.length > 0) {
+            dateSpan.attr("data-enabled", "1");
+            setTimeout(() => dateSpan.trigger("click"), 100);
+        } else {
+            console.warn(
+                "No se encontró el span editable para la orden:",
+                orderId
+            );
+        }
+    }
+    //✅ 4. Evita crear HTML con strings largos: usa plantillas
+    function createEditableDateSpan(orderId, date, options = {}) {
+        const {
+            cssClass = "editable-date", // clase personalizada
+            enabled = true,
+            underline = true,
+            bold = true,
+        } = options;
+
+        // Formatear fecha como "Jul-11-25"
+        const [year, month, day] = date.split("-");
+        const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
+        const shortMonth = dateObj.toLocaleString("en-US", { month: "short" });
+        const twoDigitYear = year.slice(-2);
+        const formatted = `${shortMonth}-${day.padStart(
+            2,
+            "0"
+        )}-${twoDigitYear}`;
+
+        // Armar clases
+        const classes = [
+            cssClass,
+            underline ? "text-decoration-underline" : "",
+            bold ? "fw-bold" : "",
+        ]
+            .filter(Boolean)
+            .join(" ");
+
+        return $(`
+        <span class="${classes}"
+              data-id="${orderId}"
+              data-enabled="${enabled ? 1 : 0}"
+              data-value="${date}"
+              style="cursor:${enabled ? "pointer" : "default"};">
+            ${formatted}
+        </span>
+    `);
+    }
+
+    // ✅ Main: toggle de botones y edición de fecha
+
     tableElement.on(
         "click",
         ".toggle-report-btn, .toggle-source-btn",
@@ -321,12 +489,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentValue = parseInt(button.data("value"));
             const newValue = currentValue === 1 ? 0 : 1;
             const isReport = button.hasClass("toggle-report-btn");
+
             const url = `/orders/${orderId}/${
                 isReport ? "update-report" : "update-source"
             }`;
             const body = isReport
                 ? { report: newValue }
                 : { our_source: newValue };
+
+            //Mensaje de alertas cuando es 0 o 1
+            // if (!isReport) showSourceAlert(currentValue);
 
             handlePostJsonWithAlerts(
                 url,
@@ -342,19 +514,19 @@ document.addEventListener("DOMContentLoaded", () => {
                             })
                         );
 
-                        button.data("value", newValue);
-                        button.toggleClass("btn-primary", newValue === 1);
-                        button.toggleClass("btn-secondary", newValue === 0);
-                        button
-                            .find("i")
-                            .attr(
-                                "class",
-                                `fas ${
-                                    newValue === 1
-                                        ? "fa-check-circle"
-                                        : "fa-times-circle"
-                                }`
+                        updateToggleButton(button, newValue);
+
+                        if (!isReport && newValue === 1) {
+                            triggerEditableMachiningDate(orderId);
+                        } else if (!isReport && newValue === 0) {
+                            const dateSpan = $(
+                                `.editable-machining-date[data-id="${orderId}"]`
                             );
+                            if (dateSpan.length > 0) {
+                                dateSpan.attr("data-enabled", "0");
+                                dateSpan.css("cursor", "default");
+                            }
+                        }
                     } else {
                         alert("Error al actualizar.");
                     }
@@ -363,6 +535,99 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
     );
+
+    //✅ Edición de fecha de maquinado
+
+    tableElement.on("click", ".editable-machining-date", function () {
+        const span = $(this);
+        const orderId = span.data("id");
+        const isEnabled = parseInt(span.data("enabled")) === 1;
+        const currentValue = span.data("value") || "";
+
+        if (!isEnabled) return;
+
+        const input = $(
+            `<input type="date" class="form-control form-control-sm machining-date-input">`
+        ).val(currentValue);
+
+        span.replaceWith(input);
+        input.focus();
+
+        input.on("blur", function () {
+            const newDate = input.val();
+            if (!newDate || newDate === currentValue) {
+                input.replaceWith(span);
+                return;
+            }
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-date-machining`,
+                { machining_date: newDate },
+                (data) => {
+                    if (data.success) {
+                        localStorage.setItem(
+                            "date-machining-change",
+                            JSON.stringify({
+                                orderId,
+                                machining_date: newDate,
+                                dias_restantes: data.dias_restantes,
+                                alertColor: data.alertColor,
+                                alertLabel: data.alertLabel,
+                                status: data.status, // ✅ Incluye el estado actual
+                                updatedAt: Date.now(),
+                            })
+                        );
+
+                        const newSpan = createEditableDateSpan(
+                            orderId,
+                            newDate,
+                            {
+                                cssClass: "editable-machining-date",
+                                underline: true,
+                                bold: true,
+                            }
+                        );
+
+                        input.replaceWith(newSpan);
+                        // ✅ Actualizar visualmente días restantes y alerta
+                        const diasTd = document.getElementById(
+                            `dias-restantes-${orderId}`
+                        );
+                        if (diasTd) {
+                            diasTd.textContent = `${data.dias_restantes} days`;
+                            diasTd.className =
+                                data.dias_restantes < 0
+                                    ? "text-danger fw-bold"
+                                    : data.dias_restantes <= 2
+                                    ? "text-warning fw-bold"
+                                    : "text-success fw-bold";
+                        }
+
+                        const alertaDiv = document.querySelector(
+                            `#alerta-${orderId} .progress-bar`
+                        );
+                        if (alertaDiv) {
+                            alertaDiv.className =
+                                "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
+
+                        // ✅ Aplicar estilo visual correcto a la fila , para cuando se cambie la fecha, me detecte el color segun el estatus
+                        applyRowLateStyle(
+                            orderId,
+                            data.dias_restantes,
+                            data.status || ""
+                        );
+                    } else {
+                        alert("Error al guardar la fecha.");
+                        input.replaceWith(span);
+                    }
+                }
+            );
+        });
+    });
+
+    ///--------------------------------MANEJO DE BOTONES "report & our_source" --------------------------------------------
+    //----------------------------------------------------END--------------------------------------------------------------
 
     // Editable Station
     tableElement.on("click", ".editable-station", function () {
@@ -489,68 +754,74 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    //-------------------------------------------------START-------------------------------------------------------------//
+    //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
+
+    //✅ Captura dinámica del estado anterior. Se agrega este bloque antes del "change" para asegurar que data-old-status siempre tenga el valor actual:
+    tableElement.on("focus", ".status-select", function () {
+        const currentVal = ($(this).val() || "").toLowerCase(); // .toLowerCase() Normalizar el oldStatus a minúsculas
+        $(this).data("old-status", currentVal);
+    });
+
     // Actualizar Status con confirmación SweetAlert
     tableElement.on("change", ".status-select", function () {
+        const scrollTopBefore = $(window).scrollTop();
         const select = $(this);
         const orderId = select.data("id");
-        const oldStatus = select.data("old-status") || ""; // Estado previo guardado en data attribute
-        const newStatus = select.val().toLowerCase();
 
-        // Ubicación actual del order en la fila
+        // ✅ Leer valor anterior y new status de forma segura y normalizada
+        const oldStatus = (select.data("old-status") || "").toLowerCase();
+        const newStatus = (select.val() || "").toLowerCase();
+
         const row = select.closest("tr");
         const locationSelect = row.find(".location-select");
         const currentLocation = locationSelect.length
             ? locationSelect.val()
             : "";
 
-        // Función que hace la petición para cambiar el status y actualiza UI
         const enviarCambioStatus = () => {
             handlePostJsonWithAlerts(
                 `/orders/${orderId}/update-status`,
                 { status: newStatus },
                 (data) => {
-                    localStorage.setItem(
-                        "status-change",
-                        JSON.stringify({
-                            orderId,
-                            status: data.status,
-                            dias_restantes: data.dias_restantes,
-                            alertColor: data.alertColor,
-                            alertLabel: data.alertLabel,
-                        })
-                    );
-
                     if (data.success) {
-                        // Actualizar location si viene en la respuesta
-                        if (data.location) {
-                            if (locationSelect.length) {
-                                locationSelect.val(data.location);
-                            }
+                        localStorage.setItem(
+                            "status-change",
+                            JSON.stringify({
+                                orderId,
+                                status: data.status,
+                                dias_restantes: data.dias_restantes,
+                                alertColor: data.alertColor,
+                                alertLabel: data.alertLabel,
+                            })
+                        );
+
+                        if (data.location && locationSelect.length) {
+                            locationSelect.val(data.location);
                         }
 
-                        // Actualizar badge last-location-label
                         const label = row.find(".last-location-label");
                         if (data.last_location === "Yarnell") {
                             label
                                 .html(
                                     `
-                                <span class="badge bg-warning text-dark">
-                                    <i class="fas fa-map-marker-alt me-1"></i> Yarnell
-                                </span>
-                            `
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                    </span>
+                                `
                                 )
                                 .show();
                         } else {
                             label.hide().html("");
                         }
 
-                        // Eliminar fila si estado es "sent"
+                        //✅ Eliminar fila si estado es "sent"
                         if (newStatus === "sent") {
                             window.table.row(row).remove().draw(false);
                             return;
                         }
 
-                        // Actualizar campo sent_at si existe
+                        //✅ Actualizar sent_at
                         if (data.sent_at) {
                             const sentCell = document.getElementById(
                                 `sent-at-${orderId}`
@@ -558,6 +829,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (sentCell) sentCell.textContent = data.sent_at;
                         }
 
+                        //✅ Actualizar estado oculto
                         const hiddenStatusCell = document.getElementById(
                             `hidden-status-${orderId}`
                         );
@@ -565,17 +837,20 @@ document.addEventListener("DOMContentLoaded", () => {
                             hiddenStatusCell.textContent =
                                 data.status.toLowerCase();
 
+                        //✅ Actualizar en DataTable (columna 2)
                         if (window.table) {
                             const rowIndex = window.table.row(row[0]).index();
                             window.table
                                 .cell(rowIndex, 2)
                                 .data(data.status.toLowerCase())
                                 .draw(false);
+                            $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
+                            select.blur(); // quita foco
                         }
 
+                        // ✅Agregar nuevo valor al filtro si no existe
                         const $statusFilter = $("#statusFilter");
                         const newStatusVal = data.status.toLowerCase();
-
                         if (
                             $statusFilter.find(
                                 `option[value="${newStatusVal}"]`
@@ -599,10 +874,228 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (!inserted) $statusFilter.append(newOption);
                         }
 
-                        $(row).removeClass((i, c) =>
-                            (c.match(/bg-status-\S+/g) || []).join(" ")
+                        // ✅Actualizar días restantes
+                        const diasTd = document.getElementById(
+                            `dias-restantes-${orderId}`
                         );
-                        $(row).addClass(`bg-status-${data.status}`);
+
+                        if (diasTd) {
+                            const dias = data.dias_restantes;
+
+                            diasTd.textContent = `${dias} days`;
+                            diasTd.className =
+                                dias < 0
+                                    ? "text-danger fw-bold"
+                                    : dias <= 2
+                                    ? "text-warning fw-bold"
+                                    : "text-success fw-bold";
+                        }
+
+                        //------------------------------------------------------------------------------
+
+                        //✅Actualizar alerta
+                        const alertaDiv = document.querySelector(
+                            `#alerta-${orderId} .progress-bar`
+                        );
+                        if (alertaDiv) {
+                            alertaDiv.className =
+                                "progress-bar " + data.alertColor;
+                            alertaDiv.textContent = data.alertLabel;
+                        }
+                        // ✅ Actualiza el valor de referencia para futuros cambios
+                        select.data("old-status", newStatus);
+
+                        //✅ Guardar estado como "viejo" para siguiente edición
+                        select.data("old-status", newStatus);
+                    } else {
+                        alert("Hubo un problema al actualizar el estado.");
+                    }
+                },
+                "Error al comunicarse con el servidor."
+            );
+        };
+
+        // ✅ Confirmación si nuevo estado es 'sent'
+        if (newStatus === "sent") {
+            // 1) Intentar leer WO_QTY de input y, si no, del td
+            const $inp = row.find(".wo-qty-input");
+
+            // 2) Normalizar a número (tolerando comas, espacios, etc.)
+            const toNumber = (v) => {
+                if (v === undefined || v === null) return null;
+                const n = Number(String(v).replace(/[^\d.-]/g, ""));
+                return Number.isFinite(n) ? n : null;
+            };
+
+            // Prioridad: input -> td
+            const woQtyNum = toNumber($inp.length ? $inp.val() : null);
+
+            // 3) Validar
+            if (!Number.isFinite(woQtyNum) || woQtyNum <= 0) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "WO_QTY required",
+                    text: "Before selecting as 'sent', you must capture a valid value in WO_QTY.",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    // Revertir select
+                    select.val(oldStatus).trigger("change");
+                    // Tip: enfocar el input para que el usuario lo capture
+                    if ($inp.length) $inp.focus().select();
+                });
+                return; // 🚫 no continuar
+            }
+
+            // 4) Confirmar envío
+            Swal.fire({
+                title: "¿Are you sure?",
+                text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, Completed",
+                cancelButtonText: "No, cancel",
+                reverseButtons: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    enviarCambioStatus();
+                } else {
+                    select.val(oldStatus).trigger("change");
+                }
+            });
+            return;
+        }
+
+        // ✅ Activar edición del due_date si es "onhold"
+        const dueSpan = row.find(`.editable-due-date[data-id="${orderId}"]`);
+
+        if (newStatus === "onhold") {
+            // 🔓 Activar edición
+            if (dueSpan.length) {
+                dueSpan.attr("data-enabled", "1");
+                dueSpan.css("cursor", "pointer");
+                dueSpan.addClass("fw-bold");
+                triggerEditableDueDate(orderId); // ✅ aquí sí debe abrirse
+            }
+        } else {
+            // 🔒 Desactivar edición
+            if (dueSpan.length) {
+                dueSpan.attr("data-enabled", "0");
+                dueSpan.css("cursor", "default");
+                dueSpan.removeClass("fw-bold");
+            }
+        }
+
+        // ✅ Confirmación si cambia a 'deburring' o 'shipping' desde 'Yarnell'
+        if (
+            (newStatus === "deburring" || newStatus === "shipping") &&
+            currentLocation.toLowerCase() === "yarnell"
+        ) {
+            Swal.fire({
+                title: "¿Are you sure?",
+                text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, Change",
+                cancelButtonText: "No, Cancel",
+                reverseButtons: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.setItem(
+                        "location-change",
+                        JSON.stringify({ orderId, location: "hearst" })
+                    );
+                    enviarCambioStatus();
+                } else {
+                    select.val(oldStatus); // Revertir
+                }
+            });
+            return;
+        }
+
+        // ✅ Enviar directamente si no requiere confirmación
+        enviarCambioStatus();
+    });
+
+    //----
+    function triggerEditableDueDate(orderId) {
+        const dateSpan = $(`.editable-due-date[data-id="${orderId}"]`);
+        //console.log("🟢 triggerEditableDueDate llamado para:", orderId);
+
+        if (dateSpan.length > 0) {
+            // console.log("✅ Span encontrado:", dateSpan[0]);
+            dateSpan.attr("data-enabled", "1");
+
+            setTimeout(() => {
+                //console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
+                dateSpan.trigger("click");
+            }, 100);
+        } else {
+            console.warn(
+                "⚠️ No se encontró due-date editable para la orden:",
+                orderId
+            );
+        }
+    }
+    //----------
+    tableElement.on("click", ".editable-due-date", function () {
+        const span = $(this);
+        //console.log("📌 Click en due-date span", span[0]);
+        const orderId = span.data("id");
+        const isEnabled = parseInt(span.data("enabled")) === 1;
+        const currentValue = span.data("value") || "";
+
+        // console.log( "✔️ isEnabled:", isEnabled,"| orderId:",orderId, "| value:",currentValue );
+
+        if (!isEnabled) {
+            // console.log("⛔ Edición deshabilitada para este campo.");
+            return;
+        }
+
+        const input = $(
+            `<input type="date" class="form-control form-control-sm due-date-input">`
+        ).val(currentValue);
+
+        // console.log("🆕 Input generado:", input[0]);
+
+        span.replaceWith(input);
+        input.focus();
+
+        input.on("blur", function () {
+            const newDate = input.val();
+            if (!newDate || newDate === currentValue) {
+                input.replaceWith(span);
+                return;
+            }
+
+            handlePostJsonWithAlerts(
+                `/orders/${orderId}/update-date-due`,
+                { due_date: newDate },
+                (data) => {
+                    if (data.success) {
+                        localStorage.setItem(
+                            "date-due-change",
+                            JSON.stringify({
+                                orderId,
+                                due_date: newDate,
+                                dias_restantes: data.dias_restantes,
+                                alertColor: data.alertColor,
+                                alertLabel: data.alertLabel,
+                                status: data.status,
+                                updatedAt: Date.now(),
+                            })
+                        );
+
+                        const newSpan = createEditableDateSpan(
+                            orderId,
+                            newDate,
+                            {
+                                cssClass: "editable-due-date",
+                                underline: false,
+                                bold: true,
+                            }
+                        );
+
+                        input.replaceWith(newSpan);
 
                         const diasTd = document.getElementById(
                             `dias-restantes-${orderId}`
@@ -626,54 +1119,22 @@ document.addEventListener("DOMContentLoaded", () => {
                             alertaDiv.textContent = data.alertLabel;
                         }
 
-                        // Actualiza el estado viejo guardado para poder revertir si se edita otra vez
-                        select.data("old-status", newStatus);
+                        applyRowLateStyle(
+                            orderId,
+                            data.dias_restantes,
+                            data.status || ""
+                        );
                     } else {
-                        alert("Hubo un problema al actualizar el estado.");
+                        alert("Error al guardar due_date.");
+                        input.replaceWith(span);
                     }
-                },
-                "Error al comunicarse con el servidor."
-            );
-        };
-
-        // Mostrar confirmación si cumple condiciones
-        // Mostrar confirmación si cumple condiciones
-        if (
-            (newStatus === "deburring" || newStatus === "shipping") &&
-            currentLocation.toLowerCase() === "yarnell"
-        ) {
-            Swal.fire({
-                title: "¿Are you sure??",
-                text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Yes, change",
-                cancelButtonText: "No, cancel",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // 🔁 Notifica a otras pestañas que esta orden ahora estará en Hearst
-                    localStorage.setItem(
-                        "location-change",
-                        JSON.stringify({
-                            orderId: orderId,
-                            location: "hearst",
-                        })
-                    );
-
-                    console.log(
-                        "📢 Notificación enviada a pestañas: orden movida a Hearst"
-                    );
-
-                    enviarCambioStatus();
-                } else {
-                    // Revertir al estado anterior
-                    select.val(oldStatus);
                 }
-            });
-        } else {
-            enviarCambioStatus();
-        }
+            );
+        });
     });
+
+    //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
+    //-------------------------------------------------END-------------------------------------------------------------//
 
     //-------------------------------------------------
     // Tooltips
@@ -701,7 +1162,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Guardar notas
     $("#notesForm").submit(function (e) {
-        console.log("Interceptando submit del formulario de notas"); // 👈 esto
+        //console.log("Interceptando submit del formulario de notas"); // 👈 esto
         e.preventDefault(); // Esto evita que el form se envíe "normalmente"
         const orderId = $("#notesOrderId").val();
         const notes = $("#notesTextarea").val();
@@ -710,7 +1171,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `/orders/${orderId}/update-notes`,
             { notes },
             (data) => {
-                console.log("Respuesta del servidor:", data);
+                //console.log("Respuesta del servidor:", data);
                 if (!data.success) return alert("Error al guardar la nota.");
 
                 localStorage.setItem(
@@ -752,21 +1213,32 @@ document.addEventListener("DOMContentLoaded", () => {
     $(document).on("blur", ".wo-qty-input", function () {
         const input = $(this);
         const original = input.data("original");
-        const newVal = input.val();
 
-        if (original == newVal) return;
+        let newVal = input.val().trim();
+        //Para cuando se borra WO
+        if (newVal === "") {
+            newVal = 0; // puedes cambiarlo a `null` si tu backend lo acepta
+        }
+
+        const qty = parseInt(newVal, 10);
+        if (isNaN(qty) || qty < 0) {
+            Swal.fire("⚠️ Invalid quantity", "Enter a valid number", "warning");
+            return;
+        }
+
+        if (original == qty) return;
 
         const orderId = input.data("id");
 
         handlePostJsonWithAlerts(
             `/orders/${orderId}/update-wo-qty`,
-            { wo_qty: newVal },
+            { wo_qty: qty },
             (data) => {
                 localStorage.setItem(
                     "wo-qty-change",
                     JSON.stringify({
                         orderId,
-                        wo_qty: newVal,
+                        wo_qty: qty,
                     })
                 );
                 localStorage.removeItem("wo-qty-change");
@@ -781,7 +1253,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function agregarBotonesKit() {
         tableElement.find("tbody tr").each(function (index) {
-            const partDescCell = $(this).find("td").eq(4); // columna PART/DESCRIPTION
+            const partDescCell = $(this).find("td").eq(3); // columna PART/DESCRIPTION
             partDescCell.css("position", "relative"); // para posicionar el botón dentro
 
             const texto = partDescCell.text().toLowerCase();
@@ -835,6 +1307,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const btn = $(this);
         const row = btn.closest("tr");
 
+        // 👇   usa data-id en el <tr data-id="123"> y deja este fallback a la col 0
+        const originalId = row.data("orderId");
+
         // Obtener próximo ID antes de hacer cualquier cosa
         fetch("/orders/next-id")
             .then((res) => res.json())
@@ -844,18 +1319,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Clonar la fila original (sin eventos)
                 const newRow = row.clone(false);
 
+                copySelectAndInputValues(row, newRow);
+                // console.log("✔ Location clonada: ",newRow.find('select[name="location"]').val());
+
                 // Mostrar cuántas columnas tiene la fila
-                // console.log("Total celdas en la fila:", newRow.find("td").length);
+                // console.log( "Total celdas en la fila:",newRow.find("td").length);
 
                 // Mostrar el next_id en la primera celda (columna 0)
-                const idCell = newRow.find("td:eq(0)");
-                idCell.text(nextId);
-                idCell.append(
-                    `<input type="hidden" name="id" value="${nextId}">`
-                );
+                // const idCell = newRow.find("td:eq(0)");
+                // idCell.text(nextId);
+                //  idCell.append(
+                //   `<input type="hidden" name="id" value="${nextId}">`
+                //  );
 
                 // En las columnas 2, 4 y 6 ponemos inputs vacíos
-                [2, 4, 6].forEach((index) => {
+                [1, 3, 5].forEach((index) => {
                     const cell = newRow.find(`td:eq(${index})`);
                     cell.html(
                         `<input type="text" name="col_text_${index}" class="form-control form-control-sm" value="">`
@@ -869,24 +1347,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Guardar solo al presionar Enter en input col_text_6
                 newRow
-                    .find('input[name="col_text_6"]')
+                    .find('input[name="col_text_5"]')
                     .on("keydown", function (e) {
                         if (e.key === "Enter" && !guardado) {
+                            e.preventDefault(); // Evita que el Enter dispare el submit
+                            e.stopPropagation(); // Evita burbujas
+
                             const val6 = $(this).val().trim();
                             if (val6) {
-                                if (confirm("¿Save this new record?")) {
-                                    guardado = true;
-                                    checkInputsAndSend();
-                                }
+                                Swal.fire({
+                                    title: "¿Save Order?",
+                                    icon: "question",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, Save",
+                                    cancelButtonText: "Cancel",
+                                    reverseButtons: true,
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        guardado = true;
+                                        checkInputsAndSend();
+                                    }
+                                });
                             } else {
-                                //alert("Debes capturar al menos el campo de Cantidad (columna 6).");
+                                Swal.fire({
+                                    title: "Required WO QTY",
+                                    text: "You must capture at least the WO QTY",
+                                    icon: "warning",
+                                    confirmButtonText: "Ok",
+                                });
                             }
                         }
                     });
 
                 function checkInputsAndSend() {
                     const val6 = newRow
-                        .find('input[name="col_text_6"]')
+                        .find('input[name="col_text_5"]')
                         .val()
                         .trim();
 
@@ -899,19 +1394,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     newRow.find("td").each(function (index) {
                         const cell = $(this);
-                        const input = cell.find("input");
-                        if (input.length) {
-                            dataToSend[`col_text_${index}`] = input.val();
-                        } else {
-                            let text = cell.text().trim();
+                        //Si existe un input o select:→ Guarda su valor usando .val().
+                        const inputOrSelect = cell.find("input, select");
 
-                            // Si es la columna 17 y tiene el texto por defecto "Note", se guarda vacío
-                            if (index === 17 && text === "Note") {
-                                text = "";
+                        if (inputOrSelect.length) {
+                            dataToSend[`col_text_${index}`] =
+                                inputOrSelect.val();
+                        } else {
+                            let finalText = "";
+
+                            // 📌 Caso especial para columna de Notas (con .open-notes-modal)
+                            const noteSpan = cell.find(".open-notes-modal");
+                            if (noteSpan.length) {
+                                finalText = noteSpan.data("notes") || "";
                             }
 
-                            dataToSend[`col_text_${index}`] = text;
+                            // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            else if (
+                                cell.find(".editable-machining-date").length
+                            ) {
+                                finalText =
+                                    cell
+                                        .find(".editable-machining-date")
+                                        .data("value") || "";
+                            }
+                            // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            else if (cell.find(".editable-due-date").length) {
+                                finalText =
+                                    cell
+                                        .find(".editable-due-date")
+                                        .data("value") || "";
+                            }
+
+                            // 🔄 Caso general (texto visible, sin hijos como select/div/span)
+                            else {
+                                finalText = cell
+                                    .clone()
+                                    .children()
+                                    .remove()
+                                    .end()
+                                    .text()
+                                    .trim();
+                                if (index === 15 && finalText === "Note")
+                                    finalText = "";
+                            }
+
+                            dataToSend[`col_text_${index}`] = finalText;
                         }
+                        //---------------------------------------------------------------------------------
 
                         // También incluir inputs ocultos
                         cell.find('input[type="hidden"]').each(function () {
@@ -920,8 +1450,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                 hiddenInput.val();
                         });
                     });
-                    // console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
 
+                    // 👇 aquí añadimos el id de la fila original para enviar los valores de co y cust_po
+                    dataToSend.original_id = originalId;
+
+                    //console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
                     handlePostJsonWithAlerts(
                         "/orders",
                         dataToSend,
@@ -931,7 +1464,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             // Actualizar visualmente la fila: eliminar inputs excepto columna 7 y dejar texto plano
                             newRow.find("td").each(function (index) {
                                 const cell = $(this);
-                                if (index === 7) return; // No tocar input en columna 7
+                                if (index === 6) return; // No tocar input en columna 7
                                 const input = cell.find("input");
                                 if (input.length) {
                                     const value = input.val();
@@ -951,7 +1484,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <i class="fas fa-plus-circle me-1 text-muted"></i> Note</span>`;
 
                             // Insertar en la columna 18 (si existe)
-                            const notesCell = newRow.find("td:eq(17)");
+                            const notesCell = newRow.find("td:eq(15)");
                             if (notesCell.length) {
                                 notesCell.html(newNotesHtml);
                             } else {
@@ -972,4 +1505,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     //-----------------------------------------
+
+    function copySelectAndInputValues(originalRow, clonedRow) {
+        originalRow.find("select").each(function (i) {
+            const value = $(this).val();
+            const className = $(this).attr("class");
+            const name = $(this).attr("name");
+
+            // Encuentra el select correspondiente en la fila clonada
+            const cloned = clonedRow
+                .find(`select.${className.split(" ").join(".")}`)
+                .eq(i);
+            if (cloned.length) {
+                cloned.val(value); // asigna el valor seleccionado real
+            }
+        });
+
+        originalRow.find("input").each(function (i) {
+            const value = $(this).val();
+            const name = $(this).attr("name");
+            const className = $(this).attr("class");
+
+            const cloned = clonedRow
+                .find(`input.${className.split(" ").join(".")}`)
+                .eq(i);
+            if (cloned.length) {
+                cloned.val(value);
+            }
+        });
+    }
 });

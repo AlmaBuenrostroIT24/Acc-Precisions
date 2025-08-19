@@ -1,16 +1,102 @@
+.bg-status-pending {
+    background-color: #fcf4dd !important; /* Amarillo pastel */
+}
 
-.bg-status-pending                 { background-color: #fcf4dd !important; } /* Amarillo pastel */
-.bg-status-waitingformaterial      { background-color: #e5e7e9 !important; } /* Celeste pastel */
-.bg-status-onrack                  { background-color: #d7dbdd !important; } /* Verde pastel */
-.bg-status-setup      { background-color: #d5f5e3 !important; } /* Gris pastel */
+.bg-status-waitingformaterial {
+    background-color: #e5e7e9 !important; /* Gris claro pastel */
+}
 
-.bg-status-machining    { background-color: #abebc6 !important; } /* Coral pastel */
-.bg-status-outsource        { background-color: #d2b4de !important; } /* Azul cielo pastel */
-.bg-status-qa      { background-color: #d6eaf8  !important; } /* Amarillo vainilla pastel */
-.bg-status-deburring      { background-color: #aed6f1 !important; } /* Naranja pastel */
-.bg-status-shipping     { background-color: #85c1e9 !important; } /* Verde menta pastel */
-.bg-status-onhold        { background-color: #ffffff !important; } /* Rosa pastel */
+.bg-status-cutmaterial {
+    background-color: #e6d3c3 !important;
+}
 
+.bg-status-grinding {
+    background-color: #e8daef !important;
+}
+
+.bg-status-onrack {
+    background-color: #d7dbdd !important; /* Gris pastel */
+}
+
+.bg-status-programming {
+    background-color: #d1f2eb !important; /* Verde agua pastel */
+}
+
+.bg-status-setup {
+    background-color: #d5f5e3 !important; /* Verde menta suave */
+}
+
+.bg-status-machining {
+    background-color: #abebc6 !important; /* Verde claro pastel */
+}
+
+.bg-status-marking {
+    background-color: #fcf3cf !important; /* Amarillo claro pastel */
+}
+
+.bg-status-deburring {
+    background-color: #d6eaf8 !important; /* Azul pastel */ 
+}
+
+.bg-status-qa {
+    background-color: #aed6f1 !important; /* Azul cielo pastel */
+}
+
+.bg-status-outsource {
+    background-color: #d2b4de !important; /* Lila pastel */
+}
+
+.bg-status-assembly {
+    background-color: #f9e79f !important; /* Amarillo vainilla pastel */
+}
+
+.bg-status-shipping {
+    background-color: #85c1e9 !important; /* Azul cielo más intenso pastel */
+}
+
+.bg-status-onhold {
+    background-color: #fcfcfc !important; /* Rosa pastel */
+}
+
+.row-late {
+    background-color: #f8d7da !important; /* Rojo claro para atraso */
+}
+
+.row-priority {
+    font-weight: bold;
+    background-color: #a662f9 !important; /* optional: light gold */
+}
+
+.bg-status-ready {
+    background-color: #c8f7c5 !important;
+    border-left: 5px solid #27ae60 !important;
+    font-weight: bold !important;
+    box-shadow: 0 0 8px rgba(39, 174, 96, 0.3);
+    transition: all 0.3s ease-in-out;
+}
+
+.select-status.bg-status-ready {
+    background-color: #c8f7c5 !important;
+    color: #145a32 !important;
+    font-weight: bold;
+    border-left: 4px solid #27ae60;
+}
+
+   table td {
+        color: black !important;
+        font-size: 14px !important;
+       
+    }
+
+    table th {
+    color: black !important;
+    font-size: 14px !important;
+   
+}
+
+table tr {
+    height: 20px; /* o el valor que prefieras */
+}
 
 .select-bold {
     font-weight: bold;
@@ -41,3 +127,4 @@
     padding: 2px 6px;
     vertical-align: middle;
 }
+

@@ -62,29 +62,48 @@ Route::match(['put', 'patch'], '/roles/{id}', [RolePermissionController::class, 
 // Devuelve la lista de permisos (GET)
 Route::get('/roles/{id}/permissions', [RolePermissionController::class, 'getPermissions']);
 
-//---------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------
 Route::resource('schedule/general', Order_ScheduleController::class);
 // Ruta para almacenar la nueva orden
 Route::post('/orders', [Order_ScheduleController::class, 'store'])->name('orders.store');
 
-//Route::resource('/schedule/general', Order_ScheduleController::class); VISTAS
+//Tabs de vistas
 Route::get('/schedule/general', [Order_ScheduleController::class, 'index'])->name('schedule.general')->middleware('auth');
 Route::get('/schedule/endyarnell', [Order_ScheduleController::class, 'endyarnell'])->name('schedule.endyarnell')->middleware('auth');
 Route::get('/schedule/finished', [Order_ScheduleController::class, 'finished'])->name('schedule.finished')->middleware('auth');
 Route::get('/schedule/statistics', [Order_ScheduleController::class, 'statistics'])->name('schedule.statistics')->middleware('auth');
+Route::get('/schedule/workhearst', [Order_ScheduleController::class, 'workhearst'])->name('schedule.workhearst')->middleware('auth');
 
-Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
-Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
+// Partials para recarga dinámica de secciones en schedule_workhearst
+Route::get('/workhearst/deburring/partial', [Order_ScheduleController::class, 'partialDeburring']);
+Route::get('/workhearst/ready/partial', [Order_ScheduleController::class, 'partialReady']);
+Route::get('/workhearst/outsource/partial', [Order_ScheduleController::class, 'partialOutsource']);
+Route::get('/workhearst/processend/partial', [Order_ScheduleController::class, 'partialProcessend']);
+Route::get('/workhearst/workinprocess/partial', [Order_ScheduleController::class, 'partialWorkhearst']);
 
+
+
+//Importar archivo en excel
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
+
 Route::post('/orders/{order}/update-status', [Order_ScheduleController::class, 'updateStatus']);
 Route::post('/orders/{order}/update-report', [Order_ScheduleController::class, 'updateReport']);
 Route::post('/orders/{order}/update-source', [Order_ScheduleController::class, 'updateSource']);
 Route::post('/orders/{order}/update-location', [Order_ScheduleController::class, 'updateLocation'])->name('orders.updateLocation');
-Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);
+Route::post('/orders/{order}/update-date-machining', [Order_ScheduleController::class, 'updateDateMachining']);
 Route::post('/orders/{order}/update-notes', [Order_ScheduleController::class, 'updateNotes']);
 Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 'ajaxUpdateWorkId'])->name('orders.ajaxUpdateWorkId');
 Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
+Route::post('/orders/{order}/update-date-due', [Order_ScheduleController::class, 'updateDueDate'])->name('orders.update-date-due');
+
+Route::post('/orders/{order}/return-previous', [Order_ScheduleController::class, 'returnPreviousStatus'])->name('orders.returnPreviousStatus');
+Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);
+
+//Ventanas de Hearst y Yarnell
+Route::get('/scheduley', [Order_ScheduleController::class, 'yarnellSchedule'])->name('schedule.yarnell');
+Route::get('/scheduleh', [Order_ScheduleController::class, 'hearstSchedule'])->name('schedule.hearst');
+Route::get('/api/schedule-last-update', [Order_ScheduleController::class, 'lastUpdate']); // detecta la ultima actualizacion de una orden para actualizar vistas en PCS
+
 
 Route::post('/orders/{id}/update-wo-qty', [Order_ScheduleController::class, 'updateWoQty']);
 Route::post('/orders/duplicate', [Order_ScheduleController::class, 'duplicate'])->name('orders.duplicate');
@@ -92,12 +111,25 @@ Route::get('/orders/next-id', function () {
     $lastId = \App\Models\OrderSchedule::max('id') ?? 0;
     return response()->json(['next_id' => $lastId + 1]);
 });
+Route::post('/orders/{order}/deactivate', [Order_ScheduleController::class, 'deactivate'])->name('orders.deactivate');
+Route::get('/orders/search', [Order_ScheduleController::class, 'search'])->name('orders.search');
+Route::post('/orders/{order}/priority', [Order_ScheduleController::class, 'setPriority']);
+Route::post('/orders/{order}/toggle-priority', [Order_ScheduleController::class, 'togglePriority'])->name('orders.toggle-priority');
+Route::get('/orders/{id}/clone-data', [Order_ScheduleController::class, 'cloneData']);
+
+
 Route::get('/orders/summary/year/{year}', [Order_ScheduleController::class, 'summaryByYear']);
 Route::get('/orders/summary/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByMonth']);
 Route::get('/orders/summary/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByWeek']);
 Route::get('/orders/summary/by-customer/year/{year}', [Order_ScheduleController::class, 'summaryByCustomerYear']);
 Route::get('/orders/summary/by-customer/month/{year}/{month}', [Order_ScheduleController::class, 'summaryByCustomerMonth']);
 Route::get('/orders/summary/by-customer/week/{year}/{week}', [Order_ScheduleController::class, 'summaryByCustomerWeek']);
+Route::get('/orders/summary/next-weeks/{weeks}', [Order_ScheduleController::class, 'summaryNextWeeks']);
+Route::get('/orders/summary/on-time-filtered', [Order_ScheduleController::class, 'summaryOnTimeFiltered']);
+
+Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersByWeekAjax'])->name('orders.byWeek.ajax');
+
+
 
 // -----------------------------------QA FAI-------------------------------------------------------
 

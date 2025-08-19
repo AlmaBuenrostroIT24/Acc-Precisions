@@ -34,55 +34,38 @@
         <div class="card mb-4">
             <div class="card-body">
                 {{-- Filtros dinámicos --}}
-                <div class="row mb-4">
-                    <!-- Formulario de carga -->
-
-                    <!-- Filtros -->
-                    <div class="col-md-8">
-                        <div class="card shadow">
-                            <div class="card-body row">
-                                <div class="form-group col-md-12">
-                                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
-                                        <div class="form-group col-md-4">
-                                            <label for="customerFilter">Customer</label>
-                                            <select id="customerFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-4">
-                                            <label for="locationFilter">Status</label>
-                                            <select name="location" id="locationFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+                <div class="form-group col-md-12">
+                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
+                        <div class="form-group col-md-2">
+                            <label for="customerFilter">Customer</label>
+                            <select id="customerFilter" class="form-control auto-submit">
+                                <option value="">-- All --</option>
+                            </select>
                         </div>
-                    </div>
+                    </form>
                 </div>
                 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
                             <i class="fas fa-plus"></i> New Order
                         </button> -->
                 <div class="table-responsive">
                     {{-- Tabla --}}
-                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap">
+                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap" style="table-layout: fixed; width: 100%;">
                         <thead class="table-light">
                             <tr>
-                                <th>LOCATION</th>
-                                <th>WORK ID</th>
-                                <th>PN</th>
-                                <th>PART/DESCRIPTION</th>
-                                <th>CUSTOMER</th>
-                                <th>CO QTY</th>
-                                <th>WO QTY</th>
-                                <th>REPORT</th>
-                                <th>OUT</th>
-                                <th>DUE DATE</th>
-                                <th>MACH DATE</th>
-                                <th>END MACH</th>
-                                <th>TARGET</th>
-                                <th>NOTES</th>
+                                <th style="width: 65px;">LOCATION</th>
+                                <th style="width: 65px;">WORK ID</th>
+                                <th style="width: 65px;">PN</th>
+                                <th style="width: 110px;">PART/DESCRIPTION</th>
+                                <th style="width: 65px;">CUSTOMER</th>
+                                <th style="width: 65px;">CO QTY</th>
+                                <th style="width: 65px;">WO QTY</th>
+                                <th style="width: 55px;">REPORT</th>
+                                <th style="width: 45px;">OUT</th>
+                                <th style="width: 65px;">DUE DATE</th>
+                                <th style="width: 65px;">MACH DATE</th>
+                                <th style="width: 85px;">END MACH</th>
+                                <th style="width: 65px;">TARGET</th>
+                                <th style="width: 65px;">NOTES</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
@@ -99,7 +82,7 @@
                                 </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td style="min-width: 120px;">{{ $order->PN }}</td>
-                                <td style="font-size: 12px;">{{ $order->Part_description }}</td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
@@ -117,7 +100,7 @@
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
-                                <td>
+                                <td data-order="{{ $order->endate_mach ? $order->endate_mach->format('Y-m-d H:i:s') : '' }}">
                                     {{ $order->endate_mach ? $order->endate_mach->format('M-d-y H:i') : '' }}
                                 </td>
                                 <td>
@@ -131,7 +114,7 @@
                                         <span>-</span> {{-- En caso de que target_mach sea null --}}
                                         @endif
                                 </td>
-                                <td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
                                     <span class="open-notes-modal" data-id="{{ $order->id }}"
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
                                         {{ Str::limit($order->notes, 30) }}
@@ -159,11 +142,11 @@
     $(document).ready(function() {
 
         // Agrega un filtro personalizado para mostrar solo los status diferentes a "sent"
-      /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            const row = settings.aoData[dataIndex].nTr;
-            const status = $(row).data('status');
-            return status !== 'sent'; // cambia esta línea
-        });*/
+        /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+              const row = settings.aoData[dataIndex].nTr;
+              const status = $(row).data('status');
+              return status !== 'sent'; // cambia esta línea
+          });*/
 
         // Inicializa la tabla con DataTables
         window.table = $('#orders_endscheduleTable').DataTable({
@@ -171,7 +154,7 @@
             autoWidth: false,
             pageLength: 25,
             order: [
-                [10, 'desc'] // corregí 'des' por 'desc'
+                [11, 'desc'] // corregí 'des' por 'desc'
             ],
             columnDefs: [{
                 targets: [6, 7, 11],
