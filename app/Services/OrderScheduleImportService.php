@@ -168,7 +168,7 @@ class OrderScheduleImportService
             'qty'             => $row['line_qty'],
             'co'             => $row['order_id'],
             'cust_po'             => $row['customer_po_ref'],
-            'operation'       => $row['operation'] ?? 'default_value',
+            'operation'       => $row['operation'] ?? '0',
             'machines'        => $row['machines'] ?? 'default_value',
             'done'            => $row['done'] ?? '1',
             'status'          => $row['status'] ?? 'pending',
@@ -189,6 +189,10 @@ class OrderScheduleImportService
             'canceled'        => $row['canceled'] ?? '1',
             'tracking_number' => $row['tracking_number'] ?? 'default_value',
             'revision'        => $row['revision'] ?? 'default_value',
+            'total_fai'        => $row['total_fai'] ?? '0',
+            'total_ipi'        => $row['total_ipi'] ?? '0',
+            'sampling'        => $row['sampling'] ?? '0',
+            'status_inspection'        => $row['status_inspection'] ?? 'pending',
             'created_by'      => auth()->check() ? auth()->id() : null,
         ]);
     }

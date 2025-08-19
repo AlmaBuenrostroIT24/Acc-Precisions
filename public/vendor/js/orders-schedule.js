@@ -917,9 +917,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Confirmación si nuevo estado es 'sent'
         if (newStatus === "sent") {
+            // 1) Intentar leer WO_QTY de input y, si no, del td
+            const $inp = row.find(".wo-qty-input");
+
+            // 2) Normalizar a número (tolerando comas, espacios, etc.)
+            const toNumber = (v) => {
+                if (v === undefined || v === null) return null;
+                const n = Number(String(v).replace(/[^\d.-]/g, ""));
+                return Number.isFinite(n) ? n : null;
+            };
+
+            // Prioridad: input -> td
+            const woQtyNum = toNumber($inp.length ? $inp.val() : null);
+
+            // 3) Validar
+            if (!Number.isFinite(woQtyNum) || woQtyNum <= 0) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "WO_QTY required",
+                    text: "Before selecting as 'sent', you must capture a valid value in WO_QTY.",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    // Revertir select
+                    select.val(oldStatus).trigger("change");
+                    // Tip: enfocar el input para que el usuario lo capture
+                    if ($inp.length) $inp.focus().select();
+                });
+                return; // 🚫 no continuar
+            }
+
+            // 4) Confirmar envío
             Swal.fire({
                 title: "¿Are you sure?",
-                text: `Changing the status to '${newStatus}' .It will be moved to 'Completed Orders'.`,
+                text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, Completed",
@@ -929,7 +959,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (result.isConfirmed) {
                     enviarCambioStatus();
                 } else {
-                    select.val(oldStatus).trigger("change"); // Revertir
+                    select.val(oldStatus).trigger("change");
                 }
             });
             return;
@@ -992,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
         //console.log("🟢 triggerEditableDueDate llamado para:", orderId);
 
         if (dateSpan.length > 0) {
-           // console.log("✅ Span encontrado:", dateSpan[0]);
+            // console.log("✅ Span encontrado:", dateSpan[0]);
             dateSpan.attr("data-enabled", "1");
 
             setTimeout(() => {
@@ -1009,15 +1039,15 @@ document.addEventListener("DOMContentLoaded", () => {
     //----------
     tableElement.on("click", ".editable-due-date", function () {
         const span = $(this);
-       //console.log("📌 Click en due-date span", span[0]);
+        //console.log("📌 Click en due-date span", span[0]);
         const orderId = span.data("id");
         const isEnabled = parseInt(span.data("enabled")) === 1;
         const currentValue = span.data("value") || "";
 
-      // console.log( "✔️ isEnabled:", isEnabled,"| orderId:",orderId, "| value:",currentValue );
+        // console.log( "✔️ isEnabled:", isEnabled,"| orderId:",orderId, "| value:",currentValue );
 
         if (!isEnabled) {
-           // console.log("⛔ Edición deshabilitada para este campo.");
+            // console.log("⛔ Edición deshabilitada para este campo.");
             return;
         }
 
@@ -1025,7 +1055,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `<input type="date" class="form-control form-control-sm due-date-input">`
         ).val(currentValue);
 
-       // console.log("🆕 Input generado:", input[0]);
+        // console.log("🆕 Input generado:", input[0]);
 
         span.replaceWith(input);
         input.focus();
@@ -1277,6 +1307,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const btn = $(this);
         const row = btn.closest("tr");
 
+        // 👇   usa data-id en el <tr data-id="123"> y deja este fallback a la col 0
+        const originalId = row.data("orderId");
+
         // Obtener próximo ID antes de hacer cualquier cosa
         fetch("/orders/next-id")
             .then((res) => res.json())
@@ -1287,10 +1320,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const newRow = row.clone(false);
 
                 copySelectAndInputValues(row, newRow);
-               // console.log("✔ Location clonada: ",newRow.find('select[name="location"]').val());
+                // console.log("✔ Location clonada: ",newRow.find('select[name="location"]').val());
 
                 // Mostrar cuántas columnas tiene la fila
-               // console.log( "Total celdas en la fila:",newRow.find("td").length);
+                // console.log( "Total celdas en la fila:",newRow.find("td").length);
 
                 // Mostrar el next_id en la primera celda (columna 0)
                 // const idCell = newRow.find("td:eq(0)");
@@ -1417,8 +1450,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                 hiddenInput.val();
                         });
                     });
-                    //console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
 
+                    // 👇 aquí añadimos el id de la fila original para enviar los valores de co y cust_po
+                    dataToSend.original_id = originalId;
+
+                    //console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
                     handlePostJsonWithAlerts(
                         "/orders",
                         dataToSend,

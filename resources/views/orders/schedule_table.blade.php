@@ -3,7 +3,7 @@
         <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
             <thead class="table-light thead-custom">
                 <tr>
-                    <th>Id</th>
+                    <th >Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
                     <th style="width: 65px;">LOCATION</th>
