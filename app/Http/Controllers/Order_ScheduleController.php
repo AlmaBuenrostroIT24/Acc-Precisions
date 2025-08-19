@@ -405,7 +405,7 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Request completo:', $request->all());
+       // Log::info('Request completo:', $request->all());
 
         $mapping = [
             'col_text_0'  => 'location',
@@ -436,7 +436,7 @@ class Order_ScheduleController extends Controller
                 }
             }
             // 🔎 DEBUG: original_id recibido
-            Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
+           // Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
             // --- 👇 Aquí inyectamos co y cust_po desde la orden original ---
             if ($request->filled('original_id')) {
                 $orig = OrderSchedule::select('co', 'cust_po')

@@ -917,9 +917,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Confirmación si nuevo estado es 'sent'
         if (newStatus === "sent") {
+            // 1) Intentar leer WO_QTY de input y, si no, del td
+            const $inp = row.find(".wo-qty-input");
+
+            // 2) Normalizar a número (tolerando comas, espacios, etc.)
+            const toNumber = (v) => {
+                if (v === undefined || v === null) return null;
+                const n = Number(String(v).replace(/[^\d.-]/g, ""));
+                return Number.isFinite(n) ? n : null;
+            };
+            // Prioridad: input -> td
+            const woQtyNum = toNumber(rawFromInput ?? rawFromTd);
+            // 4) Validar
+            if (!Number.isFinite(woQtyNum) || woQtyNum <= 0) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "WO_QTY required",
+                    text: "Before selecting as 'sent', you must capture a valid value in WO_QTY.",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    // Revertir select
+                    select.val(oldStatus).trigger("change");
+                    // Tip: enfocar el input para que el usuario lo capture
+                    if ($inp.length) $inp.focus().select();
+                });
+                return; // 🚫 no continuar
+            }
+            // 5) Confirmar envío
             Swal.fire({
                 title: "¿Are you sure?",
-                text: `Changing the status to '${newStatus}' .It will be moved to 'Completed Orders'.`,
+                text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, Completed",
@@ -929,7 +956,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (result.isConfirmed) {
                     enviarCambioStatus();
                 } else {
-                    select.val(oldStatus).trigger("change"); // Revertir
+                    select.val(oldStatus).trigger("change");
                 }
             });
             return;
@@ -1278,7 +1305,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const row = btn.closest("tr");
 
         // 👇   usa data-id en el <tr data-id="123"> y deja este fallback a la col 0
-       const originalId = row.data("orderId");
+        const originalId = row.data("orderId");
 
         // Obtener próximo ID antes de hacer cualquier cosa
         fetch("/orders/next-id")
