@@ -917,14 +917,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Confirmación si nuevo estado es 'sent'
         if (newStatus === "sent") {
-
-            // 2) Intentar leer WO_QTY de input y, si no, del td
+            // 1) Intentar leer WO_QTY de input y, si no, del td
             const $inp = row.find(".wo-qty-input");
-            const $td = row.find("td.wo-qty"); // úsalo solo si realmente existe en tu Blade
-            const rawFromInput = $inp.length ? $inp.val() : null;
-            const rawFromTd = $td.length ? $td.text().trim() : null;
 
-            // 3) Normalizar a número (tolerando comas, espacios, etc.)
+            // 2) Normalizar a número (tolerando comas, espacios, etc.)
             const toNumber = (v) => {
                 if (v === undefined || v === null) return null;
                 const n = Number(String(v).replace(/[^\d.-]/g, ""));
@@ -932,9 +928,9 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             // Prioridad: input -> td
-            const woQtyNum = toNumber(rawFromInput ?? rawFromTd);
+            const woQtyNum = toNumber($inp.length ? $inp.val() : null);
 
-            // 4) Validar
+            // 3) Validar
             if (!Number.isFinite(woQtyNum) || woQtyNum <= 0) {
                 Swal.fire({
                     icon: "warning",
@@ -950,7 +946,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return; // 🚫 no continuar
             }
 
-            // 5) Confirmar envío
+            // 4) Confirmar envío
             Swal.fire({
                 title: "¿Are you sure?",
                 text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
