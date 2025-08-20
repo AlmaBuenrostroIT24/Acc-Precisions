@@ -43,13 +43,64 @@
         <div class="card mb-4">
             <div class="card-body">
                 {{-- Filtros dinámicos --}}
-                <div class="row mb-4">
-                    <!-- Formulario de carga -->
+                {{-- Tabla --}}
+                <div class="table-responsive">
+                    <table class="table  table-bordered table-striped" style="table-layout: fixed; width: 100%;">
+                        <thead class="table-light thead-custom">
+                            <tr>
+                                <th style="width: 40px;">DATE</th>
+                                <th style="width: 50px;">LOCATION</th>
+                                <th style="width: 40px;">WORD ID</th>
+                                <th style="width: 50px;">PN</th>
+                                <th style="width: 90px;">DESCRIPTION</th>
+                                <th style="width: 40px;">QTY CHECK</th>
+                                <th style="width: 40px;">WO QTY</th>
+                                <th style="width: 40px;">SAMPLING</th>
+                                <th style="width: 40px;">OPERATIONS</th>
+                                <th style="width: 20px;">FAI</th>
+                                <th style="width: 20px;">IPI</th>
 
-           
+                                <th style="width: 50px;">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($orderscompleted as $o)
+                            <tr id="row-{{ $o->id }}">
+                                {{-- No traes fecha aún: deja en blanco o usa updated_at si lo agregas al select --}}
+                                <td>-</td>
+                                <td>{{ ucfirst($o->location) }}</td>
+                                <td>{{ $o->work_id }}</td>
+                                <td>{{ $o->PN }}</td>
+                                <td>{{ \Illuminate\Support\Str::before($o->Part_description, ',') }}</td>
+                                <td></td>
+                                <td>{{ $o->wo_qty }}</td>
+                                <td>{{ $o->sampling }}</td>
+                                <td>{{ $o->operation }}</td>
+                                <td>{{ $o->total_fai }}</td>
+                                <td>{{ $o->total_ipi }}</td>
+
+
+
+                                <td class="text-nowrap">
+                                    <a href="#"
+                                        class="btn btn-sm btn-primary btn-open-pdf"
+                                        data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="9" class="text-center">No hay registros completados.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
+                            <i class="fas fa-plus"></i> New Order
+                        </button> -->
 
-           
             </div>
         </div>
     </div>
@@ -57,7 +108,23 @@
 
 
 <!--  {{-- Tab: By End Schedule --}}-->
-
+<div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl" style="max-width: 95%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    PDF Preview
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" style="height:80vh;">
+                <iframe id="pdfViewer" src="" width="100%" height="100%" style="border:0;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 
@@ -71,6 +138,15 @@
 
 @push('js')
 <script>
+  $(document).on('click', '.btn-open-pdf', function (e) {
+    e.preventDefault();
+    const url = $(this).data('pdf-url');
+    $('#pdfViewer').attr('src', url + '#toolbar=1&zoom=page-width');
+    $('#pdfModal').modal('show');
+  });
 
+  $('#pdfModal').on('hidden.bs.modal', function () {
+    $('#pdfViewer').attr('src', '');
+  });
 </script>
 @endpush

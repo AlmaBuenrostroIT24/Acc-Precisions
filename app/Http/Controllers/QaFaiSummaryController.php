@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\QaSamplingPlan;
 use Illuminate\Support\Facades\DB; // si no tienes modelo Status
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use PDF;
 
 class QaFaiSummaryController extends Controller
 {
@@ -17,47 +19,53 @@ class QaFaiSummaryController extends Controller
                                             Todo el tab relacionado a parts revision
     ============================================================================================================================*/
     // Mostrar listado de registros
-// Mostrar listado de registros
-public function partsrevision()
-{
-    $user = auth()->user();
+    // Mostrar listado de registros
+    public function partsrevision()
+    {
+        $user = auth()->user();
 
-    $select = [
-        'id', 'work_id', 'PN', 'Part_description', 'operation',
-        'wo_qty', 'location', 'status_inspection'
-    ];
+        $select = [
+            'id',
+            'work_id',
+            'PN',
+            'Part_description',
+            'operation',
+            'wo_qty',
+            'location',
+            'status_inspection'
+        ];
 
-    $base = \App\Models\OrderSchedule::query()
-        ->select($select)
-        ->where('status', '<>', 'sent')
-        ->where(function ($q) {
-            $q->where(function ($x) {
-                $x->where('was_work_id_null', 0)->whereNotNull('co');
-            })->orWhere(function ($x) {
-                $x->where('was_work_id_null', 1)->whereNull('co');
-            });
-        })
-        // Filtro por ubicación según rol (Admin no filtra)
-        ->when($user && $user->hasRole('QAdmin'), fn ($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-        ->when($user && $user->hasRole('QA'),     fn ($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
+        $base = \App\Models\OrderSchedule::query()
+            ->select($select)
+            ->where('status', '<>', 'sent')
+            ->where(function ($q) {
+                $q->where(function ($x) {
+                    $x->where('was_work_id_null', 0)->whereNotNull('co');
+                })->orWhere(function ($x) {
+                    $x->where('was_work_id_null', 1)->whereNull('co');
+                });
+            })
+            // Filtro por ubicación según rol (Admin no filtra)
+            ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
+            ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
 
-    // Pendientes: null o 'pending'
-    $ordersempty = (clone $base)
-        ->where(function ($q) {
-            $q->whereNull('status_inspection')
-              ->orWhere('status_inspection', 'pending');
-        })
-        ->orderByDesc('id')
-        ->get();
+        // Pendientes: null o 'pending'
+        $ordersempty = (clone $base)
+            ->where(function ($q) {
+                $q->whereNull('status_inspection')
+                    ->orWhere('status_inspection', 'pending');
+            })
+            ->orderByDesc('id')
+            ->get();
 
-    // En proceso
-    $ordersprocess = (clone $base)
-        ->where('status_inspection', 'in_progress')
-        ->orderByDesc('id')
-        ->get();
+        // En proceso
+        $ordersprocess = (clone $base)
+            ->where('status_inspection', 'in_progress')
+            ->orderByDesc('id')
+            ->get();
 
-    return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
-}
+        return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
+    }
 
 
 
@@ -250,13 +258,97 @@ public function partsrevision()
         return view('qa.faisummary.faisummary_summary', compact('inspections'));
     }
 
-    // Mostrar listado de registros
+    //===========================================================================================================================
+    /*===========================================================================================================================
+         Todo el tab relacionado a faicompleted Y GENERACION DE PDF
+    ============================================================================================================================*/
     public function faicompleted()
     {
+        $select = [
+            'id',
+            'work_id',
+            'PN',
+            'Part_description',
+            'operation',
+            'wo_qty',
+            'location',
+            'status_inspection',
+            'total_fai',
+            'total_ipi',
+            'sampling'
+        ];
 
+        $orderscompleted = \App\Models\OrderSchedule::query()
+            ->select($select)
+            ->where(function ($q) {
+                $q->where(function ($x) {
+                    $x->where('was_work_id_null', 0)->whereNotNull('co');
+                })->orWhere(function ($x) {
+                    $x->where('was_work_id_null', 1)->whereNull('co');
+                });
+            })
+            ->where('status_inspection', 'completed') // 👈 Único filtro importante
+            ->orderByDesc('id')
+            ->get();
 
-        return view('qa.faisummary.faisummary_completed');
+        return view('qa.faisummary.faisummary_completed', compact('orderscompleted'));
     }
+
+    public function pdf(OrderSchedule $order)
+    {
+        // Datos base del encabezado
+        $header = [
+            'work_id'          => $order->work_id,
+            'pn'               => $order->PN,
+            'description'      => Str::before($order->Part_description, ','),
+            'location'         => ucfirst($order->location),
+            'co'               => $order->co ?? '',        // si existe
+            'cust_po'               => $order->cust_po ?? '',        // si existe
+            'qty'           => $order->qty ?? 0,
+            'wo_qty'           => $order->wo_qty ?? 0,
+            'due_date'          => $order->due_date,
+            'operations'       => (int)($order->operation === 'default_value' ? 0 : ($order->operation ?? 0)),
+            'sampling'         => (int)($order->sampling ?? 0),
+            'total_fai'        => (int)($order->total_fai ?? 0),
+            'total_ipi'        => (int)($order->total_ipi ?? 0),
+            'status_inspection' => $order->status_inspection,
+        ];
+
+        // Trae TODAS las filas tal cual se capturaron
+        $rows = QaFaiSummary::where('order_schedule_id', $order->id)
+            ->orderBy('date')          // primero por fecha
+            ->orderBy('insp_type')     // luego tipo
+            ->orderBy('operation')     // y operación
+            ->get([
+                'date',
+                'insp_type',
+                'operation',
+                'operator',
+                'results',
+                'sb_is',
+                'observation',
+                'station',
+                'method',
+                'inspector'
+            ]);
+        $pdf = PDF::loadView('qa.faisummary.faisummary_pdf', [
+            'order'  => $order,
+            'header' => $header,
+            'rows'   => $rows,
+        ])->setPaper('letter', 'landscape');
+
+        $filename = "FAI_" . str_replace(['/', '\\'], '-', (string)$order->work_id) . ".pdf";
+        return $pdf->stream($filename, ['Attachment' => false]); // inline
+        // Si prefieres descarga directa: return $pdf->download("FAI_{$order->work_id}.pdf");
+    }
+
+
+    //===========================================================================================================================
+
+    /*===========================================================================================================================
+         Todo el tab relacionado a faistatistics Y ESTADISTICAS DE LAS INSPECCIONES
+    ============================================================================================================================*/
+
 
     // Mostrar listado de registros
     public function faistatistics()

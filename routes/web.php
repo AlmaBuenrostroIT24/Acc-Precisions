@@ -146,6 +146,7 @@ Route::put('/orders-schedule/{order}/status-inspection', [QaFaiSummaryController
 
 Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderStation']);
 Route::get('/operators/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderOperator']);
+Route::get('/qa/faisummary/{order}/pdf', [QaFaiSummaryController::class, 'pdf'])->name('qa.faisummary.pdf');
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
