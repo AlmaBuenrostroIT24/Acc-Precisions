@@ -120,7 +120,7 @@
                 </button>
             </div>
             <div class="modal-body p-0" style="height:80vh;">
-                <iframe id="pdfViewer" src="" width="100%" height="100%" style="border:0;"></iframe>
+                <embed id="pdfEmbed" src="" type="application/pdf" width="100%" height="100%">
             </div>
         </div>
     </div>
@@ -138,15 +138,14 @@
 
 @push('js')
 <script>
-  $(document).on('click', '.btn-open-pdf', function (e) {
-    e.preventDefault();
-    const url = $(this).data('pdf-url');
-    $('#pdfViewer').attr('src', url + '#toolbar=1&zoom=page-width');
-    $('#pdfModal').modal('show');
-  });
-
-  $('#pdfModal').on('hidden.bs.modal', function () {
-    $('#pdfViewer').attr('src', '');
-  });
+    $(document).on('click', '.btn-open-pdf', function(e) {
+        e.preventDefault();
+        const url = $(this).data('pdf-url'); // ← usa la URL del botón
+        $('#pdfEmbed').attr('src', url + '#zoom=page-width');
+        $('#pdfModal').modal('show');
+    });
+    $('#pdfModal').on('hidden.bs.modal', function() {
+        $('#pdfEmbed').attr('src', '');
+    });
 </script>
 @endpush

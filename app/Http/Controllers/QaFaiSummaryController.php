@@ -294,31 +294,32 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.faisummary_completed', compact('orderscompleted'));
     }
 
+
+
     public function pdf(OrderSchedule $order)
     {
-        // Datos base del encabezado
         $header = [
-            'work_id'          => $order->work_id,
-            'pn'               => $order->PN,
-            'description'      => Str::before($order->Part_description, ','),
-            'location'         => ucfirst($order->location),
-            'co'               => $order->co ?? '',        // si existe
-            'cust_po'               => $order->cust_po ?? '',        // si existe
-            'qty'           => $order->qty ?? 0,
-            'wo_qty'           => $order->wo_qty ?? 0,
+            'work_id'           => $order->work_id,
+            'pn'                => $order->PN,
+            'description'       => $order->Part_description,
+            'location'          => ucfirst($order->location ?? ''),
+            'co'                => $order->co ?? '',
+            'cust_po'           => $order->cust_po ?? '',
+            'costumer'          => $order->costumer ?? '',
+            'qty'               => $order->qty ?? 0,
+            'wo_qty'            => $order->wo_qty ?? 0,
             'due_date'          => $order->due_date,
-            'operations'       => (int)($order->operation === 'default_value' ? 0 : ($order->operation ?? 0)),
-            'sampling'         => (int)($order->sampling ?? 0),
-            'total_fai'        => (int)($order->total_fai ?? 0),
-            'total_ipi'        => (int)($order->total_ipi ?? 0),
+            'operation'         => (int)($order->operation === 'default_value' ? 0 : ($order->operation ?? 0)),
+            'sampling'          => (int)($order->sampling ?? 0),
+            'total_fai'         => (int)($order->total_fai ?? 0),
+            'total_ipi'         => (int)($order->total_ipi ?? 0),
             'status_inspection' => $order->status_inspection,
         ];
 
-        // Trae TODAS las filas tal cual se capturaron
         $rows = QaFaiSummary::where('order_schedule_id', $order->id)
-            ->orderBy('date')          // primero por fecha
-            ->orderBy('insp_type')     // luego tipo
-            ->orderBy('operation')     // y operación
+            ->orderBy('date')
+            ->orderBy('insp_type')
+            ->orderBy('operation')
             ->get([
                 'date',
                 'insp_type',
@@ -331,16 +332,52 @@ class QaFaiSummaryController extends Controller
                 'method',
                 'inspector'
             ]);
+
+        Log::debug('Datos de QA FAI Summary:', $rows->toArray());
+
+        $generatedAt = now('America/Los_Angeles');
+
+        // 1) Crea el PDF
         $pdf = PDF::loadView('qa.faisummary.faisummary_pdf', [
-            'order'  => $order,
-            'header' => $header,
-            'rows'   => $rows,
+            'order'       => $order,
+            'header'      => $header,
+            'rows'        => $rows,
+            'generatedAt' => $generatedAt,
         ])->setPaper('letter', 'landscape');
 
-        $filename = "FAI_" . str_replace(['/', '\\'], '-', (string)$order->work_id) . ".pdf";
-        return $pdf->stream($filename, ['Attachment' => false]); // inline
-        // Si prefieres descarga directa: return $pdf->download("FAI_{$order->work_id}.pdf");
+        // 2) Obtén Dompdf y RENDER explícitamente (clave)
+        $dompdf = $pdf->getDomPDF();
+        $dompdf->render(); // <-- importante: inicializa canvas y páginas
+
+        // 3) Ahora SÍ: dibuja los folios con page_text en el canvas
+        $canvas      = $dompdf->getCanvas();
+        $fontMetrics = $dompdf->getFontMetrics();
+
+        Log::debug('PDF canvas size', ['w' => $canvas->get_width(), 'h' => $canvas->get_height()]);
+
+        $font = $fontMetrics->get_font('DejaVu Sans', 'normal'); // o 'helvetica'
+        $size = 10;
+
+        // Texto de prueba ARRIBA-IZQ para confirmar que pinta
+        //$canvas->page_text(12, 24, 'TEST TOP {PAGE_NUM}/{PAGE_COUNT}', $font, $size, [255, 0, 0]); // rojo
+
+        // Folio centrado abajo
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+        $text = 'Page {PAGE_NUM} of {PAGE_COUNT}';
+        $textWidth = $fontMetrics->get_text_width($text, $font, $size);
+
+        $textWidth = $fontMetrics->get_text_width($text, $font, $size);
+        $x = $w-70  ; // 20 pts desde el borde derecho
+        $y = 5;                   // 20 pts desde arriba
+
+        $canvas->page_text($x, $y, $text, $font, $size, [0, 0, 0]);
+
+        // 4) Envía el PDF (usa dompdf->stream para evitar re-render)
+        $filename = 'FAI_' . str_replace(['/', '\\'], '-', (string)$order->work_id) . '.pdf';
+        return $dompdf->stream($filename, ['Attachment' => false]); // inline
     }
+
 
 
     //===========================================================================================================================
