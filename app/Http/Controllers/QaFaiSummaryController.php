@@ -366,8 +366,6 @@ class QaFaiSummaryController extends Controller
         $h = $canvas->get_height();
         $text = 'Page {PAGE_NUM} of {PAGE_COUNT}';
         $textWidth = $fontMetrics->get_text_width($text, $font, $size);
-
-        $textWidth = $fontMetrics->get_text_width($text, $font, $size);
         $x = $w-70  ; // 20 pts desde el borde derecho
         $y = 5;                   // 20 pts desde arriba
 
