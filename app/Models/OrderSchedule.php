@@ -53,7 +53,9 @@ class OrderSchedule extends Model
         'total_fai',
         'total_ipi',
         'sampling',
-        'status_inspection'
+        'status_inspection',
+        'sampling_check',
+        'inspection_endate'
     ];
 
     // Casts para manejar tipos de datos correctamente

@@ -110,31 +110,46 @@ class QaFaiSummaryController extends Controller
         return response()->json(['data' => $data]);
     }
 
-    public function updateOperation(Request $request, $id)
-    {
-        $request->validate([
-            'operation' => 'required|numeric|min:0', // numérico, al menos 1
-            'sampling'  => 'required|numeric|min:0', // valor de sampling
-        ]);
-        $order = OrderSchedule::findOrFail($id);
-        $operation = (int) $request->operation;
-        $sampling  = (int) $request->sampling;
-        // Cálculos
-        $total_fai = $operation * 1;
-        $total_ipi = $operation * $sampling;
-        // Guardar
-        $order->operation  = $operation;
-        $order->sampling  = $sampling;
-        $order->total_fai  = $total_fai;
-        $order->total_ipi  = $total_ipi;
-        $order->save();
-        return response()->json([
-            'success' => true,
-            'message' => 'Operation and totals updated.',
-            'total_fai' => $total_fai,
-            'total_ipi' => $total_ipi
-        ]);
+   public function updateOperation(Request $request, $id)
+{
+    $request->validate([
+        'operation'      => 'sometimes|numeric|min:0',
+        'sampling'       => 'sometimes|numeric|min:0',
+        'sampling_check' => 'sometimes|string|max:100',
+    ]);
+
+    if (!$request->hasAny(['operation', 'sampling', 'sampling_check'])) {
+        return response()->json(['success' => false, 'message' => 'No fields to update.'], 422);
     }
+
+    $order = OrderSchedule::findOrFail($id);
+
+    if ($request->filled('sampling_check')) {
+        $order->sampling_check = $request->input('sampling_check');
+    }
+    if ($request->has('sampling')) { // permite 0 si así lo devuelve tu plan
+        $order->sampling = (int) $request->input('sampling', 0);
+    }
+
+    // (Opcional) Recalcular totales si quieres que IPI dependa del nuevo sampling:
+    if ($request->filled('sampling')) {
+        $order->total_fai = (int)($order->operation ?? 0) * 1;
+        $order->total_ipi = (int)($order->operation ?? 0) * (int)$order->sampling;
+    }
+
+    $order->save();
+
+    return response()->json([
+        'success'        => true,
+        'sampling'       => $order->sampling,
+        'sampling_check' => $order->sampling_check,
+        'operation'      => $order->operation,
+        'total_fai'      => $order->total_fai,
+        'total_ipi'      => $order->total_ipi,
+    ]);
+}
+
+
 
     public function storeSingle(Request $request)
     {

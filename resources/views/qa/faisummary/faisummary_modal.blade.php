@@ -81,14 +81,14 @@
                         <table class="table table-bordered" id="dynamicTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 2%;">DATE</th>
+                                    <th style="width: 1%;">DATE</th>
                                     <th style="width: 7%;">TYPE</th>
-                                    <th style="width: 9%;">OPERATION</th>
+                                    <th style="width: 8%;">OPERATION</th>
                                     <th style="width: 9%;">OPERATOR</th>
-                                    <th style="width: 8%;">RESULTS</th>
+                                    <th style="width: 7%;">RESULTS</th>
                                     <th style="width: 11%;">SB/IS</th>
                                     <th style="width: 20%;">OBSERVATION</th>
-                                    <th style="width: 5%;">STATION</th>
+                                    <th style="width: 8%;">STATION</th>
                                     <th style="width: 10%;">METHOD</th>
                                     <th style="width: 7%;">QTY INSP</th>
                                     <th style="width: 10%;">ACTIONS</th>
