@@ -26,118 +26,56 @@
 {{-- Tabs --}}
 @include('qa.faisummary.faisummary_tab')
 
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-body">
-                <table id="ordersTableEmpty" class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>PART/DESCRIPCION</th>
-                            <th>JOB</th>
-                            <th>Acciones</th> {{-- Nueva columna --}}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($ordersempty as $order)
-                        <tr>
-                            <td>{{ $order->PN }} - {{ Str::before($order->Part_description, ',') }}</td>
-                            <td>{{ $order->work_id }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal"
-                                    data-id="{{ $order->id }}"
-                                    data-pn="{{ $order->PN }}"
-                                    data-description="{{ $order->Part_description }}"
-                                    data-workid="{{ $order->work_id }}"
-                                    data-woqty="{{ $order->wo_qty }}"
-                                    data-operation="{{ $order->operation ?? '' }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
-                            <i class="fas fa-plus"></i> New Order
-                        </button> -->
-
-                <!-- Modal de edición -->
-
-
-
-            </div>
-        </div>
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Parts in Inspection</h5>
     </div>
-
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-body">
-                <table id="ordersTableProcess" class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>PART/DESCRIPCION</th>
-                            <th>JOB</th>
-                            <th>Progress</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($ordersprocess as $order)
-                        <tr>
-                            <td>{{ $order->PN }} - {{ Str::before($order->Part_description, ',') }}</td>
-                            <td>{{ $order->work_id }}</td>
-
-                            {{-- Placeholder progreso (JS lo llenará) --}}
-                            <td>
-                                <div class="progress" data-order-id="{{ $order->id }}" style="height: 18px;">
-                                    <div class="progress-bar bg-secondary" role="progressbar"
-                                        style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                        0%
-                                    </div>
-                                </div>
-                                <small class="text-muted d-block">
-                                    <span class="badge bg-light text-dark me-1">FAI + IPI</span>
-                                </small>
-                            </td>
-
-                            <td>
-                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal"
-                                    data-id="{{ $order->id }}"
-                                    data-pn="{{ $order->PN }}"
-                                    data-description="{{ $order->Part_description }}"
-                                    data-workid="{{ $order->work_id }}"
-                                    data-woqty="{{ $order->wo_qty }}"
-                                    data-operation="{{ $order->operation ?? '' }}"> {{-- aquí guardas el # de ops --}}
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-
-                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
-                            <i class="fas fa-plus"></i> New Order
-                        </button> -->
-
-                <!-- Modal de edición -->
-
-
-
+    <div class="card-body">
+        <div class="row">
+            <!-- Columna izquierda: primer filtro + botón + gráfica -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">Pendientes</div>
+                    <div class="card-body">
+                        <table id="ordersTableEmpty" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>PART/DESCRIPCIÓN</th>
+                                    <th>JOB</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Columna derecha: segundo filtro + botón + gráfica -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">En proceso</div>
+                    <div class="card-body">
+                        <table id="ordersTableProcess" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>PART/DESCRIPCIÓN</th>
+                                    <th>JOB</th>
+                                    <th>Progress</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+
+
 @include('qa.faisummary.faisummary_modal')
 
 <!--  {{-- Tab: By End Schedule --}}-->
-
-
-
 
 @endsection
 
@@ -148,858 +86,1028 @@
 
 
 @push('js')
+<script src="{{ asset('vendor/js/faisummary-ui.js') }}"></script>
 <script>
-    // ================== FAI Summary UI Script (globals + modal activo) ==================
+(() => {
+  // ================== Config & Utils ==================
+  const ROUTES = {
+    partsData: "{{ route('faisummary.partsrevision.data') }}", // GET ?bucket=empty|process
+    samplingPlan: (lot, type = 'Normal') => `/sampling-plan?lot_size=${lot}&sampling_type=${encodeURIComponent(type)}`,
+    faibyOrder: id => `/qa/faisummary/by-order/${id}`, // GET
+    validateOps: (id, ops) => `/orders-schedule/${id}/validate-ops?ops=${encodeURIComponent(ops)}`,
+    updateOps: id => `/orders-schedule/${id}/update-operation`, // POST
+    statusInspection: id => `/orders-schedule/${id}/status-inspection`, // PUT
+    storeSingle: `/qa/faisummary/store-single`, // POST
+    deleteRow: id => `/qa/faisummary/delete/${id}`, // DELETE
+    stationsByOrder: id => `/stations/by-order/${id}`, // GET
+    operatorsByOrder: id => `/operators/by-order/${id}` // GET
+  };
 
-    // Globals re-asignables por cada modal abierto
-    let $rowsContainer; // tbody del modal actual
-    let $samplingResult; // #edit-sampling-result del modal actual
-    let $operationInput; // #operationInput del modal actual
-    let $reportPre; // #inspection-missing del modal actual
-    let $reportBox; // #inspection-missing-container del modal actual
+  const COLLATOR = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
 
-    let faiDoneOps = new Set();
-    let ipiCountMap = new Map();
+  const getCsrf = () =>
+    $('input[name="_token"]').val() ||
+    $('meta[name="csrf-token"]').attr('content') ||
+    '';
 
-    $(document).ready(function() {
-        // ---------------- DataTables ----------------
-        const dtOptions = {
-            responsive: true,
-            deferRender: true,
-            stateSave: true,
-            lengthMenu: [5, 10, 25, 50, 100],
-            pageLength: 10,
-            order: [
-                [0, 'asc']
-            ]
-        };
-        ['#ordersTableEmpty', '#ordersTableProcess'].forEach(sel => {
-            const $t = $(sel);
-            if ($.fn.DataTable.isDataTable($t)) {
-                $t.DataTable().columns.adjust().responsive.recalc();
-            } else {
-                $t.DataTable(dtOptions);
-            }
-        });
+  const swalOk = (title = '¡Guardado!', text = 'Operación realizada') =>
+    Swal.fire({ icon: 'success', title, text, timer: 1300, showConfirmButton: false });
 
-        // ---------------- Abrir modal ----------------
-        $('#editModal').on('show.bs.modal', function(event) {
-            const $modal = $(this);
-            const button = $(event.relatedTarget);
-            const id = button.data('id');
-            const operation = button.data('operation') === 'default_value' ? '' : (button.data('operation') || '');
+  const swalError = (title = 'Error', text = 'Ocurrió un error') =>
+    Swal.fire({ icon: 'error', title, text });
 
-            // 🔗 Re-enlazar globals al DOM del modal activo
-            $rowsContainer = $modal.find('#dynamicTable tbody');
-            $samplingResult = $modal.find('#edit-sampling-result');
-            $operationInput = $modal.find('#operationInput');
-            $reportPre = $modal.find('#inspection-missing');
-            $reportBox = $modal.find('#inspection-missing-container');
+  const swalWarn = (title = 'Atención', text = 'Revisa los campos') =>
+    Swal.fire({ icon: 'warning', title, text });
 
-            // Campos base
-            $modal.find('#edit-id, #order-id').val(id);
-            $modal.find('#edit-workid').val(button.data('workid'));
-            $modal.find('#edit-woqty').val(button.data('woqty'));
-            $operationInput.val(operation);
+  const debounce = (fn, ms = 150) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
-            const pn = button.data('pn');
-            const description = button.data('description') || '';
-            $modal.find('#edit-fullpart').val(`${pn} - ${description.split(',')[0]}`);
+  // ================== Estado de módulo ==================
+  const ctx = {
+    // DataTables
+    dtEmpty: null,
+    dtProcess: null,
+    // cache sampling por order (tabla)
+    tableSamplingCache: new Map(), // orderId -> sample_qty
 
-            // 1) Limpiar y crear fila borrador ARRIBA
-            $rowsContainer.empty();
-            /*Crear fila en automaticamente
-             const draftRow = createRow();
-             if (draftRow) $rowsContainer.prepend(draftRow);*/
+    // Modal “activo”
+    modal: {
+      $rowsContainer: null,
+      $samplingResult: null,
+      $operationInput: null,
+      $reportPre: null,
+      $reportBox: null
+    },
 
-            // 2) Cargar filas guardadas DEBAJO (sin limpiar otra vez)
-            loadFaiRows(id, function() {
-                updateInspectionMissing(); // al terminar de cargar
+    // Contadores dentro del modal
+    faiDoneOps: new Set(),      // operaciones con FAI OK
+    ipiCountMap: new Map()      // op -> suma qty_pcs (IPI)
+  };
+
+  // ================== DataTables ==================
+  const COLUMNS = {
+    process: [
+      { data: 'part' },
+      { data: 'work_id' },
+      {
+        data: null, orderable: false, searchable: false,
+        render: (data, type, row) => `
+          <div class="progress" data-order-id="${row.id}" style="height:18px;">
+            <div class="progress-bar bg-secondary" role="progressbar"
+                 style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+          </div>
+          <small class="text-muted d-block">
+            <span class="badge bg-light text-dark me-1">FAI + IPI</span>
+          </small>`
+      },
+      { data: 'actions', orderable: false, searchable: false }
+    ],
+    empty: [
+      { data: 'part' },
+      { data: 'work_id' },
+      { data: 'actions', orderable: false, searchable: false }
+    ]
+  };
+
+  function makeDT(bucket) {
+    return {
+      responsive: true,
+      deferRender: true,
+      stateSave: true,
+      lengthMenu: [5, 10, 25, 50, 100],
+      pageLength: 10,
+      order: [[1, 'desc']],
+      ajax: { url: ROUTES.partsData, data: { bucket }, dataSrc: 'data' },
+      columns: COLUMNS[bucket],
+      rowId: 'id',
+      drawCallback: function() {
+        if (bucket !== 'process') return;
+        const api = this.api();
+        api.rows({ page: 'current' }).every(function() {
+          const row = this.data();
+          const orderId = row?.id;
+          const ops = parseInt(row?.ops) || 0;
+          const lotSize = parseInt(row?.wo_qty) || 0;
+          if (!orderId || !ops || !lotSize) return;
+
+          const useProgress = (ipiReq) => refreshProgress(orderId, ops, ipiReq);
+
+          if (ctx.tableSamplingCache.has(orderId)) {
+            useProgress(ctx.tableSamplingCache.get(orderId));
+          } else {
+            $.getJSON(ROUTES.samplingPlan(lotSize, 'Normal')).done(resp => {
+              const ipiReq = (resp && resp.sample_qty !== undefined) ? resp.sample_qty : 0;
+              ctx.tableSamplingCache.set(orderId, ipiReq);
+              useProgress(ipiReq);
             });
-
-            // 3) Recalcular sampling + progreso + reporte
-            updateSamplingQty();
-            updateInspectionMissing();
-
-            const opsNow = parseInt($operationInput.val()) || 0;
-            const ipiNow = parseInt($samplingResult.val()) || 0;
-            refreshProgress(id, opsNow, ipiNow);
+          }
         });
+      }
+    };
+  }
 
-        // ---------------- Eventos (globales, usan las globals re-enlazadas) ----------------
+  // ================== Modal: show/hidden ==================
+  $('#editModal').on('show.bs.modal', function(event) {
+    const $modal = $(this);
+    const button = $(event.relatedTarget);
 
-        // Cambios en sampling (tipo/cantidad)
-        $('#edit-sampling-type, #edit-woqty').on('change input', function() {
-            updateSamplingQty();
+    // Re-enlazar referencias del modal activo
+    ctx.modal.$rowsContainer  = $modal.find('#dynamicTable tbody');
+    ctx.modal.$samplingResult = $modal.find('#edit-sampling-result');
+    ctx.modal.$operationInput = $modal.find('#operationInput');
+    ctx.modal.$reportPre      = $modal.find('#inspection-missing');
+    ctx.modal.$reportBox      = $modal.find('#inspection-missing-container');
+
+    // Campos base
+    const id   = button.data('id');
+    const opIn = (button.data('operation') === 'default_value') ? '' : (button.data('operation') || '');
+    $modal.find('#edit-id, #order-id').val(id);
+    $modal.find('#edit-workid').val(button.data('workid'));
+    $modal.find('#edit-woqty').val(button.data('woqty'));
+    ctx.modal.$operationInput.val(opIn);
+
+    const pn   = button.data('pn');
+    const desc = button.data('description') || '';
+    $modal.find('#edit-fullpart').val(`${pn} - ${desc.split(',')[0]}`);
+
+    // Limpiar tbody
+    ctx.modal.$rowsContainer.empty();
+
+    // Cargar filas guardadas + armar reporte y progreso
+    const orderId = id;
+    loadFaiRows(orderId, () => { updateInspectionMissing(); });
+
+    updateSamplingQty();
+    updateInspectionMissing();
+
+    const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
+    const ipiNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    // Habilitar / deshabilitar Agregar fila
+    $('#addRowBtn').prop('disabled', opsNow === 0);
+    refreshProgress(orderId, opsNow, ipiNow);
+  });
+
+  $('#editModal').on('hidden.bs.modal', function() {
+    if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
+    if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
+
+    // liberar referencias del modal
+    ctx.modal.$rowsContainer  = null;
+    ctx.modal.$samplingResult = null;
+    ctx.modal.$operationInput = null;
+    ctx.modal.$reportPre      = null;
+    ctx.modal.$reportBox      = null;
+    ctx.faiDoneOps.clear();
+    ctx.ipiCountMap.clear();
+  });
+
+  // ================== Inicialización DTs ==================
+  $(document).ready(() => {
+    ctx.dtEmpty   = $('#ordersTableEmpty').DataTable(makeDT('empty'));
+    ctx.dtProcess = $('#ordersTableProcess').DataTable(makeDT('process'));
+  });
+
+  // ================== Eventos del modal ==================
+  // Cambios en sampling (tipo/cantidad)
+  $('#editModal').on('change input', '#edit-sampling-type, #edit-woqty', () => {
+    updateSamplingQty();
+  });
+
+  // Guardar # de operaciones
+  $('#editModal').on('click', '#addOperationBtn', function() {
+    const orderId  = $('#order-id').val();
+    const operation = parseInt(ctx.modal.$operationInput.val().trim()) || 0;
+    const sampling  = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    const total_fai = operation * 1;
+    const total_ipi = operation * sampling;
+
+    $.post(ROUTES.updateOps(orderId), {
+      _token: getCsrf(),
+      operation, sampling, total_fai, total_ipi
+    })
+    .done(() => {
+      $('#addRowBtn').prop('disabled', operation === 0);
+
+      setInspectionStatus(orderId, 'in_progress')
+        .always(() => {
+          ctx.modal.$operationInput.val(operation);
+          $(`button[data-id="${orderId}"]`).attr('data-operation', operation);
+          refreshProgress(orderId, operation, sampling);
+          updateInspectionMissing();
+
+          if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
+          if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
+          swalOk('¡Actualizado!', 'Operación guardada correctamente');
         });
+    })
+    .fail(() => swalError('Error', 'No se pudo actualizar la operación'));
+  });
 
-        // Guardar # de operaciones
-        $('#addOperationBtn').on('click', function() {
-            const operation = parseInt($operationInput.val().trim()) || 0;
-            const orderId = $('#order-id').val();
-            const sampling = parseInt($samplingResult.val()) || 0;
+  // Agregar fila (verifica que la operación esté guardada)
+  $('#editModal').on('click', '#addRowBtn', function() {
+    const orderId = $('#order-id').val();
+    const opsVal  = (ctx.modal.$operationInput.val() || '').trim();
+    if (!opsVal) return swalWarn('Required information', 'Enter the number of operations first');
 
-            const total_fai = operation * 1; // 1 FAI por operación
-            const total_ipi = operation * sampling; // IPI = ops * sampling
+    $.get(ROUTES.validateOps(orderId, opsVal))
+      .done(resp => {
+        if (!resp?.saved) {
+          return swalError('Not saved yet', 'Save the number of operations before adding inspections.');
+        }
+        const row = createDraftRow();
+        if (!row) return;
+        ctx.modal.$rowsContainer.prepend(row);
+        row.find('input,select').filter(':visible:not([disabled])').first().focus();
+      })
+      .fail(() => swalError('Server error', 'Unable to validate operations. Try again later.'));
+  });
 
-            $.post(`/orders-schedule/${orderId}/update-operation`, {
-                _token: $('input[name="_token"]').val(),
-                operation,
-                sampling,
-                total_fai,
-                total_ipi
-            }).done(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Actualizado!',
-                    text: 'Operación y totales guardados correctamente',
-                    timer: 1200,
-                    showConfirmButton: false
-                });
-                $operationInput.val(operation);
-                $(`button[data-id="${orderId}"]`).attr('data-operation', operation);
-                refreshProgress(orderId, operation, sampling);
-                updateInspectionMissing();
-            }).fail(() => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Error al actualizar operación'
-                });
-            });
-        });
+  // Eliminar borrador
+  $('#editModal').on('click', '.removeRowBtn', function() {
+    $(this).closest('tr').remove();
+    updateInspectionMissing();
+  });
 
-        // Agregar fila (validando #ops)
-        $('#addRowBtn').on('click', function() {
-            const opsVal = ($operationInput.val() || '').trim();
-            if (!opsVal) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Required information',
-                    text: 'Please enter the number of operations before adding an inspection.'
-                });
-                return;
-            }
-            const newRow = createRow();
-            if (!newRow) return;
-            $rowsContainer.prepend(newRow);
-            newRow.find('input,select').filter(':visible:not([disabled])').first().focus();
-        });
-
-        // Quitar fila nueva sin guardar
-        $('#dynamicTable').on('click', '.removeRowBtn', function() {
-            $(this).closest('tr').remove();
-            updateInspectionMissing();
-        });
-
-        // Editar fila guardada
-        $(document).on('click', '.editRowBtn', function() {
-            const row = $(this).closest('tr');
-            row.find('input, select').prop('disabled', false);
-            row.find('td:last').html(`
+  // Editar fila guardada
+  $('#editModal').on('click', '.editRowBtn', function() {
+    const $row = $(this).closest('tr');
+    $row.find('input, select').prop('disabled', false);
+    $row.find('td:last').html(`
       <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
       <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
     `);
-        });
 
-        /**==========================GUARDAR FILA (CREATE/UPDATE)============================================= */
-        $(document).on('click', '.saveRowBtn', function() {
-            const row = $(this).closest('tr');
-            const token = $('input[name="_token"]').val();
-            const orderScheduleId = $('#order-id').val();
-            const rowId = row.data('id');
+    // Si es IPI y habilitamos edición, recalcula pendientes de esa fila
+    const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+    if (type === 'IPI') {
+      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
+      const $cell = $row.find('td.col-sample');
+      const cur = $cell.find('select[name="sample_idx[]"]').val() || null;
+      renderSampleCell($cell.empty(), 'IPI', sampling, cur, op);
+    }
+  });
 
-            const data = {
-                _token: token,
-                order_schedule_id: orderScheduleId,
-                date: row.find('input[name="date[]"]').val()?.trim(),
-                insp_type: row.find('select[name="insp_type[]"]').val(),
-                operation: row.find('select[name="operation[]"]').val() || row.find('input[name="operation[]"]').val(),
-                operator: row.find('input[name="operator[]"]').val()?.trim(),
-                results: row.find('select[name="results[]"]').val(),
-                sb_is: row.find('input[name="sb_is[]"]').val()?.trim(),
-                observation: row.find('input[name="observation[]"]').val()?.trim(),
-                station: row.find('input[name="station[]"]').val()?.trim(),
-                method: row.find('select[name="method[]"]').val(),
-                inspector: $('#edit-inspector').val(),
-            };
-            if (rowId) data.id = rowId;
+  // Guardar fila (create/update)
+  $('#editModal').on('click', '.saveRowBtn', function() {
+    const $row = $(this).closest('tr');
+    const orderId = $('#order-id').val();
+    const rowId = $row.data('id');
 
-            $.post('/qa/faisummary/store-single', data).done(function(resp) {
-                if (resp.id) row.attr('data-id', resp.id);
+    const inspType = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
 
-                //===== Bloquea edición y botones=====*/
-                row.find('input, select, .saveRowBtn').prop('disabled', true);
-                updateInspectionMissing();
+    // sample_idx: FAI => 1; IPI => select 1..sampling
+    let sampleIdx = null;
+    if (inspType === 'FAI') {
+      sampleIdx = 1;
+    } else {
+      const $sel = $row.find('select[name="sample_idx[]"]').not('.sample-fixed');
+      const $hid = $row.find('input[name="sample_idx[]"]');
+      sampleIdx = $sel.length ? parseInt($sel.val(), 10) : ($hid.length ? parseInt($hid.val(), 10) : null);
+    }
 
-                /*====== Acciones en la última celda=====*/
-                row.find('td:last').html(`
-         <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
-        <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-        <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-      `);
+    if (inspType === 'IPI') {
+      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      if (!sampling || !sampleIdx || sampleIdx < 1 || sampleIdx > sampling) {
+        return swalWarn('Muestra inválida', `El índice de muestra debe estar entre 1 y ${sampling}.`);
+      }
+    }
 
-                // ---- Calcular progreso con datos frescos y mostrar SOLO un mensaje ----
-                const opsNow = parseInt($operationInput.val()) || 0;
-                const ipiNow = parseInt($samplingResult.val()) || 0;
+    const payload = {
+      _token: getCsrf(),
+      order_schedule_id: orderId,
+      date: $row.find('input[name="date[]"]').val()?.trim(),
+      insp_type: $row.find('select[name="insp_type[]"]').val(),
+      operation: $row.find('select[name="operation[]"]').val() || $row.find('input[name="operation[]"]').val(),
+      operator: $row.find('input[name="operator[]"]').val()?.trim(),
+      results:  $row.find('select[name="results[]"]').val(),
+      sb_is:    $row.find('input[name="sb_is[]"]').val()?.trim(),
+      observation: $row.find('input[name="observation[]"]').val()?.trim(),
+      station:  $row.find('input[name="station[]"]').val()?.trim(),
+      method:   $row.find('select[name="method[]"]').val(),
+      inspector: $('#edit-inspector').val(),
+      qty_pcs:  sampleIdx
+    };
+    if (rowId) payload.id = rowId;
 
-                $.get(`/qa/faisummary/by-order/${orderScheduleId}`, function(rows) {
-                    const pct = computeProgressFromRows(rows, opsNow, ipiNow);
+    $.post(ROUTES.storeSingle, payload)
+      .done(resp => {
+        if (resp?.id) $row.attr('data-id', resp.id);
 
-                    // Actualiza barra usando el mismo cálculo (evita hacer otra petición)
-                    renderOrderProgress(orderScheduleId, pct);
-                    // ✅ COMPLETED: solo botón Aceptar → cambia a completed
-                    if (pct >= 100) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Inspección completada!',
-                            text: `Se cumplieron 1 FAI y ${ipiNow} IPI por cada una de las ${opsNow} operaciones.`,
-                            confirmButtonText: 'Aceptar',
-                            showCancelButton: false,
-                            showCloseButton: false,
-                            allowOutsideClick: false,
-                            allowEscapeKey: false //bloquea cerrar por fuera/ESC.
-                        }).then((result) => {
-                            setInspectionStatus(orderScheduleId, 'completed')
-                                .done(() => {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Orden marcada como completada',
-                                        timer: 1700,
-                                        showConfirmButton: false
-                                    });
-                                    // (Opcional) actualizar UI:
-                                    const $r = $(`#ordersTableProcess button[data-id="${orderScheduleId}"]`).closest('tr');
-                                    $r.find('.status-inspection-badge')
-                                        .text('completed')
-                                        .removeClass('bg-warning bg-secondary')
-                                        .addClass('bg-success');
-                                    $('#editModal').modal('hide');
-                                })
-                                .fail(xhr => {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'No se pudo marcar como completada',
-                                        text: xhr.responseJSON?.message || 'Error inesperado'
-                                    });
-                                });
-                        });
-                    } else {
-                        // ★ PROCESO: si hay al menos UNA fila (FAI o IPI), marcar como 'process'
-                        if (Array.isArray(rows) && rows.length > 0) {
-                            setInspectionStatus(orderScheduleId, 'in_progress')
-                                .fail(xhr => console.warn('No se pudo marcar process:', xhr?.status, xhr?.responseText));
-                        }
+        $row.find('input, select, .saveRowBtn').prop('disabled', true);
+        $row.find('select.sample-fixed').prop('disabled', true);
 
-                        // Mensaje normal de guardado
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Guardado!',
-                            text: 'La fila se ha guardado correctamente',
-                            timer: 1200,
-                            showConfirmButton: false
-                        });
-                    }
-                });
+        updateInspectionMissing();
 
-            }).fail(function(xhr) {
-                const msg = xhr.responseJSON?.error ? 'Error: ' + xhr.responseJSON.error : 'Error al guardar la fila';
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: msg
-                });
-            });
-        });
+        $row.find('td:last').html(`
+          <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
+          <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+        `);
 
-        /** 
-         * Marca la orden como process en cuanto exista al menos una inspección (FAI o IPI) guardada,
-         * y conserva el flujo de completed cuando llegas al 100%.
-         */
-        function setInspectionStatus(orderId, status) {
-            return $.ajax({
-                url: `/orders-schedule/${orderId}/status-inspection`,
-                method: 'PUT',
-                data: {
-                    _token: $('input[name="_token"]').val() || $('meta[name="csrf-token"]').attr('content'),
-                    status_inspection: status
-                }
-            });
-        }
+        const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
+        const ipiNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
-        // Eliminar fila guardada
-        $(document).on('click', '.deleteRowBtn', function() {
-            const row = $(this).closest('tr');
-            const rowId = row.data('id');
+        $.get(ROUTES.faibyOrder(orderId)).done(rows => {
+          const pct = computeProgressFromRows(rows, opsNow, ipiNow);
+          renderOrderProgress(orderId, pct);
 
+          if (pct >= 100) {
             Swal.fire({
-                icon: 'warning',
-                title: '¿Eliminar fila?',
-                text: 'Esta acción no se puede deshacer',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (!result.isConfirmed) return;
-
-                // Si no está guardada
-                if (!rowId) {
-                    row.remove();
-                    updateInspectionMissing();
-                    return;
-                }
-
-                $.ajax({
-                    url: `/qa/faisummary/delete/${rowId}`,
-                    method: 'DELETE',
-                    data: {
-                        _token: $('input[name="_token"]').val()
-                    }
-                }).done(() => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Eliminado',
-                        text: 'La fila ha sido eliminada',
-                        timer: 1200,
-                        showConfirmButton: false
-                    });
-
-                    // Quitar la fila y actualizar reporte
-                    row.remove();
-                    updateInspectionMissing();
-
-                    // ⇩⇩ NUEVO: recalcular y actualizar status
-                    const currentOrderId = $('#order-id').val();
-                    const opsNow = parseInt($operationInput.val()) || 0;
-                    const ipiNow = parseInt($samplingResult.val()) || 0;
-
-                    if (currentOrderId) {
-                        $.get(`/qa/faisummary/by-order/${currentOrderId}`, function(rows) {
-                            const pct = computeProgressFromRows(rows, opsNow, ipiNow);
-                            renderOrderProgress(currentOrderId, pct);
-
-                            const newStatus = (rows.length === 0) ?
-                                'pending' :
-                                (pct >= 100 ? 'completed' : 'in_progress');
-
-                            setInspectionStatus(currentOrderId, newStatus)
-                                .fail(xhr => console.warn('No se pudo actualizar status:', xhr?.status, xhr?.responseText));
-                        });
-                    }
-                    // ⇧⇧ FIN NUEVO
-
-                }).fail(() => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'No se pudo eliminar la fila'
-                    });
-                });
+              icon: 'success',
+              title: '¡Inspección completada!',
+              text: `Se cumplieron 1 FAI y ${ipiNow} IPI por cada una de las ${opsNow} operaciones.`,
+              confirmButtonText: 'Aceptar',
+              allowOutsideClick: false,
+              allowEscapeKey: false
+            }).then(() => {
+              setInspectionStatus(orderId, 'completed')
+                .done(() => {
+                  swalOk('¡Listo!', 'Orden marcada como completada');
+                  $('#editModal').modal('hide');
+                  if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
+                  if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
+                })
+                .fail(xhr => swalError('No se pudo marcar como completada', xhr.responseJSON?.message || 'Error inesperado'));
             });
-        });
-
-
-        // ----------- Progreso inicial (fuera del modal) -----------
-        $('#ordersTableProcess button[data-id]').each(function() {
-            const $btn = $(this);
-            const orderId = $btn.data('id');
-            const operations = parseInt($btn.data('operation')) || 0;
-            const woqty = parseInt($btn.data('woqty')) || 0;
-            if (!orderId || !operations || !woqty) return;
-
-            const samplingType = 'Normal'; // Ajusta si lo manejas por orden
-            $.getJSON(`/sampling-plan?lot_size=${woqty}&sampling_type=${samplingType}`, function(data) {
-                const ipiRequired = (data.sample_qty !== undefined ? data.sample_qty : 0);
-                refreshProgress(orderId, operations, ipiRequired);
-            });
-        });
-    }); // document.ready
-
-    // ================== Funciones (usan las globals re-enlazadas) ==================
-
-    // Cargar filas guardadas (JSON) SIN vaciar el tbody (preserva borrador arriba)
-    function loadFaiRows(orderScheduleId, callback) {
-        $.getJSON(`/qa/faisummary/by-order/${orderScheduleId}`, function(rows) {
-            rows = Array.isArray(rows) ? rows : [];
-
-            // Si el backend no ordena, descomenta:
-            // rows.sort((a,b)=> new Date(b.date) - new Date(a.date) || (b.id||0) - (a.id||0));
-
-            rows.forEach(row => $rowsContainer.append(createRowFromData(row)));
-
-            if (typeof callback === 'function') callback();
-        });
-    }
-
-    // Recalcular sampling y refrescar progreso + reporte
-    function updateSamplingQty() {
-        const lotSize = parseInt($('#edit-woqty').val());
-        const type = $('#edit-sampling-type').val();
-        if (!lotSize || lotSize < 1) return $samplingResult.val('');
-
-        $.getJSON(`/sampling-plan?lot_size=${lotSize}&sampling_type=${type}`, function(data) {
-            const sample = (data.sample_qty !== undefined ? data.sample_qty : 0);
-            $samplingResult.val(sample);
-
-            const currentOrderId = $('#order-id').val();
-            const opsNow = parseInt($operationInput.val()) || 0;
-            if (currentOrderId && opsNow) {
-                refreshProgress(currentOrderId, opsNow, sample);
-                updateInspectionMissing();
+          } else {
+            if (Array.isArray(rows) && rows.length > 0) {
+              setInspectionStatus(orderId, 'in_progress').fail(xhr => console.warn('status process fail:', xhr?.status));
             }
+            swalOk('¡Guardado!', 'La inspección se guardó correctamente');
+            if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
+            if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
+          }
         });
-    }
+      })
+      .fail(xhr => {
+        const msg = xhr.responseJSON?.error ? `Error: ${xhr.responseJSON.error}` : 'Error al guardar la fila';
+        swalError('Error', msg);
+      });
+  });
 
-    // Construye el resumen/report y mapas para selects
-    function updateInspectionMissing() {
-        const sampling = parseInt($samplingResult.val()) || 0;
-        const operations = parseInt($operationInput.val()) || 0;
+  // Eliminar fila guardada
+  $('#editModal').on('click', '.deleteRowBtn', function() {
+    const $row = $(this).closest('tr');
+    const rowId = $row.data('id');
 
-        if (!operations) {
-            $reportPre.text('');
-            $reportBox.removeClass('bg-light bg-success bg-danger text-white');
-            return;
-        }
+    Swal.fire({
+      icon: 'warning',
+      title: '¿Eliminar fila?',
+      text: 'Esta acción no se puede deshacer',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
 
-        const faiMap = new Map(),
-            ipiMap = new Map();
-        faiDoneOps = new Set();
-        ipiCountMap = new Map();
+      // Si es borrador
+      if (!rowId) {
+        $row.remove();
+        updateInspectionMissing();
+        return;
+      }
 
-        // Contar SOLO filas guardadas (evita la fila borrador)
-        $rowsContainer.find('tr[data-id]').each(function() {
-            const $row = $(this);
-            const type = String($row.find('select[name="insp_type[]"]').val() || '').trim().toUpperCase(); // FAI | IPI
-            const operation = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
-            const result = String($row.find('select[name="results[]"]').val() || '').trim().toLowerCase(); // pass | no pass
-            if (!operation) return;
+      $.ajax({
+        url: ROUTES.deleteRow(rowId),
+        method: 'DELETE',
+        data: { _token: getCsrf() }
+      })
+      .done(() => {
+        swalOk('Eliminado', 'La fila ha sido eliminada');
+        $row.remove();
+        updateInspectionMissing();
 
-            if (type === 'FAI' && result === 'pass') {
-                faiMap.set(operation, (faiMap.get(operation) || 0) + 1);
-                faiDoneOps.add(operation);
-            }
-            if (type === 'IPI' && result === 'pass') {
-                ipiMap.set(operation, (ipiMap.get(operation) || 0) + 1);
-                ipiCountMap.set(operation, (ipiCountMap.get(operation) || 0) + 1);
-            }
-        });
-
-        let resumen = '';
-        let hayFaltantes = false;
-
-        for (let i = 1; i <= operations; i++) {
-            const op = ordinalSuffix(i);
-            const faiCount = faiMap.get(op) || 0;
-            const ipiCount = ipiMap.get(op) || 0;
-
-            const faiRequired = 1; // 1 FAI por operación
-            const ipiRequired = sampling; // IPI requeridos por operación
-
-            const faiStatus = (faiCount >= faiRequired) ?
-                `FAI: OK (${faiCount}/${faiRequired})` :
-                `FAI: Need ${faiRequired - faiCount} (${faiCount}/${faiRequired})`;
-
-            const ipiStatus = (ipiCount >= ipiRequired) ?
-                `IPI: OK (${ipiCount}/${ipiRequired})` :
-                `IPI: ❌ Need ${Math.max(ipiRequired - ipiCount, 0)} (${ipiCount}/${ipiRequired})`;
-
-            const linea =
-                (faiCount >= faiRequired && ipiCount >= ipiRequired) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
-                (faiCount < faiRequired && ipiCount < ipiRequired) ? `❌ ${op} → ${faiStatus} | ${ipiStatus}` :
-                `⚠️ ${op} → ${faiStatus} | ${ipiStatus}`;
-
-            resumen += linea + '\n';
-            if (faiCount < faiRequired || ipiCount < ipiRequired) hayFaltantes = true;
-        }
-
-        // Pintar en el REPORT del modal ACTIVO
-        $reportPre.text(resumen.trim());
-        $reportBox.removeClass('bg-light bg-success bg-danger text-white');
-        $reportBox.addClass(hayFaltantes ? 'bg-light text-white' : 'bg-success text-white');
-    }
-
-    // Helpers
-    function addToMapIfPass(map, type, targetType, operation, result) {
-        if (!operation) return;
-        if (type === targetType && result === 'pass') {
-            map.set(operation, (map.get(operation) || 0) + 1);
-        }
-    }
-
-    function ordinalSuffix(n) {
-        if (n === 1) return '1st Op';
-        if (n === 2) return '2nd Op';
-        if (n === 3) return '3rd Op';
-        return `${n}th Op`;
-    }
-
-    // Select de operaciones disponibles según FAI/IPI ya cumplidos
-    function createOperationSelect(count, inspType = 'FAI') {
-        const select = $('<select name="operation[]" class="form-control"></select>');
-        const sampling = parseInt($samplingResult.val()) || 0;
-
-        for (let i = 1; i <= count; i++) {
-            const value = ordinalSuffix(i);
-            if (inspType === 'FAI' && faiDoneOps.has(value)) continue;
-            if (inspType === 'IPI') {
-                const ipiCount = ipiCountMap.get(value) || 0;
-                if (ipiCount >= sampling) continue;
-            }
-            select.append(`<option value="${value}">${value}</option>`);
-        }
-        return select;
-    }
-
-    // Fila editable (borrador)
-    function createRow() {
-        const today = new Date().toISOString().split('T')[0];
-        const operationValue = parseInt($operationInput.val());
-        const isNumber = !isNaN(operationValue) && operationValue > 0;
         const orderId = $('#order-id').val();
+        const opsNow  = parseInt(ctx.modal.$operationInput.val()) || 0;
+        const ipiNow  = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
-        const row = $('<tr></tr>');
-        row.append(`<td><input type="date" name="date[]" class="form-control" value="${today}"></td>`);
+        if (orderId) {
+          $.get(ROUTES.faibyOrder(orderId)).done(rows => {
+            const pct = computeProgressFromRows(rows, opsNow, ipiNow);
+            renderOrderProgress(orderId, pct);
+            const newStatus =
+              (rows.length === 0) ? 'pending' :
+              (pct >= 100 ? 'completed' : 'in_progress');
 
-        const $inspType = $(`
-    <select name="insp_type[]" class="form-control">
-      <option value="FAI">FAI</option>
-      <option value="IPI">IPI</option>
-    </select>
-  `);
-        row.append($('<td></td>').append($inspType));
-
-        const $operationCell = $('<td></td>');
-        let defaultType = 'FAI';
-
-        if (isNumber) {
-            let operationSelect = createOperationSelect(operationValue, 'FAI');
-            if (operationSelect.children().length === 0) {
-                operationSelect = createOperationSelect(operationValue, 'IPI');
-                defaultType = 'IPI';
-                if (operationSelect.children().length === 0) {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'No operations available',
-                        text: 'All inspections for FAI and IPI have now been completed.'
-                    });
-                    return null;
-                }
-            }
-            $inspType.val(defaultType);
-            $operationCell.append(operationSelect);
+            setInspectionStatus(orderId, newStatus)
+              .always(() => {
+                if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
+                if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
+              });
+          });
         } else {
-            $operationCell.append('<input type="text" name="operation[]" class="form-control">');
+          if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
+          if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
         }
+      })
+      .fail(() => swalError('Error', 'No se pudo eliminar la fila'));
+    });
+  });
 
-        row.append($operationCell);
-        row.append(buildOperatorInputCell(orderId));
-        row.append(`<td>
-    <select name="results[]" class="form-control">
-      <option value="pass">Pass</option>
-      <option value="no pass">No Pass</option>
-    </select>
-  </td>`);
-        row.append(`<td><input type="text" name="sb_is[]" class="form-control"></td>`);
-        row.append(`<td><input type="text" name="observation[]" class="form-control"></td>`);
-        // ✅ Station como input con datalist, usando **data**, no rowData
-        row.append(buildStationInputCell(orderId));
-        row.append(`<td>
-    <select name="method[]" class="form-control">
-      <option value="Manual">Manual</option>
-      <option value="Vmm/Manual">Vmm/Manual</option>
-      <option value="Visual">Visual</option>
-      <option value="Vmm">Vmm</option>
-      <option value="Keyence">Keyence</option>
-      <option value="Keyence/Manual">Keyence/Manual</option>
-    </select>
-  </td>`);
-        row.append(`<td>
-    <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-    <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
-  </td>`);
+  // ================== Lógica de Sampling & Reporte ==================
+  function updateSamplingQty() {
+    const lotSize = parseInt($('#edit-woqty').val());
+    const type    = $('#edit-sampling-type').val();
+    if (!lotSize || lotSize < 1) {
+      ctx.modal.$samplingResult.val('');
+      return;
+    }
+    $.getJSON(ROUTES.samplingPlan(lotSize, type)).done(data => {
+      const sample = (data?.sample_qty ?? 0);
+      ctx.modal.$samplingResult.val(sample);
 
-        $inspType.on('change', function() {
-            if (!isNumber) return;
-            const newType = $(this).val();
-            const newOpSelect = createOperationSelect(operationValue, newType);
-            $operationCell.empty().append(newOpSelect);
-        });
+      // refrescar selects IPI (no FAI)
+      refreshAllSamplingSelects();
+      // recalcular pendientes por operación en borradores
+      refreshPendingIpiOptions();
 
-        return row;
+      const orderId = $('#order-id').val();
+      const opsNow  = parseInt(ctx.modal.$operationInput.val()) || 0;
+      if (orderId && opsNow) {
+        refreshProgress(orderId, opsNow, sample);
+        updateInspectionMissing();
+      }
+    });
+  }
+
+  function updateInspectionMissing() {
+    const sampling   = parseInt(ctx.modal.$samplingResult.val()) || 0;
+    const operations = parseInt(ctx.modal.$operationInput.val()) || 0;
+
+    const $box = ctx.modal.$reportBox;
+    const $pre = ctx.modal.$reportPre;
+
+    if (!operations) {
+      $pre.text('');
+      $box.removeClass('bg-success bg-warning text-white');
+      return;
     }
 
-    // Fila solo-lectura desde DB
-    function createRowFromData(data) {
-        const row = $('<tr></tr>').attr('data-id', data.id);
-        row.append(`<td><input type="date" name="date[]" class="form-control" value="${data.date || ''}" disabled></td>`);
-        row.append(`<td>
-    <select name="insp_type[]" class="form-control" disabled>
-      <option value="FAI" ${data.insp_type === 'FAI' ? 'selected' : ''}>FAI</option>
-      <option value="IPI" ${data.insp_type === 'IPI' ? 'selected' : ''}>IPI</option>
-    </select>
-  </td>`);
-        row.append(`<td><input type="text" name="operation[]" class="form-control" value="${data.operation || ''}" disabled></td>`);
-        row.append(`<td><input type="text" name="operator[]" class="form-control" value="${data.operator || ''}" disabled></td>`);
-        const results = (data.results || '').toLowerCase();
-        row.append(`<td>
-    <select name="results[]" class="form-control" disabled>
-      <option value="pass" ${results === 'pass' ? 'selected' : ''}>Pass</option>
-      <option value="no pass" ${results === 'no pass' ? 'selected' : ''}>No Pass</option>
-    </select>
-  </td>`);
-        row.append(`<td><input type="text" name="sb_is[]" class="form-control" value="${data.sb_is || ''}" disabled></td>`);
-        row.append(`<td><input type="text" name="observation[]" class="form-control" value="${data.observation || ''}" disabled></td>`);
-        row.append(`<td><input type="text" name="station[]" class="form-control" value="${data.station || ''}" disabled></td>`);
-        row.append(`<td>
-    <select name="method[]" class="form-control" disabled>
-      ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m =>
-        `<option value="${m}" ${data.method === m ? 'selected' : ''}>${m}</option>`).join('')}
-    </select>
-  </td>`);
-        row.append(`
-    <td>
-     <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
-      <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-      <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-    </td>
-  `);
-        return row;
-    }
+    const faiMap = new Map(), ipiMap = new Map(); // op -> suma qty_pcs
+    ctx.faiDoneOps.clear();
+    ctx.ipiCountMap.clear();
 
+    // Contar SOLO filas guardadas
+    ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
+      const $r = $(this);
+      const type = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+      const op   = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+      const res  = String($r.find('select[name="results[]"]').val() || '').toLowerCase();
+      if (!op || res !== 'pass') return;
 
+      const qty = getRowQty($r); // suma qty_pcs
 
-
-    // ================== Progreso (lista + modal) ==================
-
-    function computeProgressFromRows(rows, operations, ipiRequired) {
-        if (!operations || operations < 1) return 0;
-
-        const faiMap = new Map(); // op -> FAI pass
-        const ipiMap = new Map(); // op -> IPI pass
-
-        rows.forEach(r => {
-            const type = (r.insp_type || '').toUpperCase();
-            const op = r.operation;
-            const res = (r.results || '').toLowerCase();
-            if (res !== 'pass') return;
-
-            if (type === 'FAI') {
-                faiMap.set(op, (faiMap.get(op) || 0) + 1);
-            } else if (type === 'IPI') {
-                ipiMap.set(op, (ipiMap.get(op) || 0) + 1);
-            }
-        });
-
-        const perOpRequired = 1 + (parseInt(ipiRequired, 10) || 0); // 1 FAI + N IPI
-        const totalRequired = operations * perOpRequired;
-
-        let done = 0;
-        for (let i = 1; i <= operations; i++) {
-            const op = ordinalSuffix(i);
-            const faiCount = faiMap.get(op) || 0;
-            const ipiCount = ipiMap.get(op) || 0;
-            done += Math.min(faiCount, 1) + Math.min(ipiCount, ipiRequired || 0);
-        }
-
-        const pct = totalRequired > 0 ? Math.round((done / totalRequired) * 100) : 0;
-        return Math.max(0, Math.min(pct, 100));
-    }
-
-    function renderOrderProgress(orderId, percent) {
-        const $wrap = $(`.progress[data-order-id="${orderId}"]`);
-        const $bar = $wrap.find('.progress-bar');
-        $bar.attr('aria-valuenow', percent).css('width', percent + '%').text(percent + '%');
-
-        $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
-        if (percent >= 100) $bar.addClass('bg-success');
-        else if (percent >= 50) $bar.addClass('bg-warning');
-        else $bar.addClass('bg-danger');
-    }
-
-    function refreshProgress(orderId, operations, ipiRequired) {
-        if (!operations) operations = parseInt($('#operationInput').val()) || 0;
-        if (ipiRequired === undefined || ipiRequired === null) {
-            ipiRequired = parseInt($('#edit-sampling-result').val()) || 0;
-        }
-        $.get(`/qa/faisummary/by-order/${orderId}`, function(rows) {
-            const percent = computeProgressFromRows(rows, operations, ipiRequired);
-            renderOrderProgress(orderId, percent);
-        });
-    }
-
-    // ================== /FAI Summary UI Script ==================
-
-    // ===== Helpers para Station (input + datalist) =====
-    /***************** Config *****************/
-    const ROUTES_BY_KIND = {
-        stations: '/stations/by-order', // ajusta si tu endpoint es otro
-        operators: '/operators/by-order', // ajusta si tu endpoint es otro
-    };
-
-    const FIELD_BY_KIND = {
-        stations: 'station',
-        operators: 'operator',
-    };
-
-    const INPUT_NAME_BY_KIND = {
-        stations: 'station[]',
-        operators: 'operator[]',
-    };
-
-    const MAX_OPTIONS = 50;
-    const COLLATOR = new Intl.Collator('es', {
-        sensitivity: 'base',
-        numeric: true
+      if (type === 'FAI') {
+        faiMap.set(op, (faiMap.get(op) || 0) + qty);
+      }
+      if (type === 'IPI') {
+        const sum = (ipiMap.get(op) || 0) + qty;
+        ipiMap.set(op, sum);
+      }
     });
 
-    /*************** Utilidades ***************/
-    let __DL_COUNTER = 0;
-    const debounce = (fn, ms = 150) => {
-        let t;
-        return (...args) => {
-            clearTimeout(t);
-            t = setTimeout(() => fn(...args), ms);
-        };
+    // Actualiza caches para los selects (FAI hecho si suma >= 1; IPI suma actual)
+    for (const [op, sum] of faiMap.entries()) {
+      if (sum >= 1) ctx.faiDoneOps.add(op);
+    }
+    for (const [op, sum] of ipiMap.entries()) {
+      ctx.ipiCountMap.set(op, sum);
+    }
+
+    // Reporte por operación contra requeridos
+    let resumen = '';
+    let faltantes = false;
+
+    for (let i = 1; i <= operations; i++) {
+      const op     = ordinalSuffix(i);
+      const faiSum = faiMap.get(op) || 0;
+      const ipiSum = ipiMap.get(op) || 0;
+      const faiReq = 1;
+      const ipiReq = sampling;
+
+      const faiStatus = (faiSum >= faiReq)
+        ? `FAI: OK (${faiSum}/${faiReq})`
+        : `FAI: Need ${Math.max(faiReq - faiSum, 0)} (${faiSum}/${faiReq})`;
+
+      const ipiStatus = (ipiSum >= ipiReq)
+        ? `IPI: OK (${ipiSum}/${ipiReq})`
+        : `IPI: ❌ Need ${Math.max(ipiReq - ipiSum, 0)} (${ipiSum}/${ipiReq})`;
+
+      const line =
+        (faiSum >= faiReq && ipiSum >= ipiReq) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
+        (faiSum <  faiReq && ipiSum <  ipiReq) ? `❌ ${op} → ${faiStatus} | ${ipiStatus}` :
+                                                 `⚠️ ${op} → ${faiStatus} | ${ipiStatus}`;
+
+      resumen += line + '\n';
+      if (faiSum < faiReq || ipiSum < ipiReq) faltantes = true;
+    }
+
+    $pre.text(resumen.trim());
+    $box.removeClass('bg-success bg-warning text-white');
+    if (faltantes) $box.addClass('bg-warning text-white'); else $box.addClass('bg-success text-white');
+
+    // al finalizar, refresca pendientes IPI en borradores
+    refreshPendingIpiOptions();
+  }
+
+  // ================== Helpers varios ==================
+  function ordinalSuffix(n) {
+    if (n === 1) return '1st Op';
+    if (n === 2) return '2nd Op';
+    if (n === 3) return '3rd Op';
+    return `${n}th Op`;
+  }
+
+  // Lee la cantidad de piezas de la fila (prioriza qty_pcs; cae a sample_idx; default 1)
+  function getRowQty($row) {
+    const attr = parseInt(
+      $row.attr('data-qty_pcs') ?? $row.data('qty_pcs') ?? $row.data('qty') ?? '', 10
+    );
+    if (!isNaN(attr)) return attr;
+
+    const q1 = parseInt($row.find('input[name="qty_pcs[]"]').val() ?? '', 10);
+    if (!isNaN(q1)) return q1;
+
+    const q2 = parseInt($row.find('input[name="sample_idx[]"]').val() ?? '', 10);
+    if (!isNaN(q2)) return q2;
+
+    const q3 = parseInt($row.find('select[name="sample_idx[]"]').val() ?? '', 10);
+    if (!isNaN(q3)) return q3;
+
+    return 1;
+  }
+
+  // Devuelve cuánto IPI queda pendiente para una operación concreta
+  function getIpiRemainingForOp(op, sampling) {
+    const done = ctx.ipiCountMap.get(op) || 0;
+    const rem  = Math.max(0, (parseInt(sampling,10)||0) - done);
+    return rem;
+  }
+
+  // Reconstruye TODAS las celdas de muestra IPI (pendientes) en borradores
+  function refreshPendingIpiOptions() {
+    const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    ctx.modal.$rowsContainer.find('tr').each(function() {
+      const $row = $(this);
+      const isSaved = !!$row.attr('data-id');
+      const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+      if (isSaved || type !== 'IPI') return;
+
+      const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+      const $cell = $row.find('td.col-sample');
+      const current = $cell.find('select[name="sample_idx[]"]').val() || null;
+
+      renderSampleCell($cell.empty(), type, sampling, current, op);
+    });
+  }
+
+  // Select de operación con prioridad a una operación sugerida (preferredOp)
+  function createOperationSelect(totalOps, inspType = 'FAI', preferredOp = null) {
+    const $sel = $('<select name="operation[]" class="form-control"></select>');
+    const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    const ops = [];
+    for (let i = 1; i <= totalOps; i++) ops.push(ordinalSuffix(i));
+
+    if (preferredOp && ops.includes(preferredOp)) {
+      const idx = ops.indexOf(preferredOp);
+      if (idx > -1) ops.splice(idx, 1);
+      ops.unshift(preferredOp);
+    }
+
+    for (const value of ops) {
+      if (inspType === 'FAI' && ctx.faiDoneOps.has(value)) continue;
+      if (inspType === 'IPI') {
+        const ipiCount = ctx.ipiCountMap.get(value) || 0;
+        if (ipiCount >= sampling) continue;
+      }
+      $sel.append(`<option value="${value}">${value}</option>`);
+    }
+    return $sel;
+  }
+
+  // Determina el siguiente par {type, op} en secuencia: FAI(1), IPI(1), FAI(2), IPI(2), ...
+  function getNextInspectionPair(totalOps) {
+    const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    const faiSum  = new Map(); // op -> suma qty
+    const ipiSum  = new Map();
+
+    ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
+      const $r = $(this);
+      const type = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+      const op   = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+      const res  = String($r.find('select[name="results[]"]').val() || '').toLowerCase();
+      if (!op || res !== 'pass') return;
+
+      const qty = getRowQty($r);
+
+      if (type === 'FAI') faiSum.set(op, (faiSum.get(op) || 0) + qty);
+      if (type === 'IPI') ipiSum.set(op, (ipiSum.get(op) || 0) + qty);
+    });
+
+    for (let i = 1; i <= totalOps; i++) {
+      const op = ordinalSuffix(i);
+      if ((faiSum.get(op) || 0) < 1)        return { type: 'FAI', op };
+      if ((ipiSum.get(op) || 0) < sampling) return { type: 'IPI', op };
+    }
+    return null;
+  }
+
+  // === MOD: límite por pendiente (parámetro maxAllowed) ===
+  function buildSamplingSelect(sampling, currentVal = null, maxAllowed = null) {
+    const $sel = $(`<select name="sample_idx[]" class="form-control"></select>`);
+    const s = Math.max(0, parseInt(sampling) || 0);
+    const upper = Math.max(0, Math.min(s, maxAllowed ?? s));
+
+    if (upper === 0) {
+      $sel.append(`<option value="">—</option>`).prop('disabled', true);
+      return $sel;
+    }
+
+    $sel.append('<option value=""></option>');
+    for (let i = 1; i <= upper; i++) $sel.append(`<option value="${i}">${i}</option>`);
+    if (currentVal) {
+      if (parseInt(currentVal,10) <= upper) $sel.val(String(currentVal)); else $sel.val('');
+    }
+    return $sel;
+  }
+
+  // === MOD: usa opForPending para limitar por pendiente por operación ===
+  function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
+    $cell.empty();
+    const t = String(type).toUpperCase();
+
+    if (t === 'FAI') {
+      const $fixed = $(`
+        <select class="form-control sample-fixed" disabled>
+          <option value="1" selected>1</option>
+        </select>
+      `);
+      $cell.append($fixed);
+      $cell.append(`<input type="hidden" name="sample_idx[]" value="1">`);
+    } else {
+      const remaining = opForPending ? getIpiRemainingForOp(opForPending, sampling) : (parseInt(sampling,10)||0);
+      $cell.append(buildSamplingSelect(sampling, currentVal || 1, remaining));
+    }
+  }
+
+  // === MOD: considerar operación para pendientes en cada fila borrador
+  function refreshAllSamplingSelects() {
+    const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    ctx.modal.$rowsContainer.find('tr').each(function() {
+      const $row = $(this);
+      const isSaved = !!$row.attr('data-id'); // filas guardadas no se tocan
+      if (isSaved) return;
+
+      const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+      const $cell = $row.find('td.col-sample');
+      if (!type || !$cell.length) return;
+
+      if (type === 'FAI') {
+        renderSampleCell($cell.empty(), 'FAI', sampling);
+        return;
+      }
+
+      const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
+      const current = $cell.find('select[name="sample_idx[]"]').val() || null;
+      renderSampleCell($cell.empty(), 'IPI', sampling, current, op);
+    });
+  }
+
+  function renderOrderProgress(orderId, percent) {
+    const $wrap = $(`.progress[data-order-id="${orderId}"]`);
+    const $bar = $wrap.find('.progress-bar');
+    $bar.attr('aria-valuenow', percent).css('width', percent + '%').text(percent + '%');
+    $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
+    if (percent >= 100)      $bar.addClass('bg-success');
+    else if (percent >= 50)  $bar.addClass('bg-warning');
+    else                     $bar.addClass('bg-danger');
+  }
+
+  function computeProgressFromRows(rows, operations, ipiRequired) {
+    if (!operations || operations < 1) return 0;
+
+    const faiMap = new Map(), ipiMap = new Map(); // op -> suma qty
+
+    (rows || []).forEach(r => {
+      const type = (r.insp_type || '').toUpperCase();
+      const op   = r.operation;
+      const res  = (r.results || '').toLowerCase();
+      if (!op || res !== 'pass') return;
+
+      const qty = parseInt(r.qty_pcs ?? r.sample_idx ?? 1, 10) || 0;
+
+      if (type === 'FAI') faiMap.set(op, (faiMap.get(op) || 0) + qty);
+      if (type === 'IPI') ipiMap.set(op, (ipiMap.get(op) || 0) + qty);
+    });
+
+    const perOpReq = 1 + (parseInt(ipiRequired, 10) || 0);
+    const totalReq = operations * perOpReq;
+
+    let done = 0;
+    for (let i = 1; i <= operations; i++) {
+      const op     = ordinalSuffix(i);
+      const faiSum = faiMap.get(op) || 0;
+      const ipiSum = ipiMap.get(op) || 0;
+      done += Math.min(faiSum, 1) + Math.min(ipiSum, ipiRequired || 0);
+    }
+
+    const pct = totalReq > 0 ? Math.round((done / totalReq) * 100) : 0;
+    return Math.max(0, Math.min(pct, 100));
+  }
+
+  function refreshProgress(orderId, operations, ipiRequired) {
+    if (!operations) operations = parseInt($('#operationInput').val()) || 0;
+    if (ipiRequired === undefined || ipiRequired === null) {
+      ipiRequired = parseInt($('#edit-sampling-result').val()) || 0;
+    }
+    $.get(ROUTES.faibyOrder(orderId)).done(rows => {
+      renderOrderProgress(orderId, computeProgressFromRows(rows, operations, ipiRequired));
+    });
+  }
+
+  // ================== Fila: borrador y desde DB ==================
+  function createDraftRow() {
+    const today     = new Date().toISOString().split('T')[0];
+    const totalOps  = parseInt(ctx.modal.$operationInput.val());
+    const isNumber  = !isNaN(totalOps) && totalOps > 0;
+    const orderId   = $('#order-id').val();
+    const sampling  = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+    const $row = $('<tr></tr>');
+    $row.append(`<td><input type="date" name="date[]" class="form-control" value="${today}"></td>`);
+
+    const $inspType = $(`
+      <select name="insp_type[]" class="form-control">
+        <option value="FAI">FAI</option>
+        <option value="IPI">IPI</option>
+      </select>
+    `);
+    $row.append($('<td></td>').append($inspType));
+
+    const $opCell = $('<td></td>');
+    const $sampleCell = $('<td class="col-sample"></td>');
+    let defaultType = 'FAI';
+    let preferredOp = null;
+
+    if (isNumber) {
+      // Sugerir siguiente par FAI/IPI por operación
+      const suggestion = getNextInspectionPair(totalOps);
+      if (suggestion) {
+        defaultType = suggestion.type;   // 'FAI' | 'IPI'
+        preferredOp = suggestion.op;     // '1st Op', '2nd Op', ...
+      }
+
+      // Setear el tipo sugerido y construir el select priorizando la operación sugerida
+      $inspType.val(defaultType);
+      const opSel = createOperationSelect(totalOps, defaultType, preferredOp);
+      if (opSel.children().length === 0) {
+        Swal.fire({ icon: 'info', title: 'No operations available', text: 'All inspections for FAI and IPI have now been completed.' });
+        return null;
+      }
+      $opCell.append(opSel);
+    } else {
+      $opCell.append('<input type="text" name="operation[]" class="form-control">');
+    }
+
+    $row.append($opCell);
+    $row.append(buildOperatorInputCell(orderId));
+    $row.append(`
+      <td>
+        <select name="results[]" class="form-control">
+          <option value="pass">Pass</option>
+          <option value="no pass">No Pass</option>
+        </select>
+      </td>`);
+    $row.append(`<td><input type="text" name="sb_is[]" class="form-control"></td>`);
+    $row.append(`<td><input type="text" name="observation[]" class="form-control"></td>`);
+    $row.append(buildStationInputCell(orderId));
+    $row.append(`
+      <td>
+        <select name="method[]" class="form-control">
+          ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m=>`<option value="${m}">${m}</option>`).join('')}
+        </select>
+      </td>`);
+
+    renderSampleCell($sampleCell, $inspType.val(), sampling, null, preferredOp);
+    $row.append($sampleCell);
+
+    $row.append(`
+      <td>
+        <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
+        <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
+      </td>`);
+
+    // Al cambiar FAI/IPI, re-sugerir operación de ese tipo y refrescar celda "Muestra"
+    $inspType.on('change', function() {
+      if (!isNumber) return;
+      const newType = $(this).val();
+
+      let preferredOpForType = null;
+      const suggestion = getNextInspectionPair(totalOps);
+      if (suggestion && suggestion.type === newType) {
+        preferredOpForType = suggestion.op;
+      }
+
+      const newOpSel = createOperationSelect(totalOps, newType, preferredOpForType);
+      $opCell.empty().append(newOpSel);
+
+      const samplingNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      const opNow = newOpSel.val() || preferredOpForType || null;
+      renderSampleCell($sampleCell.empty(), newType, samplingNow, null, opNow);
+
+      // Cuando cambie la operación, recalcula pendiente para esa op
+      newOpSel.on('change', function() {
+        const opX = $(this).val() || null;
+        const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
+        const cur = $sampleCell.find('select[name="sample_idx[]"]').val() || null;
+        renderSampleCell($sampleCell.empty(), newType, sNow, cur, opX);
+      });
+    });
+
+    // Si ya existe opSel (cuando isNumber), también enlaza su change:
+    const $opSel = $opCell.find('select[name="operation[]"]');
+    $opSel.on('change', function() {
+      const tNow = $inspType.val();
+      const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      const opNow = $(this).val() || null;
+      const cur   = $sampleCell.find('select[name="sample_idx[]"]').val() || null;
+      renderSampleCell($sampleCell.empty(), tNow, sNow, cur, opNow);
+    });
+
+    return $row;
+  }
+
+  function createRowFromData(data) {
+    const $row = $('<tr></tr>').attr('data-id', data.id);
+
+    // (opcional) guarda qty en data-attr para otras funciones
+    const savedQty = parseInt(data.qty_pcs ?? data.sample_idx ?? 1, 10) || 1;
+    $row.attr('data-qty_pcs', savedQty);
+
+    $row.append(`<td><input type="date" name="date[]" class="form-control" value="${data.date || ''}" disabled></td>`);
+    $row.append(`
+      <td>
+        <select name="insp_type[]" class="form-control" disabled>
+          <option value="FAI" ${data.insp_type === 'FAI' ? 'selected' : ''}>FAI</option>
+          <option value="IPI" ${data.insp_type === 'IPI' ? 'selected' : ''}>IPI</option>
+        </select>
+      </td>`);
+    $row.append(`<td><input type="text" name="operation[]"  class="form-control" value="${data.operation || ''}"  disabled></td>`);
+    $row.append(`<td><input type="text" name="operator[]"   class="form-control" value="${data.operator  || ''}" disabled></td>`);
+
+    const results = (data.results || '').toLowerCase();
+    $row.append(`
+      <td>
+        <select name="results[]" class="form-control" disabled>
+          <option value="pass" ${results === 'pass' ? 'selected' : ''}>Pass</option>
+          <option value="no pass" ${results === 'no pass' ? 'selected' : ''}>No Pass</option>
+        </select>
+      </td>`);
+    $row.append(`<td><input type="text" name="sb_is[]"       class="form-control" value="${data.sb_is || ''}"       disabled></td>`);
+    $row.append(`<td><input type="text" name="observation[]" class="form-control" value="${data.observation || ''}" disabled></td>`);
+    $row.append(`<td><input type="text" name="station[]"     class="form-control" value="${data.station || ''}"     disabled></td>`);
+    $row.append(`
+      <td>
+        <select name="method[]" class="form-control" disabled>
+          ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m =>
+            `<option value="${m}" ${data.method === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </td>`);
+
+    // --- QTY PCS / sample_idx ---
+    const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+    const $sampleCell = $('<td class="col-sample"></td>');
+    // Para guardadas: render y deja disabled, asegurando valor
+    renderSampleCell($sampleCell, data.insp_type, sampling, savedQty, data.operation);
+    $row.append($sampleCell);
+
+    const $sel = $sampleCell.find('select[name="sample_idx[]"]').not('.sample-fixed');
+    if ($sel.length) {
+      if ($sel.find(`option[value="${savedQty}"]`).length === 0) {
+        $sel.append(`<option value="${savedQty}">${savedQty}</option>`);
+      }
+      $sel.val(String(savedQty));
+      $sel.prop('disabled', true);
+    } else {
+      $sampleCell.find('select.sample-fixed').prop('disabled', true);
+    }
+
+    $row.append(`
+      <td>
+        <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
+        <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
+        <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+      </td>`);
+
+    return $row;
+  }
+
+  function loadFaiRows(orderId, cb) {
+    $.getJSON(ROUTES.faibyOrder(orderId)).done(rows => {
+      (Array.isArray(rows) ? rows : []).forEach(r => ctx.modal.$rowsContainer.append(createRowFromData(r)));
+      if (typeof cb === 'function') cb();
+    });
+  }
+
+  // ================== Datalist (stations/operators) ==================
+  const RAW_CACHE = { stations: new Map(), operators: new Map() }; // orderId -> raw[]
+  const UNIQ_CACHE = { stations: new Map(), operators: new Map() }; // orderId -> [string]
+  const INFLIGHT = { stations: new Map(), operators: new Map() };   // orderId -> Promise
+  let __DL_COUNTER = 0;
+
+  function fetchListByOrder(kind, orderId) {
+    if (!orderId) return Promise.resolve([]);
+    const raw = RAW_CACHE[kind], inflight = INFLIGHT[kind];
+    if (raw.has(orderId))     return Promise.resolve(raw.get(orderId));
+    if (inflight.has(orderId))return inflight.get(orderId);
+
+    const url = (kind === 'stations') ? ROUTES.stationsByOrder(orderId) : ROUTES.operatorsByOrder(orderId);
+    const p = $.ajax({ url, method:'GET', dataType:'json', headers:{ 'X-Requested-With':'XMLHttpRequest' } })
+      .then(list => {
+        const arr = Array.isArray(list) ? list : [];
+        raw.set(orderId, arr);
+        const field = (kind === 'stations') ? 'station' : 'operator';
+        const uniq = [...new Set(arr.map(r => (r[field] || '').trim()))]
+          .filter(Boolean).sort(COLLATOR.compare);
+        UNIQ_CACHE[kind].set(orderId, uniq);
+        return arr;
+      })
+      .catch(() => { raw.set(orderId, []); UNIQ_CACHE[kind].set(orderId, []); return []; })
+      .always(() => inflight.delete(orderId));
+
+    inflight.set(orderId, p);
+    return p;
+  }
+
+  function getUniqStrings(kind, orderId) {
+    if (UNIQ_CACHE[kind].has(orderId)) return UNIQ_CACHE[kind].get(orderId);
+    const raw = RAW_CACHE[kind].get(orderId) || [];
+    const field = (kind === 'stations') ? 'station' : 'operator';
+    const uniq = [...new Set(raw.map(r => (r[field] || '').trim()))]
+      .filter(Boolean).sort(COLLATOR.compare);
+    UNIQ_CACHE[kind].set(orderId, uniq);
+    return uniq;
+  }
+
+  function makeDatalistCellFactory(kind) {
+    const inputName = (kind === 'stations') ? 'station[]' : 'operator[]';
+    return function buildDatalistCell(orderId, value = '', disabled = false) {
+      const dlId = `${kind}-${orderId}-${++__DL_COUNTER}`;
+      const $td = $('<td></td>');
+      const $in = $(`<input name="${inputName}" class="form-control" list="${dlId}">`)
+        .val(value || '').prop('disabled', !!disabled);
+      const $dl = $(`<datalist id="${dlId}"></datalist>`);
+      $td.append($in, $dl);
+
+      if (!orderId) {
+        $in.prop('disabled', true).attr('placeholder', 'Sin orden');
+        return $td;
+      }
+      const renderList = (arr = []) => {
+        const frag = document.createDocumentFragment();
+        arr.slice(0, 50).forEach(s => { const opt = document.createElement('option'); opt.value = s; frag.appendChild(opt); });
+        $dl.empty()[0].appendChild(frag);
+      };
+
+      const cached = getUniqStrings(kind, orderId);
+      if (cached.length) renderList(cached);
+
+      fetchListByOrder(kind, orderId).then(() => {
+        const all = getUniqStrings(kind, orderId);
+        renderList(all);
+        const onInput = debounce(() => {
+          const term = ($in.val() || '').toLowerCase();
+          if (!term) return renderList(all);
+          renderList(all.filter(s => s.toLowerCase().includes(term)));
+        }, 120);
+        $in.off(`input.__${kind}`).on(`input.__${kind}`, onInput);
+      });
+
+      return $td;
     };
+  }
 
-    /*************** Cachés por tipo ***************/
-    const RAW_CACHE = {
-        stations: new Map(),
-        operators: new Map()
-    }; // orderId -> [{...}]
-    const UNIQ_CACHE = {
-        stations: new Map(),
-        operators: new Map()
-    }; // orderId -> ['A','B',...]
-    const INFLIGHT = {
-        stations: new Map(),
-        operators: new Map()
-    }; // orderId -> Promise
+  const buildStationInputCell  = makeDatalistCellFactory('stations');
+  const buildOperatorInputCell = makeDatalistCellFactory('operators');
 
-    /** Obtiene (y cachea) la lista cruda para un tipo/kind y orderId */
-    function fetchListByOrder(kind, orderId) {
-        if (!orderId) return Promise.resolve([]);
-
-        const raw = RAW_CACHE[kind];
-        const inflight = INFLIGHT[kind];
-        if (raw.has(orderId)) return Promise.resolve(raw.get(orderId));
-        if (inflight.has(orderId)) return inflight.get(orderId);
-
-        const url = `${ROUTES_BY_KIND[kind]}/${encodeURIComponent(orderId)}`;
-
-        const p = $.ajax({
-                url,
-                method: 'GET',
-                dataType: 'json',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then((list) => {
-                const arr = Array.isArray(list) ? list : [];
-                raw.set(orderId, arr);
-
-                // precalcula strings únicos/ordenados para el datalist
-                const field = FIELD_BY_KIND[kind];
-                const uniq = [...new Set(arr.map(r => (r[field] || '').trim()))]
-                    .filter(Boolean)
-                    .sort(COLLATOR.compare);
-                UNIQ_CACHE[kind].set(orderId, uniq);
-
-                return arr;
-            })
-            .catch((xhr) => {
-                console.error(`fetchListByOrder(${kind}) error:`, {
-                    url,
-                    orderId,
-                    status: xhr?.status,
-                    responseText: xhr?.responseText
-                });
-                raw.set(orderId, []);
-                UNIQ_CACHE[kind].set(orderId, []);
-                return [];
-            })
-            .always(() => {
-                inflight.delete(orderId);
-            });
-
-        inflight.set(orderId, p);
-        return p;
-    }
-
-    /** Devuelve strings únicos/ordenados (cacheados) para un tipo/kind y orderId */
-    function getUniqStrings(kind, orderId) {
-        const uniqCache = UNIQ_CACHE[kind];
-        if (uniqCache.has(orderId)) return uniqCache.get(orderId);
-
-        const raw = RAW_CACHE[kind].get(orderId) || [];
-        const field = FIELD_BY_KIND[kind];
-        const uniq = [...new Set(raw.map(r => (r[field] || '').trim()))]
-            .filter(Boolean)
-            .sort(COLLATOR.compare);
-        uniqCache.set(orderId, uniq);
-        return uniq;
-    }
-
-    /**
-     * Fábrica de celdas <td> con <input list=...> + <datalist> (autocomplete “contiene”)
-     * @param {'stations'|'operators'} kind
-     * @returns (orderId, value?:string, disabled?:boolean) => JQuery<td>
-     */
-    function makeDatalistCellFactory(kind) {
-        return function buildDatalistCell(orderId, value = '', disabled = false) {
-            const dlId = `${kind}-${orderId}-${++__DL_COUNTER}`; // ID único por celda
-            const $td = $('<td></td>');
-            const $in = $(`<input name="${INPUT_NAME_BY_KIND[kind]}" class="form-control" list="${dlId}">`)
-                .val(value || '')
-                .prop('disabled', !!disabled);
-            const $dl = $(`<datalist id="${dlId}"></datalist>`);
-            $td.append($in, $dl);
-
-            if (!orderId) {
-                $in.prop('disabled', true).attr('placeholder', 'Sin orden');
-                return $td;
-            }
-
-            // Render de opciones usando DOM (seguro)
-            const renderList = (arr) => {
-                const frag = document.createDocumentFragment();
-                (arr || []).slice(0, MAX_OPTIONS).forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s;
-                    frag.appendChild(opt);
-                });
-                $dl.empty()[0].appendChild(frag);
-            };
-
-            // Pinta desde caché si ya existe
-            const cached = getUniqStrings(kind, orderId);
-            if (cached.length) renderList(cached);
-
-            // Asegura datos (y cache) desde backend; activa filtro “contiene”
-            fetchListByOrder(kind, orderId).then(() => {
-                const all = getUniqStrings(kind, orderId);
-                renderList(all);
-
-                const onInput = debounce(() => {
-                    const term = ($in.val() || '').toLowerCase();
-                    if (!term) return renderList(all);
-                    renderList(all.filter(s => s.toLowerCase().includes(term)));
-                }, 120);
-
-                $in.off(`input.__${kind}`).on(`input.__${kind}`, onInput);
-            });
-
-            return $td;
-        };
-    }
-
-    /*************** Constructores específicos ***************/
-    const buildStationInputCell = makeDatalistCellFactory('stations');
-    const buildOperatorInputCell = makeDatalistCellFactory('operators');
-
-
-    //----------------------------------------------------------------------------------------------------------------------
+  // ================== API: setInspectionStatus ==================
+  function setInspectionStatus(orderId, status) {
+    return $.ajax({
+      url: ROUTES.statusInspection(orderId),
+      method: 'PUT',
+      data: { _token: getCsrf(), status_inspection: status }
+    });
+  }
+})();
 </script>
+
+
+
 
 @endpush

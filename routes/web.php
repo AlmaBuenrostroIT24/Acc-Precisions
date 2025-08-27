@@ -135,6 +135,8 @@ Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersB
 
 Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general')->middleware('auth');
 Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision')->middleware('auth');
+Route::get('/qa/partsrevision/data', [QaFaiSummaryController::class, 'partsrevisionData'])->name('faisummary.partsrevision.data')->middleware('auth');
+
 Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed')->middleware('auth');
 Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics')->middleware('auth');
 
@@ -147,6 +149,7 @@ Route::put('/orders-schedule/{order}/status-inspection', [QaFaiSummaryController
 Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderStation']);
 Route::get('/operators/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderOperator']);
 Route::get('/qa/faisummary/{order}/pdf', [QaFaiSummaryController::class, 'pdf'])->name('qa.faisummary.pdf');
+Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::class, 'validateOps']);
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 

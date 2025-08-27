@@ -19,9 +19,20 @@ class QaFaiSummaryController extends Controller
                                             Todo el tab relacionado a parts revision
     ============================================================================================================================*/
     // Mostrar listado de registros
-    // Mostrar listado de registros
+
     public function partsrevision()
     {
+        // Solo devuelve la vista; las tablas vendrán por AJAX
+        return view('qa.faisummary.faisummary_partsrevision');
+    }
+
+    public function partsrevisionData(Request $request)
+    {
+        $bucket = $request->query('bucket'); // 'empty' o 'process'
+        if (!in_array($bucket, ['empty', 'process'])) {
+            return response()->json(['data' => []]);
+        }
+
         $user = auth()->user();
 
         $select = [
@@ -45,29 +56,59 @@ class QaFaiSummaryController extends Controller
                     $x->where('was_work_id_null', 1)->whereNull('co');
                 });
             })
-            // Filtro por ubicación según rol (Admin no filtra)
+            // Filtro por rol/ubicación (como ya lo tenías)
             ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
             ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
 
-        // Pendientes: null o 'pending'
-        $ordersempty = (clone $base)
-            ->where(function ($q) {
-                $q->whereNull('status_inspection')
-                    ->orWhere('status_inspection', 'pending');
-            })
-            ->orderByDesc('id')
-            ->get();
+        if ($bucket === 'empty') {
+            $base->where(function ($q) {
+                $q->whereNull('status_inspection')->orWhere('status_inspection', 'pending');
+            });
+        } else { // process
+            $base->where('status_inspection', 'in_progress');
+        }
 
-        // En proceso
-        $ordersprocess = (clone $base)
-            ->where('status_inspection', 'in_progress')
-            ->orderByDesc('id')
-            ->get();
+        $rows = $base->orderByDesc('id')->get();
 
-        return view('qa.faisummary.faisummary_partsrevision', compact('ordersempty', 'ordersprocess'));
+        // Mapea a lo que DataTables espera
+        $data = $rows->map(function ($r) {
+            $partDesc = Str::before((string)$r->Part_description, ',');
+            $part = e($r->PN) . ' - ' . e($partDesc);
+            $ops = is_numeric($r->operation) ? (int)$r->operation : 0;
+            $progressHtml =
+                '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">' .
+                '<div class="progress-bar bg-secondary" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>' .
+                '</div>' .
+                '<small class="text-muted d-block"><span class="badge bg-light text-dark me-1">FAI + IPI</span></small>';
+
+
+            // Botón para abrir modal con data-* necesarios
+            $btn = '<button class="btn btn-sm btn-primary"
+                    data-toggle="modal" data-target="#editModal"
+                    data-id="' . e($r->id) . '"
+                    data-workid="' . e($r->work_id) . '"
+                    data-woqty="' . e($r->wo_qty) . '"
+                    data-operation="' . e($r->operation) . '"
+                    data-pn="' . e($r->PN) . '"
+                    data-description="' . e($r->Part_description) . '">
+                     <i class="fas fa-edit"></i>
+                </button>';
+
+            return [
+                'id'        => (int) $r->id,            // ← FALTABA
+                'part'     => $part,
+                'ops'       => $ops,                 // <- # operaciones numérico
+                'work_id'  => $r->work_id,
+                'wo_qty'   => $r->wo_qty,
+                'progress'  => $progressHtml,        // <- la celda con la barra
+                'operation' => $r->operation,
+                'actions'  => $btn,
+            ];
+        });
+
+        // DataTables (client‑side) usa "data" como key
+        return response()->json(['data' => $data]);
     }
-
-
 
     public function updateOperation(Request $request, $id)
     {
@@ -110,6 +151,7 @@ class QaFaiSummaryController extends Controller
             'station' => 'nullable|string',
             'method' => 'required|in:Manual,Vmm/Manual,Visual,Vmm,Keyence,Keyence/Manual',
             'inspector' => 'required|string',
+            'qty_pcs'   => 'nullable|integer|min:1',
         ]);
         if ($request->has('id')) {
             $row = \App\Models\QaFaiSummary::find($request->id);
@@ -217,6 +259,18 @@ class QaFaiSummaryController extends Controller
         $order->save();
 
         return response()->json(['success' => true]);
+    }
+
+
+    /**Validar si la operacion ya esta validado en la base de datos */
+    public function validateOps(Request $request, $orderId)
+    {
+        $ops = $request->input('ops');
+        $order = OrderSchedule::findOrFail($orderId);
+
+        return response()->json([
+            'saved' => !empty($order->operation), // true si ya está guardado en BD
+        ]);
     }
 
     //===========================================================================================================================
@@ -366,7 +420,7 @@ class QaFaiSummaryController extends Controller
         $h = $canvas->get_height();
         $text = 'Page {PAGE_NUM} of {PAGE_COUNT}';
         $textWidth = $fontMetrics->get_text_width($text, $font, $size);
-        $x = $w-70  ; // 20 pts desde el borde derecho
+        $x = $w - 70; // 20 pts desde el borde derecho
         $y = 5;                   // 20 pts desde arriba
 
         $canvas->page_text($x, $y, $text, $font, $size, [0, 0, 0]);

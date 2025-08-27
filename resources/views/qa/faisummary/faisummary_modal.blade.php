@@ -1,5 +1,5 @@
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="max-width: 80%;">
+    <div class="modal-dialog" role="document" style="max-width: 90%;">
         <form method="POST" action="" id="edit-form"> {{-- Ruta se asigna dinámicamente con JS --}}
             @csrf
             @method('PUT')
@@ -57,7 +57,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end justify-content-end">
-                                    <button type="button" class="btn btn-primary mb-3" id="addRowBtn">
+                                    <button type="button" class="btn btn-primary mb-3" id="addRowBtn" disabled>
                                         <i class="fas fa-plus mr-1"></i>NEW INSPECTION
                                     </button>
                                 </div>
@@ -81,15 +81,16 @@
                         <table class="table table-bordered" id="dynamicTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 5%;">DATE</th>
-                                    <th style="width: 8%;">INSP TYPE</th>
+                                    <th style="width: 2%;">DATE</th>
+                                    <th style="width: 7%;">TYPE</th>
                                     <th style="width: 9%;">OPERATION</th>
                                     <th style="width: 9%;">OPERATOR</th>
                                     <th style="width: 8%;">RESULTS</th>
                                     <th style="width: 11%;">SB/IS</th>
                                     <th style="width: 20%;">OBSERVATION</th>
-                                    <th style="width: 8%;">STATION</th>
-                                    <th style="width: 12%;">METHOD</th>
+                                    <th style="width: 5%;">STATION</th>
+                                    <th style="width: 10%;">METHOD</th>
+                                    <th style="width: 7%;">QTY INSP</th>
                                     <th style="width: 10%;">ACTIONS</th>
                                 </tr>
                             </thead>
