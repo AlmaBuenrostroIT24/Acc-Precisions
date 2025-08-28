@@ -579,11 +579,11 @@
 
       Swal.fire({
         icon: 'warning',
-        title: '¿Eliminar fila?',
-        text: 'Esta acción no se puede deshacer',
+        title: '¿Delete inspection?',
+        text: 'This action cannot be undone',
         showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel'
       }).then(result => {
         if (!result.isConfirmed) return;
 
@@ -603,7 +603,7 @@
             }
           })
           .done(() => {
-            swalOk('Eliminado', 'La fila ha sido eliminada');
+            swalOk('Deleted', 'The inspection has been eliminated');
             $row.remove();
             updateInspectionMissing();
             refreshAllSamplingSelects();
@@ -675,34 +675,40 @@
         return;
       }
 
-      const faiMap = new Map(),
-        ipiMap = new Map(); // op -> suma qty_pcs (solo GUARDADAS)
+      // Mapas separados para PASS y NO PASS
+      const faiPassMap = new Map(),
+        faiFailMap = new Map(),
+        ipiPassMap = new Map(),
+        ipiFailMap = new Map();
+
       ctx.faiDoneOps.clear();
       ctx.ipiCountMap.clear();
 
-      // Contar SOLO filas guardadas (pass)
+      // Contar filas guardadas (pass y no pass)
       ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
         const $r = $(this);
         const type = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
         const op = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
         const res = String($r.find('select[name="results[]"]').val() || '').toLowerCase();
-        if (!op || res !== 'pass') return;
+        if (!op || !['pass', 'no pass'].includes(res)) return;
 
         const qty = getRowQty($r);
 
         if (type === 'FAI') {
-          faiMap.set(op, (faiMap.get(op) || 0) + qty);
+          if (res === 'pass') faiPassMap.set(op, (faiPassMap.get(op) || 0) + qty);
+          if (res === 'no pass') faiFailMap.set(op, (faiFailMap.get(op) || 0) + qty);
         }
         if (type === 'IPI') {
-          const sum = (ipiMap.get(op) || 0) + qty;
-          ipiMap.set(op, sum);
+          if (res === 'pass') ipiPassMap.set(op, (ipiPassMap.get(op) || 0) + qty);
+          if (res === 'no pass') ipiFailMap.set(op, (ipiFailMap.get(op) || 0) + qty);
         }
       });
 
-      // Actualiza caches
-      for (const [op, sum] of faiMap.entries())
+      // Actualiza caches SOLO con PASS
+      for (const [op, sum] of faiPassMap.entries())
         if (sum >= 1) ctx.faiDoneOps.add(op);
-      for (const [op, sum] of ipiMap.entries()) ctx.ipiCountMap.set(op, sum);
+      for (const [op, sum] of ipiPassMap.entries())
+        ctx.ipiCountMap.set(op, sum);
 
       // Reporte por operación contra requeridos
       let resumen = '';
@@ -710,30 +716,59 @@
 
       for (let i = 1; i <= operations; i++) {
         const op = ordinalSuffix(i);
-        const faiSum = faiMap.get(op) || 0;
-        const ipiSum = ipiMap.get(op) || 0;
+        const faiPass = faiPassMap.get(op) || 0;
+        const faiFail = faiFailMap.get(op) || 0;
+        const ipiPass = ipiPassMap.get(op) || 0;
+        const ipiFail = ipiFailMap.get(op) || 0;
+
         const faiReq = 1;
         const ipiReq = sampling;
 
-        const faiStatus = (faiSum >= faiReq) ?
-          `FAI: OK (${faiSum}/${faiReq})` :
-          `FAI: Need ${Math.max(faiReq - faiSum, 0)} (${faiSum}/${faiReq})`;
+        const faiRealizadosOp = faiPass + faiFail; // ✅ por operación
+        const ipiRealizadosOp = ipiPass + ipiFail; // ✅ por operación
 
-        const extraHint = ipiSum >= ipiReq ? ' (Sampling met; input allows up to WO_QTY)' : '';
-        const ipiStatus = (ipiSum >= ipiReq) ?
-          `IPI: OK (${ipiSum}/${ipiReq})${extraHint}` :
-          `IPI: ❌ Need ${Math.max(ipiReq - ipiSum, 0)} (${ipiSum}/${ipiReq})`;
+        const faiStatus = (faiPass >= faiReq) ?
+          `<strong>FAI:</strong> OK, P:(${faiPass}/${faiReq}), NP:${faiFail}, D:${faiRealizadosOp})` :
+          `<strong>FAI:</strong> N ${Math.max(faiReq - faiPass, 0)} P:(${faiPass}/${faiReq}), NP:${faiFail}, D:${faiRealizadosOp})`;
+
+        const extraHint = ipiPass >= ipiReq ? '' : '';
+        const ipiStatus = (ipiPass >= ipiReq) ?
+          `<strong>IPI:</strong> OK P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, D:${ipiRealizadosOp})${extraHint}` :
+          `<strong>IPI:</strong> ❌ N ${Math.max(ipiReq - ipiPass, 0)} P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, D:${ipiRealizadosOp})`;
 
         const line =
-          (faiSum >= faiReq && ipiSum >= ipiReq) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
-          (faiSum < faiReq && ipiSum < ipiReq) ? `❌ ${op} → ${faiStatus} | ${ipiStatus}` :
+          (faiPass >= faiReq && ipiPass >= ipiReq) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
+          (faiPass < faiReq && ipiPass < ipiReq) ? `❌ ${op} → ${faiStatus} | ${ipiStatus}` :
           `⚠️ ${op} → ${faiStatus} | ${ipiStatus}`;
 
         resumen += line + '\n';
-        if (faiSum < faiReq || ipiSum < ipiReq) faltantes = true;
+        if (faiPass < faiReq || ipiPass < ipiReq) faltantes = true;
       }
 
-      $pre.text(resumen.trim());
+      // ====== Totales generales ======
+      const sumMap = m => Array.from(m.values()).reduce((a, b) => a + b, 0);
+
+      const faiPassTotal = sumMap(faiPassMap);
+      const faiFailTotal = sumMap(faiFailMap);
+      const ipiPassTotal = sumMap(ipiPassMap);
+      const ipiFailTotal = sumMap(ipiFailMap);
+
+      const faiRealizados = faiPassTotal + faiFailTotal;
+      const ipiRealizados = ipiPassTotal + ipiFailTotal;
+
+      const faiReqTotal = operations * 1; // 1 FAI por operación
+      const ipiReqTotal = operations * sampling; // Sampling por operación
+
+      // ✅ Porcentaje SOLO con PASS
+      const faiPct = faiReqTotal ? ((faiPassTotal / faiReqTotal) * 100).toFixed(1) : '0.0';
+      const ipiPct = ipiReqTotal ? ((ipiPassTotal / ipiReqTotal) * 100).toFixed(1) : '0.0';
+
+      resumen += '\n<strong>— RESUMEN —</strong>\n';
+      resumen += `FAI → P:${faiPassTotal}, NP:${faiFailTotal}, Need:${faiReqTotal}, Done:${faiRealizados} (${faiPct}%)\n`;
+      resumen += `IPI → P:${ipiPassTotal}, NP:${ipiFailTotal}, Need:${ipiRealizados}, Done:${ipiReqTotal} (${ipiPct}%)\n`;
+
+      // Pintar caja según faltantes por operación
+      $pre.html(resumen.trim().replace(/\n/g, "<br>"));
       $box.removeClass('bg-success bg-warning text-white');
       if (faltantes) $box.addClass('bg-warning text-white');
       else $box.addClass('bg-success text-white');
@@ -741,6 +776,7 @@
       // al finalizar, refresca pendientes IPI en borradores
       refreshPendingIpiOptions();
     }
+
 
     // ================== Helpers varios ==================
     function ordinalSuffix(n) {
@@ -844,75 +880,75 @@
     }
 
     // === MOD: usa restante dinámico por operación (WO_QTY - guardadas - borradores) como tope ===
-  function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
-  $cell.empty();
-  const t = String(type).toUpperCase();
+    function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
+      $cell.empty();
+      const t = String(type).toUpperCase();
 
-  if (t === 'FAI') {
-    const $fixed = $(`<input type="number" class="form-control sample-fixed" value="1" readonly>`);
-    $cell.append($fixed);
-    $cell.append(`<input type="hidden" name="sample_idx[]" value="1">`);
-    return;
-  }
+      if (t === 'FAI') {
+        const $fixed = $(`<input type="number" class="form-control sample-fixed" value="1" readonly>`);
+        $cell.append($fixed);
+        $cell.append(`<input type="hidden" name="sample_idx[]" value="1">`);
+        return;
+      }
 
-  // IPI
-  const $row = $cell.closest('tr');
-  const op = opForPending || $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
-  const woMax = getWoQty();
+      // IPI
+      const $row = $cell.closest('tr');
+      const op = opForPending || $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+      const woMax = getWoQty();
 
-  if (!woMax || !op) {
-    const $inpDisabled = $(`<input type="number" name="sample_idx[]" class="form-control" disabled
+      if (!woMax || !op) {
+        const $inpDisabled = $(`<input type="number" name="sample_idx[]" class="form-control" disabled
                              placeholder="${!woMax ? 'WO_QTY required' : 'Operation required'}">`);
-    $cell.append($inpDisabled);
-    return;
-  }
+        $cell.append($inpDisabled);
+        return;
+      }
 
-  const curQty = Number.isFinite(parseInt(currentVal, 10)) ? parseInt(currentVal, 10) : 0;
+      const curQty = Number.isFinite(parseInt(currentVal, 10)) ? parseInt(currentVal, 10) : 0;
 
-  // 👇 restante dinámico por operación (WO_QTY − guardadas − borradores)
-  const remaining = getIpiRemainingForOpByWo(op, curQty, $row);
+      // 👇 restante dinámico por operación (WO_QTY − guardadas − borradores)
+      const remaining = getIpiRemainingForOpByWo(op, curQty, $row);
 
-  if (remaining === 0) {
-    $cell.append($(`<input type="number" name="sample_idx[]" class="form-control" min="0" max="0" value="0" disabled>`));
-    return;
-  }
+      if (remaining === 0) {
+        $cell.append($(`<input type="number" name="sample_idx[]" class="form-control" min="0" max="0" value="0" disabled>`));
+        return;
+      }
 
-  let initVal = curQty || 1;
-  if (initVal > remaining) initVal = remaining;
-  if (initVal < 1) initVal = 1;
+      let initVal = curQty || 1;
+      if (initVal > remaining) initVal = remaining;
+      if (initVal < 1) initVal = 1;
 
-  const $inpNow = buildSamplingInput(sampling, initVal, remaining);
-  // (opcional) útil para depurar:
-  $inpNow.attr('data-live-max', remaining);
-  $cell.append($inpNow);
+      const $inpNow = buildSamplingInput(sampling, initVal, remaining);
+      // (opcional) útil para depurar:
+      $inpNow.attr('data-live-max', remaining);
+      $cell.append($inpNow);
 
-  // 🔁 Recalcula límites SOLO en las otras filas borrador de la misma operación
-  $inpNow.off('input.__dynmax change.__dynmax')
-    .on('input.__dynmax change.__dynmax', debounce(() => {
-      const opLocal = op;
-      const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      // 🔁 Recalcula límites SOLO en las otras filas borrador de la misma operación
+      $inpNow.off('input.__dynmax change.__dynmax')
+        .on('input.__dynmax change.__dynmax', debounce(() => {
+          const opLocal = op;
+          const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
-      ctx.modal.$rowsContainer.find('tr').each(function () {
-        const $r = $(this);
+          ctx.modal.$rowsContainer.find('tr').each(function() {
+            const $r = $(this);
 
-        // ⛔ No tocar la fila actual para no romper el tipeo
-        if ($r[0] === $row[0]) return;
+            // ⛔ No tocar la fila actual para no romper el tipeo
+            if ($r[0] === $row[0]) return;
 
-        const isSaved = !!$r.attr('data-id');
-        if (isSaved) return;
+            const isSaved = !!$r.attr('data-id');
+            if (isSaved) return;
 
-        const tRow = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
-        if (tRow !== 'IPI') return;
+            const tRow = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+            if (tRow !== 'IPI') return;
 
-        const opRow = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
-        if (opRow !== opLocal) return;
+            const opRow = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+            if (opRow !== opLocal) return;
 
-        const $c = $r.find('td.col-sample');
-        const cur = $c.find('input[name="sample_idx[]"]').val() || null;
-        renderSampleCell($c.empty(), 'IPI', sNow, cur, opLocal);
-      });
-    }, 120));
-}
+            const $c = $r.find('td.col-sample');
+            const cur = $c.find('input[name="sample_idx[]"]').val() || null;
+            renderSampleCell($c.empty(), 'IPI', sNow, cur, opLocal);
+          });
+        }, 120));
+    }
 
 
     // === MOD: considerar operación para pendientes en cada fila borrador

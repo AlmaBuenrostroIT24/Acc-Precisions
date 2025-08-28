@@ -15,7 +15,7 @@
                     <!-- Campos fijos -->
                     <div class="row">
                         <!-- Columna izquierda: primer filtro + botón + gráfica -->
-                        <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
+                        <div class="col-md-7" style="border-right: 1px solid #ddd; padding-right: 20px;">
                             <!-- Primer bloque de filtros -->
                             <div class="row mb-3">
                                 <div class="form-group col-md-3">
@@ -64,7 +64,7 @@
                             </div>
                         </div>
                         <!-- Columna derecha: segundo filtro + botón + gráfica -->
-                        <div class="col-md-4" style="padding-left: 20px;">
+                        <div class="col-md-5" style="padding-left: 20px;">
                             <!-- Segundo bloque de filtros -->
                             <div class="form-group col-md-12">
                                 <label>REPORT</label>
