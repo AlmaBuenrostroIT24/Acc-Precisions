@@ -280,6 +280,11 @@ class QaFaiSummaryController extends Controller
 
         $order = OrderSchedule::findOrFail($id);
         $order->status_inspection = $request->status_inspection;
+
+        // ✅ Si pasa a "completed", guarda la fecha/hora
+        if ($request->status_inspection === 'completed') {
+            $order->inspection_endate = now();
+        }
         $order->save();
 
         return response()->json(['success' => true]);
