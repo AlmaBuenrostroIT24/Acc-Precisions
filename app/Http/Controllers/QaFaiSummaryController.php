@@ -110,44 +110,53 @@ class QaFaiSummaryController extends Controller
         return response()->json(['data' => $data]);
     }
 
-   public function updateOperation(Request $request, $id)
-{
-    $request->validate([
-        'operation'      => 'sometimes|numeric|min:0',
-        'sampling'       => 'sometimes|numeric|min:0',
-        'sampling_check' => 'sometimes|string|max:100',
-    ]);
+    public function updateOperation(Request $request, $id)
+    {
+        $request->validate([
+            'operation'      => 'sometimes|integer|min:0',
+            'sampling'       => 'sometimes|integer|min:0',
+            'sampling_check' => 'sometimes|string|max:100',
+        ]);
 
-    if (!$request->hasAny(['operation', 'sampling', 'sampling_check'])) {
-        return response()->json(['success' => false, 'message' => 'No fields to update.'], 422);
+        if (!$request->hasAny(['operation', 'sampling', 'sampling_check'])) {
+            return response()->json(['success' => false, 'message' => 'No fields to update.'], 422);
+        }
+
+        $order = OrderSchedule::findOrFail($id);
+
+        // Guardar sampling_check si viene
+        if ($request->has('sampling_check')) { // usa has() para permitir string vacío si algún día lo necesitas
+            $order->sampling_check = $request->input('sampling_check');
+        }
+
+        // MUY IMPORTANTE: asignar operation y sampling aunque sean 0
+        if ($request->has('operation')) {
+            $order->operation = (int) $request->input('operation', 0);
+        }
+        if ($request->has('sampling')) {
+            $order->sampling = (int) $request->input('sampling', 0);
+        }
+
+        // Recalcular totales si cambió operation o sampling (has() permite 0)
+        if ($request->has('operation') || $request->has('sampling')) {
+            $op  = (int) ($order->operation ?? 0);
+            $smp = (int) ($order->sampling ?? 0);
+
+            $order->total_fai = $op;          // 1 por operación
+            $order->total_ipi = $op * $smp;   // operación * muestreo
+        }
+
+        $order->save();
+
+        return response()->json([
+            'success'        => true,
+            'operation'      => (int) $order->operation,
+            'sampling'       => (int) $order->sampling,
+            'sampling_check' => (string) ($order->sampling_check ?? ''),
+            'total_fai'      => (int) $order->total_fai,
+            'total_ipi'      => (int) $order->total_ipi,
+        ]);
     }
-
-    $order = OrderSchedule::findOrFail($id);
-
-    if ($request->filled('sampling_check')) {
-        $order->sampling_check = $request->input('sampling_check');
-    }
-    if ($request->has('sampling')) { // permite 0 si así lo devuelve tu plan
-        $order->sampling = (int) $request->input('sampling', 0);
-    }
-
-    // (Opcional) Recalcular totales si quieres que IPI dependa del nuevo sampling:
-    if ($request->filled('sampling')) {
-        $order->total_fai = (int)($order->operation ?? 0) * 1;
-        $order->total_ipi = (int)($order->operation ?? 0) * (int)$order->sampling;
-    }
-
-    $order->save();
-
-    return response()->json([
-        'success'        => true,
-        'sampling'       => $order->sampling,
-        'sampling_check' => $order->sampling_check,
-        'operation'      => $order->operation,
-        'total_fai'      => $order->total_fai,
-        'total_ipi'      => $order->total_ipi,
-    ]);
-}
 
 
 

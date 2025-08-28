@@ -719,7 +719,7 @@
           `FAI: OK (${faiSum}/${faiReq})` :
           `FAI: Need ${Math.max(faiReq - faiSum, 0)} (${faiSum}/${faiReq})`;
 
-        const extraHint = ipiSum >= ipiReq ? ' (sampling met; input allows up to WO_QTY with live remaining)' : '';
+        const extraHint = ipiSum >= ipiReq ? ' (Sampling met; input allows up to WO_QTY)' : '';
         const ipiStatus = (ipiSum >= ipiReq) ?
           `IPI: OK (${ipiSum}/${ipiReq})${extraHint}` :
           `IPI: ❌ Need ${Math.max(ipiReq - ipiSum, 0)} (${ipiSum}/${ipiReq})`;
