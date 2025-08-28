@@ -55,7 +55,6 @@ class OrderSchedule extends Model
         'sampling',
         'status_inspection',
         'sampling_check',
-        'inspection_endate'
     ];
 
     // Casts para manejar tipos de datos correctamente
@@ -67,6 +66,7 @@ class OrderSchedule extends Model
         'due_date' => 'date',
         'sent_at' => 'datetime',
         'endate_mach' => 'datetime',
+        'inspection_endate' => 'datetime',
     ];
 
     // Relaciones con el modelo User
@@ -81,8 +81,7 @@ class OrderSchedule extends Model
     }
 
     public function machiningDateLogs()
-{
-    return $this->hasMany(OrdMachiningDateLog::class, 'order_schedule_id');
-}
-
+    {
+        return $this->hasMany(OrdMachiningDateLog::class, 'order_schedule_id');
+    }
 }

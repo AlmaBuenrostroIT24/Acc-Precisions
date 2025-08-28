@@ -48,12 +48,12 @@
                     <table class="table  table-bordered table-striped" style="table-layout: fixed; width: 100%;">
                         <thead class="table-light thead-custom">
                             <tr>
-                                <th style="width: 40px;">DATE</th>
+                                <th style="width: 50px;">DATE</th>
                                 <th style="width: 50px;">LOCATION</th>
                                 <th style="width: 40px;">WORD ID</th>
                                 <th style="width: 50px;">PN</th>
                                 <th style="width: 90px;">DESCRIPTION</th>
-                                <th style="width: 40px;">QTY CHECK</th>
+                                <th style="width: 40px;">SAMP. PLAN</th>
                                 <th style="width: 40px;">WO QTY</th>
                                 <th style="width: 40px;">SAMPLING</th>
                                 <th style="width: 40px;">OPERATIONS</th>
@@ -67,12 +67,19 @@
                             @forelse($orderscompleted as $o)
                             <tr id="row-{{ $o->id }}">
                                 {{-- No traes fecha aún: deja en blanco o usa updated_at si lo agregas al select --}}
-                                <td>-</td>
+                                <td>
+                                    {{ optional($o->inspection_endate)->format('M-d-y') }}
+                                    @if($o->inspection_endate)
+                                    <span class="badge badge-light">
+                                        {{ $o->inspection_endate->format('H:i') }}
+                                    </span>
+                                    @endif
+                                </td>
                                 <td>{{ ucfirst($o->location) }}</td>
                                 <td>{{ $o->work_id }}</td>
                                 <td>{{ $o->PN }}</td>
                                 <td>{{ \Illuminate\Support\Str::before($o->Part_description, ',') }}</td>
-                                <td></td>
+                                <td>{{ ucfirst($o->sampling_check) }}</td>
                                 <td>{{ $o->wo_qty }}</td>
                                 <td>{{ $o->sampling }}</td>
                                 <td>{{ $o->operation }}</td>

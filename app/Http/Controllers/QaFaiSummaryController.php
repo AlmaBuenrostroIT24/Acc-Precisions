@@ -358,7 +358,9 @@ class QaFaiSummaryController extends Controller
             'status_inspection',
             'total_fai',
             'total_ipi',
-            'sampling'
+            'sampling',
+            'sampling_check',
+            'inspection_endate'
         ];
 
         $orderscompleted = \App\Models\OrderSchedule::query()
