@@ -158,12 +158,13 @@
         $samplingResult: null,
         $operationInput: null,
         $reportPre: null,
-        $reportBox: null
+        $reportBox: null,
+        $woqty: null
       },
 
       // Contadores dentro del modal
       faiDoneOps: new Set(), // operaciones con FAI OK
-      ipiCountMap: new Map() // op -> suma qty_pcs (IPI)
+      ipiCountMap: new Map() // op -> suma qty_pcs (solo filas GUARDADAS con PASS)
     };
 
     // ================== DataTables ==================
@@ -179,13 +180,13 @@
           orderable: false,
           searchable: false,
           render: (data, type, row) => `
-          <div class="progress" data-order-id="${row.id}" style="height:18px;">
-            <div class="progress-bar bg-secondary" role="progressbar"
-                 style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-          </div>
-          <small class="text-muted d-block">
-            <span class="badge bg-light text-dark me-1">FAI + IPI</span>
-          </small>`
+        <div class="progress" data-order-id="${row.id}" style="height:18px;">
+          <div class="progress-bar bg-secondary" role="progressbar"
+               style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+        <small class="text-muted d-block">
+          <span class="badge bg-light text-dark me-1">FAI + IPI</span>
+        </small>`
         },
         {
           data: 'actions',
@@ -265,6 +266,7 @@
       ctx.modal.$operationInput = $modal.find('#operationInput');
       ctx.modal.$reportPre = $modal.find('#inspection-missing');
       ctx.modal.$reportBox = $modal.find('#inspection-missing-container');
+      ctx.modal.$woqty = $modal.find('#edit-woqty');
 
       // Campos base
       const id = button.data('id');
@@ -308,6 +310,7 @@
       ctx.modal.$operationInput = null;
       ctx.modal.$reportPre = null;
       ctx.modal.$reportBox = null;
+      ctx.modal.$woqty = null;
       ctx.faiDoneOps.clear();
       ctx.ipiCountMap.clear();
     });
@@ -319,7 +322,7 @@
     });
 
     // ================== Eventos del modal ==================
-    // Cambios en sampling (tipo/cantidad)
+    // Cambios en sampling (tipo/cantidad) y WO_QTY
     $('#editModal').on('change input', '#edit-sampling-type, #edit-woqty', () => {
       updateSamplingQty();
     });
@@ -329,7 +332,7 @@
       const orderId = $('#order-id').val();
       const operation = parseInt(ctx.modal.$operationInput.val().trim()) || 0;
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
-      const samplingType = $('#edit-sampling-type').val(); // 👈 valor del select
+      const samplingType = $('#edit-sampling-type').val();
 
       const total_fai = operation * 1;
       const total_ipi = operation * sampling;
@@ -340,7 +343,7 @@
           sampling,
           total_fai,
           total_ipi,
-          sampling_check: samplingType // 👈 se manda a backend
+          sampling_check: samplingType
         })
         .done(() => {
           $('#addRowBtn').prop('disabled', operation === 0);
@@ -361,63 +364,56 @@
     });
 
     /*=====Guardar automáticamente cuando cambie el tipo de sampling===========*/
-// ---- Utilidad: parsear número desde distintas respuestas del plan
-function toSamplingNumber(resp) {
-  const raw = resp?.sample_qty ?? resp?.sample_size ?? resp?.n ?? resp?.sampling ?? resp?.size ?? resp;
-  const n = parseInt(raw, 10);
-  // Devuelve NaN si no es válido para que el flujo no posteé 0
-  return Number.isFinite(n) && n >= 1 ? n : NaN;
-}
-
-// ---- Utilidad: obtener WO Qty con varios fallbacks
-$('#editModal')
-  .off('change.sampling', '#edit-sampling-type')
-  .on('change.sampling', '#edit-sampling-type', function () {
-    const orderId      = $('#order-id').val();
-    const samplingType = ($(this).val() || '').trim();
-    const lotSize      = parseInt($('#edit-woqty').val(), 10) || 0;
-
-    const $samplingRes = (ctx?.modal?.$samplingResult?.length ? ctx.modal.$samplingResult : $('#edit-sampling-result'));
-    const $opInput     = (ctx?.modal?.$operationInput?.length ? ctx.modal.$operationInput : $('#operationInput'));
-
-    if (!lotSize) {
-      swalError('WO Qty requerido', 'Captura un WO Qty válido para calcular el muestreo.');
-      return;
+    function toSamplingNumber(resp) {
+      const raw = resp?.sample_qty ?? resp?.sample_size ?? resp?.n ?? resp?.sampling ?? resp?.size ?? resp;
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) && n >= 1 ? n : NaN;
     }
-    $.get(ROUTES.samplingPlan(lotSize, samplingType))
-      .then((resp) => {
-        //console.debug('samplingPlan →', resp);
-        const n = toSamplingNumber(resp); // ahora lee sample_qty
-        if (!Number.isFinite(n)) {
-          swalError('Plan inválido', 'No se pudo calcular el tamaño de muestra para ese tipo.');
-          return $.Deferred().reject('invalid-sampling').promise();
+
+    $('#editModal')
+      .off('change.sampling', '#edit-sampling-type')
+      .on('change.sampling', '#edit-sampling-type', function() {
+        const orderId = $('#order-id').val();
+        const samplingType = ($(this).val() || '').trim();
+        const lotSize = parseInt($('#edit-woqty').val(), 10) || 0;
+
+        const $samplingRes = (ctx?.modal?.$samplingResult?.length ? ctx.modal.$samplingResult : $('#edit-sampling-result'));
+        const $opInput = (ctx?.modal?.$operationInput?.length ? ctx.modal.$operationInput : $('#operationInput'));
+
+        if (!lotSize) {
+          swalError('WO Qty requerido', 'Captura un WO Qty válido para calcular el muestreo.');
+          return;
         }
-        if ($samplingRes.length) $samplingRes.val(n);
-        return $.post(ROUTES.updateOps(orderId), {
-          _token: getCsrf(),
-          sampling_check: samplingType,
-          sampling: n
-        });
-      })
-      .done((saveResp) => {
-        const operation = parseInt(($opInput.val() || saveResp?.operation || 0), 10) || 0;
-        const sampling  = parseInt((saveResp?.sampling ?? $samplingRes.val() ?? 0), 10) || 0;
-        if (typeof refreshProgress === 'function') refreshProgress(orderId, operation, sampling);
-        if (typeof updateInspectionMissing === 'function') updateInspectionMissing();
-        if (ctx.dtEmpty)   ctx.dtEmpty.ajax.reload(null, false);
-        if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
-        swalOk('¡Updated!', `Sampling type & sampling saved successfully`);
-      })
-      .fail((xhr) => {
-        if (xhr !== 'invalid-sampling') {
-          console.warn('Sampling-type change failed:', xhr?.status, xhr?.responseText);
-          swalError('Error', 'No se pudo guardar el cambio de sampling.');
-        }
+        $.get(ROUTES.samplingPlan(lotSize, samplingType))
+          .then((resp) => {
+            const n = toSamplingNumber(resp);
+            if (!Number.isFinite(n)) {
+              swalError('Plan inválido', 'No se pudo calcular el tamaño de muestra para ese tipo.');
+              return $.Deferred().reject('invalid-sampling').promise();
+            }
+            if ($samplingRes.length) $samplingRes.val(n);
+            return $.post(ROUTES.updateOps(orderId), {
+              _token: getCsrf(),
+              sampling_check: samplingType,
+              sampling: n
+            });
+          })
+          .done((saveResp) => {
+            const operation = parseInt(($opInput.val() || saveResp?.operation || 0), 10) || 0;
+            const sampling = parseInt((saveResp?.sampling ?? $samplingRes.val() ?? 0), 10) || 0;
+            if (typeof refreshProgress === 'function') refreshProgress(orderId, operation, sampling);
+            if (typeof updateInspectionMissing === 'function') updateInspectionMissing();
+            if (ctx.dtEmpty) ctx.dtEmpty.ajax.reload(null, false);
+            if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
+            swalOk('¡Updated!', `Sampling type & sampling saved successfully`);
+          })
+          .fail((xhr) => {
+            if (xhr !== 'invalid-sampling') {
+              console.warn('Sampling-type change failed:', xhr?.status, xhr?.responseText);
+              swalError('Error', 'No se pudo guardar el cambio de sampling.');
+            }
+          });
       });
-  });
-
-
-
 
     // Agregar fila (verifica que la operación esté guardada)
     $('#editModal').on('click', '#addRowBtn', function() {
@@ -442,6 +438,7 @@ $('#editModal')
     $('#editModal').on('click', '.removeRowBtn', function() {
       $(this).closest('tr').remove();
       updateInspectionMissing();
+      refreshAllSamplingSelects(); // recalcular límites tras remover
     });
 
     // Editar fila guardada
@@ -459,7 +456,7 @@ $('#editModal')
         const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
         const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
         const $cell = $row.find('td.col-sample');
-        const cur = $cell.find('select[name="sample_idx[]"]').val() || null;
+        const cur = $cell.find('input[name="sample_idx[]"]').val() || null;
         renderSampleCell($cell.empty(), 'IPI', sampling, cur, op);
       }
     });
@@ -472,20 +469,29 @@ $('#editModal')
 
       const inspType = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
 
-      // sample_idx: FAI => 1; IPI => select 1..sampling
+      // sample_idx: FAI => 1; IPI => input
       let sampleIdx = null;
       if (inspType === 'FAI') {
         sampleIdx = 1;
       } else {
-        const $sel = $row.find('select[name="sample_idx[]"]').not('.sample-fixed');
-        const $hid = $row.find('input[name="sample_idx[]"]');
-        sampleIdx = $sel.length ? parseInt($sel.val(), 10) : ($hid.length ? parseInt($hid.val(), 10) : null);
+        const $inp = $row.find('input[name="sample_idx[]"]').not('.sample-fixed');
+        const $hid = $row.find('input[name="sample_idx[]"].sample-fixed');
+        sampleIdx = $inp.length ? parseInt($inp.val(), 10) : ($hid.length ? parseInt($hid.val(), 10) : null);
       }
 
+      // ==== VALIDACIÓN dinámica por restante en la OPERACIÓN (WO_QTY - guardadas - borradores) ====
       if (inspType === 'IPI') {
-        const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
-        if (!sampling || !sampleIdx || sampleIdx < 1 || sampleIdx > sampling) {
-          return swalWarn('Invalid sample', `The sample index must be between 1 and ${sampling}.`);
+        const opVal = $row.find('select[name="operation[]"]').val() || $row.find('input[name="operation[]"]').val() || '';
+        const curSavedQty = $row.attr('data-id') ?
+          (parseInt($row.attr('data-qty_pcs') || $row.data('qty_pcs') || $row.data('qty') || 0, 10) || 0) :
+          0;
+
+        const remainingWo = getIpiRemainingForOpByWo(opVal, curSavedQty, $row);
+        if (!remainingWo) {
+          return swalWarn('No remaining', `No remaining IPI pieces for ${opVal}.`);
+        }
+        if (!sampleIdx || sampleIdx < 1 || sampleIdx > remainingWo) {
+          return swalWarn('Invalid sample', `You can enter between 1 and ${remainingWo} pieces for ${opVal}.`);
         }
       }
 
@@ -510,10 +516,14 @@ $('#editModal')
         .done(resp => {
           if (resp?.id) $row.attr('data-id', resp.id);
 
+          // mantener qty de la fila para futuras ediciones
+          if (inspType === 'IPI') $row.attr('data-qty_pcs', sampleIdx);
+
           $row.find('input, select, .saveRowBtn').prop('disabled', true);
-          $row.find('select.sample-fixed').prop('disabled', true);
+          $row.find('input.sample-fixed').prop('disabled', true);
 
           updateInspectionMissing();
+          refreshAllSamplingSelects(); // recalcular límites tras guardar
 
           $row.find('td:last').html(`
           <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
@@ -581,6 +591,7 @@ $('#editModal')
         if (!rowId) {
           $row.remove();
           updateInspectionMissing();
+          refreshAllSamplingSelects();
           return;
         }
 
@@ -595,6 +606,7 @@ $('#editModal')
             swalOk('Eliminado', 'La fila ha sido eliminada');
             $row.remove();
             updateInspectionMissing();
+            refreshAllSamplingSelects();
 
             const orderId = $('#order-id').val();
             const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
@@ -629,13 +641,14 @@ $('#editModal')
       const type = $('#edit-sampling-type').val();
       if (!lotSize || lotSize < 1) {
         ctx.modal.$samplingResult.val('');
+        refreshAllSamplingSelects(); // deshabilita inputs si aplica
         return;
       }
       $.getJSON(ROUTES.samplingPlan(lotSize, type)).done(data => {
         const sample = (data?.sample_qty ?? 0);
         ctx.modal.$samplingResult.val(sample);
 
-        // refrescar selects IPI (no FAI)
+        // refrescar inputs IPI (no FAI)
         refreshAllSamplingSelects();
         // recalcular pendientes por operación en borradores
         refreshPendingIpiOptions();
@@ -663,11 +676,11 @@ $('#editModal')
       }
 
       const faiMap = new Map(),
-        ipiMap = new Map(); // op -> suma qty_pcs
+        ipiMap = new Map(); // op -> suma qty_pcs (solo GUARDADAS)
       ctx.faiDoneOps.clear();
       ctx.ipiCountMap.clear();
 
-      // Contar SOLO filas guardadas
+      // Contar SOLO filas guardadas (pass)
       ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
         const $r = $(this);
         const type = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
@@ -675,7 +688,7 @@ $('#editModal')
         const res = String($r.find('select[name="results[]"]').val() || '').toLowerCase();
         if (!op || res !== 'pass') return;
 
-        const qty = getRowQty($r); // suma qty_pcs
+        const qty = getRowQty($r);
 
         if (type === 'FAI') {
           faiMap.set(op, (faiMap.get(op) || 0) + qty);
@@ -686,13 +699,10 @@ $('#editModal')
         }
       });
 
-      // Actualiza caches para los selects (FAI hecho si suma >= 1; IPI suma actual)
-      for (const [op, sum] of faiMap.entries()) {
+      // Actualiza caches
+      for (const [op, sum] of faiMap.entries())
         if (sum >= 1) ctx.faiDoneOps.add(op);
-      }
-      for (const [op, sum] of ipiMap.entries()) {
-        ctx.ipiCountMap.set(op, sum);
-      }
+      for (const [op, sum] of ipiMap.entries()) ctx.ipiCountMap.set(op, sum);
 
       // Reporte por operación contra requeridos
       let resumen = '';
@@ -709,8 +719,9 @@ $('#editModal')
           `FAI: OK (${faiSum}/${faiReq})` :
           `FAI: Need ${Math.max(faiReq - faiSum, 0)} (${faiSum}/${faiReq})`;
 
+        const extraHint = ipiSum >= ipiReq ? ' (sampling met; input allows up to WO_QTY with live remaining)' : '';
         const ipiStatus = (ipiSum >= ipiReq) ?
-          `IPI: OK (${ipiSum}/${ipiReq})` :
+          `IPI: OK (${ipiSum}/${ipiReq})${extraHint}` :
           `IPI: ❌ Need ${Math.max(ipiReq - ipiSum, 0)} (${ipiSum}/${ipiReq})`;
 
         const line =
@@ -758,14 +769,192 @@ $('#editModal')
       return 1;
     }
 
-    // Devuelve cuánto IPI queda pendiente para una operación concreta
+    // === Util: obtener WO_QTY del modal ===
+    function getWoQty() {
+      const raw = (ctx?.modal?.$woqty?.length ? ctx.modal.$woqty.val() : $('#edit-woqty').val());
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+    // ====== Helpers para restante dinámico por operación (WO_QTY - guardadas - borradores) ======
+    function getDraftIpiSumForOp(op, $excludeRow = null) {
+      let sum = 0;
+      ctx.modal.$rowsContainer.find('tr').each(function() {
+        const $r = $(this);
+        if ($excludeRow && $r[0] === $excludeRow[0]) return; // excluye esta fila
+        const isSaved = !!$r.attr('data-id');
+        if (isSaved) return; // solo borradores
+        const t = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+        if (t !== 'IPI') return;
+        const opVal = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+        if (opVal !== op) return;
+
+        const q = parseInt($r.find('input[name="sample_idx[]"]').val() || 0, 10);
+        if (Number.isFinite(q) && q > 0) sum += q;
+      });
+      return sum;
+    }
+
+    function getIpiRemainingForOpByWo(op, currentRowQty = 0, $rowCtx = null) {
+      const wo = getWoQty();
+      if (!wo) return 0;
+
+      const saved = ctx.ipiCountMap.get(op) || 0; // sumatoria de GUARDADAS (pass)
+      const drafts = getDraftIpiSumForOp(op, $rowCtx); // sumatoria de borradores EXCLUYENDO $rowCtx
+      const isSavedRow = $rowCtx && !!$rowCtx.attr('data-id');
+
+      // Usado excepto esta fila:
+      const usedExceptThis = saved + drafts - (isSavedRow ? (parseInt(currentRowQty, 10) || 0) : 0);
+
+      return Math.max(0, wo - usedExceptThis);
+    }
+
+
+    // === MOD: input de muestra con tope dinámico (remaining) por operación ===
+    function buildSamplingInput(sampling, currentVal = null, maxAllowed = null) {
+      const woMax = getWoQty();
+      const s = Math.max(0, parseInt(sampling) || 0);
+      const upper = Math.max(0, maxAllowed ?? woMax ?? s); // prioridad: maxAllowed (remaining) > WO_QTY > sampling
+
+      if (upper === 0) {
+        return $(`<input type="number" name="sample_idx[]" class="form-control" disabled>`);
+      }
+
+      const $input = $(`<input type="number" name="sample_idx[]" class="form-control">`)
+        .attr({
+          min: 1,
+          max: upper,
+          step: 1
+        });
+
+      const cur = parseInt(currentVal, 10);
+      if (Number.isFinite(cur) && cur >= 1 && cur <= upper) $input.val(cur);
+      else $input.val(1);
+
+      $input.on('input change', function() {
+        const max = parseInt($(this).attr('max'), 10) || upper;
+        const min = parseInt($(this).attr('min'), 10) || 1;
+        let val = parseInt($(this).val(), 10);
+        if (!Number.isFinite(val)) return;
+        if (val > max) $(this).val(max);
+        if (val < min) $(this).val(min);
+      });
+
+      return $input;
+    }
+
+    // === MOD: usa restante dinámico por operación (WO_QTY - guardadas - borradores) como tope ===
+  function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
+  $cell.empty();
+  const t = String(type).toUpperCase();
+
+  if (t === 'FAI') {
+    const $fixed = $(`<input type="number" class="form-control sample-fixed" value="1" readonly>`);
+    $cell.append($fixed);
+    $cell.append(`<input type="hidden" name="sample_idx[]" value="1">`);
+    return;
+  }
+
+  // IPI
+  const $row = $cell.closest('tr');
+  const op = opForPending || $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+  const woMax = getWoQty();
+
+  if (!woMax || !op) {
+    const $inpDisabled = $(`<input type="number" name="sample_idx[]" class="form-control" disabled
+                             placeholder="${!woMax ? 'WO_QTY required' : 'Operation required'}">`);
+    $cell.append($inpDisabled);
+    return;
+  }
+
+  const curQty = Number.isFinite(parseInt(currentVal, 10)) ? parseInt(currentVal, 10) : 0;
+
+  // 👇 restante dinámico por operación (WO_QTY − guardadas − borradores)
+  const remaining = getIpiRemainingForOpByWo(op, curQty, $row);
+
+  if (remaining === 0) {
+    $cell.append($(`<input type="number" name="sample_idx[]" class="form-control" min="0" max="0" value="0" disabled>`));
+    return;
+  }
+
+  let initVal = curQty || 1;
+  if (initVal > remaining) initVal = remaining;
+  if (initVal < 1) initVal = 1;
+
+  const $inpNow = buildSamplingInput(sampling, initVal, remaining);
+  // (opcional) útil para depurar:
+  $inpNow.attr('data-live-max', remaining);
+  $cell.append($inpNow);
+
+  // 🔁 Recalcula límites SOLO en las otras filas borrador de la misma operación
+  $inpNow.off('input.__dynmax change.__dynmax')
+    .on('input.__dynmax change.__dynmax', debounce(() => {
+      const opLocal = op;
+      const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+      ctx.modal.$rowsContainer.find('tr').each(function () {
+        const $r = $(this);
+
+        // ⛔ No tocar la fila actual para no romper el tipeo
+        if ($r[0] === $row[0]) return;
+
+        const isSaved = !!$r.attr('data-id');
+        if (isSaved) return;
+
+        const tRow = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+        if (tRow !== 'IPI') return;
+
+        const opRow = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+        if (opRow !== opLocal) return;
+
+        const $c = $r.find('td.col-sample');
+        const cur = $c.find('input[name="sample_idx[]"]').val() || null;
+        renderSampleCell($c.empty(), 'IPI', sNow, cur, opLocal);
+      });
+    }, 120));
+}
+
+
+    // === MOD: considerar operación para pendientes en cada fila borrador
+    function refreshAllSamplingSelects() {
+      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+
+      ctx.modal.$rowsContainer.find('tr').each(function() {
+        const $row = $(this);
+        const isSaved = !!$row.attr('data-id'); // filas guardadas no se tocan
+        if (isSaved) return;
+
+        const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+        const $cell = $row.find('td.col-sample');
+        if (!type || !$cell.length) return;
+
+        if (type === 'FAI') {
+          renderSampleCell($cell.empty(), 'FAI', sampling);
+          return;
+        }
+
+        // IPI
+        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
+
+        // Valor actual desde INPUT
+        const current = (function() {
+          const v = $cell.find('input[name="sample_idx[]"]').val();
+          return v !== undefined ? v : null;
+        })();
+
+        // Render con restante dinámico por operación
+        renderSampleCell($cell.empty(), 'IPI', sampling, current, op);
+      });
+    }
+
+    // Devuelve cuánto IPI queda pendiente para una operación concreta (contra sampling plan) - usado solo para reporte
     function getIpiRemainingForOp(op, sampling) {
       const done = ctx.ipiCountMap.get(op) || 0;
       const rem = Math.max(0, (parseInt(sampling, 10) || 0) - done);
       return rem;
     }
 
-    // Reconstruye TODAS las celdas de muestra IPI (pendientes) en borradores
+    // Reconstruye TODAS las celdas de muestra IPI (pendientes) en borradores (apoya al reporte)
     function refreshPendingIpiOptions() {
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
@@ -777,7 +966,7 @@ $('#editModal')
 
         const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
         const $cell = $row.find('td.col-sample');
-        const current = $cell.find('select[name="sample_idx[]"]').val() || null;
+        const current = $cell.find('input[name="sample_idx[]"]').val() || null;
 
         renderSampleCell($cell.empty(), type, sampling, current, op);
       });
@@ -818,14 +1007,14 @@ $('#editModal')
       ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
         const $r = $(this);
         const type = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
-        const op = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+        const theOp = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
         const res = String($r.find('select[name="results[]"]').val() || '').toLowerCase();
-        if (!op || res !== 'pass') return;
+        if (!theOp || res !== 'pass') return;
 
         const qty = getRowQty($r);
 
-        if (type === 'FAI') faiSum.set(op, (faiSum.get(op) || 0) + qty);
-        if (type === 'IPI') ipiSum.set(op, (ipiSum.get(op) || 0) + qty);
+        if (type === 'FAI') faiSum.set(theOp, (faiSum.get(theOp) || 0) + qty);
+        if (type === 'IPI') ipiSum.set(theOp, (ipiSum.get(theOp) || 0) + qty);
       });
 
       for (let i = 1; i <= totalOps; i++) {
@@ -840,69 +1029,6 @@ $('#editModal')
         };
       }
       return null;
-    }
-
-    // === MOD: límite por pendiente (parámetro maxAllowed) ===
-    function buildSamplingSelect(sampling, currentVal = null, maxAllowed = null) {
-      const $sel = $(`<select name="sample_idx[]" class="form-control"></select>`);
-      const s = Math.max(0, parseInt(sampling) || 0);
-      const upper = Math.max(0, Math.min(s, maxAllowed ?? s));
-
-      if (upper === 0) {
-        $sel.append(`<option value="">—</option>`).prop('disabled', true);
-        return $sel;
-      }
-
-      $sel.append('<option value=""></option>');
-      for (let i = 1; i <= upper; i++) $sel.append(`<option value="${i}">${i}</option>`);
-      if (currentVal) {
-        if (parseInt(currentVal, 10) <= upper) $sel.val(String(currentVal));
-        else $sel.val('');
-      }
-      return $sel;
-    }
-
-    // === MOD: usa opForPending para limitar por pendiente por operación ===
-    function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
-      $cell.empty();
-      const t = String(type).toUpperCase();
-
-      if (t === 'FAI') {
-        const $fixed = $(`
-        <select class="form-control sample-fixed" disabled>
-          <option value="1" selected>1</option>
-        </select>
-      `);
-        $cell.append($fixed);
-        $cell.append(`<input type="hidden" name="sample_idx[]" value="1">`);
-      } else {
-        const remaining = opForPending ? getIpiRemainingForOp(opForPending, sampling) : (parseInt(sampling, 10) || 0);
-        $cell.append(buildSamplingSelect(sampling, currentVal || 1, remaining));
-      }
-    }
-
-    // === MOD: considerar operación para pendientes en cada fila borrador
-    function refreshAllSamplingSelects() {
-      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
-
-      ctx.modal.$rowsContainer.find('tr').each(function() {
-        const $row = $(this);
-        const isSaved = !!$row.attr('data-id'); // filas guardadas no se tocan
-        if (isSaved) return;
-
-        const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
-        const $cell = $row.find('td.col-sample');
-        if (!type || !$cell.length) return;
-
-        if (type === 'FAI') {
-          renderSampleCell($cell.empty(), 'FAI', sampling);
-          return;
-        }
-
-        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
-        const current = $cell.find('select[name="sample_idx[]"]').val() || null;
-        renderSampleCell($cell.empty(), 'IPI', sampling, current, op);
-      });
     }
 
     function renderOrderProgress(orderId, percent) {
@@ -986,11 +1112,10 @@ $('#editModal')
         // Sugerir siguiente par FAI/IPI por operación
         const suggestion = getNextInspectionPair(totalOps);
         if (suggestion) {
-          defaultType = suggestion.type; // 'FAI' | 'IPI'
-          preferredOp = suggestion.op; // '1st Op', '2nd Op', ...
+          defaultType = suggestion.type;
+          preferredOp = suggestion.op;
         }
 
-        // Setear el tipo sugerido y construir el select priorizando la operación sugerida
         $inspType.val(defaultType);
         const opSel = createOperationSelect(totalOps, defaultType, preferredOp);
         if (opSel.children().length === 0) {
@@ -1034,16 +1159,14 @@ $('#editModal')
         <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
       </td>`);
 
-      // Al cambiar FAI/IPI, re-sugerir operación de ese tipo y refrescar celda "Muestra"
+      // Al cambiar FAI/IPI, re-sugerir operación y refrescar "Muestra"
       $inspType.on('change', function() {
         if (!isNumber) return;
         const newType = $(this).val();
 
         let preferredOpForType = null;
         const suggestion = getNextInspectionPair(totalOps);
-        if (suggestion && suggestion.type === newType) {
-          preferredOpForType = suggestion.op;
-        }
+        if (suggestion && suggestion.type === newType) preferredOpForType = suggestion.op;
 
         const newOpSel = createOperationSelect(totalOps, newType, preferredOpForType);
         $opCell.empty().append(newOpSel);
@@ -1052,11 +1175,11 @@ $('#editModal')
         const opNow = newOpSel.val() || preferredOpForType || null;
         renderSampleCell($sampleCell.empty(), newType, samplingNow, null, opNow);
 
-        // Cuando cambie la operación, recalcula pendiente para esa op
+        // Cuando cambie la operación, recalcula restante para esa op
         newOpSel.on('change', function() {
           const opX = $(this).val() || null;
           const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
-          const cur = $sampleCell.find('select[name="sample_idx[]"]').val() || null;
+          const cur = $sampleCell.find('input[name="sample_idx[]"]').val() || null;
           renderSampleCell($sampleCell.empty(), newType, sNow, cur, opX);
         });
       });
@@ -1067,7 +1190,7 @@ $('#editModal')
         const tNow = $inspType.val();
         const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
         const opNow = $(this).val() || null;
-        const cur = $sampleCell.find('select[name="sample_idx[]"]').val() || null;
+        const cur = $sampleCell.find('input[name="sample_idx[]"]').val() || null;
         renderSampleCell($sampleCell.empty(), tNow, sNow, cur, opNow);
       });
 
@@ -1077,7 +1200,7 @@ $('#editModal')
     function createRowFromData(data) {
       const $row = $('<tr></tr>').attr('data-id', data.id);
 
-      // (opcional) guarda qty en data-attr para otras funciones
+      // guarda qty en data-attr para otras funciones (edición)
       const savedQty = parseInt(data.qty_pcs ?? data.sample_idx ?? 1, 10) || 1;
       $row.attr('data-qty_pcs', savedQty);
 
@@ -1114,19 +1237,16 @@ $('#editModal')
       // --- QTY PCS / sample_idx ---
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
       const $sampleCell = $('<td class="col-sample"></td>');
+
       // Para guardadas: render y deja disabled, asegurando valor
       renderSampleCell($sampleCell, data.insp_type, sampling, savedQty, data.operation);
       $row.append($sampleCell);
 
-      const $sel = $sampleCell.find('select[name="sample_idx[]"]').not('.sample-fixed');
-      if ($sel.length) {
-        if ($sel.find(`option[value="${savedQty}"]`).length === 0) {
-          $sel.append(`<option value="${savedQty}">${savedQty}</option>`);
-        }
-        $sel.val(String(savedQty));
-        $sel.prop('disabled', true);
+      const $inp = $sampleCell.find('input[name="sample_idx[]"]').not('.sample-fixed');
+      if ($inp.length) {
+        $inp.val(String(savedQty)).prop('disabled', true);
       } else {
-        $sampleCell.find('select.sample-fixed').prop('disabled', true);
+        $sampleCell.find('input.sample-fixed').prop('disabled', true);
       }
 
       $row.append(`
@@ -1265,6 +1385,8 @@ $('#editModal')
     }
   })();
 </script>
+
+
 
 
 
