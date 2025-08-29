@@ -728,21 +728,23 @@
         const ipiRealizadosOp = ipiPass + ipiFail; // ✅ por operación
 
         const faiStatus = (faiPass >= faiReq) ?
-          `<strong>FAI:</strong> OK, P:(${faiPass}/${faiReq}), NP:${faiFail}, D:${faiRealizadosOp})` :
-          `<strong>FAI:</strong> N ${Math.max(faiReq - faiPass, 0)} P:(${faiPass}/${faiReq}), NP:${faiFail}, D:${faiRealizadosOp})`;
+          `✔️ <strong>FAI:</strong> P:(${faiPass}/${faiReq}), NP:${faiFail}, Done:${faiRealizadosOp})` :
+          `❌ <strong>FAI:</strong>P:(${faiPass}/${faiReq}), NP:${faiFail}, Done:${faiRealizadosOp})`;
 
-        const extraHint = ipiPass >= ipiReq ? '' : '';
         const ipiStatus = (ipiPass >= ipiReq) ?
-          `<strong>IPI:</strong> OK P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, D:${ipiRealizadosOp})${extraHint}` :
-          `<strong>IPI:</strong> ❌ N ${Math.max(ipiReq - ipiPass, 0)} P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, D:${ipiRealizadosOp})`;
+          `✔️ <strong>IPI:</strong> P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, Done:${ipiRealizadosOp})` :
+          `❌ <strong>IPI:</strong> P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, Done:${ipiRealizadosOp})`;
 
-        const line =
-          (faiPass >= faiReq && ipiPass >= ipiReq) ? `✔️ ${op} → ${faiStatus} | ${ipiStatus}` :
-          (faiPass < faiReq && ipiPass < ipiReq) ? `❌ ${op} → ${faiStatus} | ${ipiStatus}` :
-          `⚠️ ${op} → ${faiStatus} | ${ipiStatus}`;
+        // Ícono global
+        let globalIcon = '⚠️';
+        if (faiPass >= faiReq && ipiPass >= ipiReq) globalIcon = '✔️';
+        else if (faiPass < faiReq && ipiPass < ipiReq) globalIcon = '❌';
+
+        const line = `${globalIcon} ${op} | ${faiStatus} | ${ipiStatus}`;
 
         resumen += line + '\n';
         if (faiPass < faiReq || ipiPass < ipiReq) faltantes = true;
+
       }
 
       // ====== Totales generales ======
@@ -763,7 +765,7 @@
       const faiPct = faiReqTotal ? ((faiPassTotal / faiReqTotal) * 100).toFixed(1) : '0.0';
       const ipiPct = ipiReqTotal ? ((ipiPassTotal / ipiReqTotal) * 100).toFixed(1) : '0.0';
 
-      resumen += '\n<strong>— RESUMEN —</strong>\n';
+      resumen += '\n<strong>— FAI/IPI Inspection Packet Summary —</strong>\n';
       resumen += `FAI → P:${faiPassTotal}, NP:${faiFailTotal}, Need:${faiReqTotal}, Done:${faiRealizados} (${faiPct}%)\n`;
       resumen += `IPI → P:${ipiPassTotal}, NP:${ipiFailTotal}, Need:${ipiRealizados}, Done:${ipiReqTotal} (${ipiPct}%)\n`;
 

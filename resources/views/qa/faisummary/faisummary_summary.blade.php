@@ -79,9 +79,9 @@
                                 <td>{{ $inspection->insp_type }}</td>
                                 <td>{{ $inspection->operation }}</td>
                                 <td>{{ $inspection->operator }}</td>
-                                <td>{{ $inspection->results }}</td>
+                                <td>{{ ucfirst($inspection->results) }}</td>
                                 <td class="truncate" data-toggle="tooltip" title="{{ $inspection->sb_is }}">{{ $inspection->sb_is }}</td>
-                                <td  class="truncate" data-toggle="tooltip" title="{{ $inspection->observation }}">
+                                <td class="truncate" data-toggle="tooltip" title="{{ $inspection->observation }}">
                                     {{ $inspection->observation }}
                                 </td>
                                 <td>{{ $inspection->station }}</td>
@@ -117,14 +117,14 @@
 
 @section('css')
 <style>
-
-.truncate {
-    max-width: 240px;    /* ajusta al ancho deseado */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 14px;
-}
+    .truncate {
+        max-width: 240px;
+        /* ajusta al ancho deseado */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 14px;
+    }
 </style>
 @endsection
 
@@ -142,7 +142,7 @@
             responsive: true
         });
 
-         $('[data-toggle="tooltip"]').tooltip();
+        $('[data-toggle="tooltip"]').tooltip();
     });
 </script>
 @endpush

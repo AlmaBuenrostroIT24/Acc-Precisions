@@ -67,7 +67,7 @@
                         <div class="col-md-5" style="padding-left: 20px;">
                             <!-- Segundo bloque de filtros -->
                             <div class="form-group col-md-12">
-                                <label>REPORT</label>
+                                <label>FAI/IPI Inspection Packet Report</label>
                                 <div id="inspection-missing-container" class="border rounded p-2 bg-light" style="min-height: 140px;">
                                     <pre id="inspection-missing" class="m-0" style="white-space: pre-wrap;"></pre>
                                 </div>

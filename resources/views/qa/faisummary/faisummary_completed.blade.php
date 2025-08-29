@@ -56,7 +56,7 @@
                                 <th style="width: 40px;">SAMP. PLAN</th>
                                 <th style="width: 40px;">WO QTY</th>
                                 <th style="width: 40px;">SAMPLING</th>
-                                <th style="width: 40px;">OPERATIONS</th>
+                                <th style="width: 20px;">OPS.</th>
                                 <th style="width: 20px;">FAI</th>
                                 <th style="width: 20px;">IPI</th>
 
