@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB; // si no tienes modelo Status
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use PDF;
+use App\Services\InspectionSummary;
 
 class QaFaiSummaryController extends Controller
 {
@@ -381,6 +382,8 @@ class QaFaiSummaryController extends Controller
 
 
 
+
+
     public function pdf(OrderSchedule $order)
     {
         $header = [
@@ -415,50 +418,77 @@ class QaFaiSummaryController extends Controller
                 'observation',
                 'station',
                 'method',
-                'inspector'
+                'inspector',
+                // si tienes cantidad por fila para el resumen, inclúyela p.ej.:
+                // 'qty_pcs',
             ]);
 
         Log::debug('Datos de QA FAI Summary:', $rows->toArray());
 
         $generatedAt = now('America/Los_Angeles');
 
-        // 1) Crea el PDF
+        // === Resumen FAI/IPI (servidor) ===
+        // El service carga de BD por defecto (modelo QaFai). Si tu tabla es QaFaiSummary,
+        // puedes 1) adaptar el service a ese modelo, o 2) crear un método summarizeFromRows().
+        // Opción rápida: usa summarize($order, ops, sampling) y adapta el service al modelo real.
+        $summary = app(InspectionSummary::class)->summarize(
+            $order,
+            $header['operation'],
+            $header['sampling']
+        );
+
+        // 1) Crea el PDF (pasa $summary al Blade)
         $pdf = PDF::loadView('qa.faisummary.faisummary_pdf', [
             'order'       => $order,
             'header'      => $header,
             'rows'        => $rows,
+            'summary'     => $summary,
             'generatedAt' => $generatedAt,
         ])->setPaper('letter', 'landscape');
 
-        // 2) Obtén Dompdf y RENDER explícitamente (clave)
+        // 2) Render explícito
         $dompdf = $pdf->getDomPDF();
-        $dompdf->render(); // <-- importante: inicializa canvas y páginas
+        $dompdf->render();
 
-        // 3) Ahora SÍ: dibuja los folios con page_text en el canvas
+        // 3) Canvas para folio arriba-derecha
         $canvas      = $dompdf->getCanvas();
         $fontMetrics = $dompdf->getFontMetrics();
 
         Log::debug('PDF canvas size', ['w' => $canvas->get_width(), 'h' => $canvas->get_height()]);
 
-        $font = $fontMetrics->get_font('DejaVu Sans', 'normal'); // o 'helvetica'
+        $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
         $size = 10;
 
-        // Texto de prueba ARRIBA-IZQ para confirmar que pinta
-        //$canvas->page_text(12, 24, 'TEST TOP {PAGE_NUM}/{PAGE_COUNT}', $font, $size, [255, 0, 0]); // rojo
-
-        // Folio centrado abajo
         $w = $canvas->get_width();
         $h = $canvas->get_height();
+
+        // Folio arriba-derecha (pegado casi al borde respetando margen)
         $text = 'Page {PAGE_NUM} of {PAGE_COUNT}';
         $textWidth = $fontMetrics->get_text_width($text, $font, $size);
-        $x = $w - 70; // 20 pts desde el borde derecho
-        $y = 5;                   // 20 pts desde arriba
+
+        // Márgenes superiores/laterales de tu @page: 30px top, 18px right/left => usa ~12pt de padding visual
+        $padRight = 12;
+        $padTop   = 18; // un poco debajo del margen superior para no pisar
+
+        $x = $w - $textWidth - $padRight;
+        $y = $padTop;
 
         $canvas->page_text($x, $y, $text, $font, $size, [0, 0, 0]);
 
-        // 4) Envía el PDF (usa dompdf->stream para evitar re-render)
+        // 4) Stream sin re-render
         $filename = 'FAI_' . str_replace(['/', '\\'], '-', (string)$order->work_id) . '.pdf';
-        return $dompdf->stream($filename, ['Attachment' => false]); // inline
+        return $dompdf->stream($filename, ['Attachment' => false]);
+    }
+
+
+    public function completedView(OrderSchedule $order)
+    {
+        $summary = app(InspectionSummary::class)->summarize($order, $order->operation, $order->sampling);
+
+        return view('qa.faisummary.completed', [
+            'order' => $order,
+            'summary' => $summary,
+        ]);
     }
 
 

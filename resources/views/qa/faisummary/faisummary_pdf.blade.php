@@ -121,6 +121,33 @@
             padding: 3px 5px;
             border-radius: 3px;
         }
+
+        /* Resumen FAI/IPI para Dompdf (colores planos) */
+        .summary-box {
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0 10px 0;
+            /* margen normal, nada de auto */
+            width: 60%;
+            /* ancho fijo, ajusta al gusto (ej. 50%, 70%, 400px) */
+        }
+
+        .summary-ok {
+            background: #f1f1f1;
+            color: #000;
+        }
+
+        /* éxito */
+        .summary-warn {
+            background: #f1f1f1;
+            color: #000;
+        }
+
+        /* faltantes */
+        .summary-body {
+            font-size: 10px;
+            line-height: 1.35;
+        }
     </style>
 </head>
 
@@ -140,10 +167,9 @@
             <td colspan="2"> {{ $header['description'] }}</td>
             <td><strong>CUST: </strong>{{ $header['costumer'] }}</td>
             <td colspan="2">
-                <div class="small"><strong>Printed: </strong>{{ $generatedAt->format('m/d/Y') }} {{-- o m/d/Y h:i A --}}</div>
+                <div class="small"><strong>Printed: </strong>{{ $generatedAt->format('m/d/Y') }}</div>
                 <div><strong>Rise: </strong>{{ \Carbon\Carbon::now()->format('m/d/Y') }}</div>
             </td>
-
         </tr>
         <tr>
             <td colspan="2"><strong>CO QTY:</strong> {{ $header['qty'] }}</td>
@@ -153,13 +179,12 @@
             <td><strong>WO QTY#:</strong> {{ $header['wo_qty'] }}</td>
             <td><strong>QC INSP PACKET</strong></td>
         </tr>
-
     </table>
+
     <table style="width:100%; border-collapse:separate; border-spacing:0;">
         <tr>
             <td style="border:0; padding:2px 0;">
                 <strong>{{ $header['location'] }}</strong> {{ $header['qty'] }} SAMPLING:
-
             </td>
         </tr>
         <tr>
@@ -168,13 +193,10 @@
                 {{ !empty($header['due_date']) ? \Carbon\Carbon::parse($header['due_date'])->format('m/d/Y') : '' }}
             </td>
         </tr>
-        <tr>
-            <td style="border:0; padding:2px 0;">
-                <strong>Unless otherwise stated, tolerance:</strong>
-                &nbsp;.x±_______________ &nbsp; .xx±_______________ &nbsp; .xxx±_______________&nbsp; .xxxxx±_______________ &nbsp; ±_______________ Degree
-            </td>
-        </tr>
     </table>
+
+
+
     {{-- Tabla de filas UNO A UNO --}}
     <table class="grid">
         <thead>
@@ -200,10 +222,10 @@
                 <td class="center break">{{ $r->operator ?? '' }}</td>
                 <td class="center">
                     @php $res = strtolower((string)$r->results); @endphp
-                    {{ $res === 'pass' ? 'Pass' : ($res === 'fail' ? 'Fail' : strtoupper($r->results)) }}
+                    {{ $res === 'pass' ? 'Pass' : ($res === 'no pass' ? 'No Pass' : strtoupper($r->results)) }}
                 </td>
-                <td class="">{{ $r->sb_is }}</td>
-                <td class="">{{ $r->observation }}</td>
+                <td>{{ $r->sb_is }}</td>
+                <td>{{ $r->observation }}</td>
                 <td class="center">{{ $r->station }}</td>
                 <td class="center">{{ $r->method }}</td>
                 <td class="center">{{ $r->inspector }}</td>
@@ -215,20 +237,50 @@
             @endforelse
         </tbody>
     </table>
+
     <br>
+
     <table style="width:100%; border-collapse:separate; border-spacing:0;">
         <tr>
             <td style="border:0; padding:2px 0;"> </td>
         </tr>
         <tr class="ghost-row">
-            <td><strong>#CNC OPS:</strong><span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;">{{ $header['operation'] }} Operations</span></td>
-            <td><strong>SAMPLING REQ:</strong><span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;">{{ $header['sampling'] }}</span></td>
-            <td colspan="2"><strong>FAI/IPI QTY:</strong><span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;">{{ $header['total_fai'] }} FAI / {{ $header['total_ipi'] }} IPI</span></td>
-            <td colspan="2"><strong>FINAL INSP QTY:</strong><span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;"></span></td>
-            <td colspan="2"><strong>CMPLT.INI & DATE:</strong><span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;"></span></td>
+            <td>
+                <strong>#CNC OPS:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;">
+                    {{ $header['operation'] }} Operations
+                </span>
+            </td>
+            <td>
+                <strong>SAMPLING REQ:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;">
+                    {{ $header['sampling'] }}
+                </span>
+            </td>
+            <td colspan="2">
+                <strong>FAI/IPI QTY:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;">
+                    {{ $header['total_fai'] }} FAI / {{ $header['total_ipi'] }} IPI
+                </span>
+            </td>
+            <td colspan="2">
+                <strong>FINAL INSP QTY:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;"></span>
+            </td>
+            <td colspan="2">
+                <strong>CMPLT.INI & DATE:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;"></span>
+            </td>
         </tr>
     </table>
 
+    {{-- Resumen FAI/IPI (inyectado) --}}
+    @php $isOk = !$summary['has_missing']; @endphp
+    <div class="summary-box {{ $isOk ? 'summary-ok' : 'summary-warn' }}">
+        <div class="summary-body">
+            {!! $summary['html'] !!}
+        </div>
+    </div>
 
 </body>
 
