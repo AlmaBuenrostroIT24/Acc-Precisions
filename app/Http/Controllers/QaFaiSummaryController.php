@@ -399,6 +399,7 @@ class QaFaiSummaryController extends Controller
             'due_date'          => $order->due_date,
             'operation'         => (int)($order->operation === 'default_value' ? 0 : ($order->operation ?? 0)),
             'sampling'          => (int)($order->sampling ?? 0),
+            'sampling_check'    => $order->sampling_check ?? '',
             'total_fai'         => (int)($order->total_fai ?? 0),
             'total_ipi'         => (int)($order->total_ipi ?? 0),
             'status_inspection' => $order->status_inspection,
@@ -416,6 +417,7 @@ class QaFaiSummaryController extends Controller
                 'results',
                 'sb_is',
                 'observation',
+                'qty_pcs',
                 'station',
                 'method',
                 'inspector',
@@ -467,10 +469,10 @@ class QaFaiSummaryController extends Controller
         $textWidth = $fontMetrics->get_text_width($text, $font, $size);
 
         // Márgenes superiores/laterales de tu @page: 30px top, 18px right/left => usa ~12pt de padding visual
-        $padRight = 12;
-        $padTop   = 18; // un poco debajo del margen superior para no pisar
+        $padRight = 70;
+        $padTop   =5; // un poco debajo del margen superior para no pisar
 
-        $x = $w - $textWidth - $padRight;
+        $x = $w - $padRight;
         $y = $padTop;
 
         $canvas->page_text($x, $y, $text, $font, $size, [0, 0, 0]);
