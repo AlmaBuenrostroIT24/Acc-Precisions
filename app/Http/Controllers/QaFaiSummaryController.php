@@ -311,36 +311,126 @@ class QaFaiSummaryController extends Controller
     // Mostrar listado de registros
     public function summary(Request $request)
     {
+        // === Lectura de filtros ===
+        $year      = $request->integer('year');
+        $month     = $request->integer('month');
+        $day       = $request->input('day');            // YYYY-MM-DD
+        $inspector = $request->input('inspector');      // select
+        $operator  = $request->input('operator');       // select
+        $location  = $request->input('location');       // select
 
-        // Rango del mes actual
-        $start = Carbon::now()->startOfMonth();
-        $end   = Carbon::now()->endOfMonth();
-
+        // === Query base ===
         $q = QaFaiSummary::query()
-            ->with(['orderSchedule:id,work_id,location,PN'])
-            ->whereBetween('date', [$start, $end])
+            ->with(['orderSchedule:id,work_id,location,PN']);
 
-            ->when($request->filled('search'), function ($qq) use ($request) {
-                $s = (string) $request->string('search');
-                $qq->where(function ($w) use ($s) {
-                    $w->where('operation', 'like', "%{$s}%")
-                        ->orWhere('operator', 'like', "%{$s}%")
-                        ->orWhere('station',  'like', "%{$s}%")
-                        ->orWhere('insp_type', 'like', "%{$s}%")
-                        ->orWhere('inspector', 'like', "%{$s}%")
-                        ->orWhere('results', 'like', "%{$s}%");
-                });
-            })
-            ->when($request->filled('location'), function ($qq) use ($request) {
-                $loc = (string) $request->string('location');
-                $qq->whereHas('orderSchedule', fn($os) => $os->where('location', $loc));
-            });
+        // === Filtro de fechas ===
+        if ($day) {
+            $q->whereDate('date', Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $q->whereYear('date', $year)->whereMonth('date', $month);
+        } elseif ($year) {
+            $q->whereYear('date', $year);
+        } elseif ($month) {
+            $q->whereYear('date', now()->year)->whereMonth('date', $month);
+        } else {
+            $q->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
+        }
+$table = (new QaFaiSummary)->getTable(); // e.g. 'qa_faisummary' o el que corresponda
+        // === Búsqueda general (libre) ===
+      if ($request->filled('search')) {
+    $s = (string) $request->string('search');
 
-        $inspections = $q->orderBy('date', 'desc')->orderBy('id', 'desc')
-            ->paginate(100)->withQueryString();
+    $q->where(function ($w) use ($s, $table) {
+        $like = "%{$s}%";
+        $w->where($table.'.operation',  'like', $like)
+          ->orWhere($table.'.operator',  'like', $like)
+          ->orWhere($table.'.station',   'like', $like)
+          ->orWhere($table.'.insp_type', 'like', $like)
+          ->orWhere($table.'.inspector', 'like', $like)
+          ->orWhere($table.'.results',   'like', $like);
+    });
+        }
 
-        return view('qa.faisummary.faisummary_summary', compact('inspections'));
+        // === Filtros exactos por selects ===
+        if ($inspector) {
+            $q->where('inspector', $inspector);
+        }
+
+        if ($operator) {
+            $q->where('operator', $operator);
+        }
+
+        if ($location) {
+            // location vive en la relación orderSchedule
+            $q->whereHas('orderSchedule', fn($os) => $os->where('location', $location));
+        }
+
+        // === Tabla principal (orden + paginación) ===
+        $inspections = $q->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(100)
+            ->withQueryString();
+
+        // === Distincts dinámicos para poblar selects, basados en la MISMA query filtrada ===
+        // Usamos clone + reorder() para limpiar cualquier ORDER BY previo (evita error 3065).
+
+        $inspectors = (clone $q)
+            ->reorder()
+            ->select('inspector')
+            ->whereNotNull('inspector')
+            ->distinct()
+            ->orderBy('inspector')
+            ->pluck('inspector');
+
+        $operators = (clone $q)
+            ->reorder()
+            ->select('operator')
+            ->whereNotNull('operator')
+            ->distinct()
+            ->orderBy('operator')
+            ->pluck('operator');
+
+        // Locations desde la misma query filtrada, usando join para hacerlo 100% SQL
+        $locations = (clone $q)
+            ->reorder()
+            ->join('orders_schedule as os', 'os.id', '=', 'qa_faisummary.order_schedule_id')
+            ->whereNotNull('os.location')
+            ->distinct()
+            ->orderBy('os.location')
+            ->pluck('os.location');
+
+        // === Auxiliares para selects de año/mes ===
+        $currentYear = now()->year;
+        $years = range($currentYear, $currentYear - 5);
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Aug',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Dec'
+        ];
+
+        return view('qa.faisummary.faisummary_summary', compact(
+            'inspections',
+            'years',
+            'months',
+            'year',
+            'month',
+            'day',
+            'inspectors',
+            'operators',
+            'locations'
+        ));
     }
+
+
 
     //===========================================================================================================================
     /*===========================================================================================================================
@@ -470,7 +560,7 @@ class QaFaiSummaryController extends Controller
 
         // Márgenes superiores/laterales de tu @page: 30px top, 18px right/left => usa ~12pt de padding visual
         $padRight = 70;
-        $padTop   =5; // un poco debajo del margen superior para no pisar
+        $padTop   = 5; // un poco debajo del margen superior para no pisar
 
         $x = $w - $padRight;
         $y = $padTop;

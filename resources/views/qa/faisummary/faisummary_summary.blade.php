@@ -40,71 +40,247 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-body">
-                {{-- Filtros dinámicos --}}
-                {{-- Tabla --}}
-                <div class="table-responsive">
-                    <table class="table  table-bordered table-striped" style="table-layout: fixed; width: 100%;">
-                        <thead class="table-light thead-custom">
-                            <tr>
-                                <th style="width: 80px;">DATE</th>
-                                <th style="width: 80px;">Part/Revision</th>
-                                <th style="width: 40px;">JOB</th>
-                                <th style="width: 30px;">Type</th>
-                                <th style="width: 60px;">Operation</th>
-                                <th style="width: 50px;">Operator</th>
-                                <th style="width: 40px;">Results</th>
-                                <th style="width: 110px;">SB/IS</th>
-                                <th style="width: 110px;">Observation</th>
-                                <th style="width: 40px;">Station</th>
-                                <th style="width: 60px;">Method</th>
-                                <th style="width: 70px;">Inspector</th>
-                                <th style="width: 50px;">Location</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($inspections as $inspection)
-                            <tr>
-                                <td>
-                                    {{ optional($inspection->created_at)->format('M-d-y') }}
-                                    @if($inspection->created_at)
-                                    <span class="badge badge-light">
-                                        {{ $inspection->created_at->format('H:i') }}
-                                    </span>
-                                    @endif
-                                </td>
-                                <td>{{ $inspection->orderSchedule->PN ?? '' }}</td>
-                                <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
-                                <td>{{ $inspection->insp_type }}</td>
-                                <td>{{ $inspection->operation }}</td>
-                                <td>{{ $inspection->operator }}</td>
-                                <td>{{ ucfirst($inspection->results) }}</td>
-                                <td class="truncate" data-toggle="tooltip" title="{{ $inspection->sb_is }}">{{ $inspection->sb_is }}</td>
-                                <td class="truncate" data-toggle="tooltip" title="{{ $inspection->observation }}">
-                                    {{ $inspection->observation }}
-                                </td>
-                                <td>{{ $inspection->station }}</td>
-                                <td>{{ $inspection->method }}</td>
-                                <td>{{ $inspection->inspector }}</td>
-                                <td>{{ $inspection->orderSchedule->location ?? '' }}</td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="16" class="text-center text-muted">No hay registros</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
-                            <i class="fas fa-plus"></i> New Order
-                        </button> -->
+        {{-- ====== FILTROS ====== --}}
+        <div class="card shadow-sm mb-3 filters-card-fixed">
+            <div class="card-body py-2">
+                <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
 
+                    {{-- Fila 1: --}}
+                    <div class="filters-row-top d-flex align-items-end flex-nowrap" style="gap:.75rem; overflow-x:auto;">
+                        {{-- Year --}}
+                        <div class="filter-field">
+                            <label for="year" class="mb-1">Year</label>
+                            <div class="input-group" style="min-width:160px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                </div>
+                                <select name="year" id="year" class="form-control">
+                                    <option value="">All</option>
+                                    @foreach($years as $y)
+                                    <option value="{{ $y }}" {{ (string)$year === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Month --}}
+                        <div class="filter-field">
+                            <label for="month" class="mb-1">Month</label>
+                            <div class="input-group" style="min-width:180px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                                </div>
+                                <select name="month" id="month" class="form-control">
+                                    <option value="">All</option>
+                                    @foreach($months as $num => $name)
+                                    <option value="{{ $num }}" {{ (string)$month === (string)$num ? 'selected' : '' }}>{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Day --}}
+                        <div class="filter-field">
+                            <label for="day" class="form-label mb-1">Day</label>
+                            <div class="input-group" style="min-width:200px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
+                                </div>
+                                <input type="date" name="day" id="day" class="form-control"
+                                    value="{{ $day ? \Carbon\Carbon::parse($day)->toDateString() : '' }}">
+                            </div>
+                        </div>
+
+                        {{-- Operator --}}
+                        <div class="filter-field">
+                            <label for="operator" class="mb-1">Operator</label>
+                            <div class="input-group" style="min-width:220px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-user-cog"></i></span>
+                                </div>
+                                <select name="operator" id="operator" class="form-control">
+                                    <option value="">All</option>
+                                    @foreach($operators as $op)
+                                    <option value="{{ $op }}" {{ request('operator') === $op ? 'selected' : '' }}>{{ $op }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Inspector --}}
+                        <div class="filter-field">
+                            <label for="inspector" class="mb-1">Inspector</label>
+                            <div class="input-group" style="min-width:220px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-user-check"></i></span>
+                                </div>
+                                <select name="inspector" id="inspector" class="form-control">
+                                    <option value="">All</option>
+                                    @foreach($inspectors as $i)
+                                    <option value="{{ $i }}" {{ request('inspector') === $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Location --}}
+                        <div class="filter-field">
+                            <label for="location" class="mb-1">Location</label>
+                            <div class="input-group" style="min-width:200px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                </div>
+                                <select name="location" id="location" class="form-control">
+                                    <option value="">All</option>
+                                    @foreach($locations as $loc)
+                                    <option value="{{ $loc }}" {{ request('location') === $loc ? 'selected' : '' }}>{{ ucfirst($loc) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Search --}}
+                        <div class="filter-field">
+                            <label for="search" class="mb-1">Search</label>
+                            <div class="input-group w-100">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                </div>
+                                <input
+                                    type="text"
+                                    name="search"
+                                    id="search"
+                                    class="form-control"
+                                    value="{{ request('search') }}"
+                                    placeholder="Operation, operator, station, type, inspector, results">
+                                @if(request()->filled('search'))
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">&times;</button>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {{-- Fila 2: botones / contador --}}
+                    <div class="filters-row-bottom d-flex align-items-center flex-wrap mt-4 pt-2 " style="gap:.75rem;">
+                        <div class="btn-group btn-group-sm">
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">Today</a>
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">This month</a>
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">This year</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm">Clear</a>
+
+                        <span class="badge badge-info ml-auto">
+                            {{ method_exists($inspections, 'total') ? $inspections->total() : count($inspections) }} results
+                        </span>
+                    </div>
+                </form>
+
+                {{-- ====== TABLA ====== --}}
+                <div class="mt-3">
+                    <div class="table-responsive">
+                        {{-- Usa colgroup para anchos consistentes --}}
+                        <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
+                            <colgroup>
+                                <col style="width:150px">
+                                <col style="width:140px">
+                                <col style="width:100px">
+                                <col style="width:70px">
+                                <col style="width:90px">
+                                <col style="width:110px">
+                                <col style="width:90px">
+                                <col style="width:160px">
+                                <col style="width:160px">
+                                <col style="width:90px">
+                                <col style="width:100px">
+                                <col style="width:120px">
+                                <col style="width:100px">
+                            </colgroup>
+                            <thead class="thead-light sticky-thead">
+                                <tr class="text-uppercase text-muted small">
+                                    <th>Fecha</th>
+                                    <th>Part/Revision</th>
+                                    <th>Job</th>
+                                    <th>Tipo</th>
+                                    <th>Operación</th>
+                                    <th>Operador</th>
+                                    <th>Resultado</th>
+                                    <th>SB/IS</th>
+                                    <th>Observación</th>
+                                    <th>Estación</th>
+                                    <th>Método</th>
+                                    <th>Inspector</th>
+                                    <th>Ubicación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($inspections as $inspection)
+                                @php
+                                // Usa 'date' si es tu campo lógico, fallback a created_at
+                                $d = $inspection->date ?? $inspection->created_at;
+                                $dt = $d ? \Carbon\Carbon::parse($d) : null;
+                                $isPass = strtolower($inspection->results) === 'pass';
+                                $isFAI= ($inspection->insp_type) === 'FAI';
+                                @endphp
+                                <tr>
+                                    <td>
+                                        {{ optional($dt)->format('M-d-y') }}
+                                        @if($dt)
+                                        <span class="badge badge-light">{{ $dt->format('H:i') }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
+                                        {{ $inspection->orderSchedule->PN ?? '' }}
+                                    </td>
+                                    <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
+                                    <td>
+                                        <span class="badge {{ $isFAI ? 'badge-info' : 'badge-secondary' }}">
+                                            {{ $inspection->insp_type }}
+                                        </span>
+                                    </td>
+
+                                    <td>{{ $inspection->operation }}</td>
+                                    <td class="truncate" title="{{ $inspection->operator }}">{{ $inspection->operator }}</td>
+                                    <td>
+                                        <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
+                                            {{ ucfirst($inspection->results) }}
+                                        </span>
+                                    </td>
+                                    <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->sb_is }}">
+                                        {{ $inspection->sb_is }}
+                                    </td>
+                                    <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->observation }}">
+                                        {{ $inspection->observation }}
+                                    </td>
+                                    <td>{{ $inspection->station }}</td>
+                                    <td>{{ $inspection->method }}</td>
+                                    <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
+                                    <td>{{ strtoupper($inspection->orderSchedule->location ?? '') }}</td>
+                                </tr>
+                                @empty
+                                {{-- vacío: DataTables muestra su mensaje --}}
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
+                            <i class="fas fa-plus"></i> New Order
+                        </button> -->
+
 
 
 <!--  {{-- Tab: By End Schedule --}}-->
@@ -117,13 +293,55 @@
 
 @section('css')
 <style>
+    #faiTable,
+    #faiTable td,
+    #faiTable th {
+        white-space: normal;
+    }
+
+    /* Párrafo dentro de la celda */
+    .cell-paragraph {
+        white-space: pre-line;
+        /* respeta \n y envuelve */
+        overflow-wrap: anywhere;
+        /* rompe palabras largas/URLs */
+        word-break: break-word;
+        /* respaldo */
+    }
+
+
+
+    .table-responsive--sticky {
+        max-height: calc(140vh - 260px);
+        /* ajusta con tu header */
+        overflow: auto;
+    }
+
+    .sticky-thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        /* acorde a .thead-light */
+        z-index: 2;
+    }
+
+
+    .align-middle td,
+    .align-middle th {
+        vertical-align: middle !important;
+    }
+
     .truncate {
-        max-width: 240px;
-        /* ajusta al ancho deseado */
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 14px;
+        max-width: 100%;
+    }
+
+    .table-sm td,
+    .table-sm th {
+        padding-top: .45rem;
+        padding-bottom: .45rem;
     }
 </style>
 @endsection
@@ -133,16 +351,78 @@
 <script>
     // resources/js/faisummary-all.js (o en la vista)
     $(function() {
-        $('table').DataTable({
-            pageLength: 15,
+        const $tbl = $('#faiTable');
+
+        if ($.fn.DataTable.isDataTable($tbl)) {
+            $tbl.DataTable().clear().destroy();
+        }
+
+        $tbl.DataTable({
+            searching: false, // ← evita doble búsqueda
+            lengthChange: false, // ❌ oculta el select "N registros"
+            pageLength: 20,
             order: [
                 [1, 'desc'],
                 [0, 'desc']
-            ], // date desc, id desc
-            responsive: true
+            ], // Part/Revision desc, Date desc
+            responsive: true,
+            autoWidth: false,
         });
 
         $('[data-toggle="tooltip"]').tooltip();
+
+        const $form = $('#filtersForm');
+
+        // Si seleccionas un día, enviamos y "anulamos" año/mes visualmente
+        $('#day').on('change', function() {
+            if (this.value) {
+                // Opcional: limpia año/mes para que quede claro en la UI
+                $('#year').val('');
+                $('#month').val('');
+            }
+            $form.submit();
+        });
+
+        // Cambios en año o mes => enviar (si no hay día seleccionado)
+        $('#year, #month').on('change', function() {
+            if (!$('#day').val()) {
+                $form.submit();
+            }
+        });
+
+        // Auto-submit en inspector y operador
+        $('#inspector, #operator, #location').on('change', function() {
+            $form.submit();
+        });
+
+        const $form = $('#filtersForm');
+
+        // Enviar al escribir (espera 500 ms tras última tecla)
+        let t = null;
+        $('#search').on('input', function() {
+            clearTimeout(t);
+            t = setTimeout(function() {
+                $form.find('input[name="page"]').remove(); // vuelve a pág 1
+                $form.submit();
+            }, 500);
+        });
+
+        // Enviar al presionar Enter
+        $('#search').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                $form.find('input[name="page"]').remove();
+                $form.submit();
+            }
+        });
+
+        // Botón limpiar
+        $('#clearSearch').on('click', function() {
+            $('#search').val('');
+            $form.find('input[name="page"]').remove();
+            $form.submit();
+        });
+
     });
 </script>
 @endpush
