@@ -335,20 +335,18 @@ class QaFaiSummaryController extends Controller
         } else {
             $q->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
         }
-$table = (new QaFaiSummary)->getTable(); // e.g. 'qa_faisummary' o el que corresponda
-        // === Búsqueda general (libre) ===
-      if ($request->filled('search')) {
-    $s = (string) $request->string('search');
 
-    $q->where(function ($w) use ($s, $table) {
-        $like = "%{$s}%";
-        $w->where($table.'.operation',  'like', $like)
-          ->orWhere($table.'.operator',  'like', $like)
-          ->orWhere($table.'.station',   'like', $like)
-          ->orWhere($table.'.insp_type', 'like', $like)
-          ->orWhere($table.'.inspector', 'like', $like)
-          ->orWhere($table.'.results',   'like', $like);
-    });
+        // === Búsqueda general (libre) ===
+        if ($request->filled('search')) {
+            $s = (string) $request->string('search');
+            $q->where(function ($w) use ($s) {
+                $w->where('operation', 'like', "%{$s}%")
+                    ->orWhere('operator',  'like', "%{$s}%")
+                    ->orWhere('station',   'like', "%{$s}%")
+                    ->orWhere('insp_type', 'like', "%{$s}%")
+                    ->orWhere('inspector', 'like', "%{$s}%")
+                    ->orWhere('results',   'like', "%{$s}%");
+            });
         }
 
         // === Filtros exactos por selects ===

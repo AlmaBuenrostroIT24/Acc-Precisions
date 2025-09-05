@@ -41,7 +41,7 @@
 <div class="row">
     <div class="col-md-12">
         {{-- ====== FILTROS ====== --}}
-        <div class="card shadow-sm mb-3 filters-card-fixed">
+       <div class="card shadow-sm mb-3 filters-card-fixed">
             <div class="card-body py-2">
                 <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
 
@@ -138,30 +138,8 @@
                                 </select>
                             </div>
                         </div>
-
-                        {{-- Search --}}
-                        <div class="filter-field">
-                            <label for="search" class="mb-1">Search</label>
-                            <div class="input-group w-100">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                </div>
-                                <input
-                                    type="text"
-                                    name="search"
-                                    id="search"
-                                    class="form-control"
-                                    value="{{ request('search') }}"
-                                    placeholder="Operation, operator, station, type, inspector, results">
-                                @if(request()->filled('search'))
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">&times;</button>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
                     </div>
-
+                    
 
                     {{-- Fila 2: botones / contador --}}
                     <div class="filters-row-bottom d-flex align-items-center flex-wrap mt-4 pt-2 " style="gap:.75rem;">
@@ -343,6 +321,7 @@
         padding-top: .45rem;
         padding-bottom: .45rem;
     }
+
 </style>
 @endsection
 
@@ -394,35 +373,6 @@
         $('#inspector, #operator, #location').on('change', function() {
             $form.submit();
         });
-
-        const $form = $('#filtersForm');
-
-        // Enviar al escribir (espera 500 ms tras última tecla)
-        let t = null;
-        $('#search').on('input', function() {
-            clearTimeout(t);
-            t = setTimeout(function() {
-                $form.find('input[name="page"]').remove(); // vuelve a pág 1
-                $form.submit();
-            }, 500);
-        });
-
-        // Enviar al presionar Enter
-        $('#search').on('keypress', function(e) {
-            if (e.which === 13) {
-                e.preventDefault();
-                $form.find('input[name="page"]').remove();
-                $form.submit();
-            }
-        });
-
-        // Botón limpiar
-        $('#clearSearch').on('click', function() {
-            $('#search').val('');
-            $form.find('input[name="page"]').remove();
-            $form.submit();
-        });
-
     });
 </script>
 @endpush

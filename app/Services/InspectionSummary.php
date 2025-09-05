@@ -24,38 +24,24 @@ class InspectionSummary
             ->where('order_schedule_id', $order->id)
             ->get(['insp_type', 'operation', 'results', 'qty_pcs']);
 
-        // Si no hay ops en header, dedúcelas del máximo ordinal encontrado
         $maxOpNum = 0;
 
         foreach ($rows as $r) {
             $type = strtoupper((string)$r->insp_type);
 
-            // Normalizar resultados
             $res = strtolower(trim((string)$r->results));
-            if ($res === 'nopass' || $res === 'no_pass' || $res === 'fail') {
-                $res = 'no pass';
-            }
-            if (!in_array($res, ['pass', 'no pass'], true)) {
-                continue; // ignora otros estados
-            }
+            if ($res === 'nopass' || $res === 'no_pass' || $res === 'fail') $res = 'no pass';
+            if (!in_array($res, ['pass', 'no pass'], true)) continue;
 
-            // Normalizar operación: "2nd Op" -> "2nd"
             $rawOp = trim((string)$r->operation);
             if ($rawOp === '') continue;
 
-            if (str_ends_with($rawOp, ' Op')) {
-                $op = substr($rawOp, 0, -3);
-            } else {
-                $op = $rawOp;
-            }
+            $op = str_ends_with($rawOp, ' Op') ? substr($rawOp, 0, -3) : $rawOp;
 
-            // Actualiza maxOpNum para fallback de $operations
-            $numFromOp = $this->ordinalToInt($op); // "2nd" -> 2; si no reconoce, 0
+            $numFromOp = $this->ordinalToInt($op);
             if ($numFromOp > $maxOpNum) $maxOpNum = $numFromOp;
 
-            // Cantidad de piezas (si tu modelo no guarda qty, puedes usar 1)
             $qty = (int)($r->qty_pcs ?? 0);
-            // Si tu diseño significa "una fila = 1 pieza", descomenta:
             // if ($qty <= 0) $qty = 1;
 
             if ($type === 'FAI') {
@@ -67,9 +53,7 @@ class InspectionSummary
             }
         }
 
-        if ($operations === 0 && $maxOpNum > 0) {
-            $operations = $maxOpNum; // fallback inteligente
-        }
+        if ($operations === 0 && $maxOpNum > 0) $operations = $maxOpNum;
 
         $sum = fn(array $m) => array_sum(array_values($m));
         $faiPassTotal = $sum($faiPass);
@@ -89,13 +73,13 @@ class InspectionSummary
         $lines = [];
         $faltantes = false;
 
-        // Íconos compatibles con DejaVu Sans
-        $ICON_OK   = '&#10003;'; // ✓  U+2713
-        $ICON_FAIL = '&#10007;'; // ✗  U+2717
-        $ICON_WARN = '&#9888;';        // o &#9650; (▲)
+        // Íconos compatibles con PDF/DejaVu
+        $ICON_OK   = '&#10003;'; // ✓
+        $ICON_FAIL = '&#10007;'; // ✗
+        $ICON_WARN = '&#9888;';  // ⚠
 
         for ($i = 1; $i <= $operations; $i++) {
-            $op = $this->ordinalSuffix($i); // "1st","2nd",...
+            $op = $this->ordinalSuffix($i);
 
             $fPass = $faiPass[$op] ?? 0;
             $fFail = $faiFail[$op] ?? 0;
@@ -113,13 +97,14 @@ class InspectionSummary
 
             $global = (!$faiOk && !$ipiOk) ? $ICON_FAIL : (($faiOk && $ipiOk) ? $ICON_OK : $ICON_WARN);
 
+            // Texto compacto para celdas
             $faiTxt = ($faiOk
-                ? "{$ICON_OK} <strong>FAI:</strong> P:({$fPass}/{$faiReq}), NP:{$fFail}, Done:{$fDone})"
-                : "{$ICON_FAIL} <strong>FAI:</strong> P:({$fPass}/{$faiReq}), NP:{$fFail}, Done:{$fDone})");
+                ? "({$ICON_OK})  Pass:({$fPass} for {$faiReq}), No Pass:{$fFail}, Completed:{$fDone}"
+                : "({$ICON_FAIL}) Pass:({$fPass} for {$faiReq}), No Pass:{$fFail}, Completed:{$fDone}");
 
             $ipiTxt = ($ipiOk
-                ? "{$ICON_OK} <strong>IPI:</strong> P:({$iPass}/{$ipiReq}), NP:{$iFail}, Done:{$iDone})"
-                : "{$ICON_FAIL} <strong>IPI:</strong> P:({$iPass}/{$ipiReq}), NP:{$iFail}, Done:{$iDone})");
+                ? "({$ICON_OK})  Pass:({$iPass} for {$ipiReq}), No Pass:{$iFail}, Completed:{$iDone}"
+                : "({$ICON_FAIL})  Pass:({$iPass} for {$ipiReq}), No Pass:{$iFail}, Completed:{$iDone}");
 
             if (!$faiOk || !$ipiOk) $faltantes = true;
 
@@ -132,12 +117,73 @@ class InspectionSummary
             ];
         }
 
-        $htmlLines = array_map(fn($l) => "{$l['global']} {$l['op']} | {$l['fai']} | {$l['ipi']}", $lines);
+        // ===== Render como TABLA =====
+        $tableRows = '';
+        foreach ($lines as $l) {
+            $tableRows .= "
+        <tr>
+            <td style='text-align:center; width:34px;'>{$l['global']}</td>
+            <td style='white-space:nowrap; width:52px;'><strong>{$l['op']}</strong></td>
+            <td>{$l['fai']}</td>
+            <td>{$l['ipi']}</td>
+        </tr>";
+        }
 
-        $html  = implode('<br>', $htmlLines);
-        $html .= '<br><br><strong>— FAI/IPI Inspection Packet Summary —</strong><br>';
-        $html .= "FAI → P:{$faiPassTotal}, NP:{$faiFailTotal}, Need:{$faiReqTotal}, Done:{$faiRealizados} ({$faiPct}%)<br>";
-        $html .= "IPI → P:{$ipiPassTotal}, NP:{$ipiFailTotal}, Need:{$ipiReqTotal}, Done:{$ipiRealizados} ({$ipiPct}%)";
+        $tableHtml = "
+        <div style='margin-top:10px; page-break-inside: avoid;'>
+    <table style='width:100%; border-collapse:collapse; font-family:DejaVu Sans, Arial; font-size:12px;'>
+      <thead>
+        <tr>
+          <th style='border:1px solid #ccc; padding:4px 6px; text-align:center; width:34px;'>∑</th>
+          <th style='border:1px solid #ccc; padding:4px 6px; text-align:left;  width:52px;'>Op</th>
+          <th style='border:1px solid #ccc; padding:4px 6px; text-align:left;'>FAI</th>
+          <th style='border:1px solid #ccc; padding:4px 6px; text-align:left;'>IPI</th>
+        </tr>
+      </thead>
+      <tbody>
+        " . str_replace('<tr>', "<tr style='border:1px solid #ccc;'>", $tableRows) . "
+      </tbody>
+     </table>
+</div>";
+
+        $summaryHtml = "
+<div style='margin-top:10px; page-break-inside: avoid;'>
+  <table style='width:100%; border-collapse:collapse; font-family:DejaVu Sans, Arial; font-size:12px;'>
+    <thead>
+      <tr>
+        <th colspan='5' style='border:1px solid #ccc; padding:4px 6px; text-align:left; background:#f2f2f2;'>
+          — FAI/IPI Inspection Packet Summary —
+        </th>
+      </tr>
+      <tr>
+        <th style='border:1px solid #ccc; padding:4px 6px; width:40px;'>Type</th>
+        <th style='border:1px solid #ccc; padding:4px 6px;'>Req’d</th>
+        <th style='border:1px solid #ccc; padding:4px 6px;'>Completed </th>
+         <th style='border:1px solid #ccc; padding:4px 6px;'>Fail</th>
+        <th style='border:1px solid #ccc; padding:4px 6px;'>(%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style='border:1px solid #ccc; padding:4px 6px;'><strong>FAI</strong></td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'>{$faiReqTotal}</td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'>{$faiPassTotal}</td>
+         <td style='border:1px solid #ccc; padding:4px 6px;'> {$faiFailTotal}</td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'> {$faiPct}%</td>
+      </tr>
+      <tr>
+        <td style='border:1px solid #ccc; padding:4px 6px;'><strong>IPI</strong></td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'>{$ipiReqTotal}</td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'>{$ipiPassTotal}</td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'> {$ipiFailTotal} </td>
+        <td style='border:1px solid #ccc; padding:4px 6px;'> {$ipiPct}%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>";
+
+
+        $html = $tableHtml . $summaryHtml;
 
         return [
             'lines' => $lines,
@@ -152,17 +198,20 @@ class InspectionSummary
                 'ipiPct'  => $ipiPct,
             ],
             'has_missing' => $faltantes,
-            'html' => $html,
+            'html' => $html,          // -> ahora contiene la TABLA + resumen
+            'html_table' => $tableHtml, // opcional si quieres usar la tabla sola
         ];
     }
 
+
     private function ordinalSuffix(int $n): string
     {
-        $j = $n % 10; $k = $n % 100;
-        if ($j == 1 && $k != 11) return $n.'st';
-        if ($j == 2 && $k != 12) return $n.'nd';
-        if ($j == 3 && $k != 13) return $n.'rd';
-        return $n.'th';
+        $j = $n % 10;
+        $k = $n % 100;
+        if ($j == 1 && $k != 11) return $n . 'st';
+        if ($j == 2 && $k != 12) return $n . 'nd';
+        if ($j == 3 && $k != 13) return $n . 'rd';
+        return $n . 'th';
     }
 
     private function ordinalToInt(string $op): int

@@ -132,7 +132,7 @@
             border-radius: 4px;
             margin: 8px 0 10px 0;
             /* margen normal, nada de auto */
-            width: 60%;
+            width: 70%;
             /* ancho fijo, ajusta al gusto (ej. 50%, 70%, 400px) */
         }
 
