@@ -26,50 +26,57 @@
 {{-- Tabs --}}
 @include('qa.faisummary.faisummary_tab')
 
-<div class="card mb-4">
-  <div class="card-header">
-    <h5>Parts in Inspection</h5>
-  </div>
-  <div class="card-body">
-    <div class="row">
-      <!-- Columna izquierda: primer filtro + botón + gráfica -->
-      <div class="col-md-6">
-        <div class="card mb-4">
-          <div class="card-header">Pendientes</div>
-          <div class="card-body">
-            <table id="ordersTableEmpty" class="table table-bordered table-striped">
-              <thead>
-                <tr>
-                  <th>PART/DESCRIPCIÓN</th>
-                  <th>JOB</th>
-                  <th>ACTIONS</th>
-                </tr>
-              </thead>
-            </table>
-          </div>
+<div class="row row-cols-1 row-cols-md-2 g-3">
+  <!-- Pending -->
+  <div class="col">
+    <div class="card h-100 shadow-sm rounded-3 border-left-warning">
+      <div class="card-body">
+        <div class="card-title-mini">
+          <i class="fas fa-hourglass-half text-warning"></i>
+          <span>PENDING</span>
+          <span class="badge bg-secondary ms-auto" id="badgePending">0</span>
+        </div>
+        <div class="table-responsive">
+          <table id="ordersTableEmpty" class="table table-sm table-bordered table-hover align-middle w-100 table-striped">
+            <thead class="table-light">
+              <tr>
+                <th>PART/DESCRIPCIÓN</th>
+                <th>JOB</th>
+                <th class="actions-col">ACTIONS</th>
+              </tr>
+            </thead>
+          </table>
         </div>
       </div>
-      <!-- Columna derecha: segundo filtro + botón + gráfica -->
-      <div class="col-md-6">
-        <div class="card mb-4">
-          <div class="card-header">En proceso</div>
-          <div class="card-body">
-            <table id="ordersTableProcess" class="table table-bordered table-striped">
-              <thead>
-                <tr>
-                  <th>PART/DESCRIPCIÓN</th>
-                  <th>JOB</th>
-                  <th>Progress</th>
-                  <th>ACTIONS</th>
-                </tr>
-              </thead>
-            </table>
-          </div>
+    </div>
+  </div>
+
+  <!-- In Process -->
+  <div class="col">
+    <div class="card h-100 shadow-sm rounded-3 border-left-success">
+      <div class="card-body">
+        <div class="card-title-mini">
+          <i class="fas fa-cogs text-success"></i>
+          <span>IN PROCESS</span>
+          <span class="badge bg-secondary ms-auto" id="badgeProcess">0</span>
+        </div>
+        <div class="table-responsive">
+          <table id="ordersTableProcess" class="table table-sm table-bordered table-hover align-middle w-100 table-striped">
+            <thead class="table-light">
+              <tr>
+                <th>PART/DESCRIPCIÓN</th>
+                <th>JOB </th>
+                <th>(WIP) FAI+IPI </th>
+                <th class="actions-col">ACTIONS</th>
+              </tr>
+            </thead>
+          </table>
         </div>
       </div>
     </div>
   </div>
 </div>
+
 
 
 
@@ -81,7 +88,21 @@
 
 
 @section('css')
-
+<!-- CSS complementario (puedes ponerlo en tu .css) -->
+<style>
+  .card.border-left-success { border-left: 6px solid #28a745; }
+  .card.border-left-warning { border-left: 6px solid #ffc107; }
+  .table thead th { white-space: nowrap; }
+  .card-title-mini {
+    font-size: .95rem; 
+    font-weight: 700;
+    margin-bottom: .75rem;
+    display: flex; 
+    align-items: center; 
+    gap: .5rem;
+  }
+  .actions-col { width: 1%; white-space: nowrap; }
+</style>
 @endsection
 
 
@@ -184,9 +205,7 @@
           <div class="progress-bar bg-secondary" role="progressbar"
                style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
         </div>
-        <small class="text-muted d-block">
-          <span class="badge bg-light text-dark me-1">FAI + IPI</span>
-        </small>`
+`
         },
         {
           data: 'actions',
@@ -214,7 +233,7 @@
         deferRender: true,
         stateSave: true,
         lengthMenu: [5, 10, 25, 50, 100],
-        pageLength: 10,
+        pageLength: 15,
         order: [
           [1, 'desc']
         ],
