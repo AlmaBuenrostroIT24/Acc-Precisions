@@ -44,7 +44,7 @@
         <div class="card mb-4">
             <div class="card-body">
                 {{-- Filtros dinámicos --}}
-                @unlessrole('Deburring')
+               @unlessrole('Deburring|QCShipping')
                 <div class="row mb-4">
                     <!-- Formulario de carga -->
                     <div class="col-md-4">

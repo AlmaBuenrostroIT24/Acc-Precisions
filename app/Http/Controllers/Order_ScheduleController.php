@@ -40,6 +40,17 @@ class Order_ScheduleController extends Controller
             $base->where('status', 'deburring');
         }
 
+        // 🔒 Orden especial para QCShipping: primero Shipping, luego Ready, luego el resto
+        if (auth()->check() && auth()->user()->hasRole('QCShipping')) {
+            $base->orderByRaw("
+        CASE 
+            WHEN status = 'shipping' THEN 0
+            WHEN status = 'ready'    THEN 1
+            ELSE 2
+        END
+    ");
+        }
+
         /// 👇 Filtros por request (se aplican solo si no es Deburring)
         $base->when($request->filled('location'), function ($q) use ($request) {
             $q->where('location', $request->location);

@@ -454,7 +454,7 @@ return [
                 ],
             ],
         ],
-        ['header' => 'labels'],
+       /* ['header' => 'labels'],
         [
             'text' => 'important',
             'icon_color' => 'red',
@@ -469,7 +469,7 @@ return [
             'text' => 'information',
             'icon_color' => 'cyan',
             'url' => '#',
-        ],
+        ],*/
     ],
 
     /*

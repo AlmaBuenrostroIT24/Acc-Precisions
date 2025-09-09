@@ -83,7 +83,7 @@
                                 style="width: 80px; font-weight: bold; color: black;"
                                 data-id="{{ $order->id }}"
                                 data-old-status="{{ strtolower($order->status) }}"
-                                @if(auth()->check() && auth()->user()->hasRole('Deburring')) disabled @endif
+                                @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
                                 >
                                 <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
                                 <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
@@ -100,16 +100,16 @@
                         </td>
                         <td style="white-space: nowrap; width: 100px;" class="texsty">
                             @php
-                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             @endphp
 
                             @if ($order->was_work_id_null)
                             <span
                                 class="{{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }} 
-                   {{ $isDeburring ? '' : 'editable-work-id text-decoration-underline' }}"
+                   {{ $isRestricted  ? '' : 'editable-work-id text-decoration-underline' }}"
                                 data-id="{{ $order->id }}"
                                 data-value="{{ $order->work_id ?? '' }}"
-                                style="{{ $isDeburring ? '' : 'cursor:pointer;' }}">
+                                style="{{ $isRestricted ? '' : 'cursor:pointer;' }}">
                                 {{ $order->work_id ?? 'Add' }}
                             </span>
                             @else
@@ -122,7 +122,7 @@
                         <td class="texsty">{{ $order->qty }}</td>
                         <td>
                             @php
-                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             @endphp
 
                             <input
@@ -131,7 +131,7 @@
                                 data-original="{{ $order->wo_qty }}"
                                 class="wo-qty-input form-control form-control-sm"
                                 style="width: 60px; font-weight: bold; color: black;"
-                                @if($isDeburring) disabled @endif>
+                                @if($isRestricted) disabled @endif>
                         </td>
                         <td style="min-width: 120px;">
                             <select
@@ -146,7 +146,7 @@
 
                                 // Mapear permisos por rol
                                 $roleAllowed = [
-                                'QCShipping' => ['ready','shipping','sent'],
+                                'QCShipping' => ['grinding','outsource','ready','shipping','sent'],
                                 'Deburring' => ['qa','shipping'],
                                 ];
 
@@ -197,12 +197,20 @@
 
 
                         <td class="texsty">
-                            <span class="editable-machining-date text-decoration-underline"
+                            @php
+                            $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
+                            $hasSource = $order->our_source;
+                            $dateValue = optional($order->machining_date)->format('Y-m-d');
+                            $dateLabel = optional($order->machining_date)->format('M-d-y');
+                            @endphp
+
+                            <span
+                                class="{{ $isRestricted ? '' : 'editable-machining-date text-decoration-underline' }}"
                                 data-id="{{ $order->id }}"
-                                data-enabled="{{ $order->our_source ? '1' : '0' }}"
-                                data-value="{{ optional($order->machining_date)->format('Y-m-d') }}"
-                                style="{{ $order->our_source ? 'cursor:pointer;' : '' }}">
-                                {{ optional($order->machining_date)->format('M-d-y') }}
+                                data-enabled="{{ $hasSource ? '1' : '0' }}"
+                                data-value="{{ $dateValue }}"
+                                style="{{ $isRestricted || !$hasSource ? '' : 'cursor:pointer;' }}">
+                                {{ $dateLabel }}
                             </span>
                         </td>
                         <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
@@ -231,7 +239,7 @@
                                 class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
                                 data-id="{{ $order->id }}"
                                 data-value="{{ $order->report ? 1 : 0 }}"
-                                @if(auth()->check() && auth()->user()->hasRole('Deburring')) disabled @endif
+                                @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
                                 >
                                 <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                             </button>
@@ -242,30 +250,30 @@
                                 class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
                                 data-id="{{ $order->id }}"
                                 data-value="{{ $order->our_source }}"
-                                @if(auth()->check() && auth()->user()->hasRole('Deburring')) disabled @endif
+                                @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
                                 >
                                 <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                             </button>
                         </td>
                         <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
                             @php
-                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             @endphp
                             <span
-                                class="{{ $order->station ? 'text-success fw-bold' : 'text-muted' }} {{ $isDeburring ? '' : 'editable-station text-decoration-underline' }}"
+                                class="{{ $order->station ? 'text-success fw-bold' : 'text-muted' }} {{ $isRestricted ? '' : 'editable-station text-decoration-underline' }}"
                                 data-id="{{ $order->id }}"
-                                style="{{ $isDeburring ? '' : 'cursor:pointer;' }}">
+                                style="{{ $isRestricted ? '' : 'cursor:pointer;' }}">
                                 {{ $order->station ?? 'N/A' }}
                             </span>
                         </td>
                         <td style="font-size: 12px;" class="notes-cell" data-id="{{ $order->id }}">
                             @php
-                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             @endphp
 
                             @if (!empty($order->notes))
                             <span
-                                @unless($isDeburring) class="open-notes-modal" style="cursor:pointer;" @endunless
+                                @unless($isRestricted) class="open-notes-modal" style="cursor:pointer;" @endunless
                                 data-id="{{ $order->id }}"
                                 data-notes="{{ $order->notes }}"
                                 title="{{ $order->notes }}"
@@ -275,7 +283,7 @@
                             </span>
                             @else
                             <span
-                                @unless($isDeburring) class="open-notes-modal text-muted fst-italic" style="cursor:pointer;" @else class="text-muted fst-italic" @endunless
+                                @unless($isRestricted) class="open-notes-modal text-muted fst-italic" style="cursor:pointer;" @else class="text-muted fst-italic" @endunless
                                 data-id="{{ $order->id }}"
                                 data-notes=""
                                 data-bs-toggle="tooltip"
