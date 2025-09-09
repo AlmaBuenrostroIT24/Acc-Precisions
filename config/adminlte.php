@@ -322,7 +322,7 @@ return [
         ],
         [
             'text' => 'Dashboard',
-            'url' => 'admin/pages',
+            'url' => 'dashboard',
             'icon' => 'nav-icon fas fa-tachometer-alt',
             'label' => 4,
             'label_color' => 'success',

@@ -3,7 +3,7 @@
         <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
             <thead class="table-light thead-custom">
                 <tr>
-                    <th >Id</th>
+                    <th>Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
                     <th style="width: 65px;">LOCATION</th>
@@ -70,21 +70,26 @@
                         $alertColor=$dias < 0 ? 'bg-danger' : ($dias <=2 ? 'bg-warning' : 'bg-success' );
                         $alertLabel=$dias < 0 ? 'Late' : ($dias <=2 ? 'Expedite' : 'On time' );
                         @endphp
-                        <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}"  data-priority="{{ $order->priority === 'yes' ? 'yes' : 'no' }}">
+                        <tr class="{{ $rowClass }}" data-order-id="{{ $order->id }}" id="row-{{ $order->id }}" data-priority="{{ $order->priority === 'yes' ? 'yes' : 'no' }}">
                         <td style="display: none;">{{ $order->id }}</td>
                         <!-- Columna oculta solo texto para filtro -->
                         <td id="hidden-location-{{ $order->id }}" style="display: none;">{{ strtolower($order->location) }}</td>
                         <td id="hidden-status-{{ $order->id }}" style="display:none;">{{ strtolower($order->status) }}</td>
                         <!----------------------------------------->
                         <td style="min-width: 90px;">
-                            <select name="location" class="form-control form-control-sm location-select fw-bold text-capitalize"
+                            <select
+                                name="location"
+                                class="form-control form-control-sm location-select fw-bold text-capitalize"
                                 style="width: 80px; font-weight: bold; color: black;"
                                 data-id="{{ $order->id }}"
-                                data-old-status="{{ strtolower($order->status) }}">
+                                data-old-status="{{ strtolower($order->status) }}"
+                                @if(auth()->check() && auth()->user()->hasRole('Deburring')) disabled @endif
+                                >
                                 <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
                                 <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
                                 <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
                             </select>
+
                             <div class="last-location-label mt-1">
                                 @if ($order->last_location === 'Yarnell')
                                 <span class="badge bg-warning text-dark">
@@ -94,11 +99,17 @@
                             </div>
                         </td>
                         <td style="white-space: nowrap; width: 100px;" class="texsty">
+                            @php
+                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            @endphp
+
                             @if ($order->was_work_id_null)
-                            <span class="editable-work-id text-decoration-underline {{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }}"
+                            <span
+                                class="{{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }} 
+                   {{ $isDeburring ? '' : 'editable-work-id text-decoration-underline' }}"
                                 data-id="{{ $order->id }}"
                                 data-value="{{ $order->work_id ?? '' }}"
-                                style="cursor:pointer;">
+                                style="{{ $isDeburring ? '' : 'cursor:pointer;' }}">
                                 {{ $order->work_id ?? 'Add' }}
                             </span>
                             @else
@@ -110,35 +121,81 @@
                         <td class="texsty">{{ $order->costumer }}</td>
                         <td class="texsty">{{ $order->qty }}</td>
                         <td>
+                            @php
+                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            @endphp
+
                             <input
                                 value="{{ $order->wo_qty == 0 || is_null($order->wo_qty) ? '' : $order->wo_qty }}"
                                 data-id="{{ $order->id }}"
                                 data-original="{{ $order->wo_qty }}"
                                 class="wo-qty-input form-control form-control-sm"
-                                style="width: 60px; font-weight: bold; color: black;">
+                                style="width: 60px; font-weight: bold; color: black;"
+                                @if($isDeburring) disabled @endif>
                         </td>
                         <td style="min-width: 120px;">
-                            <select class="form-control form-control-sm status-select"
-                                style=" font-weight: bold; color: black;" data-id="{{ $order->id }}" data-location="{{ $order->location }}">
-                                <option value="pending" {{ strtolower($order->status) === 'Pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="waitingformaterial" {{ strtolower($order->status) === 'waitingformaterial' ? 'selected' : '' }}>Wait Material</option>
-                                <option value="cutmaterial" {{ strtolower($order->status) === 'cutmaterial' ? 'selected' : '' }}>Cut Material</option>
-                                <option value="grinding" {{ strtolower($order->status) === 'grinding' ? 'selected' : '' }}>Grinding</option>
-                                <option value="onrack" {{ strtolower($order->status) === 'onrack' ? 'selected' : '' }}>OnRack</option>
-                                <option value="programming" {{ strtolower($order->status) === 'programming' ? 'selected' : '' }}>Programming</option>
-                                <option value="setup" {{ strtolower($order->status) === 'setup' ? 'selected' : '' }}>SetUp</option>
-                                <option value="machining" {{ strtolower($order->status) === 'machining' ? 'selected' : '' }}>Machining</option>
-                                <option value="marking" {{ strtolower($order->status) === 'marking' ? 'selected' : '' }}>Marking</option>
-                                <option value="deburring" {{ strtolower($order->status) === 'deburring' ? 'selected' : '' }}>Deburring</option>
-                                <option value="qa" {{ strtolower($order->status) === 'qa' ? 'selected' : '' }}>QA</option>
-                                <option value="outsource" {{ strtolower($order->status) === 'outsource' ? 'selected' : '' }}>OutSource</option>
-                                <option value="assembly" {{ strtolower($order->status) === 'assembly' ? 'selected' : '' }}>Assembly</option>
-                                <option value="shipping" {{ strtolower($order->status) === 'shipping' ? 'selected' : '' }}>Shipping</option>
-                                <option value="sent" {{ strtolower($order->status) === 'sent' ? 'selected' : '' }}>Sent</option>
-                                <option value="onhold" {{ strtolower($order->status) === 'onhold' ? 'selected' : '' }}>OnHold</option>
-                                <option value="ready" {{ strtolower($order->status) === 'ready' ? 'selected' : '' }}>Ready</option>
+                            <select
+                                class="form-control form-control-sm status-select"
+                                style="font-weight: bold; color: black;"
+                                data-id="{{ $order->id }}"
+                                data-location="{{ $order->location }}"
+                                data-old="{{ strtolower($order->status) }}">
+                                @php
+                                $user = auth()->user();
+                                $cur = strtolower($order->status);
+
+                                // Mapear permisos por rol
+                                $roleAllowed = [
+                                'QCShipping' => ['ready','shipping','sent'],
+                                'Deburring' => ['qa','shipping'],
+                                ];
+
+                                // Detectar rol actual
+                                $roleName = $user ? $user->getRoleNames()->first() : null;
+                                $allowed = $roleAllowed[$roleName] ?? null;
+
+                                $options = [
+                                'pending' => 'Pending',
+                                'waitingformaterial' => 'Wait Material',
+                                'cutmaterial' => 'Cut Material',
+                                'grinding' => 'Grinding',
+                                'onrack' => 'OnRack',
+                                'programming' => 'Programming',
+                                'setup' => 'SetUp',
+                                'machining' => 'Machining',
+                                'marking' => 'Marking',
+                                'deburring' => 'Deburring',
+                                'qa' => 'QA',
+                                'outsource' => 'OutSource',
+                                'assembly' => 'Assembly',
+                                'shipping' => 'Shipping',
+                                'sent' => 'Sent',
+                                'onhold' => 'OnHold',
+                                'ready' => 'Ready',
+                                ];
+                                @endphp
+
+                                @foreach($options as $value => $label)
+                                @php
+                                $selected = $cur === $value ? 'selected' : '';
+
+                                // 🔒 Reglas:
+                                // - Si hay $allowed definido para el rol,
+                                // se habilita si está en allowed o si es el estatus actual.
+                                // - Lo demás queda disabled.
+                                $disabled = '';
+                                if ($allowed !== null && !in_array($value, $allowed) && $cur !== $value) {
+                                $disabled = 'disabled';
+                                }
+                                @endphp
+                                <option value="{{ $value }}" {{ $selected }} {{ $disabled }}>
+                                    {{ $label }}
+                                </option>
+                                @endforeach
                             </select>
                         </td>
+
+
                         <td class="texsty">
                             <span class="editable-machining-date text-decoration-underline"
                                 data-id="{{ $order->id }}"
@@ -170,38 +227,65 @@
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
+                            <button
+                                class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
                                 data-id="{{ $order->id }}"
-                                data-value="{{ $order->report ? 1 : 0 }}">
+                                data-value="{{ $order->report ? 1 : 0 }}"
+                                @if(auth()->check() && auth()->user()->hasRole('Deburring')) disabled @endif
+                                >
                                 <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                             </button>
                         </td>
+
                         <td>
-                            <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
+                            <button
+                                class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
                                 data-id="{{ $order->id }}"
-                                data-value="{{ $order->our_source }}">
+                                data-value="{{ $order->our_source }}"
+                                @if(auth()->check() && auth()->user()->hasRole('Deburring')) disabled @endif
+                                >
                                 <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                             </button>
                         </td>
                         <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
-                            <span class="editable-station text-decoration-underline {{ $order->station ? 'text-success fw-bold' : 'text-muted' }}"
-                                data-id="{{ $order->id }}" style="cursor:pointer;">
+                            @php
+                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            @endphp
+                            <span
+                                class="{{ $order->station ? 'text-success fw-bold' : 'text-muted' }} {{ $isDeburring ? '' : 'editable-station text-decoration-underline' }}"
+                                data-id="{{ $order->id }}"
+                                style="{{ $isDeburring ? '' : 'cursor:pointer;' }}">
                                 {{ $order->station ?? 'N/A' }}
                             </span>
                         </td>
                         <td style="font-size: 12px;" class="notes-cell" data-id="{{ $order->id }}">
+                            @php
+                            $isDeburring = auth()->check() && auth()->user()->hasRole('Deburring');
+                            @endphp
+
                             @if (!empty($order->notes))
-                            <span class="open-notes-modal" data-id="{{ $order->id }}" data-notes="{{ $order->notes }}" style="cursor:pointer;" title="{{ $order->notes }}" data-bs-toggle="tooltip" data-bs-placement="left">
+                            <span
+                                @unless($isDeburring) class="open-notes-modal" style="cursor:pointer;" @endunless
+                                data-id="{{ $order->id }}"
+                                data-notes="{{ $order->notes }}"
+                                title="{{ $order->notes }}"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="left">
                                 {{ \Illuminate\Support\Str::limit($order->notes, 30) }}
                             </span>
                             @else
-                            <span class="open-notes-modal text-muted fst-italic"
-                                data-id="{{ $order->id }}" data-notes="" style="cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="left">
+                            <span
+                                @unless($isDeburring) class="open-notes-modal text-muted fst-italic" style="cursor:pointer;" @else class="text-muted fst-italic" @endunless
+                                data-id="{{ $order->id }}"
+                                data-notes=""
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="left">
                                 <i class="fas fa-plus-circle me-1"></i>
                                 Note
                             </span>
                             @endif
                         </td>
+
                         </tr>
                         @empty
                         <tr>

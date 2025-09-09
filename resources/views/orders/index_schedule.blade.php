@@ -38,11 +38,13 @@
 
 {{-- Tab: By Active Schedules --}}
 
+
 <div class="row">
     <div class="col-md-12">
         <div class="card mb-4">
             <div class="card-body">
                 {{-- Filtros dinámicos --}}
+                @unlessrole('Deburring')
                 <div class="row mb-4">
                     <!-- Formulario de carga -->
                     <div class="col-md-4">
@@ -129,7 +131,9 @@
                             </div>
                         </div>
                     </div>
+                        
                 </div>
+           @endunlessrole
                 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
                             <i class="fas fa-plus"></i> New Order
                         </button> -->

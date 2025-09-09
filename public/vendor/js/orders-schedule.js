@@ -1,21 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Cache de elementos usados frecuentemente
-    const tableElement = $("#orders_scheduleTable");
-    const csrfToken = $('meta[name="csrf-token"]').attr("content");
-    const loadingMessage = document.getElementById("loading-message");
-    const inputCsv = document.getElementById("csv_file");
-    const labelCsv = document.getElementById("csv_file_label");
+  // Helpers
+  const qs = (id) => document.getElementById(id);
 
+  // Cache de elementos (pueden NO existir según el rol)
+  const tableElement  = $("#orders_scheduleTable"); // jQuery, ok si no existe
+  const csrfToken     = $('meta[name="csrf-token"]').attr("content");
+  const loadingMsg    = qs("loading-message");
+  const uploadForm    = qs("upload-form");
+  const inputCsv      = qs("csv_file");
+  const labelCsv      = qs("csv_file_label");
     //------Agregar funcionalidad para cerrar el mensaje---------------
 
-    const closeButtons = document.querySelectorAll(".close");
-    closeButtons.forEach(function (button) {
-        button.addEventListener("click", function () {
-            const alertMessage = button.closest(".alert-message");
-            alertMessage.style.display = "none";
-        });
+   // ------ Cerrar mensajes (si existen) ------
+  const closeButtons = document.querySelectorAll(".close");
+  if (closeButtons.length) {
+    closeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const alertMessage = btn.closest(".alert-message");
+        if (alertMessage) alertMessage.style.display = "none";
+      });
     });
-
+  }
     // Fetch helper con CSRF
     const postJson = (url, data) =>
         fetch(url, {
@@ -34,10 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return res.json();
         });
 
-    // Mostrar mensaje de carga al enviar form
-    document.getElementById("upload-form").addEventListener("submit", () => {
-        loadingMessage.style.display = "block";
+    // ------ Mostrar mensaje de carga al enviar form (si existe) ------
+  if (uploadForm && loadingMsg) {
+    uploadForm.addEventListener("submit", () => {
+      loadingMsg.style.display = "block";
     });
+  }
 
     // Actualiza label del input file
     if (inputCsv && labelCsv) {
@@ -50,12 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const uploadForm = document.getElementById("upload-form");
-    if (uploadForm && loadingMessage) {
-        uploadForm.addEventListener("submit", () => {
-            loadingMessage.style.display = "block";
-        });
-    }
+
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
@@ -1273,7 +1276,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         `<button 
                             class="btn btn-primary btn-add-kit rounded-circle p-0" 
                             type="button" 
-                            title="Agregar" 
+                            title="Add" 
                             style="
                                 width: 1.6em; 
                                 height: 1.6em; 
