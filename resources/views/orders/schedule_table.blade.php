@@ -123,6 +123,9 @@
                         <td>
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
+                            $hasValue = !is_null($order->wo_qty) && (string)$order->wo_qty !== '' && (int)$order->wo_qty !== 0;
+                            // Deshabilitar solo si es rol restringido Y ya tiene valor
+                            $disabled = $isRestricted && $hasValue;
                             @endphp
 
                             <input
@@ -131,7 +134,7 @@
                                 data-original="{{ $order->wo_qty }}"
                                 class="wo-qty-input form-control form-control-sm"
                                 style="width: 60px; font-weight: bold; color: black;"
-                                @if($isRestricted) disabled @endif>
+                                @if($disabled) disabled @endif>
                         </td>
                         <td style="min-width: 120px;">
                             <select

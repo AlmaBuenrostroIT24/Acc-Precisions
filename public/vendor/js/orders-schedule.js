@@ -934,7 +934,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const woQtyNum = toNumber($inp.length ? $inp.val() : null);
 
             // 3) Validar
-            if (!Number.isFinite(woQtyNum) || woQtyNum <= 0) {
+            if (!Number.isFinite(woQtyNum) || woQtyNum < 0) {
                 Swal.fire({
                     icon: "warning",
                     title: "WO_QTY required",
