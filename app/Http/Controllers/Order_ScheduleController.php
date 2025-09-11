@@ -35,7 +35,23 @@ class Order_ScheduleController extends Controller
                 $q->whereNull('status_order')->orWhere('status_order', 'active');
             });
 
-        // 👇 Filtros por request (sin duplicar)
+        // 🔒 Filtro especial: usuarios con rol Deburring solo ven status=deburring
+        if (auth()->check() && auth()->user()->hasRole('Deburring')) {
+            $base->where('status', 'deburring');
+        }
+
+        // 🔒 Orden especial para QCShipping: primero Shipping, luego Ready, luego el resto
+        if (auth()->check() && auth()->user()->hasRole('QCShipping')) {
+            $base->orderByRaw("
+        CASE 
+            WHEN status = 'shipping' THEN 0
+            WHEN status = 'ready'    THEN 1
+            ELSE 2
+        END
+    ");
+        }
+
+        /// 👇 Filtros por request (se aplican solo si no es Deburring)
         $base->when($request->filled('location'), function ($q) use ($request) {
             $q->where('location', $request->location);
         });
@@ -405,7 +421,7 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-       // Log::info('Request completo:', $request->all());
+        // Log::info('Request completo:', $request->all());
 
         $mapping = [
             'col_text_0'  => 'location',
@@ -436,7 +452,7 @@ class Order_ScheduleController extends Controller
                 }
             }
             // 🔎 DEBUG: original_id recibido
-           // Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
+            // Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
             // --- 👇 Aquí inyectamos co y cust_po desde la orden original ---
             if ($request->filled('original_id')) {
                 $orig = OrderSchedule::select('co', 'cust_po')

@@ -1,21 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Cache de elementos usados frecuentemente
-    const tableElement = $("#orders_scheduleTable");
-    const csrfToken = $('meta[name="csrf-token"]').attr("content");
-    const loadingMessage = document.getElementById("loading-message");
-    const inputCsv = document.getElementById("csv_file");
-    const labelCsv = document.getElementById("csv_file_label");
+    // Helpers
+    const qs = (id) => document.getElementById(id);
 
+    // Cache de elementos (pueden NO existir según el rol)
+    const tableElement = $("#orders_scheduleTable"); // jQuery, ok si no existe
+    const csrfToken = $('meta[name="csrf-token"]').attr("content");
+    const loadingMsg = qs("loading-message");
+    const uploadForm = qs("upload-form");
+    const inputCsv = qs("csv_file");
+    const labelCsv = qs("csv_file_label");
     //------Agregar funcionalidad para cerrar el mensaje---------------
 
+    // ------ Cerrar mensajes (si existen) ------
     const closeButtons = document.querySelectorAll(".close");
-    closeButtons.forEach(function (button) {
-        button.addEventListener("click", function () {
-            const alertMessage = button.closest(".alert-message");
-            alertMessage.style.display = "none";
+    if (closeButtons.length) {
+        closeButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const alertMessage = btn.closest(".alert-message");
+                if (alertMessage) alertMessage.style.display = "none";
+            });
         });
-    });
-
+    }
     // Fetch helper con CSRF
     const postJson = (url, data) =>
         fetch(url, {
@@ -34,10 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return res.json();
         });
 
-    // Mostrar mensaje de carga al enviar form
-    document.getElementById("upload-form").addEventListener("submit", () => {
-        loadingMessage.style.display = "block";
-    });
+    // ------ Mostrar mensaje de carga al enviar form (si existe) ------
+    if (uploadForm && loadingMsg) {
+        uploadForm.addEventListener("submit", () => {
+            loadingMsg.style.display = "block";
+        });
+    }
 
     // Actualiza label del input file
     if (inputCsv && labelCsv) {
@@ -50,12 +58,76 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const uploadForm = document.getElementById("upload-form");
-    if (uploadForm && loadingMessage) {
-        uploadForm.addEventListener("submit", () => {
-            loadingMessage.style.display = "block";
-        });
+    // 👉 Formateador común para exportar "lo que ves"
+    function exportCellFormatter(data, row, column, node) {
+        const $node = $(node);
+
+        // 0) Botones toggle (Report / Our Source)
+        const $toggle = $node.find(
+            "button.toggle-report-btn, button.toggle-source-btn"
+        );
+        if ($toggle.length) {
+            // Detecta tipo (por si quieres etiquetar)
+            const label = $toggle.hasClass("toggle-report-btn")
+                ? "Report"
+                : $toggle.hasClass("toggle-source-btn")
+                ? "Source"
+                : "";
+
+            // ¿Está activo?
+            // Nota: data('value') puede quedar desactualizado si no lo actualizas al hacer toggle;
+            // por eso también verificamos clase e ícono.
+            const valAttr = String(
+                $toggle.attr("data-value") || ""
+            ).toLowerCase();
+            const isOn =
+                $toggle.hasClass("btn-primary") ||
+                $toggle.find(".fa-check-circle").length > 0 ||
+                valAttr === "1" ||
+                valAttr === "true";
+
+            // Elige el formato que prefieras:
+            // return isOn ? '1' : '0';                  // binario
+            // return isOn ? '✔' : '✘';                 // símbolos (ojo con fuentes PDF)
+            // return `${label}: ${isOn ? 'Yes' : 'No'}`; // con etiqueta
+            return isOn ? "Yes" : "No";
+        }
+
+        // 1) Selects → solo opción seleccionada
+        const $sel = $("select", $node);
+        if ($sel.length) {
+            return $sel.find("option:selected").text().trim();
+        }
+
+        // 2) Inputs (ej. WOQTY)
+        const $inp = $("input", $node);
+        if ($inp.length) {
+            return ($inp.val() || "").toString().trim();
+        }
+
+        // 3) Progress/Badges (ALERT)
+        const $pb = $(".progress-bar", $node);
+        if ($pb.length) {
+            return $pb.text().trim();
+        }
+
+        // 4) Spans editables
+        const $span = $("span", $node);
+        if ($span.length && !$sel.length && !$inp.length) {
+            return $span.text().trim();
+        }
+
+        // 5) Fallback: limpia HTML → texto
+        return $("<div>").html(data).text().replace(/\s+/g, " ").trim();
     }
+
+    // Sello de tiempo consistente: YYYY-MM-DD HH:mm
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const now = new Date();
+    const genStamp = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(
+        now.getDate()
+    )} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
@@ -70,6 +142,164 @@ document.addEventListener("DOMContentLoaded", () => {
                 { targets: 1, visible: false, searchable: true }, // LocationText
                 { targets: 2, visible: false, searchable: true }, // StatusText
                 { targets: 12, visible: false, searchable: false }, // DueDateText
+            ],
+            // ⬇️ Habilita zona para botones (B)
+            dom: "Bfrtip",
+
+            // ⬇️ Botones (se ocultarán visualmente y los dispararemos desde el <select>)
+            buttons: [
+                {
+                    extend: "excelHtml5",
+                    title: `Orders Schedule — Generated: ${genStamp}`,
+                    filename: `orders_schedule_${new Date()
+                        .toISOString()
+                        .slice(0, 10)}`,
+                    exportOptions: {
+                        columns: function (idx, data, node) {
+                            const dt = $.fn.dataTable.Api
+                                ? tableElement.DataTable()
+                                : null;
+                            const visible = dt
+                                ? dt.column(idx).visible()
+                                : true;
+                            const noExport = $(node).hasClass("no-export");
+                            return visible && !noExport;
+                        },
+                        modifier: { search: "applied", order: "applied" },
+                        format: { body: exportCellFormatter }, // 👈 AQUÍ
+                    },
+                },
+                {
+                    extend: "pdfHtml5",
+                    title: "Orders Schedule",
+                    orientation: "landscape",
+                    pageSize: "A4",
+                    exportOptions: {
+                        columns: (idx, data, node) => {
+                            const noExport = $(node).hasClass("no-export");
+                            const visible = window.table
+                                ? window.table.column(idx).visible()
+                                : true;
+                            return visible && !noExport;
+                        },
+                        modifier: { search: "applied", order: "applied" },
+                        format: { body: exportCellFormatter }, // 👈 AQUÍ
+                    },
+                    customize: function (doc) {
+                        // sello de tiempo
+                        const pad2 = (n) => String(n).padStart(2, "0");
+                        const now = new Date();
+                        const genStamp = `${now.getFullYear()}-${pad2(
+                            now.getMonth() + 1
+                        )}-${pad2(now.getDate())} ${pad2(
+                            now.getHours()
+                        )}:${pad2(now.getMinutes())}`;
+
+                        // ❗ usa el dataURL DIRECTO (sin doc.images)
+                        if (
+                            window.LOGO_BASE64 &&
+                            /^data:image\/(png|jpe?g);base64,/.test(
+                                window.LOGO_BASE64
+                            )
+                        ) {
+                            doc.pageMargins = [20, 60, 20, 30]; // margen superior mayor por el header
+                            doc.header = {
+                                margin: [20, 10, 20, 0],
+                                columns: [
+                                    { image: window.LOGO_BASE64, width: 60 },
+                                    {
+                                        text: `Acc Precision Inc.\nGenerated: ${genStamp}`,
+                                        alignment: "right",
+                                        margin: [0, 10, 0, 0],
+                                        fontSize: 9,
+                                    },
+                                ],
+                            };
+                        } else {
+                            console.warn(
+                                "Logo omitido: dataURL inválido o formato no soportado (usa PNG/JPG)."
+                            );
+                        }
+                        // estilos de tabla y footer
+                        doc.styles.tableHeader.fontSize = 9;
+                        doc.defaultStyle.fontSize = 8;
+                        if (doc.content[1] && doc.content[1].layout) {
+                            doc.content[1].layout.hLineWidth = () => 0.3;
+                            doc.content[1].layout.vLineWidth = () => 0.3;
+                        }
+                        doc.footer = (currentPage, pageCount) => ({
+                            text: currentPage + " / " + pageCount,
+                            alignment: "right",
+                            margin: [0, 0, 20, 0],
+                            fontSize: 8,
+                        });
+                    },
+                },
+                {
+                    extend: "print",
+                    title: "", // dejamos vacío y armamos el header con messageTop
+                    messageTop: function () {
+                        // usa el base64 si está disponible; si no, usa la ruta pública
+                        const src =
+                            window.LOGO_BASE64 &&
+                            /^data:image\/(png|jpe?g);base64,/.test(
+                                window.LOGO_BASE64
+                            )
+                                ? window.LOGO_BASE64
+                                : "/img/logo.png";
+
+                        // sello de tiempo
+                        const pad2 = (n) => String(n).padStart(2, "0");
+                        const d = new Date();
+                        const genStamp = `${d.getFullYear()}-${pad2(
+                            d.getMonth() + 1
+                        )}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(
+                            d.getMinutes()
+                        )}`;
+
+                        // header HTML (logo izquierda, título/fecha derecha)
+                        return `
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <img src="${src}" style="height:46px;"/>
+        <div style="text-align:right; font-size:12px; line-height:1.2;">
+          <div style="font-weight:600; font-size:14px;">Acc Precision Inc.</div>
+          <div>Generado: ${genStamp}</div>
+        </div>
+      </div>
+    `;
+                    },
+                    exportOptions: {
+                        columns: function (idx, data, node) {
+                            const dt = $.fn.dataTable.Api
+                                ? tableElement.DataTable()
+                                : null;
+                            const visible = dt
+                                ? dt.column(idx).visible()
+                                : true;
+                            const noExport = $(node).hasClass("no-export");
+                            return visible && !noExport;
+                        },
+                        modifier: { search: "applied", order: "applied" },
+                        format: { body: exportCellFormatter }, // 👈 igual que en PDF/Excel
+                    },
+                    customize: function (win) {
+                        // CSS para imprimir en landscape y compactar tabla
+                        const css = `
+      @page { size: landscape; margin: 12mm; }
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
+      table.dataTable { width: 100% !important; }
+      table.dataTable th, table.dataTable td { padding: 4px 6px !important; vertical-align: middle; }
+      table.dataTable thead th { background: #f1f1f1 !important; font-weight: 600; }
+    `;
+                        const head =
+                            win.document.head ||
+                            win.document.getElementsByTagName("head")[0];
+                        const style = win.document.createElement("style");
+                        style.type = "text/css";
+                        style.appendChild(win.document.createTextNode(css));
+                        head.appendChild(style);
+                    },
+                },
             ],
             initComplete: function () {
                 const wrapper = document.getElementById("table-wrapper");
@@ -104,16 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const path = window.location.pathname;
 
         const tableConfigs = {
-            "/scheduley": {
-                pageLength: 40,
-                searching: false,
-                order: [], // aquí respetas el orden del backend (status personalizado)
-            },
-            "/scheduleh": {
-                pageLength: 40,
-                searching: false,
-                order: [], // aquí respetas el orden del backend (status personalizado)
-            },
+            "/scheduley": { pageLength: 40, searching: false, order: [] },
+            "/scheduleh": { pageLength: 40, searching: false, order: [] },
             "/schedule/workhearst": {
                 pageLength: 10,
                 lengthChange: true,
@@ -122,7 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const config = tableConfigs[path] || {};
-        config.rowCallback = applyRowLateHighlight;
+        if (typeof applyRowLateHighlight === "function") {
+            config.rowCallback = applyRowLateHighlight;
+        }
 
         // ⏳ Mostrar loader antes de inicializar
         const loader = document.getElementById("loader");
@@ -132,9 +356,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
+
+        // Oculta los botones nativos (opcional)
+        setTimeout(() => $(".dt-buttons").hide(), 0); // por si el DOM se pinta después
+
+        // Helper para disparar el botón correcto
+        function triggerExport(action) {
+            if (!window.table || typeof window.table.button !== "function") {
+                console.error("DataTable no inicializada o falta Buttons.");
+                return;
+            }
+            // Por clase… y si no, por índice (0=excel, 1=pdf, 2=print)
+            if (action === "excel") {
+                window.table.button(".buttons-excel").length
+                    ? window.table.button(".buttons-excel").trigger()
+                    : window.table.button(0).trigger();
+            } else if (action === "pdf") {
+                window.table.button(".buttons-pdf").length
+                    ? window.table.button(".buttons-pdf").trigger()
+                    : window.table.button(1).trigger();
+            } else if (action === "print") {
+                window.table.button(".buttons-print").length
+                    ? window.table.button(".buttons-print").trigger()
+                    : window.table.button(2).trigger();
+            }
+        }
+
+        // 1) SELECT simple
+        const exportSel = document.getElementById("exportFilter");
+        if (exportSel) {
+            exportSel.addEventListener("change", function () {
+                if (this.value) triggerExport(this.value);
+                this.value = ""; // reset
+            });
+        }
+
+        // 2) DROPDOWN estilo select
+        $(document).on("click", ".export-action", function () {
+            triggerExport(this.dataset.action);
+        });
     } else {
         console.error("❌ No se encontró #orders_scheduleTable");
-        F;
     }
 
     function applyRowLateHighlight(row, data, index) {
@@ -931,7 +1193,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const woQtyNum = toNumber($inp.length ? $inp.val() : null);
 
             // 3) Validar
-            if (!Number.isFinite(woQtyNum) || woQtyNum <= 0) {
+            if (!Number.isFinite(woQtyNum) || woQtyNum < 0) {
                 Swal.fire({
                     icon: "warning",
                     title: "WO_QTY required",
@@ -1273,7 +1535,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         `<button 
                             class="btn btn-primary btn-add-kit rounded-circle p-0" 
                             type="button" 
-                            title="Agregar" 
+                            title="Add" 
                             style="
                                 width: 1.6em; 
                                 height: 1.6em; 
