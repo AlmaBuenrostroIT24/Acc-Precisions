@@ -269,10 +269,6 @@
 <script src="{{ asset('vendor/js/orders-schedule.js') }}"></script>
 
 
-
-<!-- Bootstrap 4 JS + Popper (para dropdowns BS4 en general) -->
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
 <script>
 
      // Queda null si no existe o no se pudo leer
