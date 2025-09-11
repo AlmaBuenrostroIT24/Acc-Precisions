@@ -92,10 +92,10 @@
                                     <i class="fas fa-filter text-info mr-2"></i>
                                     <span class="font-weight-semibold"><strong>Filters</strong></span>
                                 </div>
-
+                                {{-- Location --}}
                                 <form method="GET" action="{{ route('schedule.general') }}" id="filterForm" class="form-row">
                                     {{-- Location --}}
-                                    <div class="form-group col-12 col-md-3">
+                                    <div class="form-group col-12 col-md-2">
                                         <label for="locationFilter" class="mb-1">Location</label>
                                         <div class="input-group input-group">
                                             <div class="input-group-prepend">
@@ -147,9 +147,8 @@
                                             </select>
                                         </div>
                                     </div>
-                                    {{-- Acciones --}}
                                     {{-- Priority & Delete --}}
-                                    <div class="form-group col-12 col-md-3">
+                                    <div class="form-group col-12 col-md-2">
                                         <label class="mb-1">Priority & Delete</label>
                                         <div class="input-group input-group">
                                             <div class="input-group-prepend">
@@ -163,23 +162,64 @@
                                                 data-toggle="dropdown"
                                                 aria-haspopup="true"
                                                 aria-expanded="false">
-                                                Action
+                                                — Action —
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right w-100 p-2" aria-labelledby="actionMenuButton">
                                                 <button type="button"
                                                     class="btn btn-info text-white w-100 d-flex align-items-center mb-2"
                                                     data-toggle="modal" data-target="#deleteModal" data-mode="priority">
-                                                    <i class="fas fa-star mr-2"></i> Priority Order
+                                                    <i class="fas fa-star mr-2"></i> Priority
                                                 </button>
 
                                                 <button type="button"
                                                     class="btn btn-danger text-white w-100 d-flex align-items-center"
                                                     data-toggle="modal" data-target="#deleteModal" data-mode="delete">
-                                                    <i class="fas fa-trash-alt mr-2"></i> Delete Order
+                                                    <i class="fas fa-trash-alt mr-2"></i> Delete
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {{-- Export (PDF / Excel / Print) - BS4 --}}
+                                    <div class="form-group col-12 col-md-2">
+                                        <label class="mb-1">Export</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text bg-light">
+                                                    <i class="fas fa-file-export text-warning"></i>
+                                                </span>
+                                            </div>
+
+                                            {{-- Contenedor dropdown BS4 --}}
+                                            <div class="dropdown flex-grow-1">
+                                                <button
+                                                    class="form-control text-left dropdown-toggle"
+                                                    type="button"
+                                                    id="exportMenuBtn"
+                                                    data-toggle="dropdown" {{-- <- BS4 --}}
+                                                    aria-haspopup="true"
+                                                    aria-expanded="false">
+                                                    — Select —
+                                                </button>
+
+                                                <div class="dropdown-menu dropdown-menu-right p-2 w-100" aria-labelledby="exportMenuBtn" style="min-width:100%;">
+                                                    <button type="button" class="btn btn-success w-100 mb-2 d-flex align-items-center justify-content-center export-action" data-action="excel">
+                                                        <i class="fas fa-file-excel mr-2"></i> Excel
+                                                    </button>
+
+                                                    <button type="button" class="btn btn-danger w-100 mb-2 d-flex align-items-center justify-content-center export-action" data-action="pdf">
+                                                        <i class="fas fa-file-pdf mr-2"></i> PDF
+                                                    </button>
+
+                                                    <button type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center export-action" data-action="print">
+                                                        <i class="fas fa-print mr-2"></i> Print
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
 
 
                                 </form>
@@ -190,7 +230,16 @@
                     </div>
                     @endunlessrole
                 </div>
+                @php
+                use Illuminate\Support\Facades\File;
 
+                $logoRel = 'img/logo.png'; // ← usa .png o .jpg
+                $logoAbs = public_path($logoRel);
+
+                $mime = File::exists($logoAbs) ? (File::mimeType($logoAbs) ?? 'image/png') : null;
+                $b64 = $mime ? base64_encode(file_get_contents($logoAbs)) : null;
+                $dataUrl = ($mime && $b64) ? "data:$mime;base64,$b64" : null;
+                @endphp
                 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
                             <i class="fas fa-plus"></i> New Order
                         </button> -->
@@ -220,7 +269,27 @@
 <script src="{{ asset('vendor/js/orders-schedule.js') }}"></script>
 
 
+
+<!-- Buttons core -->
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+
+<!-- Dependencias de export -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/build/pdfmake.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/build/vfs_fonts.js"></script>
+
+<!-- Botones HTML5 y Print -->
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+<!-- Bootstrap 4 JS + Popper (para dropdowns BS4 en general) -->
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
 <script>
+
+     // Queda null si no existe o no se pudo leer
+  window.LOGO_BASE64 =   'data:image/png;base64,{{ base64_encode(file_get_contents(public_path("img/acc.png"))) }}';
+
     let currentActionMode = 'delete'; // default
 
     // 🟢 Detectar qué botón abre el modal y actualizar contenido
