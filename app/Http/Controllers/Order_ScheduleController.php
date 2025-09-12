@@ -212,9 +212,30 @@ class Order_ScheduleController extends Controller
 
     public function endyarnell(Request $request)
     {
+
+        // Parámetros de filtro
+        $year     = $request->integer('year');
+        $month    = $request->integer('month');
+        $day      = $request->input('day');
+
         $query = OrderSchedule::latest()
             ->where('last_location', 'Yarnell')
             ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
+
+        // 📅 Filtro de fechas (prioridad como en summary)
+        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
+        if ($day) {
+            $query->whereDate('endate_mach', Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $query->whereYear('endate_mach', $year)->whereMonth('endate_mach', $month);
+        } elseif ($year) {
+            $query->whereYear('endate_mach', $year);
+        } elseif ($month) {
+            $query->whereYear('endate_mach', now()->year)->whereMonth('endate_mach', $month);
+        } else {
+            // Por defecto: mes actual para no traer dataset enorme
+            $query->whereBetween('endate_mach', [now()->startOfMonth(), now()->endOfMonth()]);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -226,6 +247,23 @@ class Order_ScheduleController extends Controller
         $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
+        $currentYear = now()->year;
+        $years  = range($currentYear, $currentYear - 5);
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Aug',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Dec'
+        ];
+
         foreach ($orders as $order) {
             $order->dias_restantes = $this->calcularDiasInterno(
                 $order->status,
@@ -234,7 +272,7 @@ class Order_ScheduleController extends Controller
             );
         }
 
-        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers'));
+        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers','years','months','year','month','day'));
     }
 
     //----------------------------------------------------------------------------------------------------------------------------
