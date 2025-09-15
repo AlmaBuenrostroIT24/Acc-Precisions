@@ -180,7 +180,7 @@
                                 <th class="text-center align-middle">REPORT</th>
                                 <th class="text-center align-middle">OUT/SRC</th>
                                 <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
-                                <th style="width: 70px;">END DATE</th>
+                                <th style="width: 110px;">END DATE</th>
                                 <th class="text-center align-middle">TARGET</th>
                                 <th class="text-center align-middle">NOTES</th>
                                 <th class="text-center align-middle">STATUS</th>
