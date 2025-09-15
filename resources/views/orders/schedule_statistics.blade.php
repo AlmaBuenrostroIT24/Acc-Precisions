@@ -161,23 +161,35 @@
 
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table id="tableweek" class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle datatable-export"
-                            style="table-layout: fixed; width: 100%;">
-                            <thead class="table-light">
+                        <table id="tableweek"
+                            class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                            {{-- Anchos consistentes sin inline-styles --}}
+                            <colgroup>
+                                <col style="width:10%">
+                                <col style="width:12%">
+                                <col style="width:36%"> {{-- DESCRIPTION --}}
+                                <col style="width:14%">
+                                <col style="width:8%"> {{-- QTY --}}
+                                <col style="width:10%"> {{-- STATUS --}}
+                                <col style="width:10%"> {{-- DUE DATE --}}
+                            </colgroup>
+
+                            <thead class="bg-success text-white">
                                 <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    <th style="width: 40px;">WORK ID</th>
-                                    <th style="width: 50px;">PN</th>
-                                    <th style="width: 150px;">DESCRIPTION</th>
-                                    <th style="width: 70px;">CUSTOMER</th>
-                                    <th style="width: 30px;">QTY</th>
-                                    <th style="width: 50px;">STATUS</th>
-                                    <th style="width: 70px;">DUE DATE</th>
+                                    <th>W.ID</th>
+                                    <th>PN</th>
+                                    <th>DESCRIPTION</th>
+                                    <th>CUSTOMER</th>
+                                    <th>QTY</th>
+                                    <th>STATUS</th>
+                                    <th>DUE DATE</th>
                                 </tr>
                             </thead>
                             <tbody id="tableweek-body">
                                 @include('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenesSemana])
                             </tbody>
                         </table>
+
                     </div>
                 </div>
                 <div class="card-footer bg-light text-center py-2">
@@ -197,11 +209,11 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table id="tablelate" class="table table-bordered table-sm nowrap small mb-0 text-nowrap align-middle datatable-export"
+                        <table id="tablelate" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export"
                             style="table-layout: fixed; width: 100%;">
-                            <thead class="table-light">
+                            <thead class="bg-danger text-white">
                                 <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    <th style="width: 40px;">WORK ID</th>
+                                    <th style="width: 40px;">W.ID</th>
                                     <th style="width: 50px;">PN</th>
                                     <th style="width: 150px;">DESCRIPTION</th>
                                     <th style="width: 70px;">CUSTOMER</th>
@@ -221,9 +233,14 @@
                                     </td>
                                     <td>{{ ucfirst($order->costumer) }}</td>
                                     <td>{{ $order->qty }}</td>
-                                    <td><span class="badge bg-warning text-dark">{{ $order->status }}</span></td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark text-truncate d-inline-block" style="max-width: 70px;"
+                                            title="{{ $order->status }}">
+                                            {{ $order->status }}
+                                        </span>
+                                    </td>
                                     <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
-                                    <td style="white-space: normal !important; word-break: break-word;" title="{{ $order->notes }}">
+                                    <td style="white-space: normal !important; font-size: 12px !important; word-break: break-word;" title="{{ $order->notes }}">
                                         {{ $order->notes}}
                                     </td>
                                 </tr>
@@ -663,6 +680,14 @@
             margin-top: 20px !important;
             margin-left: 15px !important;
             margin-right: 15px !important;
+        }
+
+        #tableweek tbody td {
+            height: 50px;
+        }
+
+        #tablelate tbody td {
+            height: 50px;
         }
     </style>
     @endsection
