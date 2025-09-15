@@ -278,38 +278,69 @@ class Order_ScheduleController extends Controller
     //----------------------------------------------------------------------------------------------------------------------------
     //Completed Orders--------------------------------------------------------------------------------------------------------------
 
-    public function finished(Request $request)
-    {
-        // $orders = OrderSchedule::latest()->get();
-        //return view('orders.index_schedule', compact('orders'));
+   public function finished(Request $request)
+{
+    // ⬇️ Cambia esto a 'sent_at' si tu "Finished" se basa en esa fecha
+    $dateField = 'sent_at';
 
-        $query = OrderSchedule::latest();
+    $query = OrderSchedule::query();
 
-        if ($request->filled('location')) {
-            $query->where('location', $request->location);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $orders = $query->get();
-
-        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
-        $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
-        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
-
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
-        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+    // Por defecto, mostrar solo terminados (ajusta si tu flujo usa otro status)
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    } else {
+        $query->where('status', 'sent'); // o 'finished' si así lo guardas
     }
+
+    // Location (server-side)
+    if ($request->filled('location')) {
+        $query->where('location', $request->location);
+    }
+
+    // === Filtros Year / Month / Day sobre $dateField ===
+    // Prioridad: DAY > (YEAR+MONTH) > YEAR
+    $hasDay   = $request->filled('day');
+    $hasYear  = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year);
+    $hasMonth = $request->filled('month') && preg_match('/^\d{1,2}$/', (string) $request->month);
+
+    if ($hasDay) {
+        // Día exacto
+        try {
+            $day = Carbon::parse($request->day)->startOfDay();
+            $query->whereDate($dateField, $day->toDateString());
+        } catch (\Throwable $e) {
+            // si el día no es válido, ignorar filtro
+        }
+    } else {
+        if ($hasYear) {
+            $query->whereYear($dateField, (int) $request->year);
+        }
+        if ($hasMonth) {
+            $query->whereMonth($dateField, (int) $request->month);
+        }
+    }
+
+    // Orden principal por fecha de finalización (coincide con tu DataTable col 11)
+    $query->orderByDesc($dateField);
+
+    $orders = $query->get();
+
+    // Catálogos para filtros (sin afectar resultado)
+    $locations = OrderSchedule::select('location')->distinct()->pluck('location');
+    $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
+    $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+    // Si aún necesitas dias_restantes (aunque sea "finished")
+    foreach ($orders as $order) {
+        $order->dias_restantes = $this->calcularDiasInterno(
+            $order->status,
+            $order->due_date,
+            $order->machining_date
+        );
+    }
+
+    return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+}
 
     public function returnPreviousStatus(Request $request, OrderSchedule $order)
     {

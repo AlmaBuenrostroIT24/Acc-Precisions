@@ -32,12 +32,10 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card mb-4 shadow-sm">
-
             {{-- 🔹 Header: filtros + acciones + contador --}}
             <div class="card-header py-2">
                 <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm">
                     <div class="d-flex flex-wrap align-items-end" style="gap:.5rem">
-
                         {{-- Customer (llenado vía JS/DataTables) --}}
                         <div class="form-group mb-0">
                             <label for="customerFilter" class="mb-1 sr-only">Customer</label>
@@ -131,7 +129,7 @@
 
                         {{-- Contador --}}
                         <span class="badge badge-info ml-2">
-                            Total: {{ isset($orders) && method_exists($orders,'total') ? $orders->total() : (isset($orders) ? count($orders) : 0) }}
+                            Total: <span id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
                         </span>
                     </div>
                 </form>
@@ -195,7 +193,7 @@
 @endsection
 
 @section('css')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.39.0/build/css/tempusdominus-bootstrap-4.min.css">
+
 
 <style>
 
@@ -203,9 +201,8 @@
 @endsection
 
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/en-au.js"></script> {{-- o en-gb, según idioma --}}
-<script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.39.0/build/js/tempusdominus-bootstrap-4.min.js"></script>
+
+<script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
     $(document).ready(function() {
         // =========================
@@ -273,306 +270,41 @@
         }
 
         // =========================
-        //  Helpers Tempus Dominus
+        //  Tempus Dominus (reutilizable)
         // =========================
-        function setMonthViewToYear(year) {
-            if (!year || !/^\d{4}$/.test(String(year))) return;
-            const view = moment({
-                year: parseInt(year, 10),
-                month: 0,
-                day: 1
-            });
-            $('#monthPickerWrapper').datetimepicker('viewDate', view);
+        window.initTempusFilters({
+            form: '#filterForm',
+            yearWrapper: '#yearPickerWrapper',
+            monthWrapper: '#monthPickerWrapper',
+            dayWrapper: '#dayPickerWrapper',
+            yearInput: '#year',
+            monthHiddenInput: '#month',
+            monthDisplayInput: '#monthDisplay',
+            dayInput: '#day',
+            initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
+        });
+
+
+        // ---------------------- 7. Autosubmit de filtros servidor (excluye .dt-filter) ----------------------
+        const $badge = $('#badgeFinished');
+
+        function refreshBadge() {
+            const filtered = table.rows({
+                search: 'applied'
+            }).count();
+            $badge.text(filtered);
         }
 
-        // Flags para evitar submits por cambios programáticos
-        let settingYear = false;
-        let settingMonth = false;
-        let settingDay = false;
+        // Inicial
+        refreshBadge();
 
-        /* =========================
-           YEAR picker (ignora cambios al abrir; envía al cerrar)
-           ========================= */
-        if ($('#yearPickerWrapper').length) {
-            $('#yearPickerWrapper').datetimepicker({
-                format: 'YYYY',
-                viewMode: 'years',
-                useCurrent: false,
-                keepOpen: false
-            });
+        // Mantenerlo sincronizado
+        table.on('draw.dt search.dt order.dt page.dt', refreshBadge);
 
-            const initYear = $('#yearPickerWrapper').data('initial-year') || $('#year').val();
-            if (initYear) {
-                settingYear = true;
-                $('#yearPickerWrapper').datetimepicker('date', moment(initYear, 'YYYY'));
-                settingYear = false;
-            }
-
-            let openingUntilTs = 0;
-            const OPENING_GRACE_MS = 300;
-
-            $('#yearPickerWrapper')
-                .on('show.datetimepicker', function() {
-                    $(this).data('dirty', false);
-                    openingUntilTs = Date.now() + OPENING_GRACE_MS;
-                })
-                .on('change.datetimepicker', function(e) {
-                    // Ignora: apertura, y cambios programáticos (p.ej., disparados por month/day)
-                    if (settingYear) return;
-                    if (Date.now() < openingUntilTs) return;
-
-                    if (e.date) {
-                        const yearVal = e.date.year().toString();
-                        $('#year').val(yearVal);
-
-                        // Solo limpiar DAY aquí. MONTH se limpia solo si NO hay mes seleccionado.
-                        // (Así no perdemos el mes cuando lo cambiaste tú mismo)
-                        if (!$('#month').val()) {
-                            // limpiar month solo si no hay mes seleccionado
-                            settingMonth = true;
-                            $('#month').val('');
-                            $('#monthDisplay').val('');
-                            if ($('#monthPickerWrapper').length) $('#monthPickerWrapper').datetimepicker('clear');
-                            settingMonth = false;
-                        }
-
-                        // Limpia siempre el day (para traer todo el año o todo el mes)
-                        settingDay = true;
-                        $('#day').val('');
-                        if ($('#dayPickerWrapper').length) $('#dayPickerWrapper').datetimepicker('clear');
-                        settingDay = false;
-
-                        // Alinear vista de months al nuevo año
-                        setMonthViewToYear(yearVal);
-                    } else {
-                        $('#year').val('');
-                    }
-
-                    $(this).data('dirty', true);
-                })
-                .on('hide.datetimepicker', function() {
-                    if ($(this).data('dirty')) {
-                        $('#filterForm').submit();
-                        $(this).data('dirty', false);
-                    }
-                });
-
-            // Entrada manual de año (sin submit inmediato)
-            $('#year').off('input blur').on('input blur', function() {
-                const y = this.value.trim();
-                if (/^\d{4}$/.test(y)) {
-                    setMonthViewToYear(y);
-                    // no enviamos; si quieres enviar aquí, llama a submit().
-                }
-            });
-        }
-
-        /* =========================
-           MONTH picker (visible MMM + hidden MM; envía al cerrar)
-           ========================= */
-        if ($('#monthPickerWrapper').length) {
-            $('#monthPickerWrapper').datetimepicker({
-                format: 'MMM',
-                viewMode: 'months',
-                useCurrent: false,
-                keepOpen: false
-            });
-
-            const mmHidden = ($('#month').val() || '').toString().padStart(2, '0');
-            const baseYear = ($('#year').val() ? parseInt($('#year').val(), 10) : moment().year());
-
-            if (mmHidden && mmHidden !== '00') {
-                settingMonth = true;
-                const m = moment({
-                    year: baseYear,
-                    month: parseInt(mmHidden, 10) - 1,
-                    day: 1
-                });
-                $('#monthPickerWrapper').datetimepicker('date', m);
-                settingMonth = false;
-            } else {
-                $('#monthDisplay').val('');
-                const y = $('#year').val();
-                if (y) setMonthViewToYear(y);
-            }
-
-            // Al abrir: alinear la vista al año actual/seleccionado
-            $('#monthPickerWrapper').on('show.datetimepicker', function() {
-                $(this).data('dirty', false);
-                const y = $('#year').val() || moment().year();
-                setMonthViewToYear(y);
-            });
-
-            // Elegir mes: actualizar hidden y año (protegido), limpiar day (no enviamos aún)
-            $('#monthPickerWrapper').on('change.datetimepicker', function(e) {
-                if (settingMonth) return;
-
-                if (e.date) {
-                    const monthVal = e.date.format('MM'); // 01..12
-                    $('#month').val(monthVal);
-
-                    // Sincroniza año, pero protegemos el handler de YEAR
-                    const y = e.date.year().toString();
-                    settingYear = true;
-                    $('#year').val(y);
-                    $('#yearPickerWrapper').datetimepicker('date', moment(y, 'YYYY'));
-                    settingYear = false;
-
-                    // Limpiar el día para traer "todo el mes"
-                    settingDay = true;
-                    $('#day').val('');
-                    if ($('#dayPickerWrapper').length) $('#dayPickerWrapper').datetimepicker('clear');
-                    settingDay = false;
-                } else {
-                    $('#month').val('');
-                }
-
-                $(this).data('dirty', true);
-            });
-
-            // Al cerrar: si hubo cambio real, enviar
-            $('#monthPickerWrapper').on('hide.datetimepicker', function() {
-                if ($(this).data('dirty')) {
-                    $('#filterForm').submit();
-                    $(this).data('dirty', false);
-                }
-            });
-
-            // Si cambia el Year (por el picker), re-proyecta el mes seleccionado; si no hay mes, solo vista
-            $('#yearPickerWrapper').on('change.datetimepicker', function(e) {
-                const selYear = e.date ? e.date.year() : ($('#year').val() ? parseInt($('#year').val(), 10) : baseYear);
-                const currentMM = $('#month').val();
-                if (currentMM) {
-                    settingMonth = true;
-                    const newDate = moment({
-                        year: selYear,
-                        month: parseInt(currentMM, 10) - 1,
-                        day: 1
-                    });
-                    $('#monthPickerWrapper').datetimepicker('date', newDate);
-                    settingMonth = false;
-                } else {
-                    setMonthViewToYear(selYear);
-                }
-            });
-        }
-
-        /* =========================
-           DAY picker (sincronizado con año/mes; envía al cerrar)
-           ========================= */
-        if ($('#dayPickerWrapper').length) {
-            $('#dayPickerWrapper').datetimepicker({
-                format: 'YYYY-MM-DD',
-                viewMode: 'days',
-                useCurrent: false,
-                keepOpen: false
-            });
-
-            const initDay = $('#day').val();
-            if (initDay) {
-                settingDay = true;
-                $('#dayPickerWrapper').datetimepicker('date', moment(initDay, 'YYYY-MM-DD'));
-                settingDay = false;
-            } else {
-                const y = $('#year').val();
-                const mm = ($('#month').val() || '').toString().padStart(2, '0');
-                if (y && mm && mm !== '00') {
-                    const view = moment({
-                        year: parseInt(y, 10),
-                        month: parseInt(mm, 10) - 1,
-                        day: 1
-                    });
-                    $('#dayPickerWrapper').datetimepicker('viewDate', view);
-                }
-            }
-
-            // Al abrir: si no hay day, alinea a (year,month) o hoy
-            $('#dayPickerWrapper').on('show.datetimepicker', function() {
-                $(this).data('dirty', false);
-                if (!$('#day').val()) {
-                    const y = $('#year').val();
-                    const mm = $('#month').val();
-                    if (y && mm && mm !== '00') {
-                        const view = moment({
-                            year: parseInt(y, 10),
-                            month: parseInt(mm, 10) - 1,
-                            day: 1
-                        });
-                        $('#dayPickerWrapper').datetimepicker('viewDate', view);
-                    } else {
-                        $('#dayPickerWrapper').datetimepicker('viewDate', moment()); // hoy
-                    }
-                }
-            });
-
-            // Elegir día: sincroniza year + month (no enviamos aún)
-            $('#dayPickerWrapper').on('change.datetimepicker', function(e) {
-                if (settingDay) return;
-
-                if (e.date) {
-                    const d = e.date.clone();
-                    $('#day').val(d.format('YYYY-MM-DD'));
-
-                    // YEAR
-                    settingYear = true;
-                    const y = d.format('YYYY');
-                    $('#year').val(y);
-                    $('#yearPickerWrapper').datetimepicker('date', moment(y, 'YYYY'));
-                    settingYear = false;
-
-                    // MONTH (hidden + display)
-                    settingMonth = true;
-                    const mm = d.format('MM');
-                    $('#month').val(mm);
-                    $('#monthPickerWrapper').datetimepicker('date', d.clone().startOf('month'));
-                    settingMonth = false;
-                } else {
-                    $('#day').val('');
-                }
-
-                $(this).data('dirty', true);
-            });
-
-            // Al cerrar: si hubo cambio real, enviar
-            $('#dayPickerWrapper').on('hide.datetimepicker', function() {
-                if ($(this).data('dirty')) {
-                    $('#filterForm').submit();
-                    $(this).data('dirty', false);
-                }
-            });
-
-            // Si cambia Year/Month y NO hay day seleccionado → mover solo la vista del day-picker
-            $('#yearPickerWrapper').on('change.datetimepicker', function(e) {
-                if (!$('#day').val()) {
-                    const selYear = e.date ? e.date.year() : ($('#year').val() || moment().year());
-                    const mm = ($('#month').val() || '01').toString().padStart(2, '0');
-                    const view = moment({
-                        year: parseInt(selYear, 10),
-                        month: parseInt(mm, 10) - 1,
-                        day: 1
-                    });
-                    $('#dayPickerWrapper').datetimepicker('viewDate', view);
-                }
-            });
-            $('#monthPickerWrapper').on('change.datetimepicker', function(e) {
-                if (!$('#day').val()) {
-                    const y = $('#year').val() ? parseInt($('#year').val(), 10) : moment().year();
-                    const mm = $('#month').val() || (e.date ? e.date.format('MM') : '01');
-                    const view = moment({
-                        year: y,
-                        month: parseInt(mm, 10) - 1,
-                        day: 1
-                    });
-                    $('#dayPickerWrapper').datetimepicker('viewDate', view);
-                }
-            });
-        }
-        // =========================
-        //  Autosubmit de filtros servidor (excluye .dt-filter)
-        // =========================
-        document
-            .querySelectorAll('#filterForm select:not(.dt-filter), #filterForm input[type="date"]')
-            .forEach(el => el.addEventListener('change', () => document.getElementById('filterForm').submit()));
+        // Al cambiar Location/Customer ya llamas table.draw(), que dispara refreshBadge
+        $('#customerFilter').on('change', function() {
+            table.draw();
+        });
     });
 </script>
 

@@ -545,7 +545,7 @@ return [
                     'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.css',
                 ],
-                    [
+                [
                     'type' => 'css',
                     'asset' => true,
                     'location' => 'vendor/datatables/buttons.bootstrap4.min.css',
@@ -614,6 +614,31 @@ return [
                     'type' => 'js',
                     'asset' => true,
                     'location' => 'vendor/pdfmake/vfs_fonts.js',
+                ],
+            ],
+        ],
+        'Tempusdominus' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/moment.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/tempusdominus-bootstrap-4.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/en-au.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/tempusdominus-bootstrap-4.min.css',
                 ],
             ],
         ],
