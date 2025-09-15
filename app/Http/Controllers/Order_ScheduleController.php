@@ -212,9 +212,30 @@ class Order_ScheduleController extends Controller
 
     public function endyarnell(Request $request)
     {
+
+        // Parámetros de filtro
+        $year     = $request->integer('year');
+        $month    = $request->integer('month');
+        $day      = $request->input('day');
+
         $query = OrderSchedule::latest()
             ->where('last_location', 'Yarnell')
             ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
+
+        // 📅 Filtro de fechas (prioridad como en summary)
+        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
+        if ($day) {
+            $query->whereDate('endate_mach', Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $query->whereYear('endate_mach', $year)->whereMonth('endate_mach', $month);
+        } elseif ($year) {
+            $query->whereYear('endate_mach', $year);
+        } elseif ($month) {
+            $query->whereYear('endate_mach', now()->year)->whereMonth('endate_mach', $month);
+        } else {
+            // Por defecto: mes actual para no traer dataset enorme
+            $query->whereBetween('endate_mach', [now()->startOfMonth(), now()->endOfMonth()]);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -226,6 +247,23 @@ class Order_ScheduleController extends Controller
         $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
+        $currentYear = now()->year;
+        $years  = range($currentYear, $currentYear - 5);
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Aug',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Dec'
+        ];
+
         foreach ($orders as $order) {
             $order->dias_restantes = $this->calcularDiasInterno(
                 $order->status,
@@ -234,44 +272,75 @@ class Order_ScheduleController extends Controller
             );
         }
 
-        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers'));
+        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers','years','months','year','month','day'));
     }
 
     //----------------------------------------------------------------------------------------------------------------------------
     //Completed Orders--------------------------------------------------------------------------------------------------------------
 
-    public function finished(Request $request)
-    {
-        // $orders = OrderSchedule::latest()->get();
-        //return view('orders.index_schedule', compact('orders'));
+   public function finished(Request $request)
+{
+    // ⬇️ Cambia esto a 'sent_at' si tu "Finished" se basa en esa fecha
+    $dateField = 'sent_at';
 
-        $query = OrderSchedule::latest();
+    $query = OrderSchedule::query();
 
-        if ($request->filled('location')) {
-            $query->where('location', $request->location);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $orders = $query->get();
-
-        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
-        $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
-        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
-
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
-        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+    // Por defecto, mostrar solo terminados (ajusta si tu flujo usa otro status)
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    } else {
+        $query->where('status', 'sent'); // o 'finished' si así lo guardas
     }
+
+    // Location (server-side)
+    if ($request->filled('location')) {
+        $query->where('location', $request->location);
+    }
+
+    // === Filtros Year / Month / Day sobre $dateField ===
+    // Prioridad: DAY > (YEAR+MONTH) > YEAR
+    $hasDay   = $request->filled('day');
+    $hasYear  = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year);
+    $hasMonth = $request->filled('month') && preg_match('/^\d{1,2}$/', (string) $request->month);
+
+    if ($hasDay) {
+        // Día exacto
+        try {
+            $day = Carbon::parse($request->day)->startOfDay();
+            $query->whereDate($dateField, $day->toDateString());
+        } catch (\Throwable $e) {
+            // si el día no es válido, ignorar filtro
+        }
+    } else {
+        if ($hasYear) {
+            $query->whereYear($dateField, (int) $request->year);
+        }
+        if ($hasMonth) {
+            $query->whereMonth($dateField, (int) $request->month);
+        }
+    }
+
+    // Orden principal por fecha de finalización (coincide con tu DataTable col 11)
+    $query->orderByDesc($dateField);
+
+    $orders = $query->get();
+
+    // Catálogos para filtros (sin afectar resultado)
+    $locations = OrderSchedule::select('location')->distinct()->pluck('location');
+    $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
+    $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+    // Si aún necesitas dias_restantes (aunque sea "finished")
+    foreach ($orders as $order) {
+        $order->dias_restantes = $this->calcularDiasInterno(
+            $order->status,
+            $order->due_date,
+            $order->machining_date
+        );
+    }
+
+    return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+}
 
     public function returnPreviousStatus(Request $request, OrderSchedule $order)
     {
