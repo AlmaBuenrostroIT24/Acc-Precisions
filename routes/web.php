@@ -154,3 +154,16 @@ Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::cla
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
 // -----------------------------------Machines-------------------------------------------------------
+
+Route::get('/opcache-test', function () {
+    $start = microtime(true);
+
+    // Simular carga de muchos archivos Laravel
+    for ($i = 0; $i < 1000; $i++) {
+        class_exists(\Illuminate\Support\Str::class);
+    }
+
+    $time = round((microtime(true) - $start) * 1000, 2);
+
+    return "Tiempo de ejecución: {$time} ms";
+});
