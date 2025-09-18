@@ -266,8 +266,6 @@
       return $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process')).DataTable({
         responsive: true,
         deferRender: true,
-        stateSave: true,
-        lengthMenu: [5, 10, 25, 50, 100],
         pageLength: 15,
         order: [
           [1, 'desc']
