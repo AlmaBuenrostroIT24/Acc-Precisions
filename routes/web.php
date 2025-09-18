@@ -37,7 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::resource('users', UserController::class);
 
@@ -132,16 +132,18 @@ Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersB
 
 
 // -----------------------------------QA FAI-------------------------------------------------------
+Route::middleware('auth')->group(function () {
+    Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision');
+    Route::get('/qa/partsrevision/data', [QaFaiSummaryController::class, 'partsrevisionData'])->name('faisummary.partsrevision.data');
+    Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general');
+    Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
+    Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
+});
 
-Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general')->middleware('auth');
-Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision')->middleware('auth');
-Route::get('/qa/partsrevision/data', [QaFaiSummaryController::class, 'partsrevisionData'])->name('faisummary.partsrevision.data')->middleware('auth');
 
-Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed')->middleware('auth');
-Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics')->middleware('auth');
 
 Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
-Route::post('/qa/faisummary/store-single', [QaFAiSummaryController::class, 'storeSingle']);
+Route::post('/qa/faisummary/store-single', [QaFaiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
 Route::delete('/qa/faisummary/delete/{id}', [QaFaiSummaryController::class, 'destroy']);
 Route::put('/orders-schedule/{order}/status-inspection', [QaFaiSummaryController::class, 'updateStatusInspection'])->name('orders.statusInspection.update');
@@ -154,16 +156,3 @@ Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::cla
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
 // -----------------------------------Machines-------------------------------------------------------
-
-Route::get('/opcache-test', function () {
-    $start = microtime(true);
-
-    // Simular carga de muchos archivos Laravel
-    for ($i = 0; $i < 1000; $i++) {
-        class_exists(\Illuminate\Support\Str::class);
-    }
-
-    $time = round((microtime(true) - $start) * 1000, 2);
-
-    return "Tiempo de ejecución: {$time} ms";
-});

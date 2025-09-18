@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\QaFaiSummary;
 use Illuminate\Http\Request;
 use App\Models\OrderSchedule;
-use App\Models\Stations;
 use Illuminate\Support\Facades\Log;
 use App\Models\QaSamplingPlan;
 use Illuminate\Support\Facades\DB; // si no tienes modelo Status
@@ -13,6 +12,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use PDF;
 use App\Services\InspectionSummary;
+use Illuminate\Support\Facades\Schema;
+
+
 
 class QaFaiSummaryController extends Controller
 {
@@ -29,8 +31,8 @@ class QaFaiSummaryController extends Controller
 
     public function partsrevisionData(Request $request)
     {
-        $bucket = $request->query('bucket'); // 'empty' o 'process'
-        if (!in_array($bucket, ['empty', 'process'])) {
+        $bucket = $request->query('bucket'); // 'empty' | 'process'
+        if (!in_array($bucket, ['empty', 'process'], true)) {
             return response()->json(['data' => []]);
         }
 
@@ -41,75 +43,132 @@ class QaFaiSummaryController extends Controller
             'work_id',
             'PN',
             'Part_description',
-            'operation',
+            'operation',        // => ops
             'wo_qty',
             'location',
-            'status_inspection'
+            'status_inspection',
+            // si tienes estas columnas en order_schedules:
+            'sampling',         // tamaño de muestra por operación
+            'sampling_check',   // tipo de sampling (Normal/Reduced/etc.)
         ];
 
-        $base = \App\Models\OrderSchedule::query()
+        $q = OrderSchedule::query()
             ->select($select)
             ->where('status', '<>', 'sent')
             ->where(function ($q) {
-                $q->where(function ($x) {
-                    $x->where('was_work_id_null', 0)->whereNotNull('co');
-                })->orWhere(function ($x) {
-                    $x->where('was_work_id_null', 1)->whereNull('co');
-                });
+                $q->where(fn($x) => $x->where('was_work_id_null', 0)->whereNotNull('co'))
+                    ->orWhere(fn($x) => $x->where('was_work_id_null', 1)->whereNull('co'));
             })
-            // Filtro por rol/ubicación (como ya lo tenías)
             ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
             ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
 
         if ($bucket === 'empty') {
-            $base->where(function ($q) {
-                $q->whereNull('status_inspection')->orWhere('status_inspection', 'pending');
-            });
-        } else { // process
-            $base->where('status_inspection', 'in_progress');
+            $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending'));
+        } else {
+            $q->where('status_inspection', 'in_progress');
         }
 
-        $rows = $base->orderByDesc('id')->get();
+        $rows = $q->orderByDesc('id')->get();
 
-        // Mapea a lo que DataTables espera
-        $data = $rows->map(function ($r) {
-            $partDesc = Str::before((string)$r->Part_description, ',');
-            $part = e($r->PN) . ' - ' . e($partDesc);
-            $ops = is_numeric($r->operation) ? (int)$r->operation : 0;
-            $progressHtml =
-                '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">' .
-                '<div class="progress-bar bg-secondary" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>' .
-                '</div>' .
-                '<small class="text-muted d-block"><span class="badge bg-light text-dark me-1">FAI + IPI</span></small>';
+        // ===== Helper para nombres de operación como en el front =====
+        $opName = function (int $i): string {
+            return match ($i) {
+                1 => '1st Op',
+                2 => '2nd Op',
+                3 => '3rd Op',
+                default => "{$i}th Op",
+            };
+        };
 
+        $data = $rows->map(function ($r) use ($bucket, $opName) {
+            $pn   = trim((string) $r->PN);
+            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
+            $part = $pn . ' - ' . $desc;
 
-            // Botón para abrir modal con data-* necesarios
+            // Botón para abrir modal
             $btn = '<button class="btn btn-sm btn-primary"
-                    data-toggle="modal" data-target="#editModal"
-                    data-id="' . e($r->id) . '"
-                    data-workid="' . e($r->work_id) . '"
-                    data-woqty="' . e($r->wo_qty) . '"
-                    data-operation="' . e($r->operation) . '"
-                    data-pn="' . e($r->PN) . '"
-                    data-description="' . e($r->Part_description) . '">
-                     <i class="fas fa-edit"></i>
+                  data-toggle="modal" data-target="#editModal"
+                  data-id="' . e($r->id) . '"
+                  data-workid="' . e($r->work_id) . '"
+                  data-woqty="' . e($r->wo_qty) . '"
+                  data-operation="' . e($r->operation) . '"
+                  data-pn="' . e($r->PN) . '"
+                  data-description="' . e($r->Part_description) . '"
+                  data-sampling="' . e($r->sampling ?? 0) . '"
+                  data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+                  <i class="fas fa-edit"></i>
                 </button>';
 
-            return [
-                'id'        => (int) $r->id,            // ← FALTABA
-                'part'     => $part,
-                'ops'       => $ops,                 // <- # operaciones numérico
-                'work_id'  => $r->work_id,
-                'wo_qty'   => $r->wo_qty,
-                'progress'  => $progressHtml,        // <- la celda con la barra
-                'operation' => $r->operation,
-                'actions'  => $btn,
+            $row = [
+                'id'      => (int) $r->id,
+                'part'    => $part,
+                'work_id' => trim((string) $r->work_id),
+                'actions' => $btn,
+
+                // El front los usa para varias cosas (déjalos):
+                'ops'     => (int) ($r->operation ?? 0),
+                'wo_qty'  => (int) ($r->wo_qty ?? 0),
+
+                // Útiles para prellenar modal/tabla
+                'sampling'       => (int) ($r->sampling ?? 0),
+                'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
             ];
+
+            if ($bucket === 'process') {
+                // ========== Calcular progreso en backend ==========
+                $ops      = (int) ($r->operation ?? 0);
+                $sampling = (int) ($r->sampling ?? 0);
+                $perOpReq = 1 + $sampling;                 // 1 FAI + sampling IPI por operación
+                $totalReq = $ops * $perOpReq;
+                $done     = 0;
+
+                if ($ops > 0) {
+                    // qty_pcs preferente; si no existe, usa sample_idx; si ninguno, 1
+                    $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                        ? 'qty_pcs'
+                        : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
+
+                    $pass = DB::table('qa_faisummary')
+                        ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
+                        ->where('order_schedule_id', $r->id)
+                        ->whereRaw('LOWER(results) = ?', ['pass'])
+                        ->groupBy('operation', 'insp_type')
+                        ->get();
+
+                    $fai = [];
+                    $ipi = [];
+                    foreach ($pass as $p) {
+                        $op = (string) $p->operation;
+                        $q  = (int) $p->qty;
+                        $type = strtoupper((string)$p->insp_type);
+                        if ($type === 'FAI') $fai[$op] = ($fai[$op] ?? 0) + $q;
+                        if ($type === 'IPI') $ipi[$op] = ($ipi[$op] ?? 0) + $q;
+                    }
+
+                    for ($i = 1; $i <= $ops; $i++) {
+                        $name = $opName($i);
+                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
+                    }
+                }
+
+                $progressPct = ($totalReq > 0) ? (int) round(($done / $totalReq) * 100) : 0;
+
+                // HTML de la barra (el front solo lo rellena con progress_pct)
+                $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
+                                  <div class="progress-bar bg-secondary" role="progressbar"
+                                       style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>';
+                $row['progress_pct'] = $progressPct;
+            }
+
+            return $row;
         });
 
-        // DataTables (client‑side) usa "data" como key
         return response()->json(['data' => $data]);
     }
+
+
+
 
     public function updateOperation(Request $request, $id)
     {
@@ -159,8 +218,6 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 
-
-
     public function storeSingle(Request $request)
     {
         Log::info('storeSingle called', $request->all());
@@ -190,68 +247,91 @@ class QaFaiSummaryController extends Controller
         return response()->json(['success' => true, 'id' => $row->id]);
     }
 
+
     /*========== ordenar los FAI summary registrados==========*/
     public function getByOrder($orderScheduleId)
     {
         $rows = \App\Models\QaFaiSummary::where('order_schedule_id', $orderScheduleId)
-            ->orderBy('date', 'desc')   // más recientes primero
-            ->orderBy('id', 'desc')     // desempate estable
+            ->orderBy('date', 'desc') // más recientes primero 
+            ->orderBy('id', 'desc') // desempate estable 
             ->get();
         return response()->json($rows);
     }
 
     public function get(Request $request)
     {
-        $lotSize = (int) $request->query('lot_size');
-        $type = $request->query('sampling_type', 'normal');
+        $lotSize = max(1, (int) $request->query('lot_size', 0));
+        $type    = strtolower(trim((string) $request->query('sampling_type', 'normal')));
 
-        $plan = QaSamplingPlan::where('min_qty', '<=', $lotSize)
-            ->where(function ($q) use ($lotSize) {
-                $q->where('max_qty', '>=', $lotSize)
-                    ->orWhereNull('max_qty');
-            })
-            ->first();
+        // normaliza alias
+        $type = match (true) {
+            in_array($type, ['t', 'tight', 'tightened'], true) => 'tightened',
+            in_array($type, ['r', 'reduced'], true)          => 'reduced',
+            default                                         => 'normal',
+        };
+
+        $qtyField = match ($type) {
+            'tightened' => 'tightened_qty',
+            'reduced'   => Schema::hasColumn('qa_sampling_plans', 'reduced_qty') ? 'reduced_qty' : 'normal_qty',
+            default     => 'normal_qty',
+        };
+
+        $plan = QaSamplingPlan::query()
+            ->where('min_qty', '<=', $lotSize)
+            ->where(fn($q) => $q->where('max_qty', '>=', $lotSize)->orWhereNull('max_qty'))
+            ->first()
+            ?? QaSamplingPlan::query()->orderBy('min_qty', 'asc')->first();
+
         if (!$plan) {
-            return response()->json(['error' => 'No se encontró plan de muestreo para este lote.'], 404);
+            // Fallback: inspecciona todo el lote (ajústalo a tu política)
+            return response()->json([
+                'ok'            => true,
+                'lot_size'      => $lotSize,
+                'sampling_type' => $type,
+                'sample_qty'    => $lotSize,
+                'sample_size'   => $lotSize,
+                'surface_qty'   => 0,
+                'plan_id'       => null,
+                'fallback'      => 'no-plan-row',
+            ], 200);
         }
-        $qtyField = $type === 'tightened' ? 'tightened_qty' : 'normal_qty';
-        $sampleQty = $plan->is_percent
-            ? ceil($lotSize * ($plan->$qtyField / 100))
-            : (int) $plan->$qtyField;
-        $surfaceQty = $plan->is_percent
-            ? ceil($lotSize * ($plan->surface_qty / 100))
-            : (int) $plan->surface_qty;
+
+        $calc = function ($value, $isPercent) use ($lotSize) {
+            if ($value === null) return 1;
+            $n = $isPercent ? (int) ceil($lotSize * ((float)$value / 100)) : (int) $value;
+            return max(1, min($n, $lotSize)); // clamp 1..lot
+        };
+
+        $baseQtyField = Schema::hasColumn($plan->getTable(), $qtyField) ? $qtyField : 'normal_qty';
+
+        $sampleQty  = $calc($plan->{$baseQtyField}, (bool) $plan->is_percent);
+        $surfaceQty = $calc($plan->surface_qty,     (bool) $plan->is_percent);
+
         return response()->json([
-            'lot_size' => $lotSize,
+            'ok'            => true,
+            'lot_size'      => $lotSize,
             'sampling_type' => $type,
-            'sample_qty' => $sampleQty,
-            'surface_qty' => $surfaceQty,
-            'plan_id' => $plan->id,
-        ]);
+            'sample_qty'    => $sampleQty,
+            'sample_size'   => $sampleQty,   // alias
+            'surface_qty'   => $surfaceQty,
+            'plan_id'       => $plan->id,
+            'fallback'      => null,
+        ], 200);
     }
 
-    public function destroy($id)
-    {
-        $row = QaFaiSummary::find($id);
-        if (!$row) {
-            return response()->json(['error' => 'Fila no encontrada'], 404);
-        }
-        $row->delete();
-        return response()->json(['success' => true]);
-    }
 
     public function byOrderStation($orderScheduleId)
     {
         $order = OrderSchedule::select('id', 'location')->findOrFail($orderScheduleId);
         $loc = strtolower($order->location ?? '');
 
-        // usando query builder por si no tienes modelo:
         $rows = DB::table('gen_stations as s')
             ->join('gen_location as l', 'l.id', '=', 's.location_id')
             ->select('s.id', 's.station', 'l.location as location')
-            ->whereRaw('LOWER(l.location) = ?', [strtolower($loc)])
+            ->whereRaw('LOWER(l.location) = ?', [$loc])
             ->orderBy('s.station')
             ->get();
+
 
         return response()->json($rows);
     }
@@ -291,6 +371,16 @@ class QaFaiSummaryController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function destroy($id)
+    {
+        $row = QaFaiSummary::find($id);
+        if (!$row) {
+            return response()->json(['error' => 'Fila no encontrada'], 404);
+        }
+        $row->delete();
+        return response()->json(['success' => true]);
+    }
+
 
     /**Validar si la operacion ya esta validado en la base de datos */
     public function validateOps(Request $request, $orderId)
@@ -302,6 +392,7 @@ class QaFaiSummaryController extends Controller
             'saved' => !empty($order->operation), // true si ya está guardado en BD
         ]);
     }
+
 
     //===========================================================================================================================
     /*===========================================================================================================================
