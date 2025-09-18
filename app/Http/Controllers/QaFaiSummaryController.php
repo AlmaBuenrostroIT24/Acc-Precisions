@@ -29,143 +29,135 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.faisummary_partsrevision');
     }
 
-    public function partsrevisionData(Request $request)
-    {
-        $bucket = $request->query('bucket'); // 'empty' | 'process'
-        if (!in_array($bucket, ['empty', 'process'], true)) {
-            return response()->json(['data' => []]);
-        }
+   public function partsrevisionData(Request $request)
+{
+    $bucket = $request->query('bucket'); // 'empty' | 'process'
+    if (!in_array($bucket, ['empty', 'process'], true)) {
+        return response()->json(['data' => []]);
+    }
 
-        $user = auth()->user();
+    $user = auth()->user();
 
-        $select = [
-            'id',
-            'work_id',
-            'PN',
-            'Part_description',
-            'operation',        // => ops
-            'wo_qty',
-            'location',
-            'status_inspection',
-            // si tienes estas columnas en order_schedules:
-            'sampling',         // tamaño de muestra por operación
-            'sampling_check',   // tipo de sampling (Normal/Reduced/etc.)
+    $select = [
+        'id',
+        'work_id',
+        'PN',
+        'Part_description',
+        'operation',        // => ops
+        'wo_qty',
+        'location',
+        'status_inspection',
+        'sampling',         // tamaño de muestra por operación
+        'sampling_check',   // tipo de sampling (Normal/Reduced/etc.)
+    ];
+
+    $q = OrderSchedule::query()
+        ->select($select)
+        ->where('status', '<>', 'sent')
+        // ✅ Solo Yarnell/Hearst
+        ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
+        // ✅ Filtro por rol (opcional, puedes borrar si no lo necesitas)
+        ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
+        ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
+
+    if ($bucket === 'empty') {
+        $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending'));
+    } else {
+        $q->where('status_inspection', 'in_progress');
+    }
+
+    $rows = $q->orderByDesc('id')->get();
+
+    // ===== Helper para nombres de operación =====
+    $opName = function (int $i): string {
+        return match ($i) {
+            1 => '1st Op',
+            2 => '2nd Op',
+            3 => '3rd Op',
+            default => "{$i}th Op",
+        };
+    };
+
+    $data = $rows->map(function ($r) use ($bucket, $opName) {
+        $pn   = trim((string) $r->PN);
+        $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
+        $part = $pn . ' - ' . $desc;
+
+        // Botón para abrir modal
+        $btn = '<button class="btn btn-sm btn-primary"
+              data-toggle="modal" data-target="#editModal"
+              data-id="' . e($r->id) . '"
+              data-workid="' . e($r->work_id) . '"
+              data-woqty="' . e($r->wo_qty) . '"
+              data-operation="' . e($r->operation) . '"
+              data-pn="' . e($r->PN) . '"
+              data-description="' . e($r->Part_description) . '"
+              data-sampling="' . e($r->sampling ?? 0) . '"
+              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+              <i class="fas fa-edit"></i>
+            </button>';
+
+        $row = [
+            'id'      => (int) $r->id,
+            'part'    => $part,
+            'work_id' => trim((string) $r->work_id),
+            'actions' => $btn,
+            'ops'     => (int) ($r->operation ?? 0),
+            'wo_qty'  => (int) ($r->wo_qty ?? 0),
+            'sampling'       => (int) ($r->sampling ?? 0),
+            'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
         ];
 
-        $q = OrderSchedule::query()
-            ->select($select)
-            ->where('status', '<>', 'sent')
-            ->where(function ($q) {
-                $q->where(fn($x) => $x->where('was_work_id_null', 0)->whereNotNull('co'))
-                    ->orWhere(fn($x) => $x->where('was_work_id_null', 1)->whereNull('co'));
-            })
-            ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-            ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
+        if ($bucket === 'process') {
+            // === Progreso backend ===
+            $ops      = (int) ($r->operation ?? 0);
+            $sampling = (int) ($r->sampling ?? 0);
+            $perOpReq = 1 + $sampling;
+            $totalReq = $ops * $perOpReq;
+            $done     = 0;
 
-        if ($bucket === 'empty') {
-            $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending'));
-        } else {
-            $q->where('status_inspection', 'in_progress');
-        }
+            if ($ops > 0) {
+                $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                    ? 'qty_pcs'
+                    : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
 
-        $rows = $q->orderByDesc('id')->get();
+                $pass = DB::table('qa_faisummary')
+                    ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
+                    ->where('order_schedule_id', $r->id)
+                    ->whereRaw('LOWER(results) = ?', ['pass'])
+                    ->groupBy('operation', 'insp_type')
+                    ->get();
 
-        // ===== Helper para nombres de operación como en el front =====
-        $opName = function (int $i): string {
-            return match ($i) {
-                1 => '1st Op',
-                2 => '2nd Op',
-                3 => '3rd Op',
-                default => "{$i}th Op",
-            };
-        };
-
-        $data = $rows->map(function ($r) use ($bucket, $opName) {
-            $pn   = trim((string) $r->PN);
-            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
-            $part = $pn . ' - ' . $desc;
-
-            // Botón para abrir modal
-            $btn = '<button class="btn btn-sm btn-primary"
-                  data-toggle="modal" data-target="#editModal"
-                  data-id="' . e($r->id) . '"
-                  data-workid="' . e($r->work_id) . '"
-                  data-woqty="' . e($r->wo_qty) . '"
-                  data-operation="' . e($r->operation) . '"
-                  data-pn="' . e($r->PN) . '"
-                  data-description="' . e($r->Part_description) . '"
-                  data-sampling="' . e($r->sampling ?? 0) . '"
-                  data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
-                  <i class="fas fa-edit"></i>
-                </button>';
-
-            $row = [
-                'id'      => (int) $r->id,
-                'part'    => $part,
-                'work_id' => trim((string) $r->work_id),
-                'actions' => $btn,
-
-                // El front los usa para varias cosas (déjalos):
-                'ops'     => (int) ($r->operation ?? 0),
-                'wo_qty'  => (int) ($r->wo_qty ?? 0),
-
-                // Útiles para prellenar modal/tabla
-                'sampling'       => (int) ($r->sampling ?? 0),
-                'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
-            ];
-
-            if ($bucket === 'process') {
-                // ========== Calcular progreso en backend ==========
-                $ops      = (int) ($r->operation ?? 0);
-                $sampling = (int) ($r->sampling ?? 0);
-                $perOpReq = 1 + $sampling;                 // 1 FAI + sampling IPI por operación
-                $totalReq = $ops * $perOpReq;
-                $done     = 0;
-
-                if ($ops > 0) {
-                    // qty_pcs preferente; si no existe, usa sample_idx; si ninguno, 1
-                    $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
-                        ? 'qty_pcs'
-                        : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
-
-                    $pass = DB::table('qa_faisummary')
-                        ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
-                        ->where('order_schedule_id', $r->id)
-                        ->whereRaw('LOWER(results) = ?', ['pass'])
-                        ->groupBy('operation', 'insp_type')
-                        ->get();
-
-                    $fai = [];
-                    $ipi = [];
-                    foreach ($pass as $p) {
-                        $op = (string) $p->operation;
-                        $q  = (int) $p->qty;
-                        $type = strtoupper((string)$p->insp_type);
-                        if ($type === 'FAI') $fai[$op] = ($fai[$op] ?? 0) + $q;
-                        if ($type === 'IPI') $ipi[$op] = ($ipi[$op] ?? 0) + $q;
-                    }
-
-                    for ($i = 1; $i <= $ops; $i++) {
-                        $name = $opName($i);
-                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
-                    }
+                $fai = [];
+                $ipi = [];
+                foreach ($pass as $p) {
+                    $op = (string) $p->operation;
+                    $q  = (int) $p->qty;
+                    $type = strtoupper((string)$p->insp_type);
+                    if ($type === 'FAI') $fai[$op] = ($fai[$op] ?? 0) + $q;
+                    if ($type === 'IPI') $ipi[$op] = ($ipi[$op] ?? 0) + $q;
                 }
 
-                $progressPct = ($totalReq > 0) ? (int) round(($done / $totalReq) * 100) : 0;
-
-                // HTML de la barra (el front solo lo rellena con progress_pct)
-                $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
-                                  <div class="progress-bar bg-secondary" role="progressbar"
-                                       style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-                                </div>';
-                $row['progress_pct'] = $progressPct;
+                for ($i = 1; $i <= $ops; $i++) {
+                    $name = $opName($i);
+                    $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
+                }
             }
 
-            return $row;
-        });
+            $progressPct = ($totalReq > 0) ? (int) round(($done / $totalReq) * 100) : 0;
 
-        return response()->json(['data' => $data]);
-    }
+            $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
+                              <div class="progress-bar bg-secondary" role="progressbar"
+                                   style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>';
+            $row['progress_pct'] = $progressPct;
+        }
+
+        return $row;
+    });
+
+    return response()->json(['data' => $data]);
+}
 
 
 
