@@ -319,9 +319,6 @@
       ctx.dtProcess = makeDT('process', '#badgeProcess');
     });
 
-
-
-
     // ================== Modal: show/hidden ==================
     $('#editModal').on('show.bs.modal', function(event) {
       const $modal = $(this);
@@ -381,8 +378,6 @@
       ctx.faiDoneOps.clear();
       ctx.ipiCountMap.clear();
     });
-
-
 
     // ================== Eventos del modal ==================
     // Cambios en sampling (tipo/cantidad) y WO_QTY
@@ -601,6 +596,56 @@
             rows = Array.isArray(rows) ? rows : [];
             const pct = computeProgressFromRows(rows, opsNow, ipiNow);
             renderOrderProgress(orderId, pct);
+
+            // ===== [MOD IPI → saltar a siguiente] =====
+            try {
+              const samplingNow = parseInt(ctx.modal.$samplingResult.val(), 10) || ipiNow || 0;
+              const opsTotal = parseInt(ctx.modal.$operationInput.val(), 10) || opsNow || 0;
+
+              if (typeof updateInspectionMissing === 'function') updateInspectionMissing();
+
+              if (String(inspType).toUpperCase() === 'IPI') {
+                const opJustSaved = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+                const ipiDoneForOp = ctx.ipiCountMap.get(opJustSaved) || 0;
+
+                // Si se alcanzó el requerido en esa operación → preparar siguiente borrador sugerido
+                if (ipiDoneForOp >= samplingNow) {
+                  const nextPair = getNextInspectionPair(opsTotal);
+                  if (nextPair) {
+                    const draft = createDraftRow();
+                    if (draft) {
+                      ctx.modal.$rowsContainer.prepend(draft);
+                      draft.find('input,select').filter(':visible:not([disabled])').first().focus();
+                    }
+                  }
+                }
+              }
+
+              // ===== [OPCIONAL] Avanzar tras FAI si falta IPI de esa misma op =====
+              // (Descomentar si lo deseas)
+              /*
+              if (String(inspType).toUpperCase() === 'FAI') {
+                if (typeof updateInspectionMissing === 'function') updateInspectionMissing();
+                const opSaved = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+                const faiDone = ctx.faiDoneOps.has(opSaved);
+                const ipiDoneForOp = ctx.ipiCountMap.get(opSaved) || 0;
+                if (faiDone && ipiDoneForOp < samplingNow) {
+                  const draft = createDraftRow();
+                  if (draft) {
+                    const $inspTypeSel = draft.find('select[name="insp_type[]"]');
+                    const $opSel = draft.find('select[name="operation[]"]');
+                    if ($inspTypeSel.length) $inspTypeSel.val('IPI').trigger('change');
+                    if ($opSel.length) $opSel.val(opSaved).trigger('change');
+                    ctx.modal.$rowsContainer.prepend(draft);
+                    draft.find('input,select').filter(':visible:not([disabled])').first().focus();
+                  }
+                }
+              }
+              */
+            } catch (e) {
+              console.warn('auto-next IPI suggestion skipped:', e);
+            }
+            // ===== FIN MOD =====
 
             if (pct >= 100) {
               Swal.fire({
@@ -821,7 +866,6 @@
       refreshPendingIpiOptions();
     }
 
-
     // ================== Helpers varios ==================
     function ordinalSuffix(n) {
       if (n === 1) return '1st Op';
@@ -993,85 +1037,35 @@
         }, 120));
     }
 
-    // === MOD: considerar operación para pendientes en cada fila borrador
-    function refreshAllSamplingSelects() {
-      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
-
-      ctx.modal.$rowsContainer.find('tr').each(function() {
-        const $row = $(this);
-        const isSaved = !!$row.attr('data-id'); // filas guardadas no se tocan
-        if (isSaved) return;
-
-        const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
-        const $cell = $row.find('td.col-sample');
-        if (!type || !$cell.length) return;
-
-        if (type === 'FAI') {
-          renderSampleCell($cell.empty(), 'FAI', sampling);
-          return;
-        }
-
-        // IPI
-        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
-
-        // Valor actual desde INPUT
-        const current = (function() {
-          const v = $cell.find('input[name="sample_idx[]"]').val();
-          return v !== undefined ? v : null;
-        })();
-
-        // Render con restante dinámico por operación
-        renderSampleCell($cell.empty(), 'IPI', sampling, current, op);
-      });
-    }
-
-    // Devuelve cuánto IPI queda pendiente para una operación concreta (contra sampling plan) - usado solo para reporte
-    function getIpiRemainingForOp(op, sampling) {
-      const done = ctx.ipiCountMap.get(op) || 0;
-      const rem = Math.max(0, (parseInt(sampling, 10) || 0) - done);
-      return rem;
-    }
-
-    // Reconstruye TODAS las celdas de muestra IPI (pendientes) en borradores (apoya al reporte)
-    function refreshPendingIpiOptions() {
-      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
-
-      ctx.modal.$rowsContainer.find('tr').each(function() {
-        const $row = $(this);
-        const isSaved = !!$row.attr('data-id');
-        const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
-        if (isSaved || type !== 'IPI') return;
-
-        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
-        const $cell = $row.find('td.col-sample');
-        const current = $cell.find('input[name="sample_idx[]"]').val() || null;
-
-        renderSampleCell($cell.empty(), type, sampling, current, op);
-      });
-    }
-
-    // Select de operación con prioridad a una operación sugerida (preferredOp)
+    // === MOD (Reemplazo): Select de operación que NO oculta cumplidas; solo reordenar y etiquetar "(done)"
     function createOperationSelect(totalOps, inspType = 'FAI', preferredOp = null) {
       const $sel = $('<select name="operation[]" class="form-control"></select>');
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
+      // Lista base
       const ops = [];
       for (let i = 1; i <= totalOps; i++) ops.push(ordinalSuffix(i));
 
+      // Si hay sugerida, va primero
       if (preferredOp && ops.includes(preferredOp)) {
         const idx = ops.indexOf(preferredOp);
         if (idx > -1) ops.splice(idx, 1);
         ops.unshift(preferredOp);
       }
 
+      // Etiquetar cumplidas como "(done)" pero NO deshabilitarlas
+      const isFAI = String(inspType).toUpperCase() === 'FAI';
       for (const value of ops) {
-        if (inspType === 'FAI' && ctx.faiDoneOps.has(value)) continue;
-        if (inspType === 'IPI') {
+        let label = value;
+        if (isFAI) {
+          if (ctx.faiDoneOps.has(value)) label += ' (done)';
+        } else {
           const ipiCount = ctx.ipiCountMap.get(value) || 0;
-          if (ipiCount >= sampling) continue;
+          if (ipiCount >= sampling) label += ' (done)';
         }
-        $sel.append(`<option value="${value}">${value}</option>`);
+        $sel.append(`<option value="${value}">${label}</option>`);
       }
+
       return $sel;
     }
 
@@ -1348,6 +1342,59 @@
         if (typeof cb === 'function') cb();
       });
     }
+
+
+    // === Reconstruye inputs de muestra según sampling y restante por operación ===
+    function refreshAllSamplingSelects() {
+      const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || $('#edit-sampling-result').val() || 0, 10) || 0;
+      if (!ctx.modal.$rowsContainer || !ctx.modal.$rowsContainer.length) return;
+
+      ctx.modal.$rowsContainer.find('tr').each(function() {
+        const $row = $(this);
+        const isSaved = !!$row.attr('data-id'); // filas guardadas no se tocan
+        if (isSaved) return;
+
+        const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+        const $cell = $row.find('td.col-sample');
+        if (!type || !$cell.length) return;
+
+        if (type === 'FAI') {
+          renderSampleCell($cell.empty(), 'FAI', sampling);
+          return;
+        }
+
+        // IPI
+        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
+
+        // Valor actual desde INPUT (si existe)
+        const current = (function() {
+          const v = $cell.find('input[name="sample_idx[]"]').val();
+          return v !== undefined ? v : null;
+        })();
+
+        renderSampleCell($cell.empty(), 'IPI', sampling, current, op);
+      });
+    }
+
+    // === Recalcula SOLO IPI borrador para mostrar tope por operación (restante) ===
+    function refreshPendingIpiOptions() {
+      const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || $('#edit-sampling-result').val() || 0, 10) || 0;
+      if (!ctx.modal.$rowsContainer || !ctx.modal.$rowsContainer.length) return;
+
+      ctx.modal.$rowsContainer.find('tr').each(function() {
+        const $row = $(this);
+        const isSaved = !!$row.attr('data-id');
+        const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+        if (isSaved || type !== 'IPI') return;
+
+        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
+        const $cell = $row.find('td.col-sample');
+        const current = $cell.find('input[name="sample_idx[]"]').val() || null;
+
+        renderSampleCell($cell.empty(), type, sampling, current, op);
+      });
+    }
+
 
     // ================== Datalist (stations/operators) ==================
     const RAW_CACHE = {
