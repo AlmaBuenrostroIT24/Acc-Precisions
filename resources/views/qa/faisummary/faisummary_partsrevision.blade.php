@@ -789,8 +789,8 @@
         const faiReq = 1;
         const ipiReq = sampling;
 
-        const faiRealizadosOp = faiPass + faiFail; // ✅ por operación
-        const ipiRealizadosOp = ipiPass + ipiFail; // ✅ por operación
+        const faiRealizadosOp = faiPass + faiFail;
+        const ipiRealizadosOp = ipiPass + ipiFail;
 
         const faiStatus = (faiPass >= faiReq) ?
           `✔️ <strong>FAI:</strong> P:(${faiPass}/${faiReq}), NP:${faiFail}, Done:${faiRealizadosOp})` :
@@ -809,31 +809,7 @@
 
         resumen += line + '\n';
         if (faiPass < faiReq || ipiPass < ipiReq) faltantes = true;
-
       }
-
-      // ====== Totales generales ======
-      const sumMap = m => Array.from(m.values()).reduce((a, b) => a + b, 0);
-
-      const faiPassTotal = sumMap(faiPassMap);
-      const faiFailTotal = sumMap(faiFailMap);
-      const ipiPassTotal = sumMap(ipiPassMap);
-      const ipiFailTotal = sumMap(ipiFailMap);
-
-      const faiRealizados = faiPassTotal + faiFailTotal;
-      const ipiRealizados = ipiPassTotal + ipiFailTotal;
-
-      const faiReqTotal = operations * 1; // 1 FAI por operación
-      const ipiReqTotal = operations * sampling; // Sampling por operación
-
-      // ✅ Porcentaje SOLO con PASS
-      const faiPct = faiReqTotal ? ((faiPassTotal / faiReqTotal) * 100).toFixed(1) : '0.0';
-      const ipiPct = ipiReqTotal ? ((ipiPassTotal / ipiReqTotal) * 100).toFixed(1) : '0.0';
-
-      resumen += '\n<strong>— FAI/IPI Inspection Packet Summary —</strong>\n';
-      resumen += `FAI → P:${faiPassTotal}, NP:${faiFailTotal}, Need:${faiReqTotal}, Done:${faiRealizados} (${faiPct}%)\n`;
-      // ⬇️ Corregido: antes estaban invertidos Need/Done
-      resumen += `IPI → P:${ipiPassTotal}, NP:${ipiFailTotal}, Need:${ipiReqTotal}, Done:${ipiRealizados} (${ipiPct}%)\n`;
 
       // Pintar caja según faltantes por operación
       $pre.html(resumen.trim().replace(/\n/g, "<br>"));
@@ -844,6 +820,7 @@
       // al finalizar, refresca pendientes IPI en borradores
       refreshPendingIpiOptions();
     }
+
 
     // ================== Helpers varios ==================
     function ordinalSuffix(n) {
