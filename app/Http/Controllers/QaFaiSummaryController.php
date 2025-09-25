@@ -28,8 +28,10 @@ class QaFaiSummaryController extends Controller
         // Solo devuelve la vista; las tablas vendrán por AJAX
         return view('qa.faisummary.faisummary_partsrevision');
     }
+//	31009/1
 
-   public function partsrevisionData(Request $request)
+
+public function partsrevisionData(Request $request)
 {
     $bucket = $request->query('bucket'); // 'empty' | 'process'
     if (!in_array($bucket, ['empty', 'process'], true)) {
@@ -38,35 +40,50 @@ class QaFaiSummaryController extends Controller
 
     $user = auth()->user();
 
+    // Campos base (incluye parent_id para poder agrupar)
     $select = [
         'id',
+        'parent_id',
         'work_id',
         'PN',
         'Part_description',
         'operation',        // => ops
         'wo_qty',
+        'due_date',
         'location',
         'status_inspection',
         'sampling',         // tamaño de muestra por operación
         'sampling_check',   // tipo de sampling (Normal/Reduced/etc.)
     ];
 
-    $q = OrderSchedule::query()
+    // ===== Filtros base (aún no filtramos padres aquí) =====
+    $base = OrderSchedule::query()
         ->select($select)
         ->where('status', '<>', 'sent')
-        // ✅ Solo Yarnell/Hearst
         ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
-        // ✅ Filtro por rol (opcional, puedes borrar si no lo necesitas)
         ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-        ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']));
+        ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
+        ->when($bucket === 'empty',
+            fn($q) => $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
+            fn($q) => $q->where('status_inspection', 'in_progress')
+        );
 
-    if ($bucket === 'empty') {
-        $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending'));
-    } else {
-        $q->where('status_inspection', 'in_progress');
-    }
+    // ===== Totales por grupo (padre + hijos) SIN filtrar a padres aquí =====
+    // Clave del grupo: IFNULL(parent_id, id)
+    // Si wo_qty es VARCHAR o puede traer comas/texto, usa REGEXP_REPLACE; si es numérico, basta con COALESCE(wo_qty,0)
+    $withTotals = (clone $base)
+        ->selectRaw("
+            IFNULL(parent_id, id) AS grp_id,
+           SUM(COALESCE(wo_qty,0)) OVER (PARTITION BY IFNULL(parent_id, id)) AS wo_qty_sum
+        ");
 
-    $rows = $q->orderByDesc('id')->get();
+    // Ahora sí: solo PADRES (parent_id IS NULL) y orden por due más lejano
+    $rows = DB::query()
+        ->fromSub($withTotals, 't')
+        ->select('t.*')
+        ->whereNull('t.parent_id')   // ← solo padres
+        ->orderByDesc('t.due_date')  // el padre ya es el de due más lejano por tu proceso de marcado
+        ->get();
 
     // ===== Helper para nombres de operación =====
     $opName = function (int $i): string {
@@ -83,43 +100,66 @@ class QaFaiSummaryController extends Controller
         $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
         $part = $pn . ' - ' . $desc;
 
-        // Botón para abrir modal
+        // Formato de due_date: Jun/05/2025
+        $dueFormatted = $r->due_date ? Carbon::parse($r->due_date)->format('M/d/Y') : null;
+
+        // Botón principal (usa la SUMA)
         $btn = '<button class="btn btn-sm btn-primary"
-              data-toggle="modal" data-target="#editModal"
-              data-id="' . e($r->id) . '"
-              data-workid="' . e($r->work_id) . '"
-              data-woqty="' . e($r->wo_qty) . '"
-              data-operation="' . e($r->operation) . '"
-              data-pn="' . e($r->PN) . '"
-              data-description="' . e($r->Part_description) . '"
-              data-sampling="' . e($r->sampling ?? 0) . '"
-              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
-              <i class="fas fa-edit"></i>
+          data-toggle="modal" data-target="#editModal"
+          data-id="' . e($r->id) . '"
+          data-workid="' . e($r->work_id) . '"
+          data-woqty="' . e((int)($r->wo_qty_sum ?? 0)) . '"
+          data-operation="' . e($r->operation) . '"
+          data-pn="' . e($r->PN) . '"
+          data-description="' . e($r->Part_description) . '"
+          data-sampling="' . e($r->sampling ?? 0) . '"
+          data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+          <i class="fas fa-edit"></i>
+        </button>';
+
+        // Botón secundario (solo 'empty', también con SUMA)
+        $btnOther = '';
+        if ($bucket === 'empty') {
+            $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
+                data-toggle="modal" data-target="#otherModal"
+                data-id="' . e($r->id) . '"
+                data-pn="' . e($r->PN) . '"
+                data-description="' . e($r->Part_description) . '"
+                data-woqty="' . e((int)($r->wo_qty_sum ?? 0)) . '"
+                data-location="' . e($r->location) . '">
+                <i class="fas fa-clipboard-list"></i>
             </button>';
+        }
+
+        $actions = '<div class="btn-group btn-group-sm" role="group" aria-label="acciones">'
+            . $btn . $btnOther .
+            '</div>';
 
         $row = [
-            'id'      => (int) $r->id,
-            'part'    => $part,
-            'work_id' => trim((string) $r->work_id),
-            'actions' => $btn,
-            'ops'     => (int) ($r->operation ?? 0),
-            'wo_qty'  => (int) ($r->wo_qty ?? 0),
+            'id'             => (int) $r->id,
+            'part'           => $part,
+            'work_id'        => trim((string) $r->work_id),
+            'actions'        => $actions,
+            'ops'            => (int) ($r->operation ?? 0),
+            'wo_qty'         => (int) ($r->wo_qty_sum ?? 0), // ← suma del grupo (padre + hijos)
             'sampling'       => (int) ($r->sampling ?? 0),
             'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
+            'due_date'       => $dueFormatted,
         ];
 
+        // ===== Progreso (solo bucket 'process') =====
         if ($bucket === 'process') {
-            // === Progreso backend ===
             $ops      = (int) ($r->operation ?? 0);
             $sampling = (int) ($r->sampling ?? 0);
-            $perOpReq = 1 + $sampling;
+            $perOpReq = 1 + $sampling;            // 1 FAI + N IPI por op
             $totalReq = $ops * $perOpReq;
             $done     = 0;
 
             if ($ops > 0) {
-                $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                // qtyExpr que exista (qty_pcs > sample_idx > 1)
+                $qtyExpr = Schema::hasColumn('qa_faisummary', 'qty_pcs')
                     ? 'qty_pcs'
-                    : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
+                    : (Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
 
                 $pass = DB::table('qa_faisummary')
                     ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
@@ -131,9 +171,9 @@ class QaFaiSummaryController extends Controller
                 $fai = [];
                 $ipi = [];
                 foreach ($pass as $p) {
-                    $op = (string) $p->operation;
-                    $q  = (int) $p->qty;
-                    $type = strtoupper((string)$p->insp_type);
+                    $op   = (string) $p->operation;
+                    $q    = (int) $p->qty;
+                    $type = strtoupper((string) $p->insp_type);
                     if ($type === 'FAI') $fai[$op] = ($fai[$op] ?? 0) + $q;
                     if ($type === 'IPI') $ipi[$op] = ($ipi[$op] ?? 0) + $q;
                 }
@@ -147,9 +187,9 @@ class QaFaiSummaryController extends Controller
             $progressPct = ($totalReq > 0) ? (int) round(($done / $totalReq) * 100) : 0;
 
             $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
-                              <div class="progress-bar bg-secondary" role="progressbar"
-                                   style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-                            </div>';
+                  <div class="progress-bar bg-secondary" role="progressbar"
+                       style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>';
             $row['progress_pct'] = $progressPct;
         }
 
@@ -158,6 +198,7 @@ class QaFaiSummaryController extends Controller
 
     return response()->json(['data' => $data]);
 }
+
 
 
 
@@ -677,7 +718,225 @@ class QaFaiSummaryController extends Controller
     public function faistatistics()
     {
 
-
         return view('qa.faisummary.faisummary_statistics');
+    }
+
+
+    public function faistatisticsData(Request $request)
+    {
+        $year = (int) ($request->integer('year') ?: now()->format('Y'));
+
+        $rows = DB::table('qa_faisummary')
+            ->whereYear('created_at', $year) // 👈 aquí
+            ->selectRaw('
+            QUARTER(`created_at`) as q, -- 👈 y aquí
+            COUNT(*) as total,
+            SUM(CASE WHEN LOWER(TRIM(results)) IN ("pass","ok") THEN 1 ELSE 0 END) as pass_cnt,
+            SUM(CASE WHEN LOWER(TRIM(results)) IN ("no pass","fail","np") THEN 1 ELSE 0 END) as fail_cnt
+        ')
+            ->groupBy('q')
+            ->orderBy('q')
+            ->get();
+
+        $quarters = collect([1, 2, 3, 4])->map(function ($q) use ($rows) {
+            $r = $rows->firstWhere('q', $q);
+            $total = (int) ($r->total ?? 0);
+            $pass  = (int) ($r->pass_cnt ?? 0);
+            $fail  = (int) ($r->fail_cnt ?? 0);
+            return [
+                'quarter'  => "Q{$q}",
+                'total'    => $total,
+                'pass'     => $pass,
+                'fail'     => $fail,
+                'pass_pct' => $total ? round($pass * 100 / $total, 2) : 0,
+                'fail_pct' => $total ? round($fail * 100 / $total, 2) : 0,
+            ];
+        });
+
+        $global = [
+            'year'  => $year,
+            'total' => $quarters->sum('total'),
+            'pass'  => $quarters->sum('pass'),
+            'fail'  => $quarters->sum('fail'),
+        ];
+        $global['pass_pct'] = $global['total'] ? round($global['pass'] * 100 / $global['total'], 2) : 0;
+        $global['fail_pct'] = $global['total'] ? round($global['fail'] * 100 / $global['total'], 2) : 0;
+
+        return response()->json([
+            'quarters' => $quarters,
+            'global'   => $global,
+        ]);
+    }
+
+
+    public function faistatisticsBy(Request $request)
+    {
+        $group = strtolower($request->get('group', 'operator')); // 'operator' | 'inspector'
+        abort_unless(in_array($group, ['operator', 'inspector'], true), 400);
+
+        // 1) Rango: prioriza start/end; si no, usa period/anchor
+        $startRaw = $request->get('start');
+        $endRaw   = $request->get('end');
+
+        if ($startRaw && $endRaw) {
+            try {
+                $startC = \Carbon\Carbon::parse($startRaw);
+                $endC   = \Carbon\Carbon::parse($endRaw);
+
+                // Si no traen hora explícita, amplia a todo el día
+                if (!preg_match('/\d{2}:\d{2}/', $startRaw)) $startC = $startC->startOfDay();
+                if (!preg_match('/\d{2}:\d{2}/', $endRaw))   $endC   = $endC->endOfDay();
+
+                // sanity: si end < start, intercambia
+                if ($endC->lt($startC)) [$startC, $endC] = [$endC, $startC];
+
+                $start = $startC->format('Y-m-d H:i:s');
+                $end   = $endC->format('Y-m-d H:i:s');
+            } catch (\Throwable $e) {
+                return response()->json(['error' => 'Invalid start/end'], 422);
+            }
+        } else {
+            $period = strtolower($request->get('period', 'year'));     // day|week|month|quarter|year
+            $anchor = $request->get('anchor', now()->toDateString());  // yyyy-mm-dd
+            // <<< asegúrate que periodBounds devuelva DATETIME (no toDateString)
+            [$start, $end] = $this->periodBounds($period, $anchor);    // 'Y-m-d H:i:s'
+        }
+
+        $nameFilter = trim((string) $request->get('name', ''));
+
+        // 2) Columna a agrupar
+        $col = $group === 'inspector' ? 'inspector' : 'operator';
+        $nameExpr = "COALESCE(NULLIF(TRIM($col),''), '(Sin $group)')";
+
+        // 3) Query (usa la columna de fecha correcta: 'created_at' o 'date')
+        $q = DB::table('qa_faisummary')
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw("$nameExpr AS name")
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw("SUM(CASE WHEN LOWER(TRIM(results)) IN ('pass','ok','p') THEN 1 ELSE 0 END) AS pass_cnt")
+            ->selectRaw("SUM(CASE WHEN LOWER(TRIM(results)) IN ('no pass','fail','np','f','no') THEN 1 ELSE 0 END) AS fail_cnt")
+            ->groupBy(DB::raw($nameExpr));
+
+        if ($nameFilter !== '') {
+            $q->having('name', '=', $nameFilter);
+        }
+
+        $rows = $q->orderByDesc('total')->get();
+
+        $data = $rows->map(function ($r) {
+            $t = (int)($r->total ?? 0);
+            $p = (int)($r->pass_cnt ?? 0);
+            $f = (int)($r->fail_cnt ?? 0);
+            return [
+                'name'     => $r->name,
+                'total'    => $t,
+                'pass'     => $p,
+                'fail'     => $f,
+                'pass_pct' => $t ? round($p * 100 / $t, 2) : 0.0,
+                'fail_pct' => $t ? round($f * 100 / $t, 2) : 0.0,
+            ];
+        })->values();
+
+        return response()->json([
+            'group' => $group,
+            'start' => $start, // con hora
+            'end'   => $end,   // con hora
+            'rows'  => $data,
+        ]);
+    }
+
+
+    /**
+     * Calcula rango por periodo respecto a anchor (Y-m-d).
+     */
+    protected function periodBounds(string $period, ?string $anchorDate): array
+    {
+        $anchor = $anchorDate ? Carbon::parse($anchorDate) : now();
+
+        switch (strtolower($period)) {
+            case 'day':
+                $start = $anchor->copy()->startOfDay();
+                $end   = $anchor->copy()->endOfDay();
+                break;
+            case 'week':
+                // Si quieres ISO (lunes-domingo) asegúrate que Carbon esté configurado con weekStartsAt = Monday
+                $start = $anchor->copy()->startOfWeek();
+                $end   = $anchor->copy()->endOfWeek();
+                break;
+            case 'month':
+                $start = $anchor->copy()->startOfMonth();
+                $end   = $anchor->copy()->endOfMonth();
+                break;
+            case 'quarter':
+            case 'trimester':
+                $start = $anchor->copy()->firstOfQuarter();
+                $end   = $anchor->copy()->lastOfQuarter()->endOfDay();
+                break;
+            case 'year':
+            default:
+                $start = $anchor->copy()->startOfYear();
+                $end   = $anchor->copy()->endOfYear();
+                break;
+        }
+        return [$start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s')];
+    }
+
+
+    public function faistatisticsByQuarterOperator(Request $request)
+    {
+        $year     = (int) $request->get('year', now()->year);
+        $operator = $request->get('operator'); // <- opcional (nombre tal como viene en la tabla)
+
+        // Base query
+        $base = DB::table('qa_faisummary')
+            ->whereYear('created_at', $year);
+
+        if (!empty($operator)) {
+            $base->where('operator', $operator);
+        }
+
+        // 1) Datos por operador × quarter
+        $q = (clone $base)
+            ->selectRaw("
+            COALESCE(NULLIF(operator, ''), '(Sin operador)') as operator,
+            QUARTER(created_at) as quarter,
+            COUNT(*) as total,
+            SUM(results = 'pass')    as pass,
+            SUM(results = 'no pass') as fail
+        ")
+            ->groupBy('operator', 'quarter')
+            ->orderBy('operator')
+            ->get();
+
+        // Normaliza a matriz [operator][quarter]
+        $rows = [];
+        foreach ($q as $r) {
+            $op = $r->operator;
+            $rows[$op][$r->quarter] = [
+                'total'    => (int) $r->total,
+                'pass'     => (int) $r->pass,
+                'fail'     => (int) $r->fail,
+                'pass_pct' => $r->total ? ($r->pass * 100 / $r->total) : 0,
+                'fail_pct' => $r->total ? ($r->fail * 100 / $r->total) : 0,
+            ];
+        }
+
+        // 2) Lista de operadores disponibles (para poblar el <select>)
+        //    La basamos en el mismo filtro de año, y si llegó 'operator', igual
+        //    devolvemos la lista completa de ese año (para que el select siga mostrando todos).
+        $operators = (clone $base)
+            ->whereNotNull('operator')
+            ->where('operator', '<>', '')
+            ->distinct()
+            ->orderBy('operator')
+            ->pluck('operator')
+            ->values(); // array simple
+
+        return response()->json([
+            'rows'      => $rows,
+            'operators' => $operators,
+            'year'      => $year,
+            'operator'  => $operator,
+        ]);
     }
 }

@@ -42,6 +42,7 @@
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
                 <th>JOB</th>
+                <th>DUE DATE</th>
                 <th class="actions-col">ACTIONS</th>
               </tr>
             </thead>
@@ -227,12 +228,17 @@
     const TEXT = $.fn.dataTable.render.text();
 
     const COLUMNS = {
-      empty: [{
+      empty: [
+        {
           data: 'part',
           render: TEXT
         },
         {
           data: 'work_id',
+          render: TEXT
+        },
+          {
+          data: 'due_date',
           render: TEXT
         },
         {

@@ -131,7 +131,7 @@ Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersB
 
 
 
-// -----------------------------------QA FAI-------------------------------------------------------
+//++++++++++++++++++++++++++++++++++++++++<-START->QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Route::middleware('auth')->group(function () {
     Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision');
     Route::get('/qa/partsrevision/data', [QaFaiSummaryController::class, 'partsrevisionData'])->name('faisummary.partsrevision.data');
@@ -139,6 +139,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
 });
+
 
 
 
@@ -155,4 +156,14 @@ Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::cla
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
+// -----------------------------------faistatiscs-------------------------------------------------------
+Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
+    // NUEVO: breakdown por operador/inspector
+Route::get('/qa/faistatistics/by', [QaFaiSummaryController::class, 'faistatisticsBy'])->name('faisummary.statistics.by'); // ?year=2025&group=operator|inspector
+Route::get('/qa/faistatistics/operators', [QaFaiSummaryController::class, 'operatorsList'])->name('faisummary.operators');
+use App\Http\Controllers\FaiSummaryController;
+
+Route::get('/faisummary/statistics/by-quarter-operator', [QaFaiSummaryController::class, 'faistatisticsByQuarterOperator'])->name('faisummary.statistics.byQuarterOperator');
+
+//++++++++++++++++++++++++++++++++++++++++ <-END-> QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // -----------------------------------Machines-------------------------------------------------------
