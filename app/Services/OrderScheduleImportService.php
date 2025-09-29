@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\OrderSchedule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class OrderScheduleImportService
 {
@@ -99,6 +101,97 @@ class OrderScheduleImportService
         'cur_break_backorder_amount',
         'cur_break_total_prepay',
     ];
+
+public function relabelParents(): void
+{
+    DB::transaction(function () {
+        // 0) Rellenar work_id faltantes (NULL o '') con el work_id de referencia por PN
+        //    (El de la orden más reciente con status <> 'sent' y work_id no vacío)
+        DB::statement("
+            UPDATE orders_schedule os
+            JOIN (
+              SELECT pn,
+                     SUBSTRING_INDEX(
+                       GROUP_CONCAT(work_id ORDER BY due_date DESC, id DESC SEPARATOR ','),
+                       ',', 1
+                     ) AS ref_work_id
+              FROM orders_schedule
+              WHERE status <> 'sent'
+                AND work_id IS NOT NULL AND work_id <> ''
+              GROUP BY pn
+            ) w ON w.pn = os.pn
+            SET os.work_id = w.ref_work_id
+            WHERE os.status <> 'sent'
+              AND (os.work_id IS NULL OR os.work_id = '')
+              AND w.ref_work_id IS NOT NULL
+        ");
+
+        // 1) group_key (solo status <> 'sent' y sin padre)
+        DB::statement("
+            UPDATE orders_schedule
+            SET group_key = CONCAT(PN, '#', COALESCE(NULLIF(work_id, ''), 'NO-WO'))
+            WHERE status <> 'sent' AND parent_id IS NULL
+        ");
+
+        // 2) Re-etiquetar padre/hijos (solo status <> 'sent' y sin padre)
+        DB::statement("
+            UPDATE orders_schedule os
+            JOIN (
+              SELECT t.PN,
+                     COALESCE(NULLIF(t.work_id, ''), 'NO-WO') AS g_work,
+                     MAX(t.id) AS parent_id
+              FROM orders_schedule t
+              JOIN (
+                 SELECT PN,
+                        COALESCE(NULLIF(work_id, ''), 'NO-WO') AS g_work,
+                        MAX(due_date) AS max_due
+                 FROM orders_schedule
+                 WHERE status <> 'sent' AND parent_id IS NULL
+                 GROUP BY PN, COALESCE(NULLIF(work_id, ''), 'NO-WO')
+              ) g
+                ON g.PN = t.PN
+               AND g.g_work = COALESCE(NULLIF(t.work_id, ''), 'NO-WO')
+               AND t.due_date = g.max_due
+              WHERE t.status <> 'sent' AND t.parent_id IS NULL
+              GROUP BY t.PN, COALESCE(NULLIF(t.work_id, ''), 'NO-WO')
+            ) p
+              ON p.PN = os.PN
+             AND p.g_work = COALESCE(NULLIF(os.work_id, ''), 'NO-WO')
+            SET os.parent_id = CASE
+              WHEN os.id = p.parent_id THEN NULL   -- padre
+              ELSE p.parent_id                     -- hijo
+            END
+            WHERE os.status <> 'sent' AND os.parent_id IS NULL
+        ");
+
+        // 3) Guardar TOTAL del grupo en la fila PADRE (status <> 'sent')
+        DB::statement("
+            UPDATE orders_schedule p
+            JOIN (
+                SELECT
+                    COALESCE(parent_id, id) AS grp_parent_id,
+                    SUM(COALESCE(qty,0)) AS total_qty
+                FROM orders_schedule
+                WHERE status <> 'sent'
+                GROUP BY COALESCE(parent_id, id)
+            ) s
+              ON s.grp_parent_id = p.id
+            SET p.group_wo_qty = s.total_qty
+            WHERE p.status <> 'sent'
+              AND p.parent_id IS NULL   -- solo padres
+        ");
+
+        // 4) (Opcional) limpiar campo en hijos
+        DB::statement("
+            UPDATE orders_schedule
+            SET group_wo_qty = NULL
+            WHERE status <> 'sent' AND parent_id IS NOT NULL
+        ");
+    });
+}
+
+
+
 
     public function cleanAndPrepareRow(array $row): ?OrderSchedule
     {
