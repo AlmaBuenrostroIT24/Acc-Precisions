@@ -124,14 +124,18 @@
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             $hasValue = !is_null($order->wo_qty) && (string)$order->wo_qty !== '' && (int)$order->wo_qty !== 0;
-                            // Deshabilitar solo si es rol restringido Y ya tiene valor
-                            $disabled = $isRestricted && $hasValue;
+
+                            // Deshabilitar si:
+                            // 1) Es rol restringido Y ya tiene valor, O
+                            // 2) Es un hijo (parent_id no es null)
+                            $disabled = ($isRestricted && $hasValue) || !is_null($order->parent_id);
                             @endphp
 
                             <input
                                 value="{{ $order->wo_qty == 0 || is_null($order->wo_qty) ? '' : $order->wo_qty }}"
                                 data-id="{{ $order->id }}"
                                 data-original="{{ $order->wo_qty }}"
+                                data-parent-id="{{ $order->parent_id }}" {{-- 👈 opcional, útil para JS --}}
                                 class="wo-qty-input form-control form-control-sm"
                                 style="width: 60px; font-weight: bold; color: black;"
                                 @if($disabled) disabled @endif>

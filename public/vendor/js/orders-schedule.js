@@ -1472,14 +1472,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     //-------------------------------------------
     //Es el input para agregar WO QTY
+    // Evento blur en inputs de WO QTY
     $(document).on("blur", ".wo-qty-input", function () {
         const input = $(this);
         const original = input.data("original");
 
-        let newVal = input.val().trim();
-        //Para cuando se borra WO
+        let newVal = String(input.val()).trim();
         if (newVal === "") {
-            newVal = 0; // puedes cambiarlo a `null` si tu backend lo acepta
+            newVal = "0"; // puedes cambiarlo a null si tu backend lo acepta
         }
 
         const qty = parseInt(newVal, 10);
@@ -1488,7 +1488,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (original == qty) return;
+        if (String(original) === String(qty)) return;
 
         const orderId = input.data("id");
 
@@ -1496,11 +1496,30 @@ document.addEventListener("DOMContentLoaded", () => {
             `/orders/${orderId}/update-wo-qty`,
             { wo_qty: qty },
             (data) => {
+                // 1) Actualizar el input con el nuevo valor confirmado
+                input.data("original", data.wo_qty_saved);
+                input.val(data.wo_qty_saved);
+
+                // 2) Actualizar el total del grupo en el padre
+                const parentId = data.parent_id;
+                const $parentRow = $(`tr[data-id="${parentId}"]`);
+                $parentRow.find(".cell-group-wo-qty").text(data.group_wo_qty);
+
+                // 3) Si usas DataTables, refrescar datos sin recargar todo:
+                // const table = $('#miDataTable').DataTable();
+                // const row = table.row($parentRow);
+                // let rowData = row.data();
+                // rowData.wo_qty = data.group_wo_qty;
+                // row.data(rowData).draw(false);
+
+                // 4) Guardar en localStorage para sincronizar entre pestañas (opcional)
                 localStorage.setItem(
                     "wo-qty-change",
                     JSON.stringify({
-                        orderId,
-                        wo_qty: qty,
+                        orderId: data.order_id,
+                        parentId: data.parent_id,
+                        wo_qty: data.wo_qty_saved,
+                        group_wo_qty: data.group_wo_qty,
                     })
                 );
                 localStorage.removeItem("wo-qty-change");
