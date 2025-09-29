@@ -132,8 +132,8 @@ public function partsrevisionData(Request $request)
                     ? 'qty_pcs'
                     : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
 
-                $pass = DB::table('qa_faisummary')
-                    ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
+                $pass = \DB::table('qa_faisummary')
+                    ->select('operation', 'insp_type', \DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
                     ->where('order_schedule_id', $r->id)
                     ->whereRaw('LOWER(results) = ?', ['pass'])
                     ->groupBy('operation', 'insp_type')
