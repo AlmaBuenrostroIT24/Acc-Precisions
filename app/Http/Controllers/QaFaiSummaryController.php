@@ -33,133 +33,104 @@ class QaFaiSummaryController extends Controller
 
 public function partsrevisionData(Request $request)
 {
-    $bucket = $request->query('bucket'); // 'empty' | 'process'
+    $bucket = $request->query('bucket');
     if (!in_array($bucket, ['empty', 'process'], true)) {
         return response()->json(['data' => []]);
     }
 
     $user = auth()->user();
 
-    // Campos base (incluye parent_id para poder agrupar)
     $select = [
         'id',
         'parent_id',
         'work_id',
         'PN',
         'Part_description',
-        'operation',        // => ops
+        'operation',
         'wo_qty',
+        'group_wo_qty',   // 👈 usar total guardado en el padre
         'due_date',
         'location',
         'status_inspection',
-        'sampling',         // tamaño de muestra por operación
-        'sampling_check',   // tipo de sampling (Normal/Reduced/etc.)
+        'sampling',
+        'sampling_check',
     ];
 
-    // ===== Filtros base (aún no filtramos padres aquí) =====
-    $base = OrderSchedule::query()
+    $rows = OrderSchedule::query()
         ->select($select)
         ->where('status', '<>', 'sent')
+        ->whereNull('parent_id')                 // 👈 solo padres
         ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
         ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
         ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
         ->when($bucket === 'empty',
             fn($q) => $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
             fn($q) => $q->where('status_inspection', 'in_progress')
-        );
-
-    // ===== Totales por grupo (padre + hijos) SIN filtrar a padres aquí =====
-    // Clave del grupo: IFNULL(parent_id, id)
-    // Si wo_qty es VARCHAR o puede traer comas/texto, usa REGEXP_REPLACE; si es numérico, basta con COALESCE(wo_qty,0)
-    $withTotals = (clone $base)
-        ->selectRaw("
-            IFNULL(parent_id, id) AS grp_id,
-           SUM(COALESCE(wo_qty,0)) OVER (PARTITION BY IFNULL(parent_id, id)) AS wo_qty_sum
-        ");
-
-    // Ahora sí: solo PADRES (parent_id IS NULL) y orden por due más lejano
-    $rows = DB::query()
-        ->fromSub($withTotals, 't')
-        ->select('t.*')
-        ->whereNull('t.parent_id')   // ← solo padres
-        ->orderByDesc('t.due_date')  // el padre ya es el de due más lejano por tu proceso de marcado
+        )
+        ->orderByDesc('due_date')
         ->get();
 
-    // ===== Helper para nombres de operación =====
     $opName = function (int $i): string {
-        return match ($i) {
-            1 => '1st Op',
-            2 => '2nd Op',
-            3 => '3rd Op',
-            default => "{$i}th Op",
-        };
+        return match ($i) {1=>'1st Op',2=>'2nd Op',3=>'3rd Op',default=>"{$i}th Op"};
     };
 
     $data = $rows->map(function ($r) use ($bucket, $opName) {
         $pn   = trim((string) $r->PN);
         $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
         $part = $pn . ' - ' . $desc;
+        $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
 
-        // Formato de due_date: Jun/05/2025
-        $dueFormatted = $r->due_date ? Carbon::parse($r->due_date)->format('M/d/Y') : null;
+        $sum = (int) ($r->group_wo_qty ?? 0); // 👈 total del grupo desde DB
 
-        // Botón principal (usa la SUMA)
         $btn = '<button class="btn btn-sm btn-primary"
           data-toggle="modal" data-target="#editModal"
-          data-id="' . e($r->id) . '"
-          data-workid="' . e($r->work_id) . '"
-          data-woqty="' . e((int)($r->wo_qty_sum ?? 0)) . '"
-          data-operation="' . e($r->operation) . '"
-          data-pn="' . e($r->PN) . '"
-          data-description="' . e($r->Part_description) . '"
-          data-sampling="' . e($r->sampling ?? 0) . '"
-          data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+          data-id="'.e($r->id).'"
+          data-workid="'.e($r->work_id).'"
+          data-woqty="'.e($sum).'"
+          data-operation="'.e($r->operation).'"
+          data-pn="'.e($r->PN).'"
+          data-description="'.e($r->Part_description).'"
+          data-sampling="'.e($r->sampling ?? 0).'"
+          data-sampling_check="'.e($r->sampling_check ?? 'Normal').'">
           <i class="fas fa-edit"></i>
         </button>';
 
-        // Botón secundario (solo 'empty', también con SUMA)
         $btnOther = '';
         if ($bucket === 'empty') {
             $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
                 data-toggle="modal" data-target="#otherModal"
-                data-id="' . e($r->id) . '"
-                data-pn="' . e($r->PN) . '"
-                data-description="' . e($r->Part_description) . '"
-                data-woqty="' . e((int)($r->wo_qty_sum ?? 0)) . '"
-                data-location="' . e($r->location) . '">
+                data-id="'.e($r->id).'"
+                data-pn="'.e($r->PN).'"
+                data-description="'.e($r->Part_description).'"
+                data-woqty="'.e($sum).'"
+                data-location="'.e($r->location).'">
                 <i class="fas fa-clipboard-list"></i>
             </button>';
         }
-
-        $actions = '<div class="btn-group btn-group-sm" role="group" aria-label="acciones">'
-            . $btn . $btnOther .
-            '</div>';
 
         $row = [
             'id'             => (int) $r->id,
             'part'           => $part,
             'work_id'        => trim((string) $r->work_id),
-            'actions'        => $actions,
+            'actions'        => '<div class="btn-group btn-group-sm">'.$btn.$btnOther.'</div>',
             'ops'            => (int) ($r->operation ?? 0),
-            'wo_qty'         => (int) ($r->wo_qty_sum ?? 0), // ← suma del grupo (padre + hijos)
+            'wo_qty'         => $sum,                  // 👈 total del grupo
             'sampling'       => (int) ($r->sampling ?? 0),
             'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
             'due_date'       => $dueFormatted,
         ];
 
-        // ===== Progreso (solo bucket 'process') =====
         if ($bucket === 'process') {
-            $ops      = (int) ($r->operation ?? 0);
+            $ops = (int) ($r->operation ?? 0);
             $sampling = (int) ($r->sampling ?? 0);
-            $perOpReq = 1 + $sampling;            // 1 FAI + N IPI por op
+            $perOpReq = 1 + $sampling;
             $totalReq = $ops * $perOpReq;
-            $done     = 0;
+            $done = 0;
 
             if ($ops > 0) {
-                // qtyExpr que exista (qty_pcs > sample_idx > 1)
-                $qtyExpr = Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
                     ? 'qty_pcs'
-                    : (Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
+                    : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
 
                 $pass = DB::table('qa_faisummary')
                     ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
@@ -168,29 +139,25 @@ public function partsrevisionData(Request $request)
                     ->groupBy('operation', 'insp_type')
                     ->get();
 
-                $fai = [];
-                $ipi = [];
+                $fai = []; $ipi = [];
                 foreach ($pass as $p) {
-                    $op   = (string) $p->operation;
-                    $q    = (int) $p->qty;
-                    $type = strtoupper((string) $p->insp_type);
-                    if ($type === 'FAI') $fai[$op] = ($fai[$op] ?? 0) + $q;
-                    if ($type === 'IPI') $ipi[$op] = ($ipi[$op] ?? 0) + $q;
+                    $name = (string)$p->operation;
+                    $q = (int)$p->qty;
+                    $type = strtoupper((string)$p->insp_type);
+                    if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
+                    if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
                 }
-
-                for ($i = 1; $i <= $ops; $i++) {
+                for ($i=1; $i <= $ops; $i++) {
                     $name = $opName($i);
                     $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
                 }
             }
 
-            $progressPct = ($totalReq > 0) ? (int) round(($done / $totalReq) * 100) : 0;
-
-            $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
+            $row['progress'] = '<div class="progress" data-order-id="'.e($r->id).'" style="height:18px;">
                   <div class="progress-bar bg-secondary" role="progressbar"
                        style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                 </div>';
-            $row['progress_pct'] = $progressPct;
+            $row['progress_pct'] = $totalReq > 0 ? (int) round(($done/$totalReq)*100) : 0;
         }
 
         return $row;
@@ -198,6 +165,7 @@ public function partsrevisionData(Request $request)
 
     return response()->json(['data' => $data]);
 }
+
 
 
 
