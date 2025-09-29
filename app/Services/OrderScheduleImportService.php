@@ -102,12 +102,12 @@ class OrderScheduleImportService
         'cur_break_total_prepay',
     ];
 
-public function relabelParents(): void
-{
-    DB::transaction(function () {
+    public function relabelParents(): void
+    {
+        DB::transaction(function () {
 
-        // 0) Rellenar work_id faltantes con el más reciente por PN (solo no 'sent')
-        DB::statement("
+            // 0) Rellenar work_id faltantes con el más reciente por PN (solo no 'sent')
+            DB::statement("
             UPDATE orders_schedule os
             JOIN (
               SELECT pn,
@@ -126,15 +126,15 @@ public function relabelParents(): void
               AND w.ref_work_id IS NOT NULL
         ");
 
-        // 1) group_key para todos los no 'sent'
-        DB::statement("
+            // 1) group_key para todos los no 'sent'
+            DB::statement("
             UPDATE orders_schedule
             SET group_key = CONCAT(PN, '#', COALESCE(NULLIF(work_id,''), 'NO-WO'))
             WHERE LOWER(status) <> 'sent'
         ");
 
-        // 2) Elegir el NUEVO padre por (PN, g_work) y re-asignar TODAS las filas de ese par al nuevo padre
-        DB::statement("
+            // 2) Elegir el NUEVO padre por (PN, g_work) y re-asignar TODAS las filas de ese par al nuevo padre
+            DB::statement("
             UPDATE orders_schedule os
             JOIN (
               SELECT t.PN,
@@ -164,8 +164,16 @@ public function relabelParents(): void
             WHERE LOWER(os.status) <> 'sent'
         ");
 
-        // 3) TOTAL del grupo (suma por relación padre→hijos ACTUAL) y escribirlo SOLO en el padre
-        DB::statement("
+            // 2.5) NUEVO: para cada hijo, setear wo_qty = qty si está vacío/nulo
+            DB::statement("
+            UPDATE orders_schedule
+            SET wo_qty = COALESCE(qty, 0)
+            WHERE parent_id IS NOT NULL
+              AND (wo_qty IS NULL OR wo_qty = 0)
+        ");
+
+            // 3) TOTAL del grupo (suma por relación padre→hijos ACTUAL) y escribirlo SOLO en el padre
+            DB::statement("
             UPDATE orders_schedule p
             JOIN (
                 SELECT COALESCE(parent_id, id) AS grp_parent_id,
@@ -180,14 +188,14 @@ public function relabelParents(): void
             WHERE p.parent_id IS NULL
         ");
 
-        // 4) Limpiar total en hijos (opcional)
-        DB::statement("
+            // 4) Limpiar total en hijos (opcional)
+            DB::statement("
             UPDATE orders_schedule
             SET group_wo_qty = NULL
             WHERE parent_id IS NOT NULL
         ");
-    });
-}
+        });
+    }
 
 
 
