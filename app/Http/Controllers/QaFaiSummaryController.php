@@ -28,143 +28,150 @@ class QaFaiSummaryController extends Controller
         // Solo devuelve la vista; las tablas vendrán por AJAX
         return view('qa.faisummary.faisummary_partsrevision');
     }
-//	31009/1
+    //	31009/1
 
 
-public function partsrevisionData(Request $request)
-{
-    $bucket = $request->query('bucket');
-    if (!in_array($bucket, ['empty', 'process'], true)) {
-        return response()->json(['data' => []]);
-    }
+    public function partsrevisionData(Request $request)
+    {
+        $bucket = $request->query('bucket');
+        if (!in_array($bucket, ['empty', 'process'], true)) {
+            return response()->json(['data' => []]);
+        }
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    $select = [
-        'id',
-        'parent_id',
-        'work_id',
-        'PN',
-        'Part_description',
-        'operation',
-        'wo_qty',
-        'group_wo_qty',   // 👈 usar total guardado en el padre
-        'due_date',
-        'location',
-        'status_inspection',
-        'sampling',
-        'sampling_check',
-    ];
+        $select = [
+            'id',
+            'parent_id',
+            'work_id',
+            'PN',
+            'Part_description',
+            'operation',
+            'wo_qty',
+            'group_wo_qty',   // 👈 usar total guardado en el padre
+            'due_date',
+            'location',
+            'status_inspection',
+            'sampling',
+            'sampling_check',
+        ];
 
-    $rows = OrderSchedule::query()
-        ->select($select)
-        ->where('status', '<>', 'sent')
-        ->whereNull('parent_id')                 // 👈 solo padres
-        ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
-        ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-        ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
-        ->when($bucket === 'empty',
-            fn($q) => $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
-            fn($q) => $q->where('status_inspection', 'in_progress')
-        )
-        ->orderByDesc('due_date')
-        ->get();
+        $rows = OrderSchedule::query()
+            ->select($select)
+            ->where('status', '<>', 'sent')
+            ->whereNull('parent_id')                 // 👈 solo padres
+            ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
+            ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
+            ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
+            ->when(
+                $bucket === 'empty',
+                fn($q) => $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
+                fn($q) => $q->where('status_inspection', 'in_progress')
+            )
+            ->orderByDesc('due_date')
+            ->get();
 
-    $opName = function (int $i): string {
-        return match ($i) {1=>'1st Op',2=>'2nd Op',3=>'3rd Op',default=>"{$i}th Op"};
-    };
+        $opName = function (int $i): string {
+            return match ($i) {
+                1 => '1st Op',
+                2 => '2nd Op',
+                3 => '3rd Op',
+                default => "{$i}th Op"
+            };
+        };
 
-    $data = $rows->map(function ($r) use ($bucket, $opName) {
-        $pn   = trim((string) $r->PN);
-        $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
-        $part = $pn . ' - ' . $desc;
-        $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
+        $data = $rows->map(function ($r) use ($bucket, $opName) {
+            $pn   = trim((string) $r->PN);
+            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
+            $part = $pn . ' - ' . $desc;
+            $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
 
-        $sum = (int) ($r->group_wo_qty ?? 0); // 👈 total del grupo desde DB
+            $sum = (int) ($r->group_wo_qty ?? 0); // 👈 total del grupo desde DB
 
-        $btn = '<button class="btn btn-sm btn-primary"
+            $btn = '<button class="btn btn-sm btn-primary"
           data-toggle="modal" data-target="#editModal"
-          data-id="'.e($r->id).'"
-          data-workid="'.e($r->work_id).'"
-          data-woqty="'.e($sum).'"
-          data-operation="'.e($r->operation).'"
-          data-pn="'.e($r->PN).'"
-          data-description="'.e($r->Part_description).'"
-          data-sampling="'.e($r->sampling ?? 0).'"
-          data-sampling_check="'.e($r->sampling_check ?? 'Normal').'">
+          data-id="' . e($r->id) . '"
+          data-workid="' . e($r->work_id) . '"
+          data-woqty="' . e($sum) . '"
+          data-operation="' . e($r->operation) . '"
+          data-pn="' . e($r->PN) . '"
+          data-description="' . e($r->Part_description) . '"
+          data-sampling="' . e($r->sampling ?? 0) . '"
+          data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
           <i class="fas fa-edit"></i>
         </button>';
 
-        $btnOther = '';
-        if ($bucket === 'empty') {
-            $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
+            $btnOther = '';
+            if ($bucket === 'empty') {
+                $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
                 data-toggle="modal" data-target="#otherModal"
-                data-id="'.e($r->id).'"
-                data-pn="'.e($r->PN).'"
-                data-description="'.e($r->Part_description).'"
-                data-woqty="'.e($sum).'"
-                data-location="'.e($r->location).'">
+                data-id="' . e($r->id) . '"
+                data-pn="' . e($r->PN) . '"
+                data-description="' . e($r->Part_description) . '"
+                data-woqty="' . e($sum) . '"
+                data-location="' . e($r->location) . '">
                 <i class="fas fa-clipboard-list"></i>
             </button>';
-        }
-
-        $row = [
-            'id'             => (int) $r->id,
-            'part'           => $part,
-            'work_id'        => trim((string) $r->work_id),
-            'actions'        => '<div class="btn-group btn-group-sm">'.$btn.$btnOther.'</div>',
-            'ops'            => (int) ($r->operation ?? 0),
-            'wo_qty'         => $sum,                  // 👈 total del grupo
-            'sampling'       => (int) ($r->sampling ?? 0),
-            'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
-            'due_date'       => $dueFormatted,
-        ];
-
-        if ($bucket === 'process') {
-            $ops = (int) ($r->operation ?? 0);
-            $sampling = (int) ($r->sampling ?? 0);
-            $perOpReq = 1 + $sampling;
-            $totalReq = $ops * $perOpReq;
-            $done = 0;
-
-            if ($ops > 0) {
-                $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
-                    ? 'qty_pcs'
-                    : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
-
-                $pass = \DB::table('qa_faisummary')
-                    ->select('operation', 'insp_type', \DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
-                    ->where('order_schedule_id', $r->id)
-                    ->whereRaw('LOWER(results) = ?', ['pass'])
-                    ->groupBy('operation', 'insp_type')
-                    ->get();
-
-                $fai = []; $ipi = [];
-                foreach ($pass as $p) {
-                    $name = (string)$p->operation;
-                    $q = (int)$p->qty;
-                    $type = strtoupper((string)$p->insp_type);
-                    if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
-                    if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
-                }
-                for ($i=1; $i <= $ops; $i++) {
-                    $name = $opName($i);
-                    $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
-                }
             }
 
-            $row['progress'] = '<div class="progress" data-order-id="'.e($r->id).'" style="height:18px;">
+            $row = [
+                'id'             => (int) $r->id,
+                'part'           => $part,
+                'work_id'        => trim((string) $r->work_id),
+                'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
+                'ops'            => (int) ($r->operation ?? 0),
+                'wo_qty'         => $sum,                  // 👈 total del grupo
+                'sampling'       => (int) ($r->sampling ?? 0),
+                'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
+                'due_date'       => $dueFormatted,
+            ];
+
+            if ($bucket === 'process') {
+                $ops = (int) ($r->operation ?? 0);
+                $sampling = (int) ($r->sampling ?? 0);
+                $perOpReq = 1 + $sampling;
+                $totalReq = $ops * $perOpReq;
+                $done = 0;
+
+                if ($ops > 0) {
+                    $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                        ? 'qty_pcs'
+                        : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
+
+                    $pass = \DB::table('qa_faisummary')
+                        ->select('operation', 'insp_type', \DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
+                        ->where('order_schedule_id', $r->id)
+                        ->whereRaw('LOWER(results) = ?', ['pass'])
+                        ->groupBy('operation', 'insp_type')
+                        ->get();
+
+                    $fai = [];
+                    $ipi = [];
+                    foreach ($pass as $p) {
+                        $name = (string)$p->operation;
+                        $q = (int)$p->qty;
+                        $type = strtoupper((string)$p->insp_type);
+                        if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
+                        if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
+                    }
+                    for ($i = 1; $i <= $ops; $i++) {
+                        $name = $opName($i);
+                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
+                    }
+                }
+
+                $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
                   <div class="progress-bar bg-secondary" role="progressbar"
                        style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                 </div>';
-            $row['progress_pct'] = $totalReq > 0 ? (int) round(($done/$totalReq)*100) : 0;
-        }
+                $row['progress_pct'] = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
+            }
 
-        return $row;
-    });
+            return $row;
+        });
 
-    return response()->json(['data' => $data]);
-}
+        return response()->json(['data' => $data]);
+    }
 
 
 
@@ -530,11 +537,13 @@ public function partsrevisionData(Request $request)
     {
         $select = [
             'id',
+            'parent_id',
             'work_id',
             'PN',
             'Part_description',
             'operation',
             'wo_qty',
+            'group_wo_qty', // 👈 suma padre+hijos
             'location',
             'status_inspection',
             'total_fai',
@@ -546,14 +555,8 @@ public function partsrevisionData(Request $request)
 
         $orderscompleted = \App\Models\OrderSchedule::query()
             ->select($select)
-            ->where(function ($q) {
-                $q->where(function ($x) {
-                    $x->where('was_work_id_null', 0)->whereNotNull('co');
-                })->orWhere(function ($x) {
-                    $x->where('was_work_id_null', 1)->whereNull('co');
-                });
-            })
-            ->where('status_inspection', 'completed') // 👈 Único filtro importante
+            ->whereNull('parent_id')  // 👈 Solo padres
+            ->where('status_inspection', 'completed')
             ->orderByDesc('id')
             ->get();
 

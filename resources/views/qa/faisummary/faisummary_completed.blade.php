@@ -80,7 +80,7 @@
                                 <td>{{ $o->PN }}</td>
                                 <td>{{ \Illuminate\Support\Str::before($o->Part_description, ',') }}</td>
                                 <td>{{ ucfirst($o->sampling_check) }}</td>
-                                <td>{{ $o->wo_qty }}</td>
+                                <td>{{ $o->group_wo_qty }}</td>
                                 <td>{{ $o->sampling }}</td>
                                 <td>{{ $o->operation }}</td>
                                 <td>{{ $o->total_fai }}</td>
