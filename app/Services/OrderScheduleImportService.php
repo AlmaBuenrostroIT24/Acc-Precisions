@@ -105,8 +105,8 @@ class OrderScheduleImportService
 public function relabelParents(): void
 {
     DB::transaction(function () {
-        // 0) Rellenar work_id faltantes (NULL o '') con el work_id de referencia por PN
-        //    (El de la orden más reciente con status <> 'sent' y work_id no vacío)
+
+        // 0) Rellenar work_id faltantes con el más reciente por PN (solo no 'sent')
         DB::statement("
             UPDATE orders_schedule os
             JOIN (
@@ -116,79 +116,80 @@ public function relabelParents(): void
                        ',', 1
                      ) AS ref_work_id
               FROM orders_schedule
-              WHERE status <> 'sent'
+              WHERE LOWER(status) <> 'sent'
                 AND work_id IS NOT NULL AND work_id <> ''
               GROUP BY pn
             ) w ON w.pn = os.pn
             SET os.work_id = w.ref_work_id
-            WHERE os.status <> 'sent'
+            WHERE LOWER(os.status) <> 'sent'
               AND (os.work_id IS NULL OR os.work_id = '')
               AND w.ref_work_id IS NOT NULL
         ");
 
-        // 1) group_key (solo status <> 'sent' y sin padre)
+        // 1) group_key para todos los no 'sent'
         DB::statement("
             UPDATE orders_schedule
-            SET group_key = CONCAT(PN, '#', COALESCE(NULLIF(work_id, ''), 'NO-WO'))
-            WHERE status <> 'sent' AND parent_id IS NULL
+            SET group_key = CONCAT(PN, '#', COALESCE(NULLIF(work_id,''), 'NO-WO'))
+            WHERE LOWER(status) <> 'sent'
         ");
 
-        // 2) Re-etiquetar padre/hijos (solo status <> 'sent' y sin padre)
+        // 2) Elegir el NUEVO padre por (PN, g_work) y re-asignar TODAS las filas de ese par al nuevo padre
         DB::statement("
             UPDATE orders_schedule os
             JOIN (
               SELECT t.PN,
-                     COALESCE(NULLIF(t.work_id, ''), 'NO-WO') AS g_work,
+                     COALESCE(NULLIF(t.work_id,''), 'NO-WO') AS g_work,
                      MAX(t.id) AS parent_id
               FROM orders_schedule t
               JOIN (
                  SELECT PN,
-                        COALESCE(NULLIF(work_id, ''), 'NO-WO') AS g_work,
+                        COALESCE(NULLIF(work_id,''), 'NO-WO') AS g_work,
                         MAX(due_date) AS max_due
                  FROM orders_schedule
-                 WHERE status <> 'sent' AND parent_id IS NULL
-                 GROUP BY PN, COALESCE(NULLIF(work_id, ''), 'NO-WO')
+                 WHERE LOWER(status) <> 'sent'
+                 GROUP BY PN, COALESCE(NULLIF(work_id,''), 'NO-WO')
               ) g
                 ON g.PN = t.PN
-               AND g.g_work = COALESCE(NULLIF(t.work_id, ''), 'NO-WO')
+               AND g.g_work = COALESCE(NULLIF(t.work_id,''), 'NO-WO')
                AND t.due_date = g.max_due
-              WHERE t.status <> 'sent' AND t.parent_id IS NULL
-              GROUP BY t.PN, COALESCE(NULLIF(t.work_id, ''), 'NO-WO')
+              WHERE LOWER(t.status) <> 'sent'
+              GROUP BY t.PN, COALESCE(NULLIF(t.work_id,''), 'NO-WO')
             ) p
-              ON p.PN = os.PN
-             AND p.g_work = COALESCE(NULLIF(os.work_id, ''), 'NO-WO')
+              ON  p.PN     = os.PN
+             AND  p.g_work = COALESCE(NULLIF(os.work_id,''), 'NO-WO')
             SET os.parent_id = CASE
-              WHEN os.id = p.parent_id THEN NULL   -- padre
-              ELSE p.parent_id                     -- hijo
+              WHEN os.id = p.parent_id THEN NULL   -- este es el nuevo padre
+              ELSE p.parent_id                     -- todos los demás -> hijos del nuevo padre
             END
-            WHERE os.status <> 'sent' AND os.parent_id IS NULL
+            WHERE LOWER(os.status) <> 'sent'
         ");
 
-        // 3) Guardar TOTAL del grupo en la fila PADRE (status <> 'sent')
+        // 3) TOTAL del grupo (suma por relación padre→hijos ACTUAL) y escribirlo SOLO en el padre
         DB::statement("
             UPDATE orders_schedule p
             JOIN (
-                SELECT
-                    COALESCE(parent_id, id) AS grp_parent_id,
-                    SUM(COALESCE(qty,0)) AS total_qty
+                SELECT COALESCE(parent_id, id) AS grp_parent_id,
+                       SUM(COALESCE(qty,0))    AS total_qty
                 FROM orders_schedule
-                WHERE status <> 'sent'
+                /* si quieres sumar solo no 'sent', descomenta la siguiente línea:
+                WHERE LOWER(status) <> 'sent'
+                */
                 GROUP BY COALESCE(parent_id, id)
-            ) s
-              ON s.grp_parent_id = p.id
+            ) s  ON s.grp_parent_id = p.id
             SET p.group_wo_qty = s.total_qty
-            WHERE p.status <> 'sent'
-              AND p.parent_id IS NULL   -- solo padres
+            WHERE p.parent_id IS NULL
         ");
 
-        // 4) (Opcional) limpiar campo en hijos
+        // 4) Limpiar total en hijos (opcional)
         DB::statement("
             UPDATE orders_schedule
             SET group_wo_qty = NULL
-            WHERE status <> 'sent' AND parent_id IS NOT NULL
+            WHERE parent_id IS NOT NULL
         ");
     });
 }
+
+
 
 
 
