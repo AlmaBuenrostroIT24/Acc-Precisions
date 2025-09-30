@@ -60,7 +60,7 @@
                                 <th style="width: 20px;">FAI</th>
                                 <th style="width: 20px;">IPI</th>
 
-                                <th style="width: 50px;">ACTIONS</th>
+                                <th style="width: 30px;">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,14 +85,17 @@
                                 <td>{{ $o->operation }}</td>
                                 <td>{{ $o->total_fai }}</td>
                                 <td>{{ $o->total_ipi }}</td>
-
-
-
                                 <td class="text-nowrap">
                                     <a href="#"
                                         class="btn btn-sm btn-primary btn-open-pdf"
                                         data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
-                                        View
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    
+                                    {{-- Botón para descargar --}}
+                                    <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
+                                        class="btn btn-sm btn-warning">
+                                        <i class="fas fa-download"></i>
                                     </a>
                                 </td>
                             </tr>

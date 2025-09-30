@@ -572,6 +572,17 @@ class QaFaiSummaryController extends Controller
         // 0) Normaliza: si llaman con un hijo, usa el padre del grupo
         $parentId = $order->parent_id ?: $order->id;
 
+        $generatedAt = now('America/Los_Angeles');
+        $user = auth()->user(); // 👈 usuario logueado
+
+        // === Total qty padre + hijos ===
+        $totalQty = \App\Models\OrderSchedule::query()
+            ->where(function ($q) use ($parentId, $order) {
+                $q->where('id', $parentId)      // el padre
+                    ->orWhere('parent_id', $parentId); // todos los hijos
+            })
+            ->sum('qty');
+
         // 1) Header base del PDF
         $header = [
             'id'                => $order->id,
@@ -582,7 +593,7 @@ class QaFaiSummaryController extends Controller
             'co'                => $order->co ?? '',
             'cust_po'           => $order->cust_po ?? '',
             'costumer'          => $order->costumer ?? '',
-            'qty'               => $order->qty ?? 0,
+            'qty'               => $totalQty,   // 👈 suma padre + hijos
             'group_wo_qty'      => $order->group_wo_qty ?? 0,
             'due_date'          => $order->due_date,
             'operation'         => (int)($order->operation === 'default_value' ? 0 : ($order->operation ?? 0)),
@@ -672,12 +683,13 @@ class QaFaiSummaryController extends Controller
         );
 
         // 6) Render PDF
-        $pdf = \PDF::loadView('qa.faisummary.faisummary_pdf', [
+        $pdf = PDF::loadView('qa.faisummary.faisummary_pdf', [
             'order'       => $order,
             'header'      => $header,
             'rows'        => $rows,
             'summary'     => $summary,
             'generatedAt' => $generatedAt,
+            'user'        => $user,   // 👈 pasar a la vista
         ])->setPaper('letter', 'landscape');
 
         $dompdf = $pdf->getDomPDF();
@@ -692,6 +704,10 @@ class QaFaiSummaryController extends Controller
         $canvas->page_text($w - 70, 5, 'Page {PAGE_NUM} of {PAGE_COUNT}', $font, $size, [0, 0, 0]);
 
         $filename = 'FAI_' . str_replace(['/', '\\'], '-', (string)$order->work_id) . '.pdf';
+        // Si viene ?download=1 => descarga, si no => stream en navegador
+        if (request()->boolean('download')) {
+            return $dompdf->stream($filename, ['Attachment' => true]);
+        }
         return $dompdf->stream($filename, ['Attachment' => false]);
     }
 

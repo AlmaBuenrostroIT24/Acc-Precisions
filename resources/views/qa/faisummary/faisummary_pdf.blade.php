@@ -288,7 +288,17 @@
         <tr>
             <td>
                 <strong>FINAL INSP QTY:</strong>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:80px; text-align:center;"></span>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+            </td>
+        </tr>
+        <br>
+        <tr>
+            <td>
+                <strong>COMPLT. INIT & DATE:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;">
+                    {{ $user->name ?? '—' }} ( {{ $generatedAt->format('m/d/Y') }} )
+                </span>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
             </td>
         </tr>
     </table>
