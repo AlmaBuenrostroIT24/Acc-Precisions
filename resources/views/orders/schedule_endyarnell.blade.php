@@ -31,180 +31,282 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-body">
-                {{-- Filtros dinámicos --}}
-                <div class="form-group col-md-12">
-                    <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm" class="row g-3 mb-3">
-                        <div class="form-group col-md-2">
-                            <label for="customerFilter">Customer</label>
-                            <select id="customerFilter" class="form-control auto-submit">
-                                <option value="">-- All --</option>
-                            </select>
+        <div class="card mb-4 shadow-sm">
+            {{-- 🔹 Header: filtros + acciones + contador --}}
+            <div class="card-header py-2">
+                <form method="GET" action="{{ route('schedule.endyarnell') }}" id="filterForm">
+                    <div class="d-flex flex-wrap align-items-end" style="gap:.5rem">
+                        {{-- Customer (llenado vía JS/DataTables) --}}
+                        <div class="form-group mb-0">
+                            <label for="customerFilter" class="mb-1 sr-only">Customer</label>
+                            <div class="input-group input-group" style="min-width:200px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-user-tag text-primary"></i>
+                                    </span>
+                                </div>
+                                <select id="customerFilter" class="form-control dt-filter">
+                                    <option value="">— All —</option>
+                                </select>
+                            </div>
                         </div>
-                    </form>
-                </div>
-                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
-                            <i class="fas fa-plus"></i> New Order
-                        </button> -->
+
+                        {{-- YEAR --}}
+                        <div class="form-group mb-0">
+                            <label for="year" class="mb-1 sr-only">Year</label>
+                            <div class="input-group input-group date" id="yearPickerWrapper"
+                                data-target-input="nearest"
+                                data-initial-year="{{ request('year') ?? '' }}"
+                                style="min-width:160px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-alt text-success"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="year" name="year" class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#yearPickerWrapper"
+                                    value="{{ request('year') }}" placeholder="Year" autocomplete="off">
+                            </div>
+                        </div>
+
+                        {{-- MONTH (display + hidden) --}}
+                        <div class="form-group mb-0">
+                            <label for="monthDisplay" class="mb-1 sr-only">Month</label>
+                            <div class="input-group input-group date" id="monthPickerWrapper"
+                                data-target-input="nearest" style="min-width:160px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-alt text-danger"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="monthDisplay" class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#monthPickerWrapper"
+                                    placeholder="Month" autocomplete="off">
+                            </div>
+                            <input type="hidden" id="month" name="month" value="{{ request('month') }}">
+                        </div>
+
+                        {{-- DAY --}}
+                        <div class="form-group mb-0">
+                            <label for="day" class="mb-1 sr-only">Day</label>
+                            <div class="input-group input-group date" id="dayPickerWrapper"
+                                data-target-input="nearest" style="min-width:180px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-day text-warning"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="day" name="day" class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#dayPickerWrapper"
+                                    value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
+                                    placeholder="Day" autocomplete="off">
+                            </div>
+                        </div>
+
+                        {{-- Acciones de filtro --}}
+                        <div class="form-group mb-0">
+                            <a href="{{ route('schedule.endyarnell') }}" class="btn btn-secondary ml-1">Clean</a>
+                        </div>
+
+                        {{-- Acciones rápidas (a la derecha) --}}
+                        <div class="btn-group btn-group ml-auto">
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('schedule.endyarnell', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                <i class="fas fa-bolt mr-1"></i> Today
+                            </a>
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('schedule.endyarnell', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                <i class="far fa-calendar-alt mr-1"></i> This Month
+                            </a>
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('schedule.endyarnell', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                <i class="far fa-calendar mr-1"></i> This Year
+                            </a>
+                        </div>
+
+
+
+
+                        {{-- Contador --}}
+                        <span class="badge badge-info ml-2">
+                            Total: <span id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
+                        </span>
+                    </div>
+                </form>
+            </div>
+
+            {{-- 🔹 Body: solo la tabla --}}
+            <div class="card-body">
                 <div class="table-responsive">
-                    {{-- Tabla --}}
-                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap" style="table-layout: fixed; width: 100%;">
+                    <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm nowrap" style="table-layout: fixed; width:100%">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 65px;">LOCATION</th>
-                                <th style="width: 65px;">WORK ID</th>
-                                <th style="width: 65px;">PN</th>
-                                <th style="width: 110px;">PART/DESCRIPTION</th>
-                                <th style="width: 65px;">CUSTOMER</th>
-                                <th style="width: 65px;">CO QTY</th>
-                                <th style="width: 65px;">WO QTY</th>
-                                <th style="width: 55px;">REPORT</th>
-                                <th style="width: 45px;">OUT</th>
-                                <th style="width: 65px;">DUE DATE</th>
-                                <th style="width: 65px;">MACH DATE</th>
-                                <th style="width: 85px;">END MACH</th>
-                                <th style="width: 65px;">TARGET</th>
-                                <th style="width: 65px;">NOTES</th>
+                                <th style="width:75px">LOCATION</th>
+                                <th style="width:60px">WORK ID</th>
+                                <th style="width:65px">PN</th>
+                                <th style="width:110px">PART/DESCRIPTION</th>
+                                <th style="width:65px">CUSTOMER</th>
+                                <th style="width:65px">CO QTY</th>
+                                <th style="width:65px">WO QTY</th>
+                                <th style="width:55px">REPORT</th>
+                                <th style="width:45px">OUT</th>
+                                <th style="width:65px">DUE DATE</th>
+                                <th style="width:65px">MACH DATE</th>
+                                <th style="width:85px">END MACH</th>
+                                <th style="width:65px">TARGET</th>
+                                <th style="width:65px">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody id="statusTable">
-                            @foreach($orders as $order)
-                            <tr data-status="{{ $order->status }}">
-                                <td>
-                                    @if ($order->last_location === 'Yarnell')
-                                    <span style="color: black; font-weight: bold;">Yarnell</span>
-                                    @endif
-                                    <span class="badge bg-warning text-dark d-inline-flex align-items-center">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                                    </span>
-
-                                </td>
+                        <tbody id="statusTable"> @foreach($orders as $order) <tr data-status="{{ $order->status }}">
+                                <td> @if ($order->last_location === 'Yarnell') <span style="color: black; font-weight: bold;">Yarnell</span> @endif <span class="badge bg-warning text-dark d-inline-flex align-items-center"> <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }} </span> </td>
                                 <td>{{ $order->work_id }}</td>
-                                <td style="min-width: 120px;">{{ $order->PN }}</td>
+                                <td style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->PN }}</td>
                                 <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
                                 <td>
-                                    <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}">
+                                    <span class="badge  {{ $order->report ? 'bg-primary' : 'bg-secondary' }} p-2" style="font-size:1rem;">
                                         <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                                    </button>
+                                    </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->our_source }}">
+                                    <span class="badge  {{ $order->our_source ? 'bg-primary' : 'bg-secondary' }} p-2" style="font-size:1rem;">
                                         <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                                    </button>
+                                    </span>
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
-                                <td data-order="{{ $order->endate_mach ? $order->endate_mach->format('Y-m-d H:i:s') : '' }}">
-                                    {{ $order->endate_mach ? $order->endate_mach->format('M-d-y H:i') : '' }}
-                                </td>
-                                <td>
-                                    @if ($order->target_mach < 0)
-                                        <span class="badge bg-danger">{{ $order->target_mach }} Late</span>
-                                        @elseif ($order->target_mach == 0)
-                                        <span class="badge bg-success">{{ $order->target_mach }} On time</span>
-                                        @elseif ($order->target_mach > 0)
-                                        <span class="badge bg-info">{{ $order->target_mach}} Early</span>
-                                        @else
-                                        <span>-</span> {{-- En caso de que target_mach sea null --}}
-                                        @endif
-                                </td>
-                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    <span class="open-notes-modal" data-id="{{ $order->id }}"
-                                        data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
-                                        {{ Str::limit($order->notes, 30) }}
-                                    </span>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
+                                <td data-order="{{ $order->endate_mach ? $order->endate_mach->format('Y-m-d H:i:s') : '' }}"> {{ $order->endate_mach ? $order->endate_mach->format('M-d-y H:i') : '' }} </td>
+                                <td> @if ($order->target_mach < 0) <span class="badge bg-danger">{{ $order->target_mach }} Late</span> @elseif ($order->target_mach == 0) <span class="badge bg-success">{{ $order->target_mach }} On time</span> @elseif ($order->target_mach > 0) <span class="badge bg-info">{{ $order->target_mach}} Early</span> @else <span>-</span> {{-- En caso de que target_mach sea null --}} @endif </td>
+                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;"> <span class="open-notes-modal" data-id="{{ $order->id }}" data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}"> {{ Str::limit($order->notes, 30) }} </span> </td>
+                            </tr> @endforeach </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
+
 
 @endsection
 
 @section('css')
 
+
+<style>
+
+</style>
 @endsection
 
 @push('js')
 
+<script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
     $(document).ready(function() {
+        // =========================
+        //  DataTables
+        // =========================
+        const CUSTOMER_COL = 4;
 
-        // Agrega un filtro personalizado para mostrar solo los status diferentes a "sent"
-        /*  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-              const row = settings.aoData[dataIndex].nTr;
-              const status = $(row).data('status');
-              return status !== 'sent'; // cambia esta línea
-          });*/
+        if ($('#orders_endscheduleTable').length) {
+            window.table = $('#orders_endscheduleTable').DataTable({
+                scrollX: false,
+                autoWidth: false,
+                pageLength: 25,
+                order: [
+                    [11, 'desc']
+                ],
+                columnDefs: [{
+                    targets: [6, 7],
+                    orderable: false
+                }],
+            });
 
-        // Inicializa la tabla con DataTables
-        window.table = $('#orders_endscheduleTable').DataTable({
-            scrollX: false,
-            autoWidth: false,
-            pageLength: 25,
-            order: [
-                [11, 'desc'] // corregí 'des' por 'desc'
-            ],
-            columnDefs: [{
-                targets: [6, 7, 11],
-                orderable: false
-            }],
+            function populateCustomerFilterFromDT() {
+                const sel = document.getElementById('customerFilter');
+                if (!sel) return;
+
+                const colData = window.table
+                    .column(CUSTOMER_COL, {
+                        search: 'applied'
+                    })
+                    .data().toArray()
+                    .map(x => (typeof x === 'string' ? x : $(x).text()))
+                    .map(s => s.trim()).filter(Boolean);
+
+                const unique = [...new Set(colData)]
+                    .sort((a, b) => a.localeCompare(b, undefined, {
+                        sensitivity: 'base'
+                    }));
+
+                const current = sel.value || '';
+                while (sel.options.length > 1) sel.remove(1);
+
+                const frag = document.createDocumentFragment();
+                for (const v of unique) {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v;
+                    frag.appendChild(opt);
+                }
+                sel.appendChild(frag);
+
+                if (current && unique.includes(current)) sel.value = current;
+            }
+
+            document.getElementById('customerFilter')?.addEventListener('change', function() {
+                const val = this.value;
+                if (!val) window.table.column(CUSTOMER_COL).search('', true, false).draw();
+                else {
+                    const esc = $.fn.dataTable.util.escapeRegex(val);
+                    window.table.column(CUSTOMER_COL).search('^' + esc + '$', true, false).draw();
+                }
+            });
+
+            populateCustomerFilterFromDT();
+            window.table.on('draw', populateCustomerFilterFromDT);
+        }
+
+        // =========================
+        //  Tempus Dominus (reutilizable)
+        // =========================
+        window.initTempusFilters({
+            form: '#filterForm',
+            yearWrapper: '#yearPickerWrapper',
+            monthWrapper: '#monthPickerWrapper',
+            dayWrapper: '#dayPickerWrapper',
+            yearInput: '#year',
+            monthHiddenInput: '#month',
+            monthDisplayInput: '#monthDisplay',
+            dayInput: '#day',
+            initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
         });
 
-        /**
-         * Extrae valores únicos de una columna específica y los usa para llenar un <select>
-         * @param {number} columnIndex - Índice de la columna en la tabla
-         * @param {string} selectId - ID del <select> para llenar (ej: #locationFilter)
-         */
-        function populateFilterFromColumn(columnIndex, selectId) {
-            const unique = new Set();
 
-            $('#orders_endscheduleTable tbody tr').each(function() {
-                const value = $(this).find('td').eq(columnIndex).text().trim().toLowerCase();
-                if (value) unique.add(value);
-            });
+        // ---------------------- 7. Autosubmit de filtros servidor (excluye .dt-filter) ----------------------
+        const $badge = $('#badgeFinished');
 
-            const values = [...unique].sort();
-            const $select = $(selectId);
-            $select.find('option:not(:first)').remove(); // mantener "-- All --"
-
-            values.forEach(value => {
-                const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
-                $select.append(`<option value="${value}">${capitalized}</option>`);
-            });
+        function refreshBadge() {
+            const filtered = table.rows({
+                search: 'applied'
+            }).count();
+            $badge.text(filtered);
         }
 
-        /**
-         * Aplica el filtro exacto con regex a una columna
-         * @param {string} selector - Selector del <select>
-         * @param {number} columnIndex - Índice de la columna a filtrar
-         */
-        function applyFilter(selector, columnIndex) {
-            $(selector).on("change", function() {
-                const val = $(this).val()?.toLowerCase() || "";
-                window.table
-                    .column(columnIndex)
-                    .search(val ? `^${val}$` : "", true, false)
-                    .draw();
-            });
-        }
-        // Aplica filtros para location y customer
-        populateFilterFromColumn(0, '#locationFilter'); // columna 0 = location
-        applyFilter('#locationFilter', 0);
+        // Inicial
+        refreshBadge();
 
-        populateFilterFromColumn(4, '#customerFilter'); // columna 4 = customer
-        applyFilter('#customerFilter', 4);
+        // Mantenerlo sincronizado
+        table.on('draw.dt search.dt order.dt page.dt', refreshBadge);
+
+        // Al cambiar Location/Customer ya llamas table.draw(), que dispara refreshBadge
+        $('#customerFilter').on('change', function() {
+            table.draw();
+        });
     });
 </script>
+
+
 @endpush

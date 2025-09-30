@@ -30,40 +30,140 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-body">
-                {{-- Filtros dinámicos --}}
-                <div class="row mb-4">
-                    <!-- Formulario de carga -->
+        <div class="card mb-4 shadow-sm">
 
-                    <!-- Filtros -->
-                    <div class="col-md-8">
-                        <div class="card shadow">
-                            <div class="card-body row">
-                                <div class="form-group col-md-12">
-                                    <form method="GET" action="{{ route('schedule.finished') }}" id="filterForm" class="row g-3 mb-3">
-                                        <div class="form-group col-md-4">
-                                            <label for="locationFilter">Location</label>
-                                            <select name="location" id="locationFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
+            {{-- Filtros dinámicos --}}
+            <div class="card-header py-2">
+                <form method="GET" action="{{ route('schedule.finished') }}" id="filterForm">
+                    <div class="d-flex flex-wrap align-items-end" style="gap:.5rem">
 
-                                        <div class="form-group col-md-4">
-                                            <label for="customerFilter">Customer</label>
-                                            <select id="customerFilter" class="form-control auto-submit">
-                                                <option value="">-- All --</option>
-                                            </select>
-                                        </div>
-                                    </form>
+                        {{-- 🔹 Location --}}
+                        <div class="form-group mb-0">
+                            <label for="locationFilter" class="mb-1 sr-only">Location</label>
+                            <div class="input-group input-group" style="min-width:180px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-map-marker-alt text-danger"></i>
+                                    </span>
                                 </div>
+                                <select name="location" id="locationFilter" class="form-control auto-submit">
+                                    <option value="">— All —</option>
+                                    @foreach($locations ?? [] as $loc)
+                                    <option value="{{ strtolower($loc) }}" {{ strtolower(request('location')) == strtolower($loc) ? 'selected' : '' }}>
+                                        {{ $loc }}
+                                    </option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
+
+                        {{-- 🔹 Customer --}}
+                        <div class="form-group mb-0">
+                            <label for="customerFilter" class="mb-1 sr-only">Customer</label>
+                            <div class="input-group input-group" style="min-width:200px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-user-tag text-primary"></i>
+                                    </span>
+                                </div>
+                                <select id="customerFilter" class="form-control dt-filter">
+                                    <option value="">— All —</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- 🔹 Year --}}
+                        <div class="form-group mb-0">
+                            <label for="year" class="mb-1 sr-only">Year</label>
+                            <div class="input-group input-group date" id="yearPickerWrapper"
+                                data-target-input="nearest"
+                                data-initial-year="{{ request('year') ?? '' }}"
+                                style="min-width:160px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-alt text-success"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="year" name="year"
+                                    class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#yearPickerWrapper"
+                                    value="{{ request('year') }}" placeholder="Year" autocomplete="off">
+                            </div>
+                        </div>
+
+                        {{-- 🔹 Month (display + hidden) --}}
+                        <div class="form-group mb-0">
+                            <label for="monthDisplay" class="mb-1 sr-only">Month</label>
+                            <div class="input-group input-group date" id="monthPickerWrapper"
+                                data-target-input="nearest" style="min-width:160px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-alt text-danger"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="monthDisplay"
+                                    class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#monthPickerWrapper"
+                                    placeholder="Month" autocomplete="off">
+                            </div>
+                            <input type="hidden" id="month" name="month" value="{{ request('month') }}">
+                        </div>
+
+                        {{-- 🔹 Day --}}
+                        <div class="form-group mb-0">
+                            <label for="day" class="mb-1 sr-only">Day</label>
+                            <div class="input-group input-group date" id="dayPickerWrapper"
+                                data-target-input="nearest" style="min-width:180px">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-day text-warning"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="day" name="day"
+                                    class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#dayPickerWrapper"
+                                    value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
+                                    placeholder="Day" autocomplete="off">
+                            </div>
+                        </div>
+
+                        {{-- 🔹 Clean --}}
+
+                        <a href="{{ route('schedule.finished') }}"
+                            class="btn btn-info btn-sm ml-1 flex-shrink-0"
+                            title="Clean">
+                            <i class="fas fa-eraser text-white"></i>
+                        </a>
+
+
+                        {{-- 🔹 Quick actions (right aligned) --}}
+                        <div class="btn-group btn-group ml-auto">
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('schedule.finished', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                <i class="fas fa-bolt mr-1"></i> Today
+                            </a>
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('schedule.finished', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                <i class="far fa-calendar-alt mr-1"></i> This Month
+                            </a>
+                            <a class="btn btn-outline-secondary"
+                                href="{{ route('schedule.finished', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                <i class="far fa-calendar mr-1"></i> This Year
+                            </a>
+                        </div>
+
+                        {{-- 🔹 Counter --}}
+                        <span class="badge badge-info ml-2">
+                            Total: <span id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
+                        </span>
+
                     </div>
-                </div>
-                <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
-                            <i class="fas fa-plus"></i> New Order
-                        </button> -->
+                </form>
+            </div>
+
+
+
+            <div class="card-body">
                 <div class="table-responsive">
                     {{-- Tabla --}}
 
@@ -80,7 +180,7 @@
                                 <th class="text-center align-middle">REPORT</th>
                                 <th class="text-center align-middle">OUT/SRC</th>
                                 <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
-                                <th style="width: 70px;">END DATE</th>
+                                <th style="width: 110px;">END DATE</th>
                                 <th class="text-center align-middle">TARGET</th>
                                 <th class="text-center align-middle">NOTES</th>
                                 <th class="text-center align-middle">STATUS</th>
@@ -104,17 +204,15 @@
                                 <td>{{ $order->costumer }}</td>
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ $order->wo_qty }}</td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}">
+                                <td>
+                                    <span class="badge  {{ $order->report ? 'bg-primary' : 'bg-secondary' }} p-2" style="font-size:1rem;">
                                         <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                                    </button>
+                                    </span>
                                 </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                                        data-id="{{ $order->id }}" data-value="{{ $order->our_source }}">
+                                <td>
+                                    <span class="badge  {{ $order->our_source ? 'bg-primary' : 'bg-secondary' }} p-2" style="font-size:1rem;">
                                         <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                                    </button>
+                                    </span>
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
                                 <td data-order="{{ $order->sent_at ? $order->sent_at->format('Y-m-d H:i:s') : '' }}">
@@ -162,20 +260,16 @@
 @endsection
 
 @push('js')
-
+<script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
     $(document).ready(function() {
         const $tableElement = $('#orders_endscheduleTable');
         if (!$tableElement.length) return;
 
-        // ---------------------- 1. FILTRO GLOBAL POR STATUS = "sent" ----------------------
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            const row = settings.aoData[dataIndex].nTr;
-            const status = $(row).data('status');
-            return status === 'sent';
-        });
+        // (Opcional recomendado) Limpiar filtros ext.search previos para evitar efectos colaterales
+        $.fn.dataTable.ext.search.length = 0;
 
-        // ---------------------- 2. INICIALIZAR DATATABLE ----------------------
+        // ---------------------- 1. INICIALIZAR DATATABLE ----------------------
         const table = $tableElement.DataTable({
             scrollX: false,
             autoWidth: false,
@@ -191,11 +285,11 @@
 
         window.table = table;
 
-        // ---------------------- 3. POBLAR SELECTS DE FILTRO ----------------------
+        // ---------------------- 2. POBLAR SELECTS DE FILTRO ----------------------
         populateFilterFromColumn(0, '#locationFilter'); // columna 0: location
         populateFilterFromColumn(4, '#customerFilter'); // columna 4: customer
 
-        // ---------------------- 4. APLICAR FILTROS COMBINADOS ----------------------
+        // ---------------------- 3. APLICAR FILTROS COMBINADOS (client-side) ----------------------
         $('#locationFilter, #customerFilter').on("change", function() {
             table.draw();
         });
@@ -226,7 +320,7 @@
             return locationMatch && customerMatch;
         });
 
-        // ---------------------- 5. FUNCIÓN PARA LLENAR LOS SELECTS ----------------------
+        // ---------------------- 4. FUNCIÓN PARA LLENAR SELECTS ----------------------
         function populateFilterFromColumn(columnIndex, selectId) {
             const unique = new Set();
 
@@ -257,7 +351,7 @@
             });
         }
 
-        // ---------------------- 6. BOTÓN: RETURN ORDER ----------------------
+        // ---------------------- 5. BOTÓN: RETURN ORDER ----------------------
         $tableElement.on('click', '.toggle-status-btn', function() {
             const btn = $(this);
             const row = btn.closest('tr');
@@ -289,6 +383,41 @@
                         Swal.fire('Error', 'Ocurrió un error al devolver la orden.', 'error');
                     });
             });
+        });
+
+        // ---------------------- 6. Tempus Dominus (reutilizable) ----------------------
+
+        window.initTempusFilters({
+            form: '#filterForm',
+            yearWrapper: '#yearPickerWrapper',
+            monthWrapper: '#monthPickerWrapper',
+            dayWrapper: '#dayPickerWrapper',
+            yearInput: '#year',
+            monthHiddenInput: '#month',
+            monthDisplayInput: '#monthDisplay',
+            dayInput: '#day',
+            initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
+        });
+
+        // ---------------------- 7. Autosubmit de filtros servidor (excluye .dt-filter) ----------------------
+        const $badge = $('#badgeFinished');
+
+        function refreshBadge() {
+            const filtered = table.rows({
+                search: 'applied'
+            }).count();
+            $badge.text(filtered);
+        }
+
+        // Inicial
+        refreshBadge();
+
+        // Mantenerlo sincronizado
+        table.on('draw.dt search.dt order.dt page.dt', refreshBadge);
+
+        // Al cambiar Location/Customer ya llamas table.draw(), que dispara refreshBadge
+        $('#locationFilter, #customerFilter').on('change', function() {
+            table.draw();
         });
     });
 </script>

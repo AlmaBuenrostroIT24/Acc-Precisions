@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\OrderSchedule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class OrderScheduleImportService
 {
@@ -99,6 +101,112 @@ class OrderScheduleImportService
         'cur_break_backorder_amount',
         'cur_break_total_prepay',
     ];
+
+  public function relabelParents(): void
+{
+    DB::transaction(function () {
+
+        // 0) Rellenar work_id faltantes con el más reciente por PN (solo no 'sent')
+        DB::statement("
+            UPDATE orders_schedule os
+            JOIN (
+              SELECT pn,
+                     SUBSTRING_INDEX(
+                       GROUP_CONCAT(work_id ORDER BY due_date DESC, id DESC SEPARATOR ','),
+                       ',', 1
+                     ) AS ref_work_id
+              FROM orders_schedule
+              WHERE LOWER(status) <> 'sent'
+                AND work_id IS NOT NULL AND work_id <> ''
+              GROUP BY pn
+            ) w ON w.pn = os.pn
+            SET os.work_id = w.ref_work_id
+            WHERE LOWER(os.status) <> 'sent'
+              AND (os.work_id IS NULL OR os.work_id = '')
+              AND w.ref_work_id IS NOT NULL
+        ");
+
+        // 1) group_key para todos los no 'sent' (opcional, no rompe nada)
+        DB::statement("
+            UPDATE orders_schedule
+            SET group_key = CONCAT(PN, '#', COALESCE(NULLIF(work_id,''), 'NO-WO'))
+            WHERE LOWER(status) <> 'sent'
+        ");
+
+        // 2) Asignar padre SOLO a filas que aún tienen parent_id NULL
+        //    (no reparentizamos grupos ya formados)
+        DB::statement("
+            UPDATE orders_schedule os
+            JOIN (
+              SELECT t.PN,
+                     COALESCE(NULLIF(t.work_id,''), 'NO-WO') AS g_work,
+                     MAX(t.id) AS parent_id
+              FROM orders_schedule t
+              JOIN (
+                 SELECT PN,
+                        COALESCE(NULLIF(work_id,''), 'NO-WO') AS g_work,
+                        MAX(due_date) AS max_due
+                 FROM orders_schedule
+                 WHERE LOWER(status) <> 'sent'
+                 GROUP BY PN, COALESCE(NULLIF(work_id,''), 'NO-WO')
+              ) g
+                ON g.PN = t.PN
+               AND g.g_work = COALESCE(NULLIF(t.work_id,''), 'NO-WO')
+               AND IFNULL(t.due_date,'1970-01-01') = IFNULL(g.max_due,'1970-01-01')
+              WHERE LOWER(t.status) <> 'sent'
+              GROUP BY t.PN, COALESCE(NULLIF(t.work_id,''), 'NO-WO')
+            ) p
+              ON  p.PN     = os.PN
+             AND  p.g_work = COALESCE(NULLIF(os.work_id,''), 'NO-WO')
+            SET os.parent_id = CASE
+              WHEN os.id = p.parent_id THEN NULL   -- este es el padre del par
+              ELSE p.parent_id                     -- hijo del padre del par
+            END
+            WHERE LOWER(os.status) <> 'sent'
+              AND os.parent_id IS NULL             -- 👈 SOLO filas sin padre
+        ");
+
+        // 2.5) NUEVO: Copiar qty → wo_qty SOLO en hijos con wo_qty vacío
+        DB::statement("
+            UPDATE orders_schedule
+            SET wo_qty = COALESCE(qty, 0)
+            WHERE parent_id IS NOT NULL
+              AND (wo_qty IS NULL OR wo_qty = 0)
+        ");
+
+        // 3) Guardar TOTAL del grupo en el PADRE, SOLO si aún no tiene group_wo_qty
+        DB::statement("
+            UPDATE orders_schedule p
+            JOIN (
+                SELECT COALESCE(parent_id, id) AS grp_parent_id,
+                       SUM(COALESCE(wo_qty,0))    AS total_qty
+                FROM orders_schedule
+                /* si quieres sumar solo no 'sent', descomenta:
+                -- WHERE LOWER(status) <> 'sent'
+                */
+                GROUP BY COALESCE(parent_id, id)
+            ) s  ON s.grp_parent_id = p.id
+            SET p.group_wo_qty = s.total_qty
+            WHERE p.parent_id IS NULL
+              AND (p.group_wo_qty IS NULL)        -- 👈 SOLO si aún no tiene total
+        ");
+
+        // 4) (Opcional) limpiar total en hijos, pero SOLO los que aún no tienen nada
+        //    (si prefieres siempre limpiar, quita la segunda condición)
+        DB::statement("
+            UPDATE orders_schedule
+            SET group_wo_qty = NULL
+            WHERE parent_id IS NOT NULL
+              AND group_wo_qty IS NOT NULL
+        ");
+    });
+}
+
+
+
+
+
+
 
     public function cleanAndPrepareRow(array $row): ?OrderSchedule
     {

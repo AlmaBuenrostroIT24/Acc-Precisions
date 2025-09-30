@@ -8,6 +8,16 @@
         </a>
     </li>
     @endcan
+
+    @can('schedule/workhearst')
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {{ request()->routeIs('schedule.workhearst') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
+            href="{{ route('schedule.workhearst') }}">
+            <i class="fas fa-clock me-2"></i> Schedule Hearst
+        </a>
+    </li>
+    @endcan
+
     @can('schedule/endyarnell')
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('schedule.endyarnell') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
@@ -20,7 +30,7 @@
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('schedule.finished') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
             href="{{ route('schedule.finished') }}">
-            <i class="fas fa-clipboard-check"></i> Completed Orders
+            <i class="fas fa-clipboard-check me-2"></i> Completed Orders
         </a>
     </li>
     @endcan

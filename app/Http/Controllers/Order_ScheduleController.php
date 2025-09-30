@@ -35,7 +35,23 @@ class Order_ScheduleController extends Controller
                 $q->whereNull('status_order')->orWhere('status_order', 'active');
             });
 
-        // 👇 Filtros por request (sin duplicar)
+        // 🔒 Filtro especial: usuarios con rol Deburring solo ven status=deburring
+        if (auth()->check() && auth()->user()->hasRole('Deburring')) {
+            $base->where('status', 'deburring');
+        }
+
+        // 🔒 Orden especial para QCShipping: primero Shipping, luego Ready, luego el resto
+        if (auth()->check() && auth()->user()->hasRole('QCShipping')) {
+            $base->orderByRaw("
+        CASE 
+            WHEN status = 'shipping' THEN 0
+            WHEN status = 'ready'    THEN 1
+            ELSE 2
+        END
+    ");
+        }
+
+        /// 👇 Filtros por request (se aplican solo si no es Deburring)
         $base->when($request->filled('location'), function ($q) use ($request) {
             $q->where('location', $request->location);
         });
@@ -196,9 +212,30 @@ class Order_ScheduleController extends Controller
 
     public function endyarnell(Request $request)
     {
+
+        // Parámetros de filtro
+        $year     = $request->integer('year');
+        $month    = $request->integer('month');
+        $day      = $request->input('day');
+
         $query = OrderSchedule::latest()
             ->where('last_location', 'Yarnell')
             ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
+
+        // 📅 Filtro de fechas (prioridad como en summary)
+        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
+        if ($day) {
+            $query->whereDate('endate_mach', Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $query->whereYear('endate_mach', $year)->whereMonth('endate_mach', $month);
+        } elseif ($year) {
+            $query->whereYear('endate_mach', $year);
+        } elseif ($month) {
+            $query->whereYear('endate_mach', now()->year)->whereMonth('endate_mach', $month);
+        } else {
+            // Por defecto: mes actual para no traer dataset enorme
+            $query->whereBetween('endate_mach', [now()->startOfMonth(), now()->endOfMonth()]);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -210,6 +247,23 @@ class Order_ScheduleController extends Controller
         $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
+        $currentYear = now()->year;
+        $years  = range($currentYear, $currentYear - 5);
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Aug',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Dec'
+        ];
+
         foreach ($orders as $order) {
             $order->dias_restantes = $this->calcularDiasInterno(
                 $order->status,
@@ -218,7 +272,7 @@ class Order_ScheduleController extends Controller
             );
         }
 
-        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers'));
+        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers', 'years', 'months', 'year', 'month', 'day'));
     }
 
     //----------------------------------------------------------------------------------------------------------------------------
@@ -226,26 +280,57 @@ class Order_ScheduleController extends Controller
 
     public function finished(Request $request)
     {
-        // $orders = OrderSchedule::latest()->get();
-        //return view('orders.index_schedule', compact('orders'));
+        // ⬇️ Cambia esto a 'sent_at' si tu "Finished" se basa en esa fecha
+        $dateField = 'sent_at';
 
-        $query = OrderSchedule::latest();
+        $query = OrderSchedule::query();
 
+        // Por defecto, mostrar solo terminados (ajusta si tu flujo usa otro status)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'sent'); // o 'finished' si así lo guardas
+        }
+
+        // Location (server-side)
         if ($request->filled('location')) {
             $query->where('location', $request->location);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        // === Filtros Year / Month / Day sobre $dateField ===
+        // Prioridad: DAY > (YEAR+MONTH) > YEAR
+        $hasDay   = $request->filled('day');
+        $hasYear  = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year);
+        $hasMonth = $request->filled('month') && preg_match('/^\d{1,2}$/', (string) $request->month);
+
+        if ($hasDay) {
+            // Día exacto
+            try {
+                $day = Carbon::parse($request->day)->startOfDay();
+                $query->whereDate($dateField, $day->toDateString());
+            } catch (\Throwable $e) {
+                // si el día no es válido, ignorar filtro
+            }
+        } else {
+            if ($hasYear) {
+                $query->whereYear($dateField, (int) $request->year);
+            }
+            if ($hasMonth) {
+                $query->whereMonth($dateField, (int) $request->month);
+            }
         }
+
+        // Orden principal por fecha de finalización (coincide con tu DataTable col 11)
+        $query->orderByDesc($dateField);
 
         $orders = $query->get();
 
-        // 👇 obtenemos TODAS las ubicaciones sin afectar la paginación
+        // Catálogos para filtros (sin afectar resultado)
         $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
+        // Si aún necesitas dias_restantes (aunque sea "finished")
         foreach ($orders as $order) {
             $order->dias_restantes = $this->calcularDiasInterno(
                 $order->status,
@@ -253,7 +338,7 @@ class Order_ScheduleController extends Controller
                 $order->machining_date
             );
         }
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
+
         return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
     }
 
@@ -406,7 +491,7 @@ class Order_ScheduleController extends Controller
 
     public function store(Request $request)
     {
-       // Log::info('Request completo:', $request->all());
+        // Log::info('Request completo:', $request->all());
 
         $mapping = [
             'col_text_0'  => 'location',
@@ -437,7 +522,7 @@ class Order_ScheduleController extends Controller
                 }
             }
             // 🔎 DEBUG: original_id recibido
-           // Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
+            // Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
             // --- 👇 Aquí inyectamos co y cust_po desde la orden original ---
             if ($request->filled('original_id')) {
                 $orig = OrderSchedule::select('co', 'cust_po')
@@ -544,16 +629,44 @@ class Order_ScheduleController extends Controller
 
     public function updateWoQty(Request $request, $id)
     {
-        // Log::info('Petición WO_QTY', ['id' => $id, 'data' => $request->all()]);
-        $request->validate([
+
+        $data = $request->validate([
             'wo_qty' => 'required|integer|min:0',
         ]);
 
-        $order = OrderSchedule::findOrFail($id);
-        $order->wo_qty = $request->input('wo_qty');
-        $order->save();
+        return DB::transaction(function () use ($id, $data) {
+            // 1) Guardar el cambio en la fila editada
+            /** @var \App\Models\OrderSchedule $order */
+            $order = OrderSchedule::lockForUpdate()->findOrFail($id);
+            $order->wo_qty = (int) $data['wo_qty'];
+            $order->save();
 
-        return response()->json(['success' => true]);
+            // 2) Determinar el padre del grupo (si es hijo, su padre; si es padre, él mismo)
+            $parentId = $order->parent_id ?: $order->id;
+
+            // 3) Recalcular total del grupo como SUM(wo_qty) de padre + hijos
+            //    (si quieres excluir 'sent', agrega ->where('status', '<>', 'sent'))
+            $groupTotal = OrderSchedule::query()
+                ->where(function ($q) use ($parentId) {
+                    $q->where('id', $parentId)
+                        ->orWhere('parent_id', $parentId);
+                })
+                ->sum(DB::raw('COALESCE(wo_qty,0)'));
+
+            // 4) Guardar el total en el padre
+            OrderSchedule::whereKey($parentId)->update([
+                'group_wo_qty' => (int) $groupTotal,
+            ]);
+
+            // 5) Responder al front con info útil para actualizar UI
+            return response()->json([
+                'success'       => true,
+                'order_id'      => $order->id,
+                'parent_id'     => $parentId,
+                'wo_qty_saved'  => (int) $order->wo_qty,
+                'group_wo_qty'  => (int) $groupTotal,
+            ]);
+        });
     }
 
 
@@ -1032,93 +1145,69 @@ class Order_ScheduleController extends Controller
     {
         $this->service = $service;
     }
-    public function import(Request $request)
+    public function import(Request $request, OrderScheduleImportService $svc)
     {
-        // 0) Validación flexible para CSV/XLS/XLSX
+        // 0) Validación (sube el max si necesitas más de 20MB)
         $request->validate([
-            // sube el máximo si tus archivos pesan más
             'csv_file' => 'required|file|max:20480|mimes:csv,txt,xlsx,xls',
         ]);
 
-        // 1) Asegura que el archivo realmente llegó
         if (!$request->hasFile('csv_file')) {
             return back()->withErrors(['csv_file' => 'No llegó ningún archivo (hasFile=false).']);
         }
 
         $file = $request->file('csv_file');
-
         if (!$file->isValid()) {
             Log::error('Upload inválido', ['error_code' => $file->getError()]);
             return back()->withErrors(['csv_file' => 'El archivo subido no es válido. Código: ' . $file->getError()]);
         }
 
-        // 2) Log de metadatos del archivo
-        //--------------------------------------------
-        /*Log::info('📦 Archivo recibido', [
-            'client_name' => $file->getClientOriginalName(),
-            'mime'        => $file->getMimeType(),
-            'size_kb'     => round($file->getSize() / 1024, 1),
-            'ext'         => $file->getClientOriginalExtension(),
-        ]);*/
-        //--------------------------------------------
-
-        // 3) Guarda una copia para depurar e impórtala desde storage (evita issues de stream)
+        // 1) Guardar copia estable
         $storedPath = $file->storeAs(
             'tmp_imports',
             now()->format('Ymd_His') . '__' . $file->getClientOriginalName()
         );
         $absPath = storage_path('app/' . $storedPath);
-        //--------------------------------------------
-        // Log::info('📁 Copia guardada', ['path' => $storedPath]);
-        //--------------------------------------------
 
-        // 4) (Opcional pero útil) Ver los encabezados que Laravel-Excel detecta
+        // 2) (Opcional) inspeccionar encabezados
         try {
             $heads = (new HeadingRowImport)->toArray($absPath);
-            //--------------------------------------------
-            /*Log::info('🧾 Encabezados detectados (primera hoja)', [
-                'headings' => $heads[0][0] ?? [],
-            ]);*/
-            //--------------------------------------------
+            // Log::info('Encabezados', ['headings' => $heads[0][0] ?? []]);
         } catch (\Throwable $e) {
             Log::warning('No se pudieron leer encabezados', ['msg' => $e->getMessage()]);
         }
 
-        // 5) Ejecuta el import con try/catch para ver VALIDACIONES de filas y otros errores
         try {
-            $importer = new OrderScheduleImport($this->service);
-
-            // 👇 Importa desde el path guardado (más estable que pasar UploadedFile)
+            // 3) Ejecutar import (inyecta el service CORRECTO)
+            $importer = new OrderScheduleImport($svc);
             Excel::import($importer, $absPath);
 
-            $count = $this->service->importedCount ?? 0;
-            // Log::info('✅ Import finalizado', ['importedCount' => $count]);
+            // 4) Re-etiquetar padres/hijos (¡después del import!)
+            $svc->relabelParents();
 
-            // Si count=0, probablemente TODAS las filas fueron descartadas por tu service:
-            // - due_date no parseada
-            // - faltan part_id / misc_reference / due_date
-            // - duplicados
+            $count = $svc->importedCount ?? 0;
             if ($count === 0) {
-                Log::warning('⚠️ Import terminó con 0 filas. Revisa logs del servicio: ' .
-                    'parseo de due_date, claves de encabezado, y columnas unset.');
+                Log::warning('Import terminó con 0 filas. Revisa el parseo de due_date / claves / duplicados.');
             }
 
-            return redirect()->route('schedule.general')
-                ->with('success', "$count records were imported successfully.");
+            return redirect()
+                ->route('schedule.general')
+                ->with('success', "{$count} records were imported successfully.");
         } catch (ExcelValidationException $e) {
-            // Validaciones por fila (si usas WithValidation)
-            $msgs = collect($e->failures())->map(
-                fn($f) =>
-                "Row {$f->row()}: " . implode(', ', $f->errors())
-            )->take(20)->implode(' | ');
+            // Errores por fila (WithValidation)
+            $msgs = collect($e->failures())
+                ->map(fn($f) => "Row {$f->row()}: " . implode(', ', $f->errors()))
+                ->take(20)
+                ->implode(' | ');
 
-            Log::warning('❌ Fallos de validación por fila', ['count' => count($e->failures())]);
+            Log::warning('Fallos de validación por fila', ['count' => count($e->failures())]);
+
+            // Si quieres, aún aquí podrías recalcular padres si algunas filas sí pasaron:
+            // $svc->relabelParents();
+
             return back()->withErrors(['import' => 'Errores de validación: ' . $msgs]);
         } catch (\Throwable $e) {
-            /* Log::error('💥 Excepción durante import', [
-                'msg' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);*/
+            Log::error('Excepción durante import', ['msg' => $e->getMessage()]);
             return back()->with('error', 'No se pudo importar: ' . $e->getMessage());
         }
     }

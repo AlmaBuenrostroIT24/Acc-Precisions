@@ -322,7 +322,7 @@ return [
         ],
         [
             'text' => 'Dashboard',
-            'url' => 'admin/pages',
+            'url' => 'dashboard',
             'icon' => 'nav-icon fas fa-tachometer-alt',
             'label' => 4,
             'label_color' => 'success',
@@ -458,7 +458,7 @@ return [
                 ],
             ],
         ],
-        ['header' => 'labels'],
+        /* ['header' => 'labels'],
         [
             'text' => 'important',
             'icon_color' => 'red',
@@ -473,7 +473,7 @@ return [
             'text' => 'information',
             'icon_color' => 'cyan',
             'url' => '#',
-        ],
+        ],*/
     ],
 
     /*
@@ -533,9 +533,13 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
+                    'location' => 'vendor/datatables/dataTables.buttons.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
                     'location' => 'vendor/datatables/buttons.bootstrap4.min.js',
                 ],
-                //<!-- Exportaciones -->
                 [
                     'type' => 'js',
                     'asset' => true,
@@ -547,15 +551,14 @@ return [
                     'location' => 'vendor/datatables/buttons.print.min.js',
                 ],
                 [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => 'vendor/datatables/buttons.jszip.min.js',
-                ],
-
-                [
                     'type' => 'css',
                     'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.css',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/buttons.bootstrap4.min.css',
                 ],
             ],
         ],
@@ -575,12 +578,17 @@ return [
             ],
         ],
         'Chartjs' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
+                    'asset' => true,
+                    'location' => 'vendor/chartjs/chart.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/chartjs/chartjs-plugin-datalabels.min.js',
                 ],
             ],
         ],
@@ -596,6 +604,51 @@ return [
                     'type' => 'css',
                     'asset' => true,
                     'location' => 'vendor/select2/select2.css',
+                ],
+            ],
+        ],
+        'Pdfmake' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/pdfmake/jszip.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/pdfmake/pdfmake.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/pdfmake/vfs_fonts.js',
+                ],
+            ],
+        ],
+        'Tempusdominus' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/moment.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/tempusdominus-bootstrap-4.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/en-au.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'vendor/tempusdominus/tempusdominus-bootstrap-4.min.css',
                 ],
             ],
         ],

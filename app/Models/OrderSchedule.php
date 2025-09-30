@@ -16,6 +16,8 @@ class OrderSchedule extends Model
     protected $fillable = [
         'work_id',
         'was_work_id_null',
+        'parent_id',
+        'group_key',
         'co',
         'cust_po',
         'PN',
@@ -55,6 +57,7 @@ class OrderSchedule extends Model
         'sampling',
         'status_inspection',
         'sampling_check',
+        'inspection_date'
     ];
 
     // Casts para manejar tipos de datos correctamente
