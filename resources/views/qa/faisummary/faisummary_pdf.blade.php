@@ -186,7 +186,7 @@
         </tr>
         <tr>
             <td><strong>CO QTY:</strong> {{ $header['qty'] }}</td>
-            <td><strong>WO QTY:</strong> {{ $header['wo_qty'] }}</td>
+            <td><strong>WO QTY:</strong> {{ $header['group_wo_qty'] }}</td>
             <td colspan="2"><strong>DUE DATE:</strong> {{ $header['due_date'] ? \Carbon\Carbon::parse($header['due_date'])->format('m/d/Y') : '' }}</td>
             <td colspan="2"><strong>CO#:</strong> {{ $header['co'] }}</td>
             <td colspan="2"><strong>CUST PO#:</strong> {{ $header['cust_po'] }}</td>
@@ -216,8 +216,19 @@
                 </span>
             </td>
         </tr>
+        @if(!empty($header['deliveries']))
+        <tr>
+            <td colspan="8" style="padding-top:4px;">
+                @foreach($header['deliveries'] as $d)
+                <div><strong>DELIVER {{ $d['pieces'] }} PIECES</strong> BY: {{ $d['date'] }}&nbsp;&nbsp;PO#{{ $d['cust_po'] }}</div>
+                @endforeach
+            </td>
+        </tr>
+        @endif
     </table>
     <br>
+
+
     {{-- Tabla de filas UNO A UNO --}}
     <table class="grid">
         <thead>

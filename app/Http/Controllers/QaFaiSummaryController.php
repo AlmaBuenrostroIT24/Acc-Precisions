@@ -569,7 +569,12 @@ class QaFaiSummaryController extends Controller
 
     public function pdf(OrderSchedule $order)
     {
+        // 0) Normaliza: si llaman con un hijo, usa el padre del grupo
+        $parentId = $order->parent_id ?: $order->id;
+
+        // 1) Header base del PDF
         $header = [
+            'id'                => $order->id,
             'work_id'           => $order->work_id,
             'pn'                => $order->PN,
             'description'       => $order->Part_description,
@@ -578,7 +583,7 @@ class QaFaiSummaryController extends Controller
             'cust_po'           => $order->cust_po ?? '',
             'costumer'          => $order->costumer ?? '',
             'qty'               => $order->qty ?? 0,
-            'wo_qty'            => $order->wo_qty ?? 0,
+            'group_wo_qty'      => $order->group_wo_qty ?? 0,
             'due_date'          => $order->due_date,
             'operation'         => (int)($order->operation === 'default_value' ? 0 : ($order->operation ?? 0)),
             'sampling'          => (int)($order->sampling ?? 0),
@@ -588,6 +593,57 @@ class QaFaiSummaryController extends Controller
             'status_inspection' => $order->status_inspection,
         ];
 
+        // 2) Líneas "DELIVER ... PIECES BY ... PO#..." sólo de HIJOS (agrupado por due_date+cust_po)
+        $deliveries = \App\Models\OrderSchedule::query()
+            ->where('parent_id', $parentId)
+            ->selectRaw("
+            due_date,
+            COALESCE(cust_po,'') AS cust_po,
+            SUM(COALESCE(wo_qty, qty, 0)) AS pieces
+        ")
+            ->groupBy('due_date', 'cust_po')
+            ->orderBy('due_date')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'date'    => $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('m/d/Y') : '—',
+                    'cust_po' => $r->cust_po ?: '—',
+                    'pieces'  => (int) $r->pieces,
+                ];
+            })
+            ->values()
+            ->all();
+
+        // (OPCIONAL) agregar también una línea del PADRE
+        if ($header['due_date'] || $header['cust_po']) {
+            $deliveries[] = [
+                'date'    => $header['due_date'] ? \Carbon\Carbon::parse($header['due_date'])->format('m/d/Y') : '—',
+                'cust_po' => $header['cust_po'] ?: '—',
+                'pieces'  => (int) ($order->wo_qty ?? $order->qty ?? 0),
+            ];
+        }
+
+        // 3) Fechas de due_date de los hijos (lista y rango)
+        $childrenDueDates = \App\Models\OrderSchedule::query()
+            ->where('parent_id', $parentId)
+            ->where('status', '<>', 'sent')           // opcional
+            ->whereNotNull('due_date')
+            ->orderBy('due_date')
+            ->distinct()
+            ->pluck('due_date')
+            ->all();
+
+        $childrenDueDatesFmt = array_map(
+            fn($d) => \Carbon\Carbon::parse($d)->format('m/d/Y'),
+            $childrenDueDates
+        );
+
+        $header['children_due_dates_fmt'] = $childrenDueDatesFmt;
+        $header['min_child_due'] = $childrenDueDates ? \Carbon\Carbon::parse($childrenDueDates[0])->format('m/d/Y') : null;
+        $header['max_child_due'] = $childrenDueDates ? \Carbon\Carbon::parse(end($childrenDueDates))->format('m/d/Y') : null;
+        $header['deliveries'] = $deliveries;
+
+        // 4) Filas de inspección
         $rows = QaFaiSummary::where('order_schedule_id', $order->id)
             ->orderBy('date')
             ->orderBy('insp_type')
@@ -604,26 +660,19 @@ class QaFaiSummaryController extends Controller
                 'station',
                 'method',
                 'inspector',
-                // si tienes cantidad por fila para el resumen, inclúyela p.ej.:
-                // 'qty_pcs',
             ]);
-
-        Log::debug('Datos de QA FAI Summary:', $rows->toArray());
 
         $generatedAt = now('America/Los_Angeles');
 
-        // === Resumen FAI/IPI (servidor) ===
-        // El service carga de BD por defecto (modelo QaFai). Si tu tabla es QaFaiSummary,
-        // puedes 1) adaptar el service a ese modelo, o 2) crear un método summarizeFromRows().
-        // Opción rápida: usa summarize($order, ops, sampling) y adapta el service al modelo real.
+        // 5) Resumen
         $summary = app(InspectionSummary::class)->summarize(
             $order,
             $header['operation'],
             $header['sampling']
         );
 
-        // 1) Crea el PDF (pasa $summary al Blade)
-        $pdf = PDF::loadView('qa.faisummary.faisummary_pdf', [
+        // 6) Render PDF
+        $pdf = \PDF::loadView('qa.faisummary.faisummary_pdf', [
             'order'       => $order,
             'header'      => $header,
             'rows'        => $rows,
@@ -631,39 +680,22 @@ class QaFaiSummaryController extends Controller
             'generatedAt' => $generatedAt,
         ])->setPaper('letter', 'landscape');
 
-        // 2) Render explícito
         $dompdf = $pdf->getDomPDF();
         $dompdf->render();
 
-        // 3) Canvas para folio arriba-derecha
         $canvas      = $dompdf->getCanvas();
         $fontMetrics = $dompdf->getFontMetrics();
-
-        Log::debug('PDF canvas size', ['w' => $canvas->get_width(), 'h' => $canvas->get_height()]);
-
         $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
         $size = 10;
 
         $w = $canvas->get_width();
-        $h = $canvas->get_height();
+        $canvas->page_text($w - 70, 5, 'Page {PAGE_NUM} of {PAGE_COUNT}', $font, $size, [0, 0, 0]);
 
-        // Folio arriba-derecha (pegado casi al borde respetando margen)
-        $text = 'Page {PAGE_NUM} of {PAGE_COUNT}';
-        $textWidth = $fontMetrics->get_text_width($text, $font, $size);
-
-        // Márgenes superiores/laterales de tu @page: 30px top, 18px right/left => usa ~12pt de padding visual
-        $padRight = 70;
-        $padTop   = 5; // un poco debajo del margen superior para no pisar
-
-        $x = $w - $padRight;
-        $y = $padTop;
-
-        $canvas->page_text($x, $y, $text, $font, $size, [0, 0, 0]);
-
-        // 4) Stream sin re-render
         $filename = 'FAI_' . str_replace(['/', '\\'], '-', (string)$order->work_id) . '.pdf';
         return $dompdf->stream($filename, ['Attachment' => false]);
     }
+
+
 
 
     public function completedView(OrderSchedule $order)
