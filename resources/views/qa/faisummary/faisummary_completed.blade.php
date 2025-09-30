@@ -59,7 +59,6 @@
                                 <th style="width: 20px;">OPS.</th>
                                 <th style="width: 20px;">FAI</th>
                                 <th style="width: 20px;">IPI</th>
-
                                 <th style="width: 30px;">ACTIONS</th>
                             </tr>
                         </thead>

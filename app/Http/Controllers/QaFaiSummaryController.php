@@ -557,7 +557,7 @@ class QaFaiSummaryController extends Controller
             ->select($select)
             ->whereNull('parent_id')  // 👈 Solo padres
             ->where('status_inspection', 'completed')
-            ->orderByDesc('id')
+            ->orderByDesc('inspection_endate')
             ->get();
 
         return view('qa.faisummary.faisummary_completed', compact('orderscompleted'));
