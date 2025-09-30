@@ -45,210 +45,97 @@
             <div class="card-body py-2">
                 <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
 
-                    {{-- Fila 1: --}}
-                    <div class="filters-row-top d-flex align-items-end flex-nowrap" style="gap:.75rem; overflow-x:auto;">
-                        {{-- Year --}}
-                        <div class="filter-field">
-                            <label for="year" class="mb-1">Year</label>
-                            <div class="input-group" style="min-width:160px;">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                </div>
-                                <select name="year" id="year" class="form-control">
-                                    <option value="">All</option>
-                                    @foreach($years as $y)
-                                    <option value="{{ $y }}" {{ (string)$year === (string)$y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
 
-                        {{-- Month --}}
-                        <div class="filter-field">
-                            <label for="month" class="mb-1">Month</label>
-                            <div class="input-group" style="min-width:180px;">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="far fa-calendar"></i></span>
-                                </div>
-                                <select name="month" id="month" class="form-control">
-                                    <option value="">All</option>
-                                    @foreach($months as $num => $name)
-                                    <option value="{{ $num }}" {{ (string)$month === (string)$num ? 'selected' : '' }}>{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
 
-                        {{-- Day --}}
-                        <div class="filter-field">
-                            <label for="day" class="form-label mb-1">Day</label>
-                            <div class="input-group" style="min-width:200px;">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
-                                </div>
-                                <input type="date" name="day" id="day" class="form-control"
-                                    value="{{ $day ? \Carbon\Carbon::parse($day)->toDateString() : '' }}">
-                            </div>
-                        </div>
+                    {{-- ====== TABLA ====== --}}
+                    <div class="mt-3">
+                        <div class="table-responsive">
+                            {{-- Usa colgroup para anchos consistentes --}}
+                            <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
+                                <colgroup>
+                                    <col style="width:150px">
+                                    <col style="width:140px">
+                                    <col style="width:100px">
+                                    <col style="width:70px">
+                                    <col style="width:90px">
+                                    <col style="width:110px">
+                                    <col style="width:90px">
+                                    <col style="width:160px">
+                                    <col style="width:160px">
+                                    <col style="width:90px">
+                                    <col style="width:100px">
+                                    <col style="width:120px">
+                                    <col style="width:100px">
+                                </colgroup>
+                                <thead class="thead-light sticky-thead">
+                                    <tr class="text-uppercase text-muted small">
+                                        <th>Fecha</th>
+                                        <th>Part/Revision</th>
+                                        <th>Job</th>
+                                        <th>Tipo</th>
+                                        <th>Operación</th>
+                                        <th>Operador</th>
+                                        <th>Resultado</th>
+                                        <th>SB/IS</th>
+                                        <th>Observación</th>
+                                        <th>Estación</th>
+                                        <th>Método</th>
+                                        <th>Inspector</th>
+                                        <th>Ubicación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($inspections as $inspection)
+                                    @php
+                                    // created_at ya es una instancia de Carbon
+                                    $dtCreated = $inspection->created_at;
+                                    $dtLogicalDate = $inspection->date ? \Carbon\Carbon::parse($inspection->date) : null;
+                                    // Comparaciones robustas
+                                    $isPass = strcasecmp(trim((string)$inspection->results), 'pass') === 0;
+                                    $isFAI = strcasecmp(trim((string)$inspection->insp_type), 'FAI') === 0;
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            {{ optional($dtLogicalDate ?? $dtCreated)->format('M-d-y') }}
+                                            @if($dtCreated)
+                                            <span class="badge badge-light">{{ $dtCreated->format('H:i') }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
+                                            {{ $inspection->orderSchedule->PN ?? '' }}
+                                        </td>
+                                        <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
+                                        <td>
+                                            <span class="badge {{ $isFAI ? 'badge-info' : 'badge-secondary' }}">
+                                                {{ $inspection->insp_type }}
+                                            </span>
+                                        </td>
 
-                        {{-- Operator --}}
-                        <div class="filter-field">
-                            <label for="operator" class="mb-1">Operator</label>
-                            <div class="input-group" style="min-width:220px;">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-user-cog"></i></span>
-                                </div>
-                                <select name="operator" id="operator" class="form-control">
-                                    <option value="">All</option>
-                                    @foreach($operators as $op)
-                                    <option value="{{ $op }}" {{ request('operator') === $op ? 'selected' : '' }}>{{ $op }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Inspector --}}
-                        <div class="filter-field">
-                            <label for="inspector" class="mb-1">Inspector</label>
-                            <div class="input-group" style="min-width:220px;">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-user-check"></i></span>
-                                </div>
-                                <select name="inspector" id="inspector" class="form-control">
-                                    <option value="">All</option>
-                                    @foreach($inspectors as $i)
-                                    <option value="{{ $i }}" {{ request('inspector') === $i ? 'selected' : '' }}>{{ $i }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Location --}}
-                        <div class="filter-field">
-                            <label for="location" class="mb-1">Location</label>
-                            <div class="input-group" style="min-width:200px;">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                </div>
-                                <select name="location" id="location" class="form-control">
-                                    <option value="">All</option>
-                                    @foreach($locations as $loc)
-                                    <option value="{{ $loc }}" {{ request('location') === $loc ? 'selected' : '' }}>{{ ucfirst($loc) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                        <td>{{ $inspection->operation }}</td>
+                                        <td class="truncate" title="{{ $inspection->operator }}">{{ $inspection->operator }}</td>
+                                        <td>
+                                            <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
+                                                {{ ucfirst($inspection->results) }}
+                                            </span>
+                                        </td>
+                                        <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->sb_is }}">
+                                            {{ $inspection->sb_is }}
+                                        </td>
+                                        <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->observation }}">
+                                            {{ $inspection->observation }}
+                                        </td>
+                                        <td>{{ $inspection->station }}</td>
+                                        <td>{{ $inspection->method }}</td>
+                                        <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
+                                        <td>{{ strtoupper($inspection->orderSchedule->location ?? '') }}</td>
+                                    </tr>
+                                    @empty
+                                    {{-- vacío: DataTables muestra su mensaje --}}
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
-
-                    {{-- Fila 2: botones / contador --}}
-                    <div class="filters-row-bottom d-flex align-items-center flex-wrap mt-4 pt-2 " style="gap:.75rem;">
-                        <div class="btn-group btn-group-sm">
-                            <a class="btn btn-outline-secondary"
-                                href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">Today</a>
-                            <a class="btn btn-outline-secondary"
-                                href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">This month</a>
-                            <a class="btn btn-outline-secondary"
-                                href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">This year</a>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Filter</button>
-                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm">Clear</a>
-
-                        <span class="badge badge-info ml-auto">
-                            {{ method_exists($inspections, 'total') ? $inspections->total() : count($inspections) }} results
-                        </span>
-                    </div>
-                </form>
-
-                {{-- ====== TABLA ====== --}}
-                <div class="mt-3">
-                    <div class="table-responsive">
-                        {{-- Usa colgroup para anchos consistentes --}}
-                        <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
-                            <colgroup>
-                                <col style="width:150px">
-                                <col style="width:140px">
-                                <col style="width:100px">
-                                <col style="width:70px">
-                                <col style="width:90px">
-                                <col style="width:110px">
-                                <col style="width:90px">
-                                <col style="width:160px">
-                                <col style="width:160px">
-                                <col style="width:90px">
-                                <col style="width:100px">
-                                <col style="width:120px">
-                                <col style="width:100px">
-                            </colgroup>
-                            <thead class="thead-light sticky-thead">
-                                <tr class="text-uppercase text-muted small">
-                                    <th>Fecha</th>
-                                    <th>Part/Revision</th>
-                                    <th>Job</th>
-                                    <th>Tipo</th>
-                                    <th>Operación</th>
-                                    <th>Operador</th>
-                                    <th>Resultado</th>
-                                    <th>SB/IS</th>
-                                    <th>Observación</th>
-                                    <th>Estación</th>
-                                    <th>Método</th>
-                                    <th>Inspector</th>
-                                    <th>Ubicación</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($inspections as $inspection)
-                                @php
-                                // Usa 'date' si es tu campo lógico, fallback a created_at
-                                $d = $inspection->date ?? $inspection->created_at;
-                                $dt = $d ? \Carbon\Carbon::parse($d) : null;
-                                $isPass = strtolower($inspection->results) === 'pass';
-                                $isFAI= ($inspection->insp_type) === 'FAI';
-                                @endphp
-                                <tr>
-                                    <td>
-                                        {{ optional($dt)->format('M-d-y') }}
-                                        @if($dt)
-                                        <span class="badge badge-light">{{ $dt->format('H:i') }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
-                                        {{ $inspection->orderSchedule->PN ?? '' }}
-                                    </td>
-                                    <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
-                                    <td>
-                                        <span class="badge {{ $isFAI ? 'badge-info' : 'badge-secondary' }}">
-                                            {{ $inspection->insp_type }}
-                                        </span>
-                                    </td>
-
-                                    <td>{{ $inspection->operation }}</td>
-                                    <td class="truncate" title="{{ $inspection->operator }}">{{ $inspection->operator }}</td>
-                                    <td>
-                                        <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
-                                            {{ ucfirst($inspection->results) }}
-                                        </span>
-                                    </td>
-                                    <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->sb_is }}">
-                                        {{ $inspection->sb_is }}
-                                    </td>
-                                    <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->observation }}">
-                                        {{ $inspection->observation }}
-                                    </td>
-                                    <td>{{ $inspection->station }}</td>
-                                    <td>{{ $inspection->method }}</td>
-                                    <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
-                                    <td>{{ strtoupper($inspection->orderSchedule->location ?? '') }}</td>
-                                </tr>
-                                @empty
-                                {{-- vacío: DataTables muestra su mensaje --}}
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -339,12 +226,9 @@
             searching: false, // ← evita doble búsqueda
             lengthChange: false, // ❌ oculta el select "N registros"
             pageLength: 20,
-            order: [
-                [1, 'desc'],
-                [0, 'desc']
-            ], // Part/Revision desc, Date desc
             responsive: true,
             autoWidth: false,
+            ordering: false // 👈 respeta el orden que viene del servidor
         });
 
         $('[data-toggle="tooltip"]').tooltip();
