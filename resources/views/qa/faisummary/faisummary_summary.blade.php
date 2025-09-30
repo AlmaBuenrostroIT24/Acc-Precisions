@@ -41,7 +41,7 @@
 <div class="row">
     <div class="col-md-12">
         {{-- ====== FILTROS ====== --}}
-       <div class="card shadow-sm mb-3 filters-card-fixed">
+        <div class="card shadow-sm mb-3 filters-card-fixed">
             <div class="card-body py-2">
                 <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
 
@@ -139,7 +139,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
 
                     {{-- Fila 2: botones / contador --}}
                     <div class="filters-row-bottom d-flex align-items-center flex-wrap mt-4 pt-2 " style="gap:.75rem;">
@@ -321,7 +321,6 @@
         padding-top: .45rem;
         padding-bottom: .45rem;
     }
-
 </style>
 @endsection
 
