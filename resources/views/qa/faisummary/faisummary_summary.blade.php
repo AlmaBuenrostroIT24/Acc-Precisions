@@ -36,6 +36,88 @@
     <div class="col-md-10">
         <div class="card shadow-sm">
             <div class="card-body">
+
+                {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
+                <div class="row mb-3">
+                    {{-- Total Inspections --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-info">
+                            {{-- Icono lateral --}}
+                            <span class="info-box-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </span>
+
+                            {{-- Contenido --}}
+                            <div class="info-box-content">
+                                <span class="info-box-text">Inspections</span>
+                                <h3 class="mb-1">{{ number_format($monthStats['total']) }}</h3>
+                                <div class="d-flex justify-content-between">
+                                    <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
+                                    <small>{{ $monthStats['year'] }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Pass --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-success">
+                            <span class="info-box-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Pass</span>
+                                <h3 class="mb-1">{{ number_format($monthStats['pass']) }}</h3>
+                                <div class="d-flex justify-content-between">
+                                    <small>Aprobadas</small>
+                                    <small>del mes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- No Pass --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-danger">
+                            <span class="info-box-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">No Pass</span>
+                                <h3 class="mb-1">{{ number_format($monthStats['fail']) }}</h3>
+                                <div class="d-flex justify-content-between">
+                                    <small>Rechazadas</small>
+                                    <small>del mes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- % Pass --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-primary">
+                            <span class="info-box-icon">
+                                <i class="fas fa-percentage"></i>
+                            </span>
+                            <div class="info-box-content">
+
+                                {{-- Número y meta en la misma fila --}}
+                                <div class="d-flex justify-content-between align-items-baseline">
+                                    <b>
+                                        <h3 class="mb-0">{{ $monthStats['rate'] }}%</h3>
+                                    </b>
+                                    <small class="text-white-50">Meta ≥ 95%</small>
+                                </div>
+
+                                {{-- Barra de progreso más gruesa --}}
+                                <div class="progress mt-2" style="height: 22px;">
+                                    <div class="progress-bar bg-light" style="width: {{ $monthStats['rate'] }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
                 <div class="table-responsive">
                     <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
                         <colgroup>
@@ -292,6 +374,36 @@
 
 
 @section('css')
+<style>
+    /* Compactar info-box para KPIs */
+    .info-box {
+        min-height: 70px;
+        /* por defecto ~120px */
+        padding: .5rem;
+    }
+
+    .info-box .info-box-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 58px;
+        line-height: 60px;
+    }
+
+    .info-box .info-box-content {
+        margin-left: .5rem;
+        line-height: 1.2;
+    }
+
+    .info-box .info-box-text {
+        font-size: .8rem;
+        font-weight: 600;
+    }
+
+    .info-box .info-box-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+</style>
 
 @endsection
 

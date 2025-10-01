@@ -409,40 +409,77 @@ class QaFaiSummaryController extends Controller
 
     // Mostrar listado de registros
    
-    public function summary(Request $request)
-    {
-        $tbl   = (new \App\Models\QaFaiSummary)->getTable(); // 'qa_faisummary'
-        $year  = $request->integer('year');
-        $month = $request->integer('month');
-        $day   = $request->input('day');
+   public function summary(Request $request)
+{
+    $tbl   = (new \App\Models\QaFaiSummary)->getTable(); // 'qa_faisummary'
+    $year  = $request->integer('year');
+    $month = $request->integer('month');
+    $day   = $request->input('day');
 
-        // === Query base ===
-        $q = \App\Models\QaFaiSummary::query()
-            ->with(['orderSchedule:id,work_id,location,PN']);
+    // === Query base ===
+    $q = \App\Models\QaFaiSummary::query()
+        ->with(['orderSchedule:id,work_id,location,PN']);
 
-      // 📅 Filtro de fechas (prioridad como en summary)
-        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
-        if ($day) {
-            $q->whereDate('created_at', Carbon::parse($day)->toDateString());
-        } elseif ($year && $month) {
-            $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
-        } elseif ($year) {
-            $q->whereYear('created_at', $year);
-        } elseif ($month) {
-            $q->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
-        } else {
-            // Por defecto: mes actual para no traer dataset enorme
-            $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
-        }
-        
-
-        // === Ordenar últimos registrados primero
-        $inspections = $q->orderByDesc("$tbl.created_at")
-            ->orderByDesc("$tbl.id")
-            ->get();
-
-        return view('qa.faisummary.faisummary_summary', compact('inspections', 'year', 'month', 'day'));
+    // 📅 Filtro de fechas (prioridad: día > año+mes > año > mes > mes actual)
+    if ($day) {
+        $q->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
+    } elseif ($year && $month) {
+        $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+    } elseif ($year) {
+        $q->whereYear('created_at', $year);
+    } elseif ($month) {
+        $q->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+    } else {
+        // Por defecto: mes actual
+        $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+        $year  = now()->year;
+        $month = now()->month;
     }
+
+    // === Ordenar últimos registrados primero
+    $inspections = $q->orderByDesc("$tbl.created_at")
+        ->orderByDesc("$tbl.id")
+        ->get();
+
+    // === Stats para el dashboard ===
+    $statsQuery = \App\Models\QaFaiSummary::query();
+
+    if ($day) {
+        $statsQuery->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
+    } elseif ($year && $month) {
+        $statsQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+    } elseif ($year) {
+        $statsQuery->whereYear('created_at', $year);
+    } elseif ($month) {
+        $statsQuery->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+    } else {
+        $statsQuery->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+        $year  = now()->year;
+        $month = now()->month;
+    }
+
+    $monthTotal = (clone $statsQuery)->count();
+    $monthPass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
+    $monthFail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
+    $passRate   = $monthTotal ? round($monthPass * 100 / $monthTotal, 1) : 0;
+
+    $monthStats = [
+        'year'  => $year,
+        'month' => $month,
+        'total' => $monthTotal,
+        'pass'  => $monthPass,
+        'fail'  => $monthFail,
+        'rate'  => $passRate,
+    ];
+
+    return view('qa.faisummary.faisummary_summary', compact(
+        'inspections',
+        'year',
+        'month',
+        'day',
+        'monthStats'
+    ));
+}
 
 
 
