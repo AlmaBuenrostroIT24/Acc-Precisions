@@ -408,22 +408,43 @@ class QaFaiSummaryController extends Controller
     ============================================================================================================================*/
 
     // Mostrar listado de registros
-public function summary(Request $request)
-{
-    $tbl = (new \App\Models\QaFaiSummary)->getTable(); // obtiene el nombre real: 'qa_faisummary'
+   
+    public function summary(Request $request)
+    {
+        $tbl   = (new \App\Models\QaFaiSummary)->getTable(); // 'qa_faisummary'
+        $year  = $request->integer('year');
+        $month = $request->integer('month');
+        $day   = $request->input('day');
 
-    // === Query base ===
-    $q = \App\Models\QaFaiSummary::query()
-        ->with(['orderSchedule:id,work_id,location,PN']);
+        // === Query base ===
+        $q = \App\Models\QaFaiSummary::query()
+            ->with(['orderSchedule:id,work_id,location,PN']);
+
+      // 📅 Filtro de fechas (prioridad como en summary)
+        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
+        if ($day) {
+            $q->whereDate('created_at', Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } elseif ($year) {
+            $q->whereYear('created_at', $year);
+        } elseif ($month) {
+            $q->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+        } else {
+            // Por defecto: mes actual para no traer dataset enorme
+            $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+        }
+        
+
+        // === Ordenar últimos registrados primero
+        $inspections = $q->orderByDesc("$tbl.created_at")
+            ->orderByDesc("$tbl.id")
+            ->get();
+
+        return view('qa.faisummary.faisummary_summary', compact('inspections', 'year', 'month', 'day'));
+    }
 
 
-     // === Tabla principal (últimos registrados primero) ===
-    $inspections = $q->orderByDesc("$tbl.created_at")
-        ->orderByDesc("$tbl.id")
-        ->get(); // 👈 sin paginación
-
-    return view('qa.faisummary.faisummary_summary', compact('inspections'));
-}
 
     //===========================================================================================================================
     /*===========================================================================================================================

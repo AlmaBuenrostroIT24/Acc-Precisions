@@ -20,13 +20,6 @@
 </div>
 @endsection
 
-@section('content_header')
-<div class="card bg-light d-flex justify-content-center align-items-center" style="height: 50px; padding: 0 15px;">
-    <h2 class="text-dark" style="font-size: 24px; margin: 0;">
-        <i class="fas fa-box"></i> Schedule Orders
-    </h2>
-</div>
-@endsection
 
 
 @section('content')
@@ -39,107 +32,249 @@
 {{-- Tab: By Active Schedules --}}
 
 <div class="row">
-    <div class="col-md-12">
-        {{-- ====== FILTROS ====== --}}
-        <div class="card shadow-sm mb-3 filters-card-fixed">
-            <div class="card-body py-2">
-                <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
+    {{-- === Columna izquierda: TABLA === --}}
+    <div class="col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
+                        <colgroup>
+                            <col style="width:150px">
+                            <col style="width:140px">
+                            <col style="width:100px">
+                            <col style="width:70px">
+                            <col style="width:90px">
+                            <col style="width:110px">
+                            <col style="width:90px">
+                            <col style="width:160px">
+                            <col style="width:160px">
+                            <col style="width:90px">
+                            <col style="width:100px">
+                            <col style="width:120px">
+                            <col style="width:100px">
+                        </colgroup>
+                        <thead class="thead-light sticky-thead">
+                            <tr class="text-uppercase text-muted small">
+                                <th>Date</th>
+                                <th>Part/Revision</th>
+                                <th>Job</th>
+                                <th>Type</th>
+                                <th>Operation</th>
+                                <th>Operator</th>
+                                <th>Result</th>
+                                <th>SB/IS</th>
+                                <th>Observation</th>
+                                <th>Station</th>
+                                <th>Method</th>
+                                <th>Inspector</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($inspections as $inspection)
+                            @php
+                            $tz = config('app.timezone', 'UTC'); // cambia si usas otra zona
+                            $dtCreated = $inspection->created_at
+                            ? $inspection->created_at->copy()->setTimezone($tz)
+                            : null;
 
-
-
-                    {{-- ====== TABLA ====== --}}
-                    <div class="mt-3">
-                        <div class="table-responsive">
-                            {{-- Usa colgroup para anchos consistentes --}}
-                            <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
-                                <colgroup>
-                                    <col style="width:150px">
-                                    <col style="width:140px">
-                                    <col style="width:100px">
-                                    <col style="width:70px">
-                                    <col style="width:90px">
-                                    <col style="width:110px">
-                                    <col style="width:90px">
-                                    <col style="width:160px">
-                                    <col style="width:160px">
-                                    <col style="width:90px">
-                                    <col style="width:100px">
-                                    <col style="width:120px">
-                                    <col style="width:100px">
-                                </colgroup>
-                                <thead class="thead-light sticky-thead">
-                                    <tr class="text-uppercase text-muted small">
-                                        <th>Fecha</th>
-                                        <th>Part/Revision</th>
-                                        <th>Job</th>
-                                        <th>Tipo</th>
-                                        <th>Operación</th>
-                                        <th>Operador</th>
-                                        <th>Resultado</th>
-                                        <th>SB/IS</th>
-                                        <th>Observación</th>
-                                        <th>Estación</th>
-                                        <th>Método</th>
-                                        <th>Inspector</th>
-                                        <th>Ubicación</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($inspections as $inspection)
-                                    @php
-                                    // created_at ya es una instancia de Carbon
-                                    $dtCreated = $inspection->created_at;
-                                    $dtLogicalDate = $inspection->date ? \Carbon\Carbon::parse($inspection->date) : null;
-                                    // Comparaciones robustas
-                                    $isPass = strcasecmp(trim((string)$inspection->results), 'pass') === 0;
-                                    $isFAI = strcasecmp(trim((string)$inspection->insp_type), 'FAI') === 0;
-                                    @endphp
-                                    <tr>
-                                        <td>
-                                            {{ optional($dtLogicalDate ?? $dtCreated)->format('M-d-y') }}
-                                            @if($dtCreated)
-                                            <span class="badge badge-light">{{ $dtCreated->format('H:i') }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
-                                            {{ $inspection->orderSchedule->PN ?? '' }}
-                                        </td>
-                                        <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
-                                        <td>
-                                            <span class="badge {{ $isFAI ? 'badge-info' : 'badge-secondary' }}">
-                                                {{ $inspection->insp_type }}
-                                            </span>
-                                        </td>
-
-                                        <td>{{ $inspection->operation }}</td>
-                                        <td class="truncate" title="{{ $inspection->operator }}">{{ $inspection->operator }}</td>
-                                        <td>
-                                            <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
-                                                {{ ucfirst($inspection->results) }}
-                                            </span>
-                                        </td>
-                                        <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->sb_is }}">
-                                            {{ $inspection->sb_is }}
-                                        </td>
-                                        <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->observation }}">
-                                            {{ $inspection->observation }}
-                                        </td>
-                                        <td>{{ $inspection->station }}</td>
-                                        <td>{{ $inspection->method }}</td>
-                                        <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
-                                        <td>{{ strtoupper($inspection->orderSchedule->location ?? '') }}</td>
-                                    </tr>
-                                    @empty
-                                    {{-- vacío: DataTables muestra su mensaje --}}
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                            $isPass = strcasecmp(trim((string)$inspection->results), 'pass') === 0;
+                            $isFAI = strcasecmp(trim((string)$inspection->insp_type), 'FAI') === 0;
+                            @endphp
+                            <tr>
+                                <td data-order="{{ $dtCreated?->format('Y-m-d H:i:s') }}">
+                                    {{ $dtCreated?->format('M-d-y') }}
+                                    @if($dtCreated)
+                                    <span class="badge badge-light">{{ $dtCreated->format('H:i') }}</span>
+                                    @endif
+                                </td>
+                                <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
+                                    {{ $inspection->orderSchedule->PN ?? '' }}
+                                </td>
+                                <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
+                                <td>
+                                    <span class="badge {{ $isFAI ? 'badge-info' : 'badge-secondary' }}">
+                                        {{ $inspection->insp_type }}
+                                    </span>
+                                </td>
+                                <td>{{ $inspection->operation }}</td>
+                                <td class="truncate" title="{{ $inspection->operator }}">{{ $inspection->operator }}</td>
+                                <td>
+                                    <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
+                                        {{ ucfirst($inspection->results) }}
+                                    </span>
+                                </td>
+                                <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->sb_is }}">
+                                    {{ $inspection->sb_is }}
+                                </td>
+                                <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->observation }}">
+                                    {{ $inspection->observation }}
+                                </td>
+                                <td>{{ $inspection->station }}</td>
+                                <td>{{ $inspection->method }}</td>
+                                <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
+                                <td>{{ strtoupper($inspection->orderSchedule->location ?? '') }}</td>
+                            </tr>
+                            @empty
+                            {{-- vacío: DataTables muestra su mensaje --}}
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
+    {{-- === Columna derecha: FILTROS === --}}
+    <div class="col-md-2">
+        <div class="card shadow-sm mb-3 filters-card-fixed">
+            <div class="card-body">
+                <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
+                    {{-- Global Search --}}
+                    <div class="form-group mb-2">
+                        <label for="globalSearch">Search</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                            <input type="text" id="globalSearch" class="form-control" placeholder="Search in table…" autocomplete="off">
+                            <div class="input-group-append">
+                                <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Operator --}}
+                    <div class="form-group mb-2">
+                        <label for="operatorFilter">Operator</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light"><i class="fas fa-user-tag text-primary"></i></span>
+                            </div>
+                            <select id="operatorFilter" class="form-control dt-filter" name="operator">
+                                <option value="">— All —</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Inspector --}}
+                    <div class="form-group mb-2">
+                        <label for="inspectorFilter">Inspector</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light"><i class="fas fa-user-check text-success"></i></span>
+                            </div>
+                            <select id="inspectorFilter" class="form-control dt-filter" name="inspector">
+                                <option value="">— All —</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+
+                    {{-- Location --}}
+                    <div class="form-group mb-2">
+                        <label for="locationFilter">Location</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-danger"></i></span>
+                            </div>
+                            <select id="locationFilter" class="form-control dt-filter" name="location">
+                                <option value="">— All —</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- YEAR --}}
+                    <div class="form-group mb-2">
+                        <label for="year">Date</label>
+                        <div class="input-group input-group date" id="yearPickerWrapper"
+                            data-target-input="nearest"
+                            data-initial-year="{{ request('year') ?? '' }}"
+                            style="min-width:160px">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-calendar-alt text-success"></i>
+                                </span>
+                            </div>
+                            <input type="text" id="year" name="year" class="form-control datetimepicker-input"
+                                data-toggle="datetimepicker" data-target="#yearPickerWrapper"
+                                value="{{ request('year') }}" placeholder="Year" autocomplete="off">
+                        </div>
+                    </div>
+
+                    {{-- MONTH (display + hidden) --}}
+                    <div class="form-group mb-2">
+                        <label for="monthDisplay" class="mb-1 sr-only">Month</label>
+                        <div class="input-group input-group date" id="monthPickerWrapper"
+                            data-target-input="nearest" style="min-width:160px">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-calendar-alt text-danger"></i>
+                                </span>
+                            </div>
+                            <input type="text" id="monthDisplay" class="form-control datetimepicker-input"
+                                data-toggle="datetimepicker" data-target="#monthPickerWrapper"
+                                placeholder="Month" autocomplete="off">
+                        </div>
+                        <input type="hidden" id="month" name="month" value="{{ request('month') }}">
+                    </div>
+
+                    {{-- DAY --}}
+                    <div class="form-group mb-2">
+                        <label for="day" class="mb-1 sr-only">Day</label>
+                        <div class="input-group input-group date" id="dayPickerWrapper"
+                            data-target-input="nearest" style="min-width:180px">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-calendar-day text-warning"></i>
+                                </span>
+                            </div>
+                            <input type="text" id="day" name="day" class="form-control datetimepicker-input"
+                                data-toggle="datetimepicker" data-target="#dayPickerWrapper"
+                                value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
+                                placeholder="Day" autocomplete="off">
+                        </div>
+                    </div>
+
+                    {{-- Clean + Total en la misma fila --}}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-eraser mr-1"></i> Clean
+                        </a>
+
+                        <span class="badge badge-info py-2 px-3" style="font-size: 1rem;">
+                            <i class="fas fa-list-ol mr-1"></i>
+                            Total: <span id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
+                        </span>
+                    </div>
+
+                    {{-- Quick actions --}}
+                    <div class="btn-group btn-group-sm d-flex mb-2">
+                        <a class="btn btn-outline-secondary flex-fill"
+                            href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                            <i class="fas fa-bolt mr-1"></i> Today
+                        </a>
+                        <a class="btn btn-outline-secondary flex-fill"
+                            href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                            <i class="far fa-calendar-alt mr-1"></i> Month
+                        </a>
+                        <a class="btn btn-outline-secondary flex-fill"
+                            href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                            <i class="far fa-calendar mr-1"></i> Year
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
+
 
 
 <!--   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createOrderModal">
@@ -157,105 +292,209 @@
 
 
 @section('css')
-<style>
-    #faiTable,
-    #faiTable td,
-    #faiTable th {
-        white-space: normal;
-    }
 
-    /* Párrafo dentro de la celda */
-    .cell-paragraph {
-        white-space: pre-line;
-        /* respeta \n y envuelve */
-        overflow-wrap: anywhere;
-        /* rompe palabras largas/URLs */
-        word-break: break-word;
-        /* respaldo */
-    }
-
-
-
-    .table-responsive--sticky {
-        max-height: calc(140vh - 260px);
-        /* ajusta con tu header */
-        overflow: auto;
-    }
-
-    .sticky-thead th {
-        position: sticky;
-        top: 0;
-        background: #f8f9fa;
-        /* acorde a .thead-light */
-        z-index: 2;
-    }
-
-
-    .align-middle td,
-    .align-middle th {
-        vertical-align: middle !important;
-    }
-
-    .truncate {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-
-    .table-sm td,
-    .table-sm th {
-        padding-top: .45rem;
-        padding-bottom: .45rem;
-    }
-</style>
 @endsection
 
 
 @push('js')
+<script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
-    // resources/js/faisummary-all.js (o en la vista)
-    $(function() {
-        const $tbl = $('#faiTable');
+    $(document).ready(function() {
 
-        if ($.fn.DataTable.isDataTable($tbl)) {
-            $tbl.DataTable().clear().destroy();
+        // =========================
+        //  DataTable
+        // =========================
+        if (!$.fn.DataTable.isDataTable('#faiTable')) {
+            window.faiDT = $('#faiTable').DataTable({
+                scrollX: false,
+                autoWidth: false,
+                pageLength: 15,
+                dom: 'rtip', // <- sin buscador global nativo
+                order: [
+                    [0, 'desc']
+                ],
+                columnDefs: [{
+                    targets: [7, 8],
+                    orderable: false
+                }, ],
+            });
+        } else {
+            window.faiDT = $('#faiTable').DataTable();
         }
 
-        $tbl.DataTable({
-            searching: false, // ← evita doble búsqueda
-            lengthChange: false, // ❌ oculta el select "N registros"
-            pageLength: 20,
-            responsive: true,
-            autoWidth: false,
-            ordering: false // 👈 respeta el orden que viene del servidor
+        // =========================
+        //  Search global (custom)
+        // =========================
+        function debounce(fn, ms) {
+            let t;
+            return function(...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), ms);
+            };
+        }
+        $('#globalSearch').on('input', debounce(function() {
+            const val = this.value || '';
+            faiDT.search(val).draw();
+        }, 200));
+        $('#clearGlobalSearch').on('click', function() {
+            $('#globalSearch').val('');
+            faiDT.search('').draw();
+        });
+        // Evita submit del form al presionar Enter
+        $('#globalSearch').on('keydown', function(e) {
+            if (e.key === 'Enter') e.preventDefault();
         });
 
-        $('[data-toggle="tooltip"]').tooltip();
 
-        const $form = $('#filtersForm');
+        // =========================
+        //  Mapeo de columnas
+        // =========================
+        const COLS = {
+            type: 3,
+            operation: 4,
+            operator: 5,
+            result: 6,
+            station: 9,
+            method: 10,
+            inspector: 11,
+            location: 12,
+        };
 
-        // Si seleccionas un día, enviamos y "anulamos" año/mes visualmente
-        $('#day').on('change', function() {
-            if (this.value) {
-                // Opcional: limpia año/mes para que quede claro en la UI
-                $('#year').val('');
-                $('#month').val('');
+        // =========================
+        //  Helpers filtros exactos
+        // =========================
+        function getText(v) {
+            if (typeof v === 'string') return v;
+            try {
+                return $(v).text();
+            } catch {
+                return String(v ?? '');
             }
-            $form.submit();
-        });
+        }
 
-        // Cambios en año o mes => enviar (si no hay día seleccionado)
-        $('#year, #month').on('change', function() {
-            if (!$('#day').val()) {
-                $form.submit();
+        function uniqueSorted(values) {
+            const cleaned = values.map(s => s.trim()).filter(Boolean);
+            return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b, undefined, {
+                sensitivity: 'base'
+            }));
+        }
+
+        function populateSelectFromDT(selectId, colIndex) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+
+            // 1) Datos visibles (applied) + 2) Datos filtrados (removed)
+            const applied = faiDT.column(colIndex, {
+                search: 'applied'
+            }).data().toArray();
+            const removed = faiDT.column(colIndex, {
+                search: 'removed'
+            }).data().toArray();
+
+            const colData = applied.concat(removed).map(getText);
+
+            const unique = uniqueSorted(colData);
+
+            const current = sel.value || '';
+            while (sel.options.length > 1) sel.remove(1);
+
+            const frag = document.createDocumentFragment();
+            for (const v of unique) {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                frag.appendChild(opt);
             }
-        });
+            sel.appendChild(frag);
 
-        // Auto-submit en inspector y operador
-        $('#inspector, #operator, #location').on('change', function() {
-            $form.submit();
-        });
+            if (current && unique.includes(current)) sel.value = current;
+        }
+
+
+        function bindExactFilter(selectId, colIndex) {
+            const el = document.getElementById(selectId);
+            if (!el) return;
+            el.addEventListener('change', function() {
+                const val = this.value;
+                if (!val) faiDT.column(colIndex).search('', true, false).draw();
+                else {
+                    const esc = $.fn.dataTable.util.escapeRegex(val);
+                    faiDT.column(colIndex).search('^' + esc + '$', true, false).draw();
+                }
+            });
+        }
+
+        const FILTERS = [{
+                id: 'operatorFilter',
+                col: COLS.operator
+            },
+            {
+                id: 'inspectorFilter',
+                col: COLS.inspector
+            },
+            {
+                id: 'stationFilter',
+                col: COLS.station
+            }, // solo si existe en tu HTML
+            {
+                id: 'methodFilter',
+                col: COLS.method
+            }, // solo si existe en tu HTML
+            {
+                id: 'locationFilter',
+                col: COLS.location
+            },
+            {
+                id: 'operationFilter',
+                col: COLS.operation
+            }, // idem
+            {
+                id: 'typeFilter',
+                col: COLS.type
+            }, // idem
+            {
+                id: 'resultFilter',
+                col: COLS.result
+            }, // idem
+        ];
+
+        FILTERS.forEach(f => bindExactFilter(f.id, f.col));
+
+        function repopulateAllFilters() {
+            FILTERS.forEach(f => populateSelectFromDT(f.id, f.col));
+        }
+        repopulateAllFilters();
+        faiDT.on('draw', repopulateAllFilters);
+
+        // Badge Total
+        const $badge = $('#badgeFinished');
+
+        function refreshBadge() {
+            $badge.text(faiDT.rows({
+                search: 'applied'
+            }).count());
+        }
+        refreshBadge();
+        faiDT.on('draw.dt search.dt order.dt page.dt', refreshBadge);
+
+        // =========================
+        //  Tempus Dominus (si usas pickers)
+        // =========================
+        if (window.initTempusFilters) {
+            window.initTempusFilters({
+                form: '#filtersForm', // <-- corregido
+                yearWrapper: '#yearPickerWrapper',
+                monthWrapper: '#monthPickerWrapper',
+                dayWrapper: '#dayPickerWrapper',
+                yearInput: '#year',
+                monthHiddenInput: '#month',
+                monthDisplayInput: '#monthDisplay',
+                dayInput: '#day',
+                initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
+            });
+        }
     });
 </script>
+
+
 @endpush
