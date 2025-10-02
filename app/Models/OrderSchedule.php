@@ -87,4 +87,9 @@ class OrderSchedule extends Model
     {
         return $this->hasMany(OrdMachiningDateLog::class, 'order_schedule_id');
     }
+
+    public function faiSummaries()
+{
+    return $this->hasMany(\App\Models\QaFaiSummary::class, 'order_schedule_id');
+}
 }

@@ -507,15 +507,30 @@ class QaFaiSummaryController extends Controller
             'inspection_endate'
         ];
 
-        $orderscompleted = \App\Models\OrderSchedule::query()
-            ->select($select)
-            ->whereNull('parent_id')  // 👈 Solo padres
-            ->where('status_inspection', 'completed')
-            ->orderByDesc('inspection_endate')
-            ->get();
 
-        return view('qa.faisummary.faisummary_completed', compact('orderscompleted'));
-    }
+        $orderscompleted = \App\Models\OrderSchedule::query()
+        ->select($select)
+        ->whereNull('parent_id')
+        ->where('status_inspection', 'completed')
+        ->withSum([
+            // ✅ Suma de qty_pcs donde FAI y pass
+            'faiSummaries as fai_pass_qty' => function ($q) {
+                $q->where('insp_type', 'FAI')
+                  ->where('results', 'pass');
+            },
+        ], 'qty_pcs')
+        ->withSum([
+            // ✅ Suma de qty_pcs donde IPI y pass
+            'faiSummaries as ipi_pass_qty' => function ($q) {
+                $q->where('insp_type', 'IPI')
+                  ->where('results', 'pass');
+            },
+        ], 'qty_pcs')
+        ->orderByDesc('inspection_endate')
+        ->get();
+
+    return view('qa.faisummary.faisummary_completed', compact('orderscompleted'));
+}
 
 
 
