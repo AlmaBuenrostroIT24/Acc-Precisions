@@ -2,6 +2,7 @@
 @extends('adminlte::page')
 
 @section('title', 'FAI Summary Completed')
+{{--
 @section('content_header')
 <div class="card shadow-sm mb-2 border-0 bg-light">
     <div class="card-body d-flex align-items-center py-2 px-3">
@@ -13,20 +14,14 @@
         <nav aria-label="breadcrumb" class="mb-0 ml-auto">
             <ol class="breadcrumb mb-0 bg-transparent p-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">FAI Summary Completed</li>
-            </ol>
-        </nav>
-    </div>
+<li class="breadcrumb-item active" aria-current="page">FAI Summary Completed</li>
+</ol>
+</nav>
+</div>
 </div>
 @endsection
+--}}
 
-@section('content_header')
-<div class="card bg-light d-flex justify-content-center align-items-center" style="height: 50px; padding: 0 15px;">
-    <h2 class="text-dark" style="font-size: 24px; margin: 0;">
-        <i class="fas fa-box"></i> Schedule Orders
-    </h2>
-</div>
-@endsection
 
 
 @section('content')
@@ -43,6 +38,86 @@
         <div class="card mb-4">
             <div class="card-body">
                 {{-- Filtros dinámicos --}}
+
+                {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
+                <div class="row mb-1">
+                    {{-- Total Inspections --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-info">
+                            {{-- Icono lateral --}}
+                            <span class="info-box-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </span>
+
+                            {{-- Contenido --}}
+                            <div class="info-box-content">
+                                <span class="info-box-text">Inspections</span>
+                                <h3 class="mb-1"></h3>
+                                <div class="d-flex justify-content-between">
+                                    <small></small>
+                                    <small></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Pass --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-success">
+                            <span class="info-box-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Pass</span>
+                                <h3 class="mb-1"></h3>
+                                <div class="d-flex justify-content-between">
+                                    <small>Approved</small>
+                                    <small></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- No Pass --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-danger">
+                            <span class="info-box-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">No Pass</span>
+                                <h3 class="mb-1"></h3>
+                                <div class="d-flex justify-content-between">
+                                    <small>Rejected</small>
+                                    <small></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- % Pass --}}
+                    <div class="col-sm-6 col-lg-3 mb-2">
+                        <div class="info-box bg-primary">
+                            <span class="info-box-icon">
+                                <i class="fas fa-percentage"></i>
+                            </span>
+                            <div class="info-box-content">
+
+                                {{-- Número y meta en la misma fila --}}
+                                <div class="d-flex justify-content-between align-items-baseline">
+                                    <b>
+                                        <h3 class="mb-0"></h3>
+                                    </b>
+                                    <small class="text-white-50">Meta ≥ 95%</small>
+                                </div>
+
+                                {{-- Barra de progreso más gruesa --}}
+                                <div class="progress mt-2" style="height: 22px;">
+                                    <div class="progress-bar bg-light" ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {{-- Tabla --}}
                 <div class="table-responsive">
                     <table class="table  table-bordered table-striped" style="table-layout: fixed; width: 100%;">
@@ -90,7 +165,7 @@
                                         data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
                                         <i class="fas fa-print"></i>
                                     </a>
-                                    
+
                                     {{-- Botón para descargar --}}
                                     <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
                                         class="btn btn-sm btn-warning">

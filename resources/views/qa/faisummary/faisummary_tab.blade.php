@@ -1,5 +1,5 @@
 {{-- Tabs --}}
-<ul class="nav nav-tabs border-bottom border-2 mb-4" id="faisummaryTabs" role="tablist">
+<ul class="nav nav-tabs border-bottom border-2 mb-3" id="faisummaryTabs" role="tablist">
     @can('qa/partsrevision')
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('faisummary.partsrevision') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"

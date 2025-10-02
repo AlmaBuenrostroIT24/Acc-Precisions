@@ -2,6 +2,7 @@
 @extends('adminlte::page')
 
 @section('title', 'FAI Summary')
+{{--
 @section('content_header')
 <div class="card shadow-sm mb-2 border-0 bg-light">
     <div class="card-body d-flex align-items-center py-2 px-3">
@@ -19,6 +20,7 @@
     </div>
 </div>
 @endsection
+--}}
 
 
 
@@ -38,7 +40,7 @@
             <div class="card-body">
 
                 {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
-                <div class="row mb-3">
+                <div class="row mb-1">
                     {{-- Total Inspections --}}
                     <div class="col-sm-6 col-lg-3 mb-2">
                         <div class="info-box bg-info">
@@ -69,8 +71,8 @@
                                 <span class="info-box-text">Pass</span>
                                 <h3 class="mb-1">{{ number_format($monthStats['pass']) }}</h3>
                                 <div class="d-flex justify-content-between">
-                                    <small>Aprobadas</small>
-                                    <small>del mes</small>
+                                    <small>Approved</small>
+                                    <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -86,8 +88,8 @@
                                 <span class="info-box-text">No Pass</span>
                                 <h3 class="mb-1">{{ number_format($monthStats['fail']) }}</h3>
                                 <div class="d-flex justify-content-between">
-                                    <small>Rechazadas</small>
-                                    <small>del mes</small>
+                                    <small>Rejected</small>
+                                    <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -117,11 +119,10 @@
                     </div>
                 </div>
 
-
                 <div class="table-responsive">
                     <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
                         <colgroup>
-                            <col style="width:150px">
+                            <col style="width:200px">
                             <col style="width:140px">
                             <col style="width:100px">
                             <col style="width:70px">
@@ -136,12 +137,12 @@
                             <col style="width:100px">
                         </colgroup>
                         <thead class="thead-light sticky-thead">
-                            <tr class="text-uppercase text-muted small">
+                            <tr class="text-uppercase ">
                                 <th>Date</th>
                                 <th>Part/Revision</th>
                                 <th>Job</th>
                                 <th>Type</th>
-                                <th>Operation</th>
+                                <th>Opet</th>
                                 <th>Operator</th>
                                 <th>Result</th>
                                 <th>SB/IS</th>

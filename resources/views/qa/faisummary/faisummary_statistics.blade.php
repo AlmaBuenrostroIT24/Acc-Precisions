@@ -4,6 +4,8 @@
 @section('title', 'FAI Summary Statistics')
 
 {{-- ✅ Un solo content_header --}}
+
+{{--
 @section('content_header')
 <div class="card shadow-sm mb-2 border-0 bg-light">
     <div class="card-body d-flex align-items-center py-2 px-3">
@@ -20,11 +22,11 @@
         </nav>
     </div>
 </div>
-
-
 @endsection
+--}}
 
 @section('content')
+
 
 {{-- Tabs --}}
 @include('qa.faisummary.faisummary_tab')
