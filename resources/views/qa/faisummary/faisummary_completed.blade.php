@@ -46,18 +46,23 @@
                     </div>
                     <div class="card-body">
                         {{-- ======= TU FORMULARIO ======= --}}
-                        <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
+                        <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm">
                             {{-- Global Search --}}
                             <div class="form-group mb-2">
+                                <label for="tableSearch" class="mb-1">Search</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text bg-light">
                                             <i class="fas fa-search"></i>
                                         </span>
                                     </div>
-                                    <input type="text" id="globalSearch" class="form-control" placeholder="Search in table…" autocomplete="off">
+                                    <input type="text"
+                                        id="tableSearch"
+                                        class="form-control"
+                                        placeholder="Type to filter the table…"
+                                        autocomplete="off">
                                     <div class="input-group-append">
-                                        <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
+                                        <button type="button" id="clearTableSearch" class="btn btn-outline-secondary" title="Clear">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -131,27 +136,28 @@
 
                             {{-- Clean + Total --}}
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm">
+                                <a href="{{ route('faisummary.completed') }}" class="btn btn-secondary btn-sm">
                                     <i class="fas fa-eraser mr-1"></i> Clean
                                 </a>
                                 <span class="badge badge-info py-2 px-3" style="font-size: 1rem;">
                                     <i class="fas fa-list-ol mr-1"></i>
-                                    Total: <span id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
+                                    Total: <span id="badgeFinished">{{ isset($orderscompleted) ? $orderscompleted->count() : 0 }}</span>
+
                                 </span>
                             </div>
 
                             {{-- Quick actions --}}
                             <div class="btn-group btn-group-sm d-flex mb-2">
                                 <a class="btn btn-outline-secondary flex-fill"
-                                    href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                    href="{{ route('faisummary.completed', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
                                     <i class="fas fa-bolt mr-1"></i> Today
                                 </a>
                                 <a class="btn btn-outline-secondary flex-fill"
-                                    href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                    href="{{ route('faisummary.completed', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
                                     <i class="far fa-calendar-alt mr-1"></i> Month
                                 </a>
                                 <a class="btn btn-outline-secondary flex-fill"
-                                    href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                    href="{{ route('faisummary.completed', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
                                     <i class="far fa-calendar mr-1"></i> Year
                                 </a>
                             </div>
@@ -209,17 +215,14 @@
             {{-- Header de la tabla --}}
             <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-list-alt mr-2 text-primary"></i>
-                    <strong>FAI Completed</strong>
-                    <span class="badge badge-primary ml-2">
-                        {{ isset($orderscompleted) ? $orderscompleted->count() : 0 }} rows
-                    </span>
+                    <i class="fas fa-list-alt mr-2"></i>
+                    <strong>FAI/IPI Completed</strong>
                 </div>
             </div>
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-sticky" style="table-layout: fixed; width: 100%;">
+                    <table id="faicompleteTable" class="table table-bordered table-sm table-striped  table-sticky" style="table-layout: fixed; width: 100%;">
                         <thead class="table-light thead-custom">
                             <tr>
                                 <th style="width: 50px;">DATE</th>
@@ -304,20 +307,23 @@
                                 </td>
                                 <td class="text-nowrap">
                                     <a href="#"
-                                        class="btn btn-sm btn-primary btn-open-pdf"
+                                        class="btn btn-sm btn-danger btn-open-pdf"
                                         data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
                                         <i class="fas fa-print"></i>
                                     </a>
                                     <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
-                                        class="btn btn-sm btn-warning">
+                                        class="btn btn-sm btn-info">
                                         <i class="fas fa-download"></i>
+                                    </a>
+                                    <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
+                                        class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
                                     </a>
                                 </td>
                             </tr>
                             @empty
-                            <tr>
-                                <td colspan="13" class="text-center">No hay registros completados.</td>
-                            </tr>
+
+
                             @endforelse
                         </tbody>
                     </table>
@@ -363,38 +369,174 @@
 
 
 @push('js')
+<script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
-    $(document).on('click', '.btn-open-pdf', function(e) {
-        e.preventDefault();
-        const url = $(this).data('pdf-url'); // ← usa la URL del botón
-        $('#pdfEmbed').attr('src', url + '#zoom=page-width');
-        $('#pdfModal').modal('show');
-    });
+    /* ===========================
+     *  Modal PDF
+     * =========================== */
+    $(document)
+        .on('click', '.btn-open-pdf', function(e) {
+            e.preventDefault();
+            const url = $(this).data('pdf-url');
+            $('#pdfEmbed').attr('src', url + '#zoom=page-width');
+            $('#pdfModal').modal('show');
+        });
     $('#pdfModal').on('hidden.bs.modal', function() {
         $('#pdfEmbed').attr('src', '');
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const table = document.getElementById('faiTable');
-        const btnDensity = document.getElementById('btnDensity');
-        const btnReload = document.getElementById('btnReload');
+    /* ===========================
+     *  DataTable + Filtros (LIMPIO)
+     * =========================== */
+    $(function() {
+        $.fn.dataTable.ext.errMode = 'throw';
 
-        if (btnDensity && table) {
-            btnDensity.addEventListener('click', () => {
-                table.classList.toggle('table-compact');
+        const COLS = {
+            date: 0,
+            location: 1,
+            work_id: 2,
+            pn: 3,
+            description: 4,
+            samp_plan: 5,
+            wo_qty: 6,
+            sampling: 7,
+            ops: 8,
+            fai: 9,
+            ipi: 10,
+            prog: 11,
+            action: 12
+        };
+
+        const $tbl = $('#faicompleteTable');
+        if (!$tbl.length) return;
+
+        if ($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
+
+        const dt = $tbl.DataTable({
+            searching: true,
+            ordering: false,
+            pageLength: 10,
+            scrollX: false,
+            autoWidth: false,
+            dom: 'rtip',
+            columnDefs: [{
+                targets: [COLS.prog, COLS.action],
+                orderable: false
+            }]
+        });
+        window.faiDT = dt;
+
+        // ===== Helpers =====
+        const nzText = v => (typeof v === 'string' ? v : ($(v).text?.() ?? String(v ?? '')).trim());
+        const uniqueSorted = arr => [...new Set(arr.map(nzText).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, undefined, {
+                sensitivity: 'base'
+            }));
+
+        // ===== Buscador global =====
+        const $search = $('#tableSearch');
+        const $clear = $('#clearTableSearch');
+
+        $search.off('.faic').on('input.faic', function() {
+            dt.search(this.value || '').page('first').draw('page');
+        }).on('keydown.faic', function(e) {
+            if (e.key === 'Enter') e.preventDefault();
+        });
+
+        $clear.off('.faic').on('click.faic', function() {
+            $search.val('');
+            dt.search('').page('first').draw('page');
+            $search.trigger('focus');
+        });
+
+        // ===== Filtros exactos (selects) =====
+        const FILTERS = [{
+                id: 'locationFilter',
+                col: COLS.location
+            },
+            // { id: 'operationFilter', col: COLS.ops },
+            // { id: 'inspectorFilter', col: X },
+            // { id: 'resultFilter',    col: X },
+        ];
+
+        function populateSelectFromDT(selectId, colIndex) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+
+            const values = dt.column(colIndex, {
+                    search: 'applied'
+                }).data().toArray()
+                .concat(dt.column(colIndex, {
+                    search: 'removed'
+                }).data().toArray());
+            const list = uniqueSorted(values);
+            const keep = sel.value || '';
+
+            // Deja solo "— All —"
+            while (sel.options.length > 1) sel.remove(1);
+            const frag = document.createDocumentFragment();
+            for (const v of list) {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                frag.appendChild(opt);
+            }
+            sel.appendChild(frag);
+            if (keep && list.includes(keep)) sel.value = keep;
+        }
+
+        function bindExactFilter(selectId, colIndex) {
+            const el = document.getElementById(selectId);
+            if (!el) return;
+            el.addEventListener('change', function() {
+                if (!this.value) {
+                    dt.column(colIndex).search('', true, false);
+                } else {
+                    const re = $.fn.dataTable.util.escapeRegex(this.value);
+                    dt.column(colIndex).search('^' + re + '$', true, false);
+                }
+                dt.page('first').draw('page');
             });
         }
 
-        if (btnReload) {
-            btnReload.addEventListener('click', () => {
-                // Si usas DataTables con AJAX:
-                // const dt = $('#faiTable').DataTable();
-                // dt.ajax.reload();
+        FILTERS.forEach(f => bindExactFilter(f.id, f.col));
 
-                // Si NO usas AJAX:
-                window.location.reload();
+        // Repobla selects al inicio y cada vez que cambia el término global o filtros (search.dt)
+        function repopulateAll() {
+            FILTERS.forEach(f => populateSelectFromDT(f.id, f.col));
+        }
+        repopulateAll();
+        dt.on('search.dt', repopulateAll);
+
+        // ===== Badge total visible =====
+        const $badge = $('#badgeFinished');
+
+        function refreshBadge() {
+            $badge.text(dt.rows({
+                search: 'applied'
+            }).count());
+        }
+        refreshBadge();
+        dt.on('draw.dt search.dt page.dt', refreshBadge);
+
+        // ===== Fechas (opcional) =====
+        if (window.initTempusFilters) {
+            window.initTempusFilters({
+                form: '#filtersForm',
+                yearWrapper: '#yearPickerWrapper',
+                monthWrapper: '#monthPickerWrapper',
+                dayWrapper: '#dayPickerWrapper',
+                yearInput: '#year',
+                monthHiddenInput: '#month',
+                monthDisplayInput: '#monthDisplay',
+                dayInput: '#day',
+                initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
             });
         }
     });
 </script>
+
+
+
+
 @endpush

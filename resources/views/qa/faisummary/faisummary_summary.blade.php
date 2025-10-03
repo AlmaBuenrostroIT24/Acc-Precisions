@@ -43,7 +43,7 @@
                 <div class="row mb-1">
                     {{-- Total Inspections --}}
                     <div class="col-sm-6 col-lg-3 mb-2">
-                        <div class="info-box bg-info">
+                        <div class="info-box bg-secondary">
                             {{-- Icono lateral --}}
                             <span class="info-box-icon">
                                 <i class="fas fa-clipboard-list"></i>
@@ -96,7 +96,7 @@
                     </div>
                     {{-- % Pass --}}
                     <div class="col-sm-6 col-lg-3 mb-2">
-                        <div class="info-box bg-primary">
+                        <div class="info-box bg-info">
                             <span class="info-box-icon">
                                 <i class="fas fa-percentage"></i>
                             </span>
@@ -548,11 +548,11 @@
             {
                 id: 'stationFilter',
                 col: COLS.station
-            }, // solo si existe en tu HTML
+            }, // solo si existe en HTML
             {
                 id: 'methodFilter',
                 col: COLS.method
-            }, // solo si existe en tu HTML
+            }, // solo si existe en HTML
             {
                 id: 'locationFilter',
                 col: COLS.location

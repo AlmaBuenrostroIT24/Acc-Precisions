@@ -408,78 +408,78 @@ class QaFaiSummaryController extends Controller
     ============================================================================================================================*/
 
     // Mostrar listado de registros
-   
-   public function summary(Request $request)
-{
-    $tbl   = (new \App\Models\QaFaiSummary)->getTable(); // 'qa_faisummary'
-    $year  = $request->integer('year');
-    $month = $request->integer('month');
-    $day   = $request->input('day');
 
-    // === Query base ===
-    $q = \App\Models\QaFaiSummary::query()
-        ->with(['orderSchedule:id,work_id,location,PN']);
+    public function summary(Request $request)
+    {
+        $tbl   = (new \App\Models\QaFaiSummary)->getTable(); // 'qa_faisummary'
+        $year  = $request->integer('year');
+        $month = $request->integer('month');
+        $day   = $request->input('day');
 
-    // 📅 Filtro de fechas (prioridad: día > año+mes > año > mes > mes actual)
-    if ($day) {
-        $q->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
-    } elseif ($year && $month) {
-        $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
-    } elseif ($year) {
-        $q->whereYear('created_at', $year);
-    } elseif ($month) {
-        $q->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
-    } else {
-        // Por defecto: mes actual
-        $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
-        $year  = now()->year;
-        $month = now()->month;
+        // === Query base ===
+        $q = \App\Models\QaFaiSummary::query()
+            ->with(['orderSchedule:id,work_id,location,PN']);
+
+        // 📅 Filtro de fechas (prioridad: día > año+mes > año > mes > mes actual)
+        if ($day) {
+            $q->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } elseif ($year) {
+            $q->whereYear('created_at', $year);
+        } elseif ($month) {
+            $q->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+        } else {
+            // Por defecto: mes actual
+            $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+            $year  = now()->year;
+            $month = now()->month;
+        }
+
+        // === Ordenar últimos registrados primero
+        $inspections = $q->orderByDesc("$tbl.created_at")
+            ->orderByDesc("$tbl.id")
+            ->get();
+
+        // === Stats para el dashboard ===
+        $statsQuery = \App\Models\QaFaiSummary::query();
+
+        if ($day) {
+            $statsQuery->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $statsQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } elseif ($year) {
+            $statsQuery->whereYear('created_at', $year);
+        } elseif ($month) {
+            $statsQuery->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+        } else {
+            $statsQuery->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+            $year  = now()->year;
+            $month = now()->month;
+        }
+
+        $monthTotal = (clone $statsQuery)->count();
+        $monthPass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
+        $monthFail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
+        $passRate   = $monthTotal ? round($monthPass * 100 / $monthTotal, 1) : 0;
+
+        $monthStats = [
+            'year'  => $year,
+            'month' => $month,
+            'total' => $monthTotal,
+            'pass'  => $monthPass,
+            'fail'  => $monthFail,
+            'rate'  => $passRate,
+        ];
+
+        return view('qa.faisummary.faisummary_summary', compact(
+            'inspections',
+            'year',
+            'month',
+            'day',
+            'monthStats'
+        ));
     }
-
-    // === Ordenar últimos registrados primero
-    $inspections = $q->orderByDesc("$tbl.created_at")
-        ->orderByDesc("$tbl.id")
-        ->get();
-
-    // === Stats para el dashboard ===
-    $statsQuery = \App\Models\QaFaiSummary::query();
-
-    if ($day) {
-        $statsQuery->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
-    } elseif ($year && $month) {
-        $statsQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
-    } elseif ($year) {
-        $statsQuery->whereYear('created_at', $year);
-    } elseif ($month) {
-        $statsQuery->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
-    } else {
-        $statsQuery->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
-        $year  = now()->year;
-        $month = now()->month;
-    }
-
-    $monthTotal = (clone $statsQuery)->count();
-    $monthPass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
-    $monthFail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
-    $passRate   = $monthTotal ? round($monthPass * 100 / $monthTotal, 1) : 0;
-
-    $monthStats = [
-        'year'  => $year,
-        'month' => $month,
-        'total' => $monthTotal,
-        'pass'  => $monthPass,
-        'fail'  => $monthFail,
-        'rate'  => $passRate,
-    ];
-
-    return view('qa.faisummary.faisummary_summary', compact(
-        'inspections',
-        'year',
-        'month',
-        'day',
-        'monthStats'
-    ));
-}
 
 
 
@@ -487,8 +487,12 @@ class QaFaiSummaryController extends Controller
     /*===========================================================================================================================
          Todo el tab relacionado a faicompleted Y GENERACION DE PDF
     ============================================================================================================================*/
-    public function faicompleted()
+    public function faicompleted(Request $request)
     {
+        $year  = $request->integer('year');   // null/0 si no viene
+        $month = $request->integer('month');  // null/0 si no viene
+        $day   = $request->input('day');      // string o null
+
         $select = [
             'id',
             'parent_id',
@@ -497,40 +501,62 @@ class QaFaiSummaryController extends Controller
             'Part_description',
             'operation',
             'wo_qty',
-            'group_wo_qty', // 👈 suma padre+hijos
+            'group_wo_qty',
             'location',
             'status_inspection',
             'total_fai',
             'total_ipi',
             'sampling',
             'sampling_check',
-            'inspection_endate'
+            'inspection_endate',
         ];
 
-
         $orderscompleted = \App\Models\OrderSchedule::query()
-        ->select($select)
-        ->whereNull('parent_id')
-        ->where('status_inspection', 'completed')
-        ->withSum([
-            // ✅ Suma de qty_pcs donde FAI y pass
-            'faiSummaries as fai_pass_qty' => function ($q) {
-                $q->where('insp_type', 'FAI')
-                  ->where('results', 'pass');
-            },
-        ], 'qty_pcs')
-        ->withSum([
-            // ✅ Suma de qty_pcs donde IPI y pass
-            'faiSummaries as ipi_pass_qty' => function ($q) {
-                $q->where('insp_type', 'IPI')
-                  ->where('results', 'pass');
-            },
-        ], 'qty_pcs')
-        ->orderByDesc('inspection_endate')
-        ->get();
+            ->select($select)
+            ->whereNull('parent_id')
+            ->where('status_inspection', 'completed')
 
-    return view('qa.faisummary.faisummary_completed', compact('orderscompleted'));
-}
+            // 📅 Filtros por fecha (SOLO si llegan)
+            ->when($day, function ($q) use ($day) {
+                $q->whereDate('inspection_endate', \Carbon\Carbon::parse($day)->toDateString());
+            })
+            ->when($year && $month, function ($q) use ($year, $month) {
+                $q->whereYear('inspection_endate', $year)
+                    ->whereMonth('inspection_endate', $month);
+            })
+            ->when($year && !$month, function ($q) use ($year) {
+                $q->whereYear('inspection_endate', $year);
+            })
+            ->when(!$year && $month, function ($q) use ($month) {
+                $q->whereYear('inspection_endate', now()->year)
+                    ->whereMonth('inspection_endate', $month);
+            })
+
+            // ✅ Sumas de piezas aprobadas (qty_pcs) desde qa_faisummary
+            ->withSum([
+                'faiSummaries as fai_pass_qty' => function ($q) {
+                    $q->where('insp_type', 'FAI')
+                        ->where('results', 'pass'); // ajusta a 'Pass' si en tu BD está con mayúscula
+                },
+            ], 'qty_pcs')
+            ->withSum([
+                'faiSummaries as ipi_pass_qty' => function ($q) {
+                    $q->where('insp_type', 'IPI')
+                        ->where('results', 'pass');
+                },
+            ], 'qty_pcs')
+
+            ->orderByDesc('inspection_endate')
+            ->get();
+
+        return view('qa.faisummary.faisummary_completed', compact(
+            'orderscompleted',
+            'year',
+            'month',
+            'day'
+        ));
+    }
+
 
 
 
