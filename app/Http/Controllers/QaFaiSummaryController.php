@@ -557,6 +557,18 @@ class QaFaiSummaryController extends Controller
         ));
     }
 
+    public function updateStatus(Request $request, OrderSchedule $order)
+    {
+        $request->validate([
+            'status_inspection' => 'required|string'
+        ]);
+
+        $order->status_inspection = $request->status_inspection;
+        $order->save();
+
+        return response()->json(['success' => true]);
+    }
+
 
 
 

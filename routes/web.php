@@ -156,6 +156,9 @@ Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::cla
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
+// -----------------------------------faicompleted-------------------------------------------------------
+
+
 // -----------------------------------faistatiscs-------------------------------------------------------
 Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
     // NUEVO: breakdown por operador/inspector

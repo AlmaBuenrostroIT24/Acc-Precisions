@@ -220,25 +220,24 @@
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            <div class="card-body p-2">
                 <div class="table-responsive">
                     <table id="faicompleteTable" class="table table-bordered table-sm table-striped  table-sticky" style="table-layout: fixed; width: 100%;">
-                        <thead class="table-light thead-custom">
+                        <thead class="thead-light sticky-thead">
                             <tr>
-                                <th style="width: 50px;">DATE</th>
-                                <th style="width: 30px;">LOC.</th>
-                                <th style="width: 40px;">WORK ID</th>
-                                <th style="width: 50px;">PN</th>
-                                <th style="width: 90px;">DESCRIPTION</th>
-                                <th style="width: 50px;">SAMP. PLAN</th>
-                                <th style="width: 40px;">WO QTY</th>
-                                <th style="width: 28px;">SAMP.</th>
-                                <th style="width: 20px;">OPS.</th>
-                                <th style="width: 20px;">FAI</th>
-                                <th style="width: 20px;">IPI</th>
-                                {{-- Nueva columna --}}
-                                <th style="width: 60px;">PROG.</th>
-                                <th style="width: 35px;">ACTION</th>
+                                <th style="width: 100px;">DATE</th>
+                                <th style="width: 70px;">LOC.</th>
+                                <th style="width: 100px;">WORK ID</th>
+                                <th style="width: 100px;">PN</th>
+                                <th style="width: 200px;">DESCRIPTION</th>
+                                <th style="width: 100px;">SAMP. PLAN</th>
+                                <th style="width: 70px;">WO QTY</th>
+                                <th style="width: 70px;">SAMP.</th>
+                                <th style="width: 50px;">OPS.</th>
+                                <th style="width: 40px;">FAI</th>
+                                <th style="width: 40px;">IPI</th>
+                                <th style="width: 100px;">PROG.</th>
+                                <th style="width: 100px;">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -282,12 +281,12 @@
                                 <td class="td-ellipsis" title="{{ $o->Part_description }}">
                                     {{ \Illuminate\Support\Str::before($o->Part_description, ',') }}
                                 </td>
-                                <td>{{ ucfirst($o->sampling_check) }}</td>
-                                <td>{{ $o->group_wo_qty }}</td>
-                                <td>{{ $o->sampling }}</td>
-                                <td>{{ $o->operation }}</td>
-                                <td>{{ $o->total_fai }}</td>
-                                <td>{{ $o->total_ipi }}</td>
+                                <td class="text-center">{{ ucfirst($o->sampling_check) }}</td>
+                                <td class="text-center">{{ $o->group_wo_qty }}</td>
+                                <td class="text-center">{{ $o->sampling }}</td>
+                                <td class="text-center">{{ $o->operation }}</td>
+                                <td class="text-center">{{ $o->total_fai }}</td>
+                                <td class="text-center">{{ $o->total_ipi }}</td>
                                 {{-- PROGRESO desde BD --}}
                                 {{-- Columna PROGRESO --}}
                                 <td>
@@ -306,19 +305,20 @@
                                     @endif
                                 </td>
                                 <td class="text-nowrap">
-                                    <a href="#"
-                                        class="btn btn-sm btn-danger btn-open-pdf"
-                                        data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
-                                        <i class="fas fa-print"></i>
-                                    </a>
-                                    <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
-                                        class="btn btn-sm btn-info">
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                    <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
-                                        class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="#" class="btn btn-danger btn-open-pdf"
+                                            data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1" class="btn btn-info">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <a href="#"
+                                            class="btn btn-warning btn-edit-pdf"
+                                            data-id="{{ $o->id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -533,6 +533,47 @@
                 initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
             });
         }
+    });
+
+    $(document).on('click', '.btn-edit-pdf', function(e) {
+        e.preventDefault();
+
+        const orderId = $(this).data('id');
+
+        Swal.fire({
+            title: '¿Move to progress?',
+            text: "The inspection will change status to 'In Progress'.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#aaa',
+            confirmButtonText: 'Yes, Continue'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/orders-schedule/${orderId}/status-inspection`, {
+                        method: 'PUT', // 👈 tu ruta es PUT, no POST
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            status_inspection: 'in_progress'
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Updated!', 'Inspection moved to In Progress.', 'success');
+                        } else {
+                            Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'Hubo un problema en el servidor', 'error');
+                    });
+            }
+        });
     });
 </script>
 
