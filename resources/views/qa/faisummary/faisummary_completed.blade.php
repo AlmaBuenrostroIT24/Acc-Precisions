@@ -213,11 +213,27 @@
     <div class="col-lg-9">
         <div class="card mb-4">
             {{-- Header de la tabla --}}
-            <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div class="d-flex align-items-center">
+            <div class="card-header py-2 d-flex align-items-center">
+                {{-- Título a la izquierda --}}
+                <div class="d-flex align-items-center mr-auto">
                     <i class="fas fa-list-alt mr-2"></i>
-                    <strong>FAI/IPI Completed</strong>
+                    <strong class="mb-0">FAI/IPI Completed</strong>
                 </div>
+                {{-- Botones en el header --}}
+                <button id="btnExportExcel" type="button" class="btn btn-sm btn-success mr-2">
+                    <i class="fas fa-file-excel mr-1"></i> Excel
+                </button>
+                <button id="btnExportPdf" type="button" class="btn btn-sm btn-danger">
+                    <i class="fas fa-file-pdf mr-1"></i> PDF
+                </button>
+
+                {{-- Formularios ocultos para enviar ids[] por POST --}}
+                <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}" method="POST" target="_blank" class="d-none">
+                    @csrf
+                </form>
+                <form id="exportPdfForm" action="{{ route('faisummary.completed.export.pdf') }}" method="POST" target="_blank" class="d-none">
+                    @csrf
+                </form>
             </div>
 
             <div class="card-body p-2">
@@ -386,11 +402,12 @@
     });
 
     /* ===========================
-     *  DataTable + Filtros (LIMPIO)
+     *  DataTable + Filtros + Export
      * =========================== */
     $(function() {
         $.fn.dataTable.ext.errMode = 'throw';
 
+        // Índices de columnas (ajusta si cambias el <thead>)
         const COLS = {
             date: 0,
             location: 1,
@@ -410,8 +427,10 @@
         const $tbl = $('#faicompleteTable');
         if (!$tbl.length) return;
 
+        // Destruye si existía
         if ($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
 
+        // Inicializa (si usas AJAX/serverSide, agrégalo aquí)
         const dt = $tbl.DataTable({
             searching: true,
             ordering: false,
@@ -423,17 +442,22 @@
                 targets: [COLS.prog, COLS.action],
                 orderable: false
             }]
+            // rowId: row => 'row-' + row.id, // <- si cargas por AJAX y tu dataset tiene "id"
         });
-        window.faiDT = dt;
+        window.faiDT = dt; // útil para depurar en consola
 
-        // ===== Helpers =====
+        /* ---------------------------
+         * Helpers
+         * --------------------------- */
         const nzText = v => (typeof v === 'string' ? v : ($(v).text?.() ?? String(v ?? '')).trim());
         const uniqueSorted = arr => [...new Set(arr.map(nzText).filter(Boolean))]
             .sort((a, b) => a.localeCompare(b, undefined, {
                 sensitivity: 'base'
             }));
 
-        // ===== Buscador global =====
+        /* ---------------------------
+         * Buscador global
+         * --------------------------- */
         const $search = $('#tableSearch');
         const $clear = $('#clearTableSearch');
 
@@ -449,20 +473,21 @@
             $search.trigger('focus');
         });
 
-        // ===== Filtros exactos (selects) =====
+        /* ---------------------------
+         * Filtro exacto por LOCATION (select)
+         * --------------------------- */
         const FILTERS = [{
                 id: 'locationFilter',
                 col: COLS.location
             },
-            // { id: 'operationFilter', col: COLS.ops },
-            // { id: 'inspectorFilter', col: X },
-            // { id: 'resultFilter',    col: X },
+            // Puedes añadir más: { id: 'operationFilter', col: COLS.ops },
         ];
 
         function populateSelectFromDT(selectId, colIndex) {
             const sel = document.getElementById(selectId);
             if (!sel) return;
 
+            // Recolecta valores de la columna (filtrados y removidos para capturar todo el universo)
             const values = dt.column(colIndex, {
                     search: 'applied'
                 }).data().toArray()
@@ -472,8 +497,9 @@
             const list = uniqueSorted(values);
             const keep = sel.value || '';
 
-            // Deja solo "— All —"
+            // Deja solo "— All —" (la primera opción)
             while (sel.options.length > 1) sel.remove(1);
+
             const frag = document.createDocumentFragment();
             for (const v of list) {
                 const opt = document.createElement('option');
@@ -482,12 +508,14 @@
                 frag.appendChild(opt);
             }
             sel.appendChild(frag);
+
             if (keep && list.includes(keep)) sel.value = keep;
         }
 
         function bindExactFilter(selectId, colIndex) {
             const el = document.getElementById(selectId);
             if (!el) return;
+
             el.addEventListener('change', function() {
                 if (!this.value) {
                     dt.column(colIndex).search('', true, false);
@@ -495,20 +523,22 @@
                     const re = $.fn.dataTable.util.escapeRegex(this.value);
                     dt.column(colIndex).search('^' + re + '$', true, false);
                 }
-                dt.page('first').draw('page');
+                dt.page('first').draw('page'); // MUY IMPORTANTE
             });
         }
 
         FILTERS.forEach(f => bindExactFilter(f.id, f.col));
 
-        // Repobla selects al inicio y cada vez que cambia el término global o filtros (search.dt)
+        // Repobla selects al inicio y cuando cambia la búsqueda global o filtros
         function repopulateAll() {
             FILTERS.forEach(f => populateSelectFromDT(f.id, f.col));
         }
         repopulateAll();
         dt.on('search.dt', repopulateAll);
 
-        // ===== Badge total visible =====
+        /* ---------------------------
+         * Badge: total visibles
+         * --------------------------- */
         const $badge = $('#badgeFinished');
 
         function refreshBadge() {
@@ -519,20 +549,87 @@
         refreshBadge();
         dt.on('draw.dt search.dt page.dt', refreshBadge);
 
-        // ===== Fechas (opcional) =====
-        if (window.initTempusFilters) {
-            window.initTempusFilters({
-                form: '#filtersForm',
-                yearWrapper: '#yearPickerWrapper',
-                monthWrapper: '#monthPickerWrapper',
-                dayWrapper: '#dayPickerWrapper',
-                yearInput: '#year',
-                monthHiddenInput: '#month',
-                monthDisplayInput: '#monthDisplay',
-                dayInput: '#day',
-                initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
-            });
+        /* ---------------------------
+         * Export (Excel / PDF) con filtros aplicados
+         * --------------------------- */
+
+        // Obtiene los IDs de las filas filtradas.
+        function getFilteredIds() {
+            // 1) Preferir IDs internos de DataTables (usan el id del <tr>)
+            let ids = dt.rows({
+                    search: 'applied'
+                }).ids().toArray()
+                .map(id => String(id).replace(/^row-/, ''));
+
+            // 2) Fallback: leer del DOM todas las páginas si no hay ids()
+            if (!ids.length) {
+                const $nodes = dt.rows({
+                    search: 'applied',
+                    page: 'all'
+                }).nodes().to$();
+                ids = $nodes.map(function() {
+                    const domId = this.id || ''; // ej. "row-123"
+                    return domId.replace(/^row-/, ''); // -> "123"
+                }).get();
+            }
+            return ids;
         }
+
+        function submitExport(formId) {
+            // Por si cambió un filtro justo antes del click
+            dt.draw(false);
+
+            const $form = $('#' + formId);
+            // Limpia inputs previos excepto @csrf
+            $form.find('input[name="ids[]"]').remove();
+            $form.find('input[name="year"], input[name="month"], input[name="day"], input[name="location"]').remove();
+
+            const ids = getFilteredIds();
+            // Debug opcional:
+            // console.log('Filtradas:', dt.rows({ search:'applied' }).count(), 'IDs:', ids.length);
+
+            if (!ids.length) {
+                alert('No hay filas para exportar con el filtro actual.');
+                return;
+            }
+
+            // Enviar los IDs visibles con el filtro actual
+            ids.forEach(id => {
+                $form.append($('<input>', {
+                    type: 'hidden',
+                    name: 'ids[]',
+                    value: id
+                }));
+            });
+
+            // (Opcional) también envía los filtros de la URL actual
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'year',
+                value: '{{ request("year") }}'
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'month',
+                value: '{{ request("month") }}'
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'day',
+                value: '{{ request("day") }}'
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'location',
+                value: '{{ request("location") }}'
+            }));
+
+            $form.trigger('submit');
+        }
+
+        // Clicks de export
+        $('#btnExportExcel').on('click', () => submitExport('exportExcelForm'));
+        $('#btnExportPdf').on('click', () => submitExport('exportPdfForm'));
     });
 
     $(document).on('click', '.btn-edit-pdf', function(e) {

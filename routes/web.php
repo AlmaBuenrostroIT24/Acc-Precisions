@@ -158,7 +158,9 @@ Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 
 // -----------------------------------faicompleted-------------------------------------------------------
 
+Route::post('/qa/faisummary/completed/export/excel', [QaFaiSummaryController::class, 'exportCompletedExcel'])->name('faisummary.completed.export.excel');
 
+Route::post('/qa/faisummary/completed/export/pdf', [QaFaiSummaryController::class, 'exportCompletedPdf'])->name('faisummary.completed.export.pdf');
 // -----------------------------------faistatiscs-------------------------------------------------------
 Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
     // NUEVO: breakdown por operador/inspector

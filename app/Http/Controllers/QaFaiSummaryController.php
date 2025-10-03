@@ -13,8 +13,9 @@ use Illuminate\Support\Str;
 use PDF;
 use App\Services\InspectionSummary;
 use Illuminate\Support\Facades\Schema;
+use Maatwebsite\Excel\Facades\Excel;
 
-
+use App\Exports\BladeTableExport;
 
 class QaFaiSummaryController extends Controller
 {
@@ -731,6 +732,147 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 
+
+    protected function baseCompletedQuery(Request $request)
+    {
+        $q = OrderSchedule::query()
+            ->select([
+                'id',
+                'parent_id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'operation',
+                'wo_qty',
+                'group_wo_qty',
+                'location',
+                'status_inspection',
+                'total_fai',
+                'total_ipi',
+                'sampling',
+                'sampling_check',
+                'inspection_endate'
+            ])
+            ->whereNull('parent_id')
+            ->where('status_inspection', 'completed')
+            ->orderByDesc('inspection_endate') // o el orden que prefieras
+            ->withSum([
+                'faiSummaries as fai_pass_qty' => function ($q) {
+                    $q->where('insp_type', 'FAI')
+                        ->where('results', 'pass'); // ajusta a 'Pass' si en tu BD está con mayúscula
+                },
+            ], 'qty_pcs')
+            ->withSum([
+                'faiSummaries as ipi_pass_qty' => function ($q) {
+                    $q->where('insp_type', 'IPI')
+                        ->where('results', 'pass');
+                },
+            ], 'qty_pcs');
+
+        // filtro de búsqueda global (igual que el de DataTables.search())
+        if ($search = trim($request->get('q', ''))) {
+            $q->where(function ($w) use ($search) {
+                $w->where('work_id', 'like', "%{$search}%")
+                    ->orWhere('PN', 'like', "%{$search}%")
+                    ->orWhere('Part_description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
+            });
+        }
+
+        return $q;
+    }
+    public function exportCompletedExcel(Request $request)
+    {
+        $ids = array_filter((array) $request->input('ids', []), 'strlen');
+
+        if (!empty($ids)) {
+            $rows = OrderSchedule::query()
+                ->select([
+                    'id',
+                    'parent_id',
+                    'work_id',
+                    'PN',
+                    'Part_description',
+                    'operation',
+                    'wo_qty',
+                    'group_wo_qty',
+                    'location',
+                    'status_inspection',
+                    'total_fai',
+                    'total_ipi',
+                    'sampling',
+                    'sampling_check',
+                    'inspection_endate'
+                ])
+                ->whereIn('id', $ids)
+                ->withSum([
+                    'faiSummaries as fai_pass_qty' => function ($q) {
+                        $q->where('insp_type', 'FAI')->whereRaw('LOWER(results) = "pass"');
+                    },
+                ], 'qty_pcs')
+                ->withSum([
+                    'faiSummaries as ipi_pass_qty' => function ($q) {
+                        $q->where('insp_type', 'IPI')->whereRaw('LOWER(results) = "pass"');
+                    },
+                ], 'qty_pcs')
+                ->orderByDesc('inspection_endate')
+                ->get();
+        } else {
+            $rows = $this->baseCompletedQuery($request)->get();
+        }
+
+        return Excel::download(
+            new \App\Exports\BladeTableExport('qa.faisummary.excel_completed_table', ['rows' => $rows]),
+            'FAI_Completed.xlsx'
+        );
+    }
+
+    public function exportCompletedPdf(Request $request)
+    {
+        $ids = array_filter((array) $request->input('ids', []), 'strlen');
+
+        if (!empty($ids)) {
+            $rows = OrderSchedule::query()
+                ->select([
+                    'id',
+                    'parent_id',
+                    'work_id',
+                    'PN',
+                    'Part_description',
+                    'operation',
+                    'wo_qty',
+                    'group_wo_qty',
+                    'location',
+                    'status_inspection',
+                    'total_fai',
+                    'total_ipi',
+                    'sampling',
+                    'sampling_check',
+                    'inspection_endate'
+                ])
+                ->whereIn('id', $ids)
+                ->withSum([
+                    'faiSummaries as fai_pass_qty' => function ($q) {
+                        $q->where('insp_type', 'FAI')->whereRaw('LOWER(results) = "pass"');
+                    },
+                ], 'qty_pcs')
+                ->withSum([
+                    'faiSummaries as ipi_pass_qty' => function ($q) {
+                        $q->where('insp_type', 'IPI')->whereRaw('LOWER(results) = "pass"');
+                    },
+                ], 'qty_pcs')
+                ->orderByDesc('inspection_endate')
+                ->get();
+        } else {
+            $rows = $this->baseCompletedQuery($request)->get();
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('qa.faisummary.pdf_completed_table', [
+            'rows' => $rows
+        ])->setPaper('letter', 'landscape');
+
+        return $pdf->stream('FAI_Completed.pdf');
+    }
 
 
     //===========================================================================================================================
