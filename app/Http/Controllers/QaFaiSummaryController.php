@@ -638,7 +638,7 @@ class QaFaiSummaryController extends Controller
             $deliveries[] = [
                 'date'    => $header['due_date'] ? \Carbon\Carbon::parse($header['due_date'])->format('m/d/Y') : '—',
                 'cust_po' => $header['cust_po'] ?: '—',
-                'pieces'  => (int) ($order->wo_qty ?? $order->qty ?? 0),
+                'pieces'  => (int) ($order->qty ?? $order->qty ?? 0),
             ];
         }
 

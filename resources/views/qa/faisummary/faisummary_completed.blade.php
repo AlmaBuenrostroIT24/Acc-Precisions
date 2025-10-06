@@ -656,10 +656,11 @@ $(function() {
 /* ===========================
  *  Botón "Move to progress"
  * =========================== */
-$(document).on('click', '.btn-edit-pdf', function(e) {
+$(document).on('click', '.btn-edit-pdf', function (e) {
   e.preventDefault();
 
   const orderId = $(this).data('id');
+  const $btn = $(this); // para identificar la fila
 
   Swal.fire({
     title: '¿Move to progress?',
@@ -670,30 +671,56 @@ $(document).on('click', '.btn-edit-pdf', function(e) {
     cancelButtonColor: '#aaa',
     confirmButtonText: 'Yes, Continue'
   }).then((result) => {
-    if (result.isConfirmed) {
-      fetch(`/orders-schedule/${orderId}/status-inspection`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ status_inspection: 'in_progress' })
-      })
+    if (!result.isConfirmed) return;
+
+    fetch(`/orders-schedule/${orderId}/status-inspection`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({ status_inspection: 'in_progress' })
+    })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          Swal.fire('Updated!', 'Inspection moved to In Progress.', 'success');
-        } else {
+        if (!data.success) {
           Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+          return;
         }
+
+        Swal.fire({
+          title: 'Updated!',
+          text: 'Inspection moved to In Progress.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+        // === 1️⃣ Eliminar la fila de la tabla manualmente ===
+        const dt = $('#faicompleteTable').DataTable();
+
+        // Detecta la fila (por si DataTables usa modo responsive)
+        const tr = $btn.closest('tr');
+        const row = dt.row(tr.hasClass('child') ? tr.prev() : tr);
+        row.remove().draw(false);
+
+
+        // === 3️⃣ Sincronizar con otras pestañas (opcional) ===
+        try {
+          localStorage.setItem('faisummary_update', JSON.stringify({
+            id: orderId,
+            status: 'in_progress',
+            timestamp: Date.now()
+          }));
+        } catch (e) {}
       })
       .catch(err => {
         console.error(err);
         Swal.fire('Error', 'Hubo un problema en el servidor', 'error');
       });
-    }
   });
 });
+
 </script>
 
 

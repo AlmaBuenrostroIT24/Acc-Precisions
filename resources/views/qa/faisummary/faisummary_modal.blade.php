@@ -101,11 +101,13 @@
                     </div>
 
                 </div>
-                <div class="modal-footer">
-                    <!-- <button type="submit" class="btn btn-success">Save Inspection</button>-->
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-success" id="btnFinishInspection">
+                        <i class="fas fa-check-circle mr-1"></i> Finish Inspection
+                    </button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Exit</button>
-                </div>
-            </div>
+                </div
+                    </div>
         </form>
     </div>
 </div>

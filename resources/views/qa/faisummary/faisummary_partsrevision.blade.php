@@ -14,10 +14,10 @@
     <nav aria-label="breadcrumb" class="mb-0 ml-auto">
       <ol class="breadcrumb mb-0 bg-transparent p-0">
         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">FAI Summary</li>
-      </ol>
-    </nav>
-  </div>
+<li class="breadcrumb-item active" aria-current="page">FAI Summary</li>
+</ol>
+</nav>
+</div>
 </div>
 @endsection
 --}}
@@ -124,21 +124,14 @@
 
 @push('js')
 
-
 <script>
   (() => {
     // ===== Rutas =====
     const ROUTES = {
-      // Lee la URL real desde la meta. Si no existe, usa el fallback “plano”.
-      partsData: document.querySelector('meta[name="route-parts-data"]')?.content ||
-        '/qa/partsrevision/data',
-
-      samplingPlan: (lot, type = 'Normal') =>
-        `/sampling-plan?lot_size=${lot}&sampling_type=${encodeURIComponent(type)}`,
-
+      partsData: document.querySelector('meta[name="route-parts-data"]')?.content || '/qa/partsrevision/data',
+      samplingPlan: (lot, type = 'Normal') => `/sampling-plan?lot_size=${lot}&sampling_type=${encodeURIComponent(type)}`,
       faibyOrder: (id) => `/qa/faisummary/by-order/${id}`, // GET
-      validateOps: (id, ops) =>
-        `/orders-schedule/${id}/validate-ops?ops=${encodeURIComponent(ops)}`,
+      validateOps: (id, ops) => `/orders-schedule/${id}/validate-ops?ops=${encodeURIComponent(ops)}`,
       updateOps: (id) => `/orders-schedule/${id}/update-operation`, // POST
       statusInspection: (id) => `/orders-schedule/${id}/status-inspection`, // PUT
       storeSingle: `/qa/faisummary/store-single`, // POST
@@ -190,23 +183,28 @@
 
     // ===== AJAX robusto (no truena UI en 500/404) =====
     function fetchJson(url, opts = {}) {
-      return $.ajax(
-        Object.assign({
-            url,
-            method: 'GET',
-            dataType: 'json',
-            headers: {
-              Accept: 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            timeout: 12000
-          },
-          opts
-        )
-      ).catch((err) => {
+      return $.ajax(Object.assign({
+        url,
+        method: 'GET',
+        dataType: 'json',
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 12000
+      }, opts)).catch((err) => {
         console.warn('fetchJson failed:', url, err?.status, err?.responseText);
         return null;
       });
+    }
+
+    /* FIX: helper seguro para recargar DataTables solo si es AJAX */
+    function reloadIfAjax($t) {
+      if ($.fn.DataTable.isDataTable($t)) {
+        const api = $t.DataTable();
+        const hasAjax = !!api.settings()[0].ajax;
+        if (hasAjax && api.ajax) api.ajax.reload(null, false);
+      }
     }
 
     // ================== Estado ==================
@@ -230,8 +228,7 @@
     const TEXT = $.fn.dataTable.render.text();
 
     const COLUMNS = {
-      empty: [
-        {
+      empty: [{
           data: 'part',
           render: TEXT
         },
@@ -239,7 +236,7 @@
           data: 'work_id',
           render: TEXT
         },
-          {
+        {
           data: 'due_date',
           render: TEXT
         },
@@ -308,6 +305,7 @@
 
             const $wrap = $(`.progress[data-order-id="${id}"]`);
             const $bar = $wrap.find('.progress-bar');
+            if (!$wrap.length || !$bar.length) return; /* FIX */
 
             $bar.attr('aria-valuenow', pct).css('width', pct + '%').text(pct + '%');
             $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
@@ -356,11 +354,10 @@
       // Cargar filas guardadas + armar reporte y progreso
       const orderId = id;
       loadFaiRows(orderId, () => {
-        updateInspectionMissing();
+        updateInspectionMissing(); /* FIX: deja solo esta */
       });
 
       updateSamplingQty();
-      updateInspectionMissing();
 
       const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
       const ipiNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
@@ -389,6 +386,12 @@
     // Cambios en sampling (tipo/cantidad) y WO_QTY
     $('#editModal').on('change input', '#edit-sampling-type, #edit-woqty', () => {
       updateSamplingQty();
+    });
+
+    /* FIX: si cambia #operationInput, habilitar/deshabilitar botón agregar fila */
+    $('#editModal').on('input change', '#operationInput', () => {
+      const ops = parseInt(ctx.modal.$operationInput.val(), 10) || 0;
+      $('#addRowBtn').prop('disabled', ops === 0);
     });
 
     /*=================== Guardar # de operaciones============================*/
@@ -421,7 +424,7 @@
 
               if (ctx.dtEmpty) ctx.dtEmpty.ajax.reload(null, false);
               if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
-              swalOk('¡Upodated!', 'Operation saved successfully');
+              swalOk('¡Updated!', 'Operation saved successfully'); /* FIX: typo */
             });
         })
         .fail(() => swalError('Error', 'The operation could not be updated.'));
@@ -502,7 +505,7 @@
     $('#editModal').on('click', '.removeRowBtn', function() {
       $(this).closest('tr').remove();
       updateInspectionMissing();
-      refreshAllSamplingSelects(); // recalcular límites tras remover
+      refreshAllSamplingSelects();
     });
 
     // Editar fila guardada
@@ -510,9 +513,9 @@
       const $row = $(this).closest('tr');
       $row.find('input, select').prop('disabled', false);
       $row.find('td:last').html(`
-    <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-    <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-  `);
+      <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
+      <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+    `);
 
       // Si es IPI y habilitamos edición, recalcula pendientes de esa fila
       const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
@@ -576,7 +579,13 @@
       };
       if (rowId) payload.id = rowId;
 
-      $.post(ROUTES.storeSingle, payload)
+      /* FIX: fuerza dataType json para evitar HTML inesperado */
+      $.ajax({
+          url: ROUTES.storeSingle,
+          method: 'POST',
+          data: payload,
+          dataType: 'json'
+        })
         .done(resp => {
           if (resp?.id) $row.attr('data-id', resp.id);
 
@@ -587,13 +596,13 @@
           $row.find('input.sample-fixed').prop('disabled', true);
 
           updateInspectionMissing();
-          refreshAllSamplingSelects(); // recalcular límites tras guardar
+          refreshAllSamplingSelects();
 
           $row.find('td:last').html(`
-        <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
-        <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-        <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-      `);
+          <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
+          <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+        `);
 
           const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
           const ipiNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
@@ -614,7 +623,6 @@
                 const opJustSaved = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
                 const ipiDoneForOp = ctx.ipiCountMap.get(opJustSaved) || 0;
 
-                // Si se alcanzó el requerido en esa operación → preparar siguiente borrador sugerido
                 if (ipiDoneForOp >= samplingNow) {
                   const nextPair = getNextInspectionPair(opsTotal);
                   if (nextPair) {
@@ -626,32 +634,9 @@
                   }
                 }
               }
-
-              // ===== [OPCIONAL] Avanzar tras FAI si falta IPI de esa misma op =====
-              // (Descomentar si lo deseas)
-              /*
-              if (String(inspType).toUpperCase() === 'FAI') {
-                if (typeof updateInspectionMissing === 'function') updateInspectionMissing();
-                const opSaved = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
-                const faiDone = ctx.faiDoneOps.has(opSaved);
-                const ipiDoneForOp = ctx.ipiCountMap.get(opSaved) || 0;
-                if (faiDone && ipiDoneForOp < samplingNow) {
-                  const draft = createDraftRow();
-                  if (draft) {
-                    const $inspTypeSel = draft.find('select[name="insp_type[]"]');
-                    const $opSel = draft.find('select[name="operation[]"]');
-                    if ($inspTypeSel.length) $inspTypeSel.val('IPI').trigger('change');
-                    if ($opSel.length) $opSel.val(opSaved).trigger('change');
-                    ctx.modal.$rowsContainer.prepend(draft);
-                    draft.find('input,select').filter(':visible:not([disabled])').first().focus();
-                  }
-                }
-              }
-              */
             } catch (e) {
               console.warn('auto-next IPI suggestion skipped:', e);
             }
-            // ===== FIN MOD =====
 
             if (pct >= 100) {
               Swal.fire({
@@ -676,8 +661,6 @@
                 setInspectionStatus(orderId, 'in_progress').fail(xhr => console.warn('status process fail:', xhr?.status));
               }
               swalOk('¡Saved!', 'The inspection was saved successfully');
-              // if (ctx.dtEmpty) ctx.dtEmpty.ajax.reload(null, false);
-              // if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
             }
           });
         })
@@ -752,25 +735,31 @@
     });
 
     // ================== Lógica de Sampling & Reporte ==================
+    /* FIX: robusto si refs del modal no existen aún */
     function updateSamplingQty() {
-      const lotSize = parseInt($('#edit-woqty').val());
+      const $sampling = (ctx.modal.$samplingResult && ctx.modal.$samplingResult.length) ?
+        ctx.modal.$samplingResult :
+        $('#edit-sampling-result');
+
+      const lotSize = parseInt($('#edit-woqty').val(), 10);
       const type = $('#edit-sampling-type').val();
+
       if (!lotSize || lotSize < 1) {
-        ctx.modal.$samplingResult.val('');
-        refreshAllSamplingSelects(); // deshabilita inputs si aplica
+        $sampling.val('');
+        refreshAllSamplingSelects();
         return;
       }
       fetchJson(ROUTES.samplingPlan(lotSize, type)).then(data => {
-        const sample = parseInt(data?.sample_qty ?? data?.sample_size ?? data?.n ?? data?.sampling ?? data?.size ?? 0, 10) || 0;
-        ctx.modal.$samplingResult.val(sample);
+        const sample = parseInt(
+          data?.sample_qty ?? data?.sample_size ?? data?.n ?? data?.sampling ?? data?.size ?? 0, 10
+        ) || 0;
+        $sampling.val(sample);
 
-        // refrescar inputs IPI (no FAI)
         refreshAllSamplingSelects();
-        // recalcular pendientes por operación en borradores
         refreshPendingIpiOptions();
 
         const orderId = $('#order-id').val();
-        const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
+        const opsNow = parseInt(ctx.modal.$operationInput?.val?.() || 0, 10) || 0;
         if (orderId && opsNow) {
           refreshProgress(orderId, opsNow, sample);
           updateInspectionMissing();
@@ -779,19 +768,18 @@
     }
 
     function updateInspectionMissing() {
-      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
-      const operations = parseInt(ctx.modal.$operationInput.val()) || 0;
+      const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || 0, 10) || 0;
+      const operations = parseInt(ctx.modal.$operationInput?.val?.() || 0, 10) || 0;
 
       const $box = ctx.modal.$reportBox;
       const $pre = ctx.modal.$reportPre;
 
       if (!operations) {
-        $pre.text('');
-        $box.removeClass('bg-success bg-warning text-white');
+        if ($pre?.length) $pre.text('');
+        if ($box?.length) $box.removeClass('bg-success bg-warning text-white');
         return;
       }
 
-      // Mapas separados para PASS y NO PASS
       const faiPassMap = new Map(),
         faiFailMap = new Map(),
         ipiPassMap = new Map(),
@@ -800,7 +788,6 @@
       ctx.faiDoneOps.clear();
       ctx.ipiCountMap.clear();
 
-      // Contar filas guardadas (pass y no pass)
       ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
         const $r = $(this);
         const type = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
@@ -820,13 +807,10 @@
         }
       });
 
-      // Actualiza caches SOLO con PASS
       for (const [op, sum] of faiPassMap.entries())
         if (sum >= 1) ctx.faiDoneOps.add(op);
-      for (const [op, sum] of ipiPassMap.entries())
-        ctx.ipiCountMap.set(op, sum);
+      for (const [op, sum] of ipiPassMap.entries()) ctx.ipiCountMap.set(op, sum);
 
-      // Reporte por operación contra requeridos
       let resumen = '';
       let faltantes = false;
 
@@ -851,7 +835,6 @@
           `✔️ <strong>IPI:</strong> P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, Done:${ipiRealizadosOp})` :
           `❌ <strong>IPI:</strong> P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, Done:${ipiRealizadosOp})`;
 
-        // Ícono global
         let globalIcon = '⚠️';
         if (faiPass >= faiReq && ipiPass >= ipiReq) globalIcon = '✔️';
         else if (faiPass < faiReq && ipiPass < ipiReq) globalIcon = '❌';
@@ -862,13 +845,13 @@
         if (faiPass < faiReq || ipiPass < ipiReq) faltantes = true;
       }
 
-      // Pintar caja según faltantes por operación
-      $pre.html(resumen.trim().replace(/\n/g, "<br>"));
-      $box.removeClass('bg-success bg-warning text-white');
-      if (faltantes) $box.addClass('bg-warning text-white');
-      else $box.addClass('bg-success text-white');
+      if ($pre?.length) $pre.html(resumen.trim().replace(/\n/g, "<br>"));
+      if ($box?.length) {
+        $box.removeClass('bg-success bg-warning text-white');
+        if (faltantes) $box.addClass('bg-warning text-white');
+        else $box.addClass('bg-success text-white');
+      }
 
-      // al finalizar, refresca pendientes IPI en borradores
       refreshPendingIpiOptions();
     }
 
@@ -880,7 +863,6 @@
       return `${n}th Op`;
     }
 
-    // Lee la cantidad de piezas de la fila (prioriza qty_pcs; cae a sample_idx; default 1)
     function getRowQty($row) {
       const attr = parseInt(
         $row.attr('data-qty_pcs') ?? $row.data('qty_pcs') ?? $row.data('qty') ?? '', 10
@@ -899,21 +881,19 @@
       return 1;
     }
 
-    // === Util: obtener WO_QTY del modal ===
     function getWoQty() {
       const raw = (ctx?.modal?.$woqty?.length ? ctx.modal.$woqty.val() : $('#edit-woqty').val());
       const n = parseInt(raw, 10);
       return Number.isFinite(n) && n > 0 ? n : 0;
     }
 
-    // ====== Helpers para restante dinámico por operación (WO_QTY - guardadas - borradores) ======
     function getDraftIpiSumForOp(op, $excludeRow = null) {
       let sum = 0;
       ctx.modal.$rowsContainer.find('tr').each(function() {
         const $r = $(this);
-        if ($excludeRow && $r[0] === $excludeRow[0]) return; // excluye esta fila
+        if ($excludeRow && $r[0] === $excludeRow[0]) return;
         const isSaved = !!$r.attr('data-id');
-        if (isSaved) return; // solo borradores
+        if (isSaved) return;
         const t = String($r.find('select[name="insp_type[]"]').val() || '').toUpperCase();
         if (t !== 'IPI') return;
         const opVal = $r.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
@@ -929,24 +909,22 @@
       const wo = getWoQty();
       if (!wo) return 0;
 
-      const saved = ctx.ipiCountMap.get(op) || 0; // sumatoria de GUARDADAS (pass)
-      const drafts = getDraftIpiSumForOp(op, $rowCtx); // sumatoria de borradores EXCLUYENDO $rowCtx
+      const saved = ctx.ipiCountMap.get(op) || 0;
+      const drafts = getDraftIpiSumForOp(op, $rowCtx);
       const isSavedRow = $rowCtx && !!$rowCtx.attr('data-id');
 
-      // Usado excepto esta fila:
       const usedExceptThis = saved + drafts - (isSavedRow ? (parseInt(currentRowQty, 10) || 0) : 0);
 
       return Math.max(0, wo - usedExceptThis);
     }
 
-    // === MOD: input de muestra con tope dinámico (remaining) por operación ===
     function buildSamplingInput(sampling, currentVal = null, maxAllowed = null) {
       const woMax = getWoQty();
       const s = Math.max(0, parseInt(sampling) || 0);
-      const upper = Math.max(0, maxAllowed ?? woMax ?? s); // prioridad: maxAllowed (remaining) > WO_QTY > sampling
+      const upper = Math.max(0, maxAllowed ?? woMax ?? s);
 
       if (upper === 0) {
-        return $(`<input type="number" name="sample_idx[]" class="form-control" disabled>`);
+        return $(`<input type="number" name="sample_idx[]" class="form-control" disabled placeholder="Sin piezas pendientes">`); /* FIX UX */
       }
 
       const $input = $(`<input type="number" name="sample_idx[]" class="form-control">`)
@@ -972,7 +950,6 @@
       return $input;
     }
 
-    // === MOD: usa restante dinámico por operación (WO_QTY - guardadas - borradores) como tope ===
     function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
       $cell.empty();
       const t = String(type).toUpperCase();
@@ -997,12 +974,10 @@
       }
 
       const curQty = Number.isFinite(parseInt(currentVal, 10)) ? parseInt(currentVal, 10) : 0;
-
-      // 👇 restante dinámico por operación (WO_QTY − guardadas − borradores)
       const remaining = getIpiRemainingForOpByWo(op, curQty, $row);
 
       if (remaining === 0) {
-        $cell.append($(`<input type="number" name="sample_idx[]" class="form-control" min="0" max="0" value="0" disabled>`));
+        $cell.append($(`<input type="number" name="sample_idx[]" class="form-control" min="0" max="0" value="0" disabled placeholder="Sin piezas pendientes">`));
         return;
       }
 
@@ -1011,11 +986,9 @@
       if (initVal < 1) initVal = 1;
 
       const $inpNow = buildSamplingInput(sampling, initVal, remaining);
-      // (opcional) útil para depurar:
       $inpNow.attr('data-live-max', remaining);
       $cell.append($inpNow);
 
-      // 🔁 Recalcula límites SOLO en las otras filas borrador de la misma operación
       $inpNow.off('input.__dynmax change.__dynmax')
         .on('input.__dynmax change.__dynmax', debounce(() => {
           const opLocal = op;
@@ -1023,8 +996,6 @@
 
           ctx.modal.$rowsContainer.find('tr').each(function() {
             const $r = $(this);
-
-            // ⛔ No tocar la fila actual para no romper el tipeo
             if ($r[0] === $row[0]) return;
 
             const isSaved = !!$r.attr('data-id');
@@ -1043,23 +1014,19 @@
         }, 120));
     }
 
-    // === MOD (Reemplazo): Select de operación que NO oculta cumplidas; solo reordenar y etiquetar "(done)"
     function createOperationSelect(totalOps, inspType = 'FAI', preferredOp = null) {
       const $sel = $('<select name="operation[]" class="form-control"></select>');
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
-      // Lista base
       const ops = [];
       for (let i = 1; i <= totalOps; i++) ops.push(ordinalSuffix(i));
 
-      // Si hay sugerida, va primero
       if (preferredOp && ops.includes(preferredOp)) {
         const idx = ops.indexOf(preferredOp);
         if (idx > -1) ops.splice(idx, 1);
         ops.unshift(preferredOp);
       }
 
-      // Etiquetar cumplidas como "(done)" pero NO deshabilitarlas
       const isFAI = String(inspType).toUpperCase() === 'FAI';
       for (const value of ops) {
         let label = value;
@@ -1075,11 +1042,10 @@
       return $sel;
     }
 
-    // Determina el siguiente par {type, op} en secuencia: FAI(1), IPI(1), FAI(2), IPI(2), ...
     function getNextInspectionPair(totalOps) {
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
-      const faiSum = new Map(); // op -> suma qty
+      const faiSum = new Map();
       const ipiSum = new Map();
 
       ctx.modal.$rowsContainer.find('tr[data-id]').each(function() {
@@ -1111,7 +1077,9 @@
 
     function renderOrderProgress(orderId, percent) {
       const $wrap = $(`.progress[data-order-id="${orderId}"]`);
+      if (!$wrap.length) return; /* FIX */
       const $bar = $wrap.find('.progress-bar');
+      if (!$bar.length) return; /* FIX */
       $bar.attr('aria-valuenow', percent).css('width', percent + '%').text(percent + '%');
       $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
       if (percent >= 100) $bar.addClass('bg-success');
@@ -1123,7 +1091,7 @@
       if (!operations || operations < 1) return 0;
 
       const faiMap = new Map(),
-        ipiMap = new Map(); // op -> suma qty
+        ipiMap = new Map();
 
       (rows || []).forEach(r => {
         const type = (r.insp_type || '').toUpperCase();
@@ -1137,7 +1105,8 @@
         if (type === 'IPI') ipiMap.set(op, (ipiMap.get(op) || 0) + qty);
       });
 
-      const perOpReq = 1 + (parseInt(ipiRequired, 10) || 0);
+      const need = Math.max(0, parseInt(ipiRequired, 10) || 0); /* FIX */
+      const perOpReq = 1 + need;
       const totalReq = operations * perOpReq;
 
       let done = 0;
@@ -1145,7 +1114,7 @@
         const op = ordinalSuffix(i);
         const faiSum = faiMap.get(op) || 0;
         const ipiSum = ipiMap.get(op) || 0;
-        done += Math.min(faiSum, 1) + Math.min(ipiSum, ipiRequired || 0);
+        done += Math.min(faiSum, 1) + Math.min(ipiSum, need);
       }
 
       const pct = totalReq > 0 ? Math.round((done / totalReq) * 100) : 0;
@@ -1175,11 +1144,11 @@
       $row.append(`<td><input type="date" name="date[]" class="form-control" value="${today}"></td>`);
 
       const $inspType = $(`
-    <select name="insp_type[]" class="form-control">
-      <option value="FAI">FAI</option>
-      <option value="IPI">IPI</option>
-    </select>
-  `);
+      <select name="insp_type[]" class="form-control">
+        <option value="FAI">FAI</option>
+        <option value="IPI">IPI</option>
+      </select>
+    `);
       $row.append($('<td></td>').append($inspType));
 
       const $opCell = $('<td></td>');
@@ -1188,7 +1157,6 @@
       let preferredOp = null;
 
       if (isNumber) {
-        // Sugerir siguiente par FAI/IPI por operación
         const suggestion = getNextInspectionPair(totalOps);
         if (suggestion) {
           defaultType = suggestion.type;
@@ -1213,32 +1181,31 @@
       $row.append($opCell);
       $row.append(buildOperatorInputCell(orderId));
       $row.append(`
-    <td>
-      <select name="results[]" class="form-control">
-        <option value="pass">Pass</option>
-        <option value="no pass">No Pass</option>
-      </select>
-    </td>`);
+      <td>
+        <select name="results[]" class="form-control">
+          <option value="pass">Pass</option>
+          <option value="no pass">No Pass</option>
+        </select>
+      </td>`);
       $row.append(`<td><input type="text" name="sb_is[]" class="form-control"></td>`);
       $row.append(`<td><input type="text" name="observation[]" class="form-control"></td>`);
       $row.append(buildStationInputCell(orderId));
       $row.append(`
-    <td>
-      <select name="method[]" class="form-control">
-        ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m=>`<option value="${m}">${m}</option>`).join('')}
-      </select>
-    </td>`);
+      <td>
+        <select name="method[]" class="form-control">
+          ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m=>`<option value="${m}">${m}</option>`).join('')}
+        </select>
+      </td>`);
 
       renderSampleCell($sampleCell, $inspType.val(), sampling, null, preferredOp);
       $row.append($sampleCell);
 
       $row.append(`
-    <td>
-      <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-      <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
-    </td>`);
+      <td>
+        <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
+        <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
+      </td>`);
 
-      // Al cambiar FAI/IPI, re-sugerir operación y refrescar "Muestra"
       $inspType.on('change', function() {
         if (!isNumber) return;
         const newType = $(this).val();
@@ -1254,7 +1221,6 @@
         const opNow = newOpSel.val() || preferredOpForType || null;
         renderSampleCell($sampleCell.empty(), newType, samplingNow, null, opNow);
 
-        // Cuando cambie la operación, recalcula restante para esa op
         newOpSel.on('change', function() {
           const opX = $(this).val() || null;
           const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
@@ -1263,7 +1229,6 @@
         });
       });
 
-      // Si ya existe opSel (cuando isNumber), también enlaza su change:
       const $opSel = $opCell.find('select[name="operation[]"]');
       $opSel.on('change', function() {
         const tNow = $inspType.val();
@@ -1276,50 +1241,45 @@
       return $row;
     }
 
-    function createRowFromData(data, orderId) { // <= recibe orderId
+    function createRowFromData(data, orderId) {
       const $row = $('<tr></tr>').attr('data-id', data.id);
 
-      // guarda qty en data-attr para otras funciones (edición)
       const savedQty = parseInt(data.qty_pcs ?? data.sample_idx ?? 1, 10) || 1;
       $row.attr('data-qty_pcs', savedQty);
 
       $row.append(`<td><input type="date" name="date[]" class="form-control" value="${data.date || ''}" disabled></td>`);
       $row.append(`
-    <td>
-      <select name="insp_type[]" class="form-control" disabled>
-        <option value="FAI" ${data.insp_type === 'FAI' ? 'selected' : ''}>FAI</option>
-        <option value="IPI" ${data.insp_type === 'IPI' ? 'selected' : ''}>IPI</option>
-      </select>
-    </td>`);
+      <td>
+        <select name="insp_type[]" class="form-control" disabled>
+          <option value="FAI" ${data.insp_type === 'FAI' ? 'selected' : ''}>FAI</option>
+          <option value="IPI" ${data.insp_type === 'IPI' ? 'selected' : ''}>IPI</option>
+        </select>
+      </td>`);
       $row.append(`<td><input type="text" name="operation[]"  class="form-control" value="${data.operation || ''}"  disabled></td>`);
-      // ⬇️ ANTES: input simple; AHORA: datalist (inicialmente disabled)
-      $row.append(buildOperatorInputCell(orderId, data.operator || '', /*disabled*/ true));
+      $row.append(buildOperatorInputCell(orderId, data.operator || '', true));
 
       const results = (data.results || '').toLowerCase();
       $row.append(`
-    <td>
-      <select name="results[]" class="form-control" disabled>
-        <option value="pass" ${results === 'pass' ? 'selected' : ''}>Pass</option>
-        <option value="no pass" ${results === 'no pass' ? 'selected' : ''}>No Pass</option>
-      </select>
-    </td>`);
+      <td>
+        <select name="results[]" class="form-control" disabled>
+          <option value="pass" ${results === 'pass' ? 'selected' : ''}>Pass</option>
+          <option value="no pass" ${results === 'no pass' ? 'selected' : ''}>No Pass</option>
+        </select>
+      </td>`);
       $row.append(`<td><input type="text" name="sb_is[]"       class="form-control" value="${data.sb_is || ''}"       disabled></td>`);
       $row.append(`<td><input type="text" name="observation[]" class="form-control" value="${data.observation || ''}" disabled></td>`);
-      // ⬇️ ANTES: input simple; AHORA: datalist (inicialmente disabled)
-      $row.append(buildStationInputCell(orderId, data.station || '', /*disabled*/ true))
+      $row.append(buildStationInputCell(orderId, data.station || '', true));
       $row.append(`
-    <td>
-      <select name="method[]" class="form-control" disabled>
-        ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m =>
-          `<option value="${m}" ${data.method === m ? 'selected' : ''}>${m}</option>`).join('')}
-      </select>
-    </td>`);
+      <td>
+        <select name="method[]" class="form-control" disabled>
+          ${['Manual','Vmm/Manual','Visual','Vmm','Keyence','Keyence/Manual'].map(m =>
+            `<option value="${m}" ${data.method === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </td>`);
 
-      // --- QTY PCS / sample_idx ---
-      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || 0, 10) || 0;
       const $sampleCell = $('<td class="col-sample"></td>');
 
-      // Para guardadas: render y deja disabled, asegurando valor
       renderSampleCell($sampleCell, data.insp_type, sampling, savedQty, data.operation);
       $row.append($sampleCell);
 
@@ -1331,33 +1291,33 @@
       }
 
       $row.append(`
-    <td>
-      <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
-      <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-      <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
-    </td>`);
+      <td>
+        <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
+        <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
+        <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+      </td>`);
 
       return $row;
     }
 
+    /* FIX: siempre llama cb en .always() */
     function loadFaiRows(orderId, cb) {
       fetchJson(ROUTES.faibyOrder(orderId)).then(rows => {
         (Array.isArray(rows) ? rows : []).forEach(r =>
-          ctx.modal.$rowsContainer.append(createRowFromData(r, orderId)) // <= pasa orderId
+          ctx.modal.$rowsContainer.append(createRowFromData(r, orderId))
         );
+      }).always(() => {
         if (typeof cb === 'function') cb();
       });
     }
 
-
-    // === Reconstruye inputs de muestra según sampling y restante por operación ===
     function refreshAllSamplingSelects() {
       const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || $('#edit-sampling-result').val() || 0, 10) || 0;
       if (!ctx.modal.$rowsContainer || !ctx.modal.$rowsContainer.length) return;
 
       ctx.modal.$rowsContainer.find('tr').each(function() {
         const $row = $(this);
-        const isSaved = !!$row.attr('data-id'); // filas guardadas no se tocan
+        const isSaved = !!$row.attr('data-id');
         if (isSaved) return;
 
         const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
@@ -1369,10 +1329,7 @@
           return;
         }
 
-        // IPI
         const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
-
-        // Valor actual desde INPUT (si existe)
         const current = (function() {
           const v = $cell.find('input[name="sample_idx[]"]').val();
           return v !== undefined ? v : null;
@@ -1382,7 +1339,6 @@
       });
     }
 
-    // === Recalcula SOLO IPI borrador para mostrar tope por operación (restante) ===
     function refreshPendingIpiOptions() {
       const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || $('#edit-sampling-result').val() || 0, 10) || 0;
       if (!ctx.modal.$rowsContainer || !ctx.modal.$rowsContainer.length) return;
@@ -1400,7 +1356,6 @@
         renderSampleCell($cell.empty(), type, sampling, current, op);
       });
     }
-
 
     // ================== Datalist (stations/operators) ==================
     const RAW_CACHE = {
@@ -1520,6 +1475,63 @@
       });
     }
   })();
+
+  /* ===== Botón Finish Inspection (fuera del IIFE para mantener tu organización) ===== */
+  $(document).on('click', '#btnFinishInspection', function(e) {
+    e.preventDefault();
+
+    const orderId = $('#edit-id').val();
+    if (!orderId) {
+      Swal.fire('Error', 'No order selected.', 'error');
+      return;
+    }
+
+    Swal.fire({
+      title: 'Finish Inspection?',
+      text: "The inspection will change status to 'Completed'.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Yes, Complete'
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      /* FIX: usa getCsrf() para consistencia */
+      fetch(`/orders-schedule/${orderId}/status-inspection`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': ($('input[name="_token"]').val() || $('meta[name="csrf-token"]').attr('content') || '')
+          },
+          body: JSON.stringify({
+            status_inspection: 'completed'
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire('Updated!', 'Inspection marked as Completed.', 'success')
+              .then(() => {
+                $('#editModal').modal('hide');
+                // 🔄 Refresca la tabla SOLO si es DataTable AJAX
+                const $t = $('#faicompleteTable');
+                if ($.fn.DataTable && $.fn.DataTable.isDataTable($t)) {
+                  const api = $t.DataTable();
+                  const hasAjax = !!api.settings()[0].ajax;
+                  if (hasAjax && api.ajax) api.ajax.reload(null, false);
+                }
+              });
+          } else {
+            Swal.fire('Error', 'Could not update status.', 'error');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          Swal.fire('Error', 'There was a server problem.', 'error');
+        });
+    });
+  });
 </script>
 
 
