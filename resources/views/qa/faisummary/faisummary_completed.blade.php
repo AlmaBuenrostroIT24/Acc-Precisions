@@ -177,7 +177,7 @@
                         <div class="info-box info-box-sm bg-light mb-2">
                             <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
                             <div class="info-box-content">
-                                <span class="info-box-text">Inspections Completed</span>
+                                <span class="info-box-text">Closed inspections</span>
                                 <h5 class="mb-0" id="kpiTotal">0</h5>
                             </div>
                         </div>
@@ -188,7 +188,7 @@
                                 <span class="info-box-text">Completed</span>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0" id="kpiPass">0</h5>
-                                    <small class="text-white-50">Approved</small>
+                                    <small class="text-white-50">100%</small>
                                 </div>
                             </div>
                         </div>
@@ -196,10 +196,10 @@
                         <div class="info-box info-box-sm bg-info mb-2">
                             <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
                             <div class="info-box-content">
-                                <span class="info-box-text">No Pass</span>
+                                <span class="info-box-text">Incomplete</span>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0" id="kpiFail">0</h5>
-                                    <small class="text-white-50">Rejected</small>
+                                    <small class="text-white-50">< 100%</small>
                                 </div>
                             </div>
                         </div>
@@ -254,7 +254,7 @@
                                 <th style="width: 50px;">OPS.</th>
                                 <th style="width: 40px;">FAI</th>
                                 <th style="width: 40px;">IPI</th>
-                                <th style="width: 100px;">PROG.</th>
+                                <th style="width: 100px;">PROGRESS</th>
                                 <th style="width: 100px;">ACTION</th>
                             </tr>
                         </thead>
@@ -284,7 +284,7 @@
                             : ($overall >= 75 ? 'bg-info'
                             : ($overall >= 50 ? 'bg-warning' : 'bg-danger'));
                             @endphp
-                            <tr id="row-{{ $o->id }}">
+                            <tr id="row-{{ $o->id }}"  data-progress="{{ $overall }}"  data-completed="{{ $completed ? 1 : 0 }}" >
                                 <td>
                                     {{ optional($o->inspection_endate)->format('M-d-y') }}
                                     @if($o->inspection_endate)
@@ -340,8 +340,6 @@
                                 </td>
                             </tr>
                             @empty
-
-
                             @endforelse
                         </tbody>
                     </table>
@@ -389,307 +387,304 @@
 @push('js')
 <script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
-    /* ===========================
-     *  Modal PDF
-     * =========================== */
-    $(document)
-        .on('click', '.btn-open-pdf', function(e) {
-            e.preventDefault();
-            const url = $(this).data('pdf-url');
-            $('#pdfEmbed').attr('src', url + '#zoom=page-width');
-            $('#pdfModal').modal('show');
-        });
-    $('#pdfModal').on('hidden.bs.modal', function() {
-        $('#pdfEmbed').attr('src', '');
+/* ===========================
+ *  Modal PDF
+ * =========================== */
+$(document)
+  .on('click', '.btn-open-pdf', function(e) {
+    e.preventDefault();
+    const url = $(this).data('pdf-url');
+    $('#pdfEmbed').attr('src', url + '#zoom=page-width');
+    $('#pdfModal').modal('show');
+  });
+$('#pdfModal').on('hidden.bs.modal', function() {
+  $('#pdfEmbed').attr('src', '');
+});
+
+/* ===========================
+ *  DataTable + Filtros + Export + KPIs
+ * =========================== */
+$(function() {
+  $.fn.dataTable.ext.errMode = 'throw';
+
+  // Índices de columnas (ajusta si cambias el <thead>)
+  const COLS = {
+    date: 0,
+    location: 1,
+    work_id: 2,
+    pn: 3,
+    description: 4,
+    samp_plan: 5,
+    wo_qty: 6,
+    sampling: 7,
+    ops: 8,
+    fai: 9,
+    ipi: 10,
+    prog: 11,
+    action: 12
+  };
+
+  const $tbl = $('#faicompleteTable');
+  if (!$tbl.length) return;
+
+  // Destruye si existía
+  if ($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
+
+  // Inicializa (si usas AJAX/serverSide, agrégalo aquí)
+  const dt = $tbl.DataTable({
+    searching: true,
+    ordering: false,
+    pageLength: 10,
+    scrollX: false,
+    autoWidth: false,
+    dom: 'rtip',
+    columnDefs: [{ targets: [COLS.prog, COLS.action], orderable: false }]
+    // rowId: row => 'row-' + row.id,
+  });
+  window.faiDT = dt; // útil en consola
+
+  /* ---------------------------
+   * Helpers
+   * --------------------------- */
+  const nzText = v => (typeof v === 'string' ? v : ($(v).text?.() ?? String(v ?? '')).trim());
+  const uniqueSorted = arr => [...new Set(arr.map(nzText).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+  /* ---------------------------
+   * Buscador global
+   * --------------------------- */
+  const $search = $('#tableSearch');
+  const $clear  = $('#clearTableSearch');
+
+  $search.off('.faic').on('input.faic', function() {
+    dt.search(this.value || '').page('first').draw('page');
+  }).on('keydown.faic', function(e) { if (e.key === 'Enter') e.preventDefault(); });
+
+  $clear.off('.faic').on('click.faic', function() {
+    $search.val('');
+    dt.search('').page('first').draw('page');
+    $search.trigger('focus');
+  });
+
+  /* ---------------------------
+   * Filtros exactos via <select>
+   * --------------------------- */
+  const FILTERS = [
+    { id: 'locationFilter', col: COLS.location },
+    // { id: 'operationFilter', col: COLS.ops },
+  ];
+
+  function populateSelectFromDT(selectId, colIndex) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+
+    const values = dt.column(colIndex, { search: 'applied' }).data().toArray()
+      .concat(dt.column(colIndex, { search: 'removed' }).data().toArray());
+    const list = uniqueSorted(values);
+    const keep = sel.value || '';
+
+    while (sel.options.length > 1) sel.remove(1);
+    const frag = document.createDocumentFragment();
+    for (const v of list) {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      frag.appendChild(opt);
+    }
+    sel.appendChild(frag);
+    if (keep && list.includes(keep)) sel.value = keep;
+  }
+
+  function bindExactFilter(selectId, colIndex) {
+    const el = document.getElementById(selectId);
+    if (!el) return;
+    el.addEventListener('change', function() {
+      if (!this.value) {
+        dt.column(colIndex).search('', true, false);
+      } else {
+        const re = $.fn.dataTable.util.escapeRegex(this.value);
+        dt.column(colIndex).search('^' + re + '$', true, false);
+      }
+      dt.page('first').draw('page');
+    });
+  }
+
+  FILTERS.forEach(f => bindExactFilter(f.id, f.col));
+  function repopulateAll() { FILTERS.forEach(f => populateSelectFromDT(f.id, f.col)); }
+  repopulateAll();
+  dt.on('search.dt', repopulateAll);
+
+  /* ---------------------------
+   * Badge: total visibles
+   * --------------------------- */
+  const $badge = $('#badgeFinished');
+  function refreshBadge() {
+    $badge.text(dt.rows({ search: 'applied' }).count());
+  }
+  refreshBadge();
+  dt.on('draw.dt search.dt page.dt', refreshBadge);
+
+  /* ---------------------------
+   * Fechas (opcional)
+   * --------------------------- */
+  if (window.initTempusFilters) {
+    window.initTempusFilters({
+      form: '#filtersForm',
+      yearWrapper: '#yearPickerWrapper',
+      monthWrapper: '#monthPickerWrapper',
+      dayWrapper: '#dayPickerWrapper',
+      yearInput: '#year',
+      monthHiddenInput: '#month',
+      monthDisplayInput: '#monthDisplay',
+      dayInput: '#day',
+      initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
+    });
+  }
+
+  /* ---------------------------
+   * KPIs: 100% completados vs <100% (incompletos)
+   * --------------------------- */
+  const $kpiTotal = $('#kpiTotal'); // visibles
+  const $kpiPass  = $('#kpiPass');  // 100%
+  const $kpiFail  = $('#kpiFail');  // <100%
+
+  function getProgressFromCell(cellVal) {
+    const txt = (typeof cellVal === 'string' ? cellVal : ($(cellVal).text?.() || '')).toString();
+    const m = txt.match(/(\d{1,3})\s*%/);
+    return m ? Number(m[1]) : NaN;
+  }
+
+  function isCompleted100(tr) {
+    // 1) data-completed (ideal)
+    const dc = tr.dataset.completed;
+    if (dc !== undefined) return Number(dc) === 1;
+
+    // 2) progress en data-progress
+    const dp = tr.dataset.progress;
+    if (dp !== undefined && !Number.isNaN(Number(dp))) return Number(dp) >= 100;
+
+    // 3) .progress-bar[aria-valuenow]
+    const aria = Number($(tr).find('.progress-bar').attr('aria-valuenow'));
+    if (!Number.isNaN(aria)) return aria >= 100;
+
+    // 4) parsear % de la columna prog
+    try {
+      const data = dt.row(tr).data();
+      const pct  = getProgressFromCell(data?.[COLS.prog]);
+      if (!Number.isNaN(pct)) return pct >= 100;
+    } catch(_) {}
+
+    // 5) fallback por texto (si marca "Done" o "Completed")
+    const rowTxt = $(tr).text().toLowerCase();
+    if (/\bdone\b|\bcompleted\b/.test(rowTxt)) return true;
+
+    return false;
+  }
+
+  function updateKpisCompletion() {
+    const rows  = dt.rows({ search: 'applied' });
+    const nodes = rows.nodes().toArray();
+
+    let done100 = 0;
+    for (const tr of nodes) if (isCompleted100(tr)) done100++;
+
+    const total = rows.count();
+    const not100 = Math.max(0, total - done100);
+
+    $kpiTotal.text(total);
+    $kpiPass.text(done100);
+    $kpiFail.text(not100);
+  }
+
+  updateKpisCompletion();
+  dt.on('draw.dt search.dt page.dt', updateKpisCompletion);
+
+  // Si tienes filtros externos:
+  $(document).on('change', '.filtro-kpi, #year, #month, #day, #location, #operator, #inspector', function () {
+    dt.draw(false);
+  });
+
+  /* ---------------------------
+   * Export (Excel / PDF) con filtros aplicados
+   * --------------------------- */
+  function getFilteredIds() {
+    let ids = dt.rows({ search: 'applied' }).ids().toArray()
+      .map(id => String(id).replace(/^row-/, ''));
+    if (!ids.length) {
+      const $nodes = dt.rows({ search: 'applied', page: 'all' }).nodes().to$();
+      ids = $nodes.map(function() { return (this.id || '').replace(/^row-/, ''); }).get();
+    }
+    return ids;
+  }
+
+  function submitExport(formId) {
+    dt.draw(false);
+
+    const $form = $('#' + formId);
+    $form.find('input[name="ids[]"]').remove();
+    $form.find('input[name="year"], input[name="month"], input[name="day"], input[name="location"]').remove();
+
+    const ids = getFilteredIds();
+    if (!ids.length) { alert('No hay filas para exportar con el filtro actual.'); return; }
+
+    ids.forEach(id => {
+      $form.append($('<input>', { type: 'hidden', name: 'ids[]', value: id }));
     });
 
-    /* ===========================
-     *  DataTable + Filtros + Export
-     * =========================== */
-    $(function() {
-        $.fn.dataTable.ext.errMode = 'throw';
+    $form.append($('<input>', { type: 'hidden', name: 'year',     value: '{{ request("year") }}' }));
+    $form.append($('<input>', { type: 'hidden', name: 'month',    value: '{{ request("month") }}' }));
+    $form.append($('<input>', { type: 'hidden', name: 'day',      value: '{{ request("day") }}' }));
+    $form.append($('<input>', { type: 'hidden', name: 'location', value: '{{ request("location") }}' }));
 
-        // Índices de columnas (ajusta si cambias el <thead>)
-        const COLS = {
-            date: 0,
-            location: 1,
-            work_id: 2,
-            pn: 3,
-            description: 4,
-            samp_plan: 5,
-            wo_qty: 6,
-            sampling: 7,
-            ops: 8,
-            fai: 9,
-            ipi: 10,
-            prog: 11,
-            action: 12
-        };
+    $form.trigger('submit');
+  }
 
-        const $tbl = $('#faicompleteTable');
-        if (!$tbl.length) return;
+  $('#btnExportExcel').on('click', () => submitExport('exportExcelForm'));
+  $('#btnExportPdf').on('click',   () => submitExport('exportPdfForm'));
+});
 
-        // Destruye si existía
-        if ($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
+/* ===========================
+ *  Botón "Move to progress"
+ * =========================== */
+$(document).on('click', '.btn-edit-pdf', function(e) {
+  e.preventDefault();
 
-        // Inicializa (si usas AJAX/serverSide, agrégalo aquí)
-        const dt = $tbl.DataTable({
-            searching: true,
-            ordering: false,
-            pageLength: 10,
-            scrollX: false,
-            autoWidth: false,
-            dom: 'rtip',
-            columnDefs: [{
-                targets: [COLS.prog, COLS.action],
-                orderable: false
-            }]
-            // rowId: row => 'row-' + row.id, // <- si cargas por AJAX y tu dataset tiene "id"
-        });
-        window.faiDT = dt; // útil para depurar en consola
+  const orderId = $(this).data('id');
 
-        /* ---------------------------
-         * Helpers
-         * --------------------------- */
-        const nzText = v => (typeof v === 'string' ? v : ($(v).text?.() ?? String(v ?? '')).trim());
-        const uniqueSorted = arr => [...new Set(arr.map(nzText).filter(Boolean))]
-            .sort((a, b) => a.localeCompare(b, undefined, {
-                sensitivity: 'base'
-            }));
-
-        /* ---------------------------
-         * Buscador global
-         * --------------------------- */
-        const $search = $('#tableSearch');
-        const $clear = $('#clearTableSearch');
-
-        $search.off('.faic').on('input.faic', function() {
-            dt.search(this.value || '').page('first').draw('page');
-        }).on('keydown.faic', function(e) {
-            if (e.key === 'Enter') e.preventDefault();
-        });
-
-        $clear.off('.faic').on('click.faic', function() {
-            $search.val('');
-            dt.search('').page('first').draw('page');
-            $search.trigger('focus');
-        });
-
-        /* ---------------------------
-         * Filtro exacto por LOCATION (select)
-         * --------------------------- */
-        const FILTERS = [{
-                id: 'locationFilter',
-                col: COLS.location
-            },
-            // Puedes añadir más: { id: 'operationFilter', col: COLS.ops },
-        ];
-
-        function populateSelectFromDT(selectId, colIndex) {
-            const sel = document.getElementById(selectId);
-            if (!sel) return;
-
-            // Recolecta valores de la columna (filtrados y removidos para capturar todo el universo)
-            const values = dt.column(colIndex, {
-                    search: 'applied'
-                }).data().toArray()
-                .concat(dt.column(colIndex, {
-                    search: 'removed'
-                }).data().toArray());
-            const list = uniqueSorted(values);
-            const keep = sel.value || '';
-
-            // Deja solo "— All —" (la primera opción)
-            while (sel.options.length > 1) sel.remove(1);
-
-            const frag = document.createDocumentFragment();
-            for (const v of list) {
-                const opt = document.createElement('option');
-                opt.value = v;
-                opt.textContent = v;
-                frag.appendChild(opt);
-            }
-            sel.appendChild(frag);
-
-            if (keep && list.includes(keep)) sel.value = keep;
+  Swal.fire({
+    title: '¿Move to progress?',
+    text: "The inspection will change status to 'In Progress'.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#aaa',
+    confirmButtonText: 'Yes, Continue'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/orders-schedule/${orderId}/status-inspection`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ status_inspection: 'in_progress' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire('Updated!', 'Inspection moved to In Progress.', 'success');
+        } else {
+          Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
         }
-
-        function bindExactFilter(selectId, colIndex) {
-            const el = document.getElementById(selectId);
-            if (!el) return;
-
-            el.addEventListener('change', function() {
-                if (!this.value) {
-                    dt.column(colIndex).search('', true, false);
-                } else {
-                    const re = $.fn.dataTable.util.escapeRegex(this.value);
-                    dt.column(colIndex).search('^' + re + '$', true, false);
-                }
-                dt.page('first').draw('page'); // MUY IMPORTANTE
-            });
-        }
-
-        FILTERS.forEach(f => bindExactFilter(f.id, f.col));
-
-        // Repobla selects al inicio y cuando cambia la búsqueda global o filtros
-        function repopulateAll() {
-            FILTERS.forEach(f => populateSelectFromDT(f.id, f.col));
-        }
-        repopulateAll();
-        dt.on('search.dt', repopulateAll);
-
-        /* ---------------------------
-         * Badge: total visibles
-         * --------------------------- */
-        const $badge = $('#badgeFinished');
-
-        function refreshBadge() {
-            $badge.text(dt.rows({
-                search: 'applied'
-            }).count());
-        }
-        refreshBadge();
-        dt.on('draw.dt search.dt page.dt', refreshBadge);
-
-        // Fechas (opcional)
-        if (window.initTempusFilters) {
-            window.initTempusFilters({
-                form: '#filtersForm',
-                yearWrapper: '#yearPickerWrapper',
-                monthWrapper: '#monthPickerWrapper',
-                dayWrapper: '#dayPickerWrapper',
-                yearInput: '#year',
-                monthHiddenInput: '#month',
-                monthDisplayInput: '#monthDisplay',
-                dayInput: '#day',
-                initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
-            });
-        }
-
-        /* ---------------------------
-         * Export (Excel / PDF) con filtros aplicados
-         * --------------------------- */
-
-        // Obtiene los IDs de las filas filtradas.
-        function getFilteredIds() {
-            // 1) Preferir IDs internos de DataTables (usan el id del <tr>)
-            let ids = dt.rows({
-                    search: 'applied'
-                }).ids().toArray()
-                .map(id => String(id).replace(/^row-/, ''));
-
-            // 2) Fallback: leer del DOM todas las páginas si no hay ids()
-            if (!ids.length) {
-                const $nodes = dt.rows({
-                    search: 'applied',
-                    page: 'all'
-                }).nodes().to$();
-                ids = $nodes.map(function() {
-                    const domId = this.id || ''; // ej. "row-123"
-                    return domId.replace(/^row-/, ''); // -> "123"
-                }).get();
-            }
-            return ids;
-        }
-
-        function submitExport(formId) {
-            // Por si cambió un filtro justo antes del click
-            dt.draw(false);
-
-            const $form = $('#' + formId);
-            // Limpia inputs previos excepto @csrf
-            $form.find('input[name="ids[]"]').remove();
-            $form.find('input[name="year"], input[name="month"], input[name="day"], input[name="location"]').remove();
-
-            const ids = getFilteredIds();
-            // Debug opcional:
-            // console.log('Filtradas:', dt.rows({ search:'applied' }).count(), 'IDs:', ids.length);
-
-            if (!ids.length) {
-                alert('No hay filas para exportar con el filtro actual.');
-                return;
-            }
-
-            // Enviar los IDs visibles con el filtro actual
-            ids.forEach(id => {
-                $form.append($('<input>', {
-                    type: 'hidden',
-                    name: 'ids[]',
-                    value: id
-                }));
-            });
-
-            // (Opcional) también envía los filtros de la URL actual
-            $form.append($('<input>', {
-                type: 'hidden',
-                name: 'year',
-                value: '{{ request("year") }}'
-            }));
-            $form.append($('<input>', {
-                type: 'hidden',
-                name: 'month',
-                value: '{{ request("month") }}'
-            }));
-            $form.append($('<input>', {
-                type: 'hidden',
-                name: 'day',
-                value: '{{ request("day") }}'
-            }));
-            $form.append($('<input>', {
-                type: 'hidden',
-                name: 'location',
-                value: '{{ request("location") }}'
-            }));
-
-            $form.trigger('submit');
-        }
-
-        // Clicks de export
-        $('#btnExportExcel').on('click', () => submitExport('exportExcelForm'));
-        $('#btnExportPdf').on('click', () => submitExport('exportPdfForm'));
-    });
-
-    $(document).on('click', '.btn-edit-pdf', function(e) {
-        e.preventDefault();
-
-        const orderId = $(this).data('id');
-
-        Swal.fire({
-            title: '¿Move to progress?',
-            text: "The inspection will change status to 'In Progress'.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#aaa',
-            confirmButtonText: 'Yes, Continue'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/orders-schedule/${orderId}/status-inspection`, {
-                        method: 'PUT', // 👈 tu ruta es PUT, no POST
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            status_inspection: 'in_progress'
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire('Updated!', 'Inspection moved to In Progress.', 'success');
-                        } else {
-                            Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        Swal.fire('Error', 'Hubo un problema en el servidor', 'error');
-                    });
-            }
-        });
-    });
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire('Error', 'Hubo un problema en el servidor', 'error');
+      });
+    }
+  });
+});
 </script>
+
 
 
 
