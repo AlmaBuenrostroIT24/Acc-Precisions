@@ -867,8 +867,15 @@ class QaFaiSummaryController extends Controller
             $rows = $this->baseCompletedQuery($request)->get();
         }
 
+        $logoPath = public_path('vendor/adminlte/dist/img/accl.png'); // coloca tu logo aquí
+        $generatedAt = now()->format('F j, Y g:i A');
+        $userName = auth()->user()->name ?? 'System';
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('qa.faisummary.pdf_completed_table', [
-            'rows' => $rows
+            'rows'         => $rows,
+            'logoPath'     => $logoPath,
+            'generated_at' => $generatedAt,
+            'user'         => $userName,
         ])->setPaper('letter', 'landscape');
 
         return $pdf->stream('FAI_Completed.pdf');

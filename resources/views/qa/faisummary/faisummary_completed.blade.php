@@ -219,13 +219,15 @@
                     <i class="fas fa-list-alt mr-2"></i>
                     <strong class="mb-0">FAI/IPI Completed</strong>
                 </div>
-                {{-- Botones en el header --}}
-                <button id="btnExportExcel" type="button" class="btn btn-sm btn-success mr-2">
-                    <i class="fas fa-file-excel mr-1"></i> Excel
-                </button>
-                <button id="btnExportPdf" type="button" class="btn btn-sm btn-danger">
-                    <i class="fas fa-file-pdf mr-1"></i> PDF
-                </button>
+                {{-- Botones de exportación --}}
+                <div class="btn-group" role="group" aria-label="Export Buttons">
+                    <button id="btnExportExcel" type="button" class="btn btn-sm btn-success">
+                        <i class="fas fa-file-excel mr-1"></i> Excel
+                    </button>
+                    <button id="btnExportPdf" type="button" class="btn btn-sm btn-danger">
+                        <i class="fas fa-file-pdf mr-1"></i> PDF
+                    </button>
+                </div>
 
                 {{-- Formularios ocultos para enviar ids[] por POST --}}
                 <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}" method="POST" target="_blank" class="d-none">
@@ -548,6 +550,21 @@
         }
         refreshBadge();
         dt.on('draw.dt search.dt page.dt', refreshBadge);
+
+        // Fechas (opcional)
+        if (window.initTempusFilters) {
+            window.initTempusFilters({
+                form: '#filtersForm',
+                yearWrapper: '#yearPickerWrapper',
+                monthWrapper: '#monthPickerWrapper',
+                dayWrapper: '#dayPickerWrapper',
+                yearInput: '#year',
+                monthHiddenInput: '#month',
+                monthDisplayInput: '#monthDisplay',
+                dayInput: '#day',
+                initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
+            });
+        }
 
         /* ---------------------------
          * Export (Excel / PDF) con filtros aplicados
