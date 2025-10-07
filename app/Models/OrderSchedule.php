@@ -89,7 +89,7 @@ class OrderSchedule extends Model
     }
 
     public function faiSummaries()
-{
-    return $this->hasMany(\App\Models\QaFaiSummary::class, 'order_schedule_id');
-}
+    {
+        return $this->hasMany(\App\Models\QaFaiSummary::class, 'order_schedule_id');
+    }
 }
