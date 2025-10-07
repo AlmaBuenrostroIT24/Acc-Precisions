@@ -328,23 +328,26 @@ return [
             'label_color' => 'success',
         ],
         ['header' => 'account_settings'],
-        [
+          [
             'text' => 'Quality Assurance',
-            'url' => 'admin/settings',
             'icon' => 'nav-icon fas fa-cogs',
-            'can' => ['QA/Calibrations', 'QA/Instruments'], // <- este es el truco
+            // El padre se muestra si el usuario tiene AL MENOS UNO de estos permisos
+            'can'  => ['QA/Calibrations', 'QA/Instruments', 'qa/partsrevision'],
             'submenu' => [
                 [
                     'text' => 'Calibration',
-                    'url' => 'QA/Calibrations',
+                    'url'  => 'QA/Calibrations',
+                    'can'  => 'QA/Calibrations',
                 ],
                 [
                     'text' => 'Instrument',
-                    'url' => 'QA/Instruments',
+                    'url'  => 'QA/Instruments',
+                    'can'  => 'QA/Instruments',
                 ],
                 [
                     'text' => 'FAI Summary',
-                    'url' => 'qa/partsrevision',
+                    'url'  => 'qa/partsrevision',
+                    'can'  => 'qa/partsrevision',
                 ],
             ],
         ],
