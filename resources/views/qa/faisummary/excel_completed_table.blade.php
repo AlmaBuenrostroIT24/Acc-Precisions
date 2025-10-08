@@ -32,7 +32,10 @@
             $ipiOk  = (int) ($o->ipi_pass_qty ?? 0);
             $faiPct = $faiReq > 0 ? (int) round($faiOk * 100 / $faiReq) : 100;
             $ipiPct = $ipiReq > 0 ? (int) round($ipiOk * 100 / $ipiReq) : 100;
-            $overall = min($faiPct, $ipiPct);
+                // ===== Overall PONDERADO =====
+            $totalReq  = $faiReq + $ipiReq;
+            $totalOk   = $faiOk  + $ipiOk;
+            $overall = $totalReq > 0 ? (int) round(($totalOk / $totalReq) * 100) : 100;
             $overallDecimal = $overall / 100;  // Excel espera 0..1 para %
             $dateStr = $o->inspection_endate ? \Carbon\Carbon::parse($o->inspection_endate)->format('Y-m-d') : '';
         @endphp

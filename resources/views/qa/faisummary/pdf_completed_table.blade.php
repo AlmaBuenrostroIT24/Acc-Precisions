@@ -108,15 +108,20 @@
 
         <tbody>
             @foreach($rows as $o)
-            @php
-            $faiReqPcs = (int) ($o->total_fai ?? 0);
-            $ipiReqPcs = (int) ($o->total_ipi ?? 0);
-            $faiPassQty = (int) ($o->fai_pass_qty ?? 0);
-            $ipiPassQty = (int) ($o->ipi_pass_qty ?? 0);
-            $faiPct = $faiReqPcs > 0 ? round($faiPassQty / $faiReqPcs * 100) : 100;
-            $ipiPct = $ipiReqPcs > 0 ? round($ipiPassQty / $ipiReqPcs * 100) : 100;
-            $overall = min($faiPct, $ipiPct);
-            @endphp
+              @php
+            $faiReq = (int) ($o->total_fai ?? 0);
+            $ipiReq = (int) ($o->total_ipi ?? 0);
+            $faiOk  = (int) ($o->fai_pass_qty ?? 0);
+            $ipiOk  = (int) ($o->ipi_pass_qty ?? 0);
+            $faiPct = $faiReq > 0 ? (int) round($faiOk * 100 / $faiReq) : 100;
+            $ipiPct = $ipiReq > 0 ? (int) round($ipiOk * 100 / $ipiReq) : 100;
+                // ===== Overall PONDERADO =====
+            $totalReq  = $faiReq + $ipiReq;
+            $totalOk   = $faiOk  + $ipiOk;
+            $overall = $totalReq > 0 ? (int) round(($totalOk / $totalReq) * 100) : 100;
+            $overallDecimal = $overall / 100;  // Excel espera 0..1 para %
+            $dateStr = $o->inspection_endate ? \Carbon\Carbon::parse($o->inspection_endate)->format('Y-m-d') : '';
+        @endphp
             <tr>
                 <td>{{ optional($o->inspection_endate)->format('Y-m-d') }}</td>
                 <td>{{ $o->location }}</td>
@@ -127,8 +132,8 @@
                 <td class="text-center">{{ $o->wo_qty }}</td>
                 <td>{{ $o->sampling_check }}</td>
                 <td class="text-center">{{ $o->operation }}</td>
-                <td class="text-center">{{ $faiPassQty }}/{{ $faiReqPcs }}</td>
-                <td class="text-center">{{ $ipiPassQty }}/{{ $ipiReqPcs }}</td>
+                <td>{{ $faiOk }}/{{ $faiReq }}</td>
+                <td>{{ $ipiOk }}/{{ $ipiReq }}</td>
                 <td class="text-center">{{ $overall }}%</td>
             </tr>
             @endforeach
