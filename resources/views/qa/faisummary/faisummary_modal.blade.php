@@ -23,20 +23,21 @@
                                     <input type="text" class="form-control" id="edit-inspector" name="inspector"
                                         value="{{ Auth::user()->name }}" readonly>
                                 </div>
-                                <div class="form-group col-md-6">
+                                <div class="form-group col-md-5">
                                     <label>PART# REV.</label>
                                     <input type="text" class="form-control" id="edit-fullpart" name="full_part" readonly>
                                 </div>
-                                <div class="form-group col-md-3">
+                                <div class="form-group col-md-2">
                                     <label>JOB</label>
                                     <input type="text" class="form-control" id="edit-workid" name="work_id" readonly>
                                 </div>
-                            </div>
-                            <div class="row align-items-end mb-3">
                                 <div class="form-group col-md-2">
                                     <label>WO QTY</label>
                                     <input type="text" class="form-control" id="edit-woqty" name="wo_qty" readonly>
                                 </div>
+                            </div>
+                            <div class="row align-items-end mb-3">
+
                                 <div class="form-group col-md-3">
                                     <label>QTY. TO CHECK</label>
                                     <select class="form-control" id="edit-sampling-type" name="sampling_type">
