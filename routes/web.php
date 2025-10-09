@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Order_ScheduleController;
 use App\Http\Controllers\QaFaiSummaryController;
+use App\Http\Controllers\NonConformanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -140,9 +141,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
 });
 
-
-
-
 Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
 Route::post('/qa/faisummary/store-single', [QaFaiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
@@ -171,4 +169,32 @@ use App\Http\Controllers\FaiSummaryController;
 Route::get('/faisummary/statistics/by-quarter-operator', [QaFaiSummaryController::class, 'faistatisticsByQuarterOperator'])->name('faisummary.statistics.byQuarterOperator');
 
 //++++++++++++++++++++++++++++++++++++++++ <-END-> QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//================================
+//================================
+//================================
+//++++++++++++++++++++++++++++++++++++++++<-START->NON-CONFORMANCE +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Route::middleware('auth')->group(function () {
+    // Vista principal
+    Route::get('/QA/NonConformace', [NonConformanceController::class, 'ncarparts'])->name('nonconformance.ncarparts');
+
+    // Endpoints para la tabla y los gráficos
+    Route::get('/QA/NonConformace/data',  [NonConformanceController::class, 'data'])->name('nonconformance.data');
+
+    Route::get('/QA/NonConformace/stats', [NonConformanceController::class, 'stats'])->name('nonconformance.stats');
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // -----------------------------------Machines-------------------------------------------------------
