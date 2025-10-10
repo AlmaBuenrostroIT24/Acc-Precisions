@@ -26,76 +26,105 @@
 
 
 
-  <div class="row">
-    <div class="col-lg-3">
-      <div class="card kpi-card kpi-new mb-3">
-        <div class="card-body d-flex align-items-center">
-          <div class="kpi-icon mr-3"><i class="fas fa-info-circle"></i></div>
-          <div><div class="small text-muted">New</div><div class="h3 mb-0" id="kpiNew">0</div></div>
-        </div>
-      </div>
-      <div class="card kpi-card kpi-qa mb-3">
-        <div class="card-body d-flex align-items-center">
-          <div class="kpi-icon mr-3"><i class="fas fa-user"></i></div>
-          <div><div class="small text-muted">Quality Review</div><div class="h3 mb-0" id="kpiQA">0</div></div>
-        </div>
-      </div>
-      <div class="card kpi-card kpi-eng mb-3">
-        <div class="card-body d-flex align-items-center">
-          <div class="kpi-icon mr-3"><i class="fas fa-wrench"></i></div>
-          <div><div class="small text-muted">Engineering Review</div><div class="h3 mb-0" id="kpiEng">0</div></div>
+<div class="row">
+  {{-- Columna izquierda: KPIs --}}
+  <div class="col-lg-3">
+    <div class="card kpi-card kpi-new mb-3">
+      <div class="card-body d-flex align-items-center">
+        <div class="kpi-icon mr-3"><i class="fas fa-info-circle"></i></div>
+        <div>
+          <div class="small text-muted">New</div>
+          <div class="h3 mb-0" id="kpiNew">0</div>
         </div>
       </div>
     </div>
 
-    <div class="col-lg-9">
-      <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>Total By Cause</strong>
-          <span class="h5 mb-0" id="kpiTotalCause">0</span>
-        </div>
-        <div class="card-body">
-          <canvas id="chartByCause" height="110"></canvas>
+    <div class="card kpi-card kpi-qa mb-3">
+      <div class="card-body d-flex align-items-center">
+        <div class="kpi-icon mr-3"><i class="fas fa-user"></i></div>
+        <div>
+          <div class="small text-muted">Quality Review</div>
+          <div class="h3 mb-0" id="kpiQA">0</div>
         </div>
       </div>
+    </div>
 
-      <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>Total</strong>
-          <button class="btn btn-sm btn-light" disabled>Total</button>
-        </div>
-        <div class="card-body">
-          <canvas id="chartTrend" height="110"></canvas>
+    <div class="card kpi-card kpi-eng mb-3">
+      <div class="card-body d-flex align-items-center">
+        <div class="kpi-icon mr-3"><i class="fas fa-wrench"></i></div>
+        <div>
+          <div class="small text-muted">Engineering Review</div>
+          <div class="h3 mb-0" id="kpiEng">0</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-body pb-0">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="input-group" style="max-width:420px">
-          <div class="input-group-prepend">
-            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+  {{-- Columna derecha: gráficos --}}
+  <div class="col-lg-9"> {{-- o col-lg-12 si quieres todo el ancho --}}
+    <div class="row">
+      <div class="col-md-6 d-flex">
+        <div class="card mb-3 w-100 h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Total By Cause</strong>
+            <span class="h5 mb-0" id="kpiTotalCause">0</span>
           </div>
-          <input id="tableSearch" type="text" class="form-control" placeholder="Search…">
+          <div class="card-body">
+            <canvas id="chartByCause" height="110"></canvas>
+          </div>
         </div>
-        <button class="btn btn-light" id="btnFilter"><i class="fas fa-filter mr-1"></i> Filter</button>
+      </div>
+
+      <div class="col-md-6 d-flex">
+        <div class="card mb-3 w-100 h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Total</strong>
+            <button class="btn btn-sm btn-light" disabled>Total</button>
+          </div>
+          <div class="card-body">
+            <canvas id="chartTrend" height="110"></canvas>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+</div> {{-- ✅ cerramos el .row grande --}}
+
+{{-- Card de buscador + tabla, fuera del row o dentro de un col-12 --}}
+<div class="card mt-3">
+  <div class="card-body pb-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="input-group" style="max-width:420px">
+        <div class="input-group-prepend">
+          <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+        </div>
+        <input id="tableSearch" type="text" class="form-control" placeholder="Search…">
+      </div>
+      <button class="btn btn-light" id="btnFilter">
+        <i class="fas fa-filter mr-1"></i> Filter
+      </button>
+    </div>
+  </div>
+  <div class="card-body p-0"> {{-- ✅ tabla dentro de card-body p-0 --}}
     <div class="table-responsive">
       <table id="ncrTable" class="table table-striped table-hover table-sm mb-0">
         <thead class="thead-light">
           <tr>
-            <th>Number</th><th>Title</th><th>Created</th><th>Customers</th>
-            <th>Reference Numbers</th><th>Type</th><th>Parts</th><th>Status</th>
+            <th>Number</th>
+            <th>Title</th>
+            <th>Created</th>
+            <th>Customers</th>
+            <th>Reference Numbers</th>
+            <th>Type</th>
+            <th>Parts</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
-
+</div>
 
 
 
