@@ -69,6 +69,7 @@ class OrderSchedule extends Model
         'due_date' => 'date',
         'sent_at' => 'datetime',
         'endate_mach' => 'datetime',
+        'inspection_endate' => 'datetime',
     ];
 
     // Relaciones con el modelo User
@@ -83,8 +84,12 @@ class OrderSchedule extends Model
     }
 
     public function machiningDateLogs()
-{
-    return $this->hasMany(OrdMachiningDateLog::class, 'order_schedule_id');
-}
+    {
+        return $this->hasMany(OrdMachiningDateLog::class, 'order_schedule_id');
+    }
 
+    public function faiSummaries()
+    {
+        return $this->hasMany(\App\Models\QaFaiSummary::class, 'order_schedule_id');
+    }
 }

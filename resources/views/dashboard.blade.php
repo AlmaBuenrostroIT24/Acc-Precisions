@@ -7,5 +7,5 @@
 @stop
 
 @section('content')
-    <p>¡Bienvenido a tu panel de administración con AdminLTE!</p>
+    <p>¡Welcome acc precision!</p>
 @stop

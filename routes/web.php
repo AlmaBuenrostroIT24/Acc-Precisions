@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Order_ScheduleController;
+use App\Http\Controllers\QaFaiSummaryController;
+use App\Http\Controllers\NonConformanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,8 +21,12 @@ use App\Http\Controllers\Order_ScheduleController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
+
+Route::get('/login', function () {
+    return view('login');
+})->name('login');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -32,7 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::resource('users', UserController::class);
 
@@ -126,7 +132,69 @@ Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersB
 
 
 
+//++++++++++++++++++++++++++++++++++++++++<-START->QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Route::middleware('auth')->group(function () {
+    Route::get('/qa/partsrevision', [QaFaiSummaryController::class, 'partsrevision'])->name('faisummary.partsrevision');
+    Route::get('/qa/partsrevision/data', [QaFaiSummaryController::class, 'partsrevisionData'])->name('faisummary.partsrevision.data');
+    Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general');
+    Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
+    Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
+});
+
+Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
+Route::post('/qa/faisummary/store-single', [QaFaiSummaryController::class, 'storeSingle']);
+Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
+Route::delete('/qa/faisummary/delete/{id}', [QaFaiSummaryController::class, 'destroy']);
+Route::put('/orders-schedule/{order}/status-inspection', [QaFaiSummaryController::class, 'updateStatusInspection'])->name('orders.statusInspection.update');
+
+Route::get('/stations/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderStation']);
+Route::get('/operators/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'byOrderOperator']);
+Route::get('/qa/faisummary/{order}/pdf', [QaFaiSummaryController::class, 'pdf'])->name('qa.faisummary.pdf');
+Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::class, 'validateOps']);
+
+Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
+
+// -----------------------------------faicompleted-------------------------------------------------------
+
+Route::post('/qa/faisummary/completed/export/excel', [QaFaiSummaryController::class, 'exportCompletedExcel'])->name('faisummary.completed.export.excel');
+
+Route::post('/qa/faisummary/completed/export/pdf', [QaFaiSummaryController::class, 'exportCompletedPdf'])->name('faisummary.completed.export.pdf');
+// -----------------------------------faistatiscs-------------------------------------------------------
+Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
+    // NUEVO: breakdown por operador/inspector
+Route::get('/qa/faistatistics/by', [QaFaiSummaryController::class, 'faistatisticsBy'])->name('faisummary.statistics.by'); // ?year=2025&group=operator|inspector
+Route::get('/qa/faistatistics/operators', [QaFaiSummaryController::class, 'operatorsList'])->name('faisummary.operators');
+use App\Http\Controllers\FaiSummaryController;
+
+Route::get('/faisummary/statistics/by-quarter-operator', [QaFaiSummaryController::class, 'faistatisticsByQuarterOperator'])->name('faisummary.statistics.byQuarterOperator');
+
+//++++++++++++++++++++++++++++++++++++++++ <-END-> QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//================================
+//================================
+//================================
+//++++++++++++++++++++++++++++++++++++++++<-START->NON-CONFORMANCE +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Route::middleware('auth')->group(function () {
+    // Vista principal
+    Route::get('/QA/NonConformace', [NonConformanceController::class, 'ncarparts'])->name('nonconformance.ncarparts');
+
+    // Endpoints para la tabla y los gráficos
+    Route::get('/QA/NonConformace/data',  [NonConformanceController::class, 'data'])->name('nonconformance.data');
+
+    Route::get('/QA/NonConformace/stats', [NonConformanceController::class, 'stats'])->name('nonconformance.stats');
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // -----------------------------------Machines-------------------------------------------------------
-
-

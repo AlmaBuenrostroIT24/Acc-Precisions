@@ -328,20 +328,31 @@ return [
             'label_color' => 'success',
         ],
         ['header' => 'account_settings'],
-        [
+          [
             'text' => 'Quality Assurance',
-            'url' => 'admin/settings',
             'icon' => 'nav-icon fas fa-cogs',
-            'can' => ['QA/Calibrations', 'QA/Instruments'], // <- este es el truco
+            // El padre se muestra si el usuario tiene AL MENOS UNO de estos permisos
+            'can'  => ['QA/Calibrations', 'QA/Instruments', 'qa/partsrevision','QA/NonConformace'],
             'submenu' => [
                 [
                     'text' => 'Calibration',
-                    'url' => 'QA/Calibrations',
+                    'url'  => 'QA/Calibrations',
+                    'can'  => 'QA/Calibrations',
                 ],
-
                 [
                     'text' => 'Instrument',
-                    'url' => 'QA/Instruments',
+                    'url'  => 'QA/Instruments',
+                    'can'  => 'QA/Instruments',
+                ],
+                [
+                    'text' => 'FAI Summary',
+                    'url'  => 'qa/partsrevision',
+                    'can'  => 'qa/partsrevision',
+                ],
+                  [
+                    'text' => 'Non Conformance',
+                    'url'  => 'QA/NonConformace',
+                    'can'  => 'QA/NonConformace',
                 ],
             ],
         ],
@@ -389,6 +400,7 @@ return [
                 [
                     'text' => 'Schedule',
                     'url' => 'schedule/general',
+                    'can' => 'schedule/general',
                 ],
             ],
         ],
@@ -519,6 +531,12 @@ return [
                     'type' => 'js',
                     'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.js',
+                ],  
+                //<!-- Botones -->
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'vendor/datatables/dataTables.buttons.min.js',
                 ],
                 [
                     'type' => 'js',

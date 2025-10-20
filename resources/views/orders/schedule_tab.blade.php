@@ -26,7 +26,6 @@
         </a>
     </li>
     @endcan
-
     @can('schedule/finished')
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('schedule.finished') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
@@ -35,7 +34,6 @@
         </a>
     </li>
     @endcan
-
     @can('schedule/statistics')
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('schedule.statistics') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"

@@ -102,7 +102,7 @@ class OrderScheduleImportService
         'cur_break_total_prepay',
     ];
 
-    public function relabelParents(): void
+ public function relabelParents(): void
     {
         DB::transaction(function () {
 
@@ -154,17 +154,19 @@ class OrderScheduleImportService
         ");
 
             // 3) Guardar TOTAL del grupo en el PADRE (recalcular SIEMPRE)
-            DB::statement("
-            UPDATE orders_schedule p
-            JOIN (
-                SELECT COALESCE(parent_id, id) AS grp_parent_id,
-                       SUM(COALESCE(wo_qty,0)) AS total_qty
-                FROM orders_schedule
-                GROUP BY COALESCE(parent_id, id)
-            ) s  ON s.grp_parent_id = p.id
-            SET p.group_wo_qty = s.total_qty
-            WHERE p.parent_id IS NULL
-        ");
+    DB::statement("
+    UPDATE orders_schedule p
+    JOIN (
+        SELECT COALESCE(parent_id, id) AS grp_parent_id,
+               SUM(COALESCE(wo_qty,0))   AS total_qty
+        FROM orders_schedule
+        WHERE NULLIF(work_id,'') IS NOT NULL   -- work_id no vacío
+          AND was_work_id_null = 0
+        GROUP BY COALESCE(parent_id, id)
+    ) s  ON s.grp_parent_id = p.id
+    SET p.group_wo_qty = s.total_qty
+    WHERE p.parent_id IS NULL
+");
 
             // 4) Limpiar total en hijos (si tienen algo)
             DB::statement("
@@ -175,6 +177,8 @@ class OrderScheduleImportService
         ");
         });
     }
+
+
 
 
 
@@ -263,7 +267,7 @@ class OrderScheduleImportService
             'report'          => $row['report'] ?? '0',
             'our_source'      => $row['our_source'] ?? '0',
             'assigned_to'     => $row['station'] ?? '""',
-            'notes'           => $row['notes'] ?? '',
+            'notes'   => $row['notes'] ?? '',
             'location'        => $row['location'] ?? 'Floor',
             'priority'        => $row['priority'] ?? 'no',
             'assigned_to'     => $row['assigned_to'] ?? '1',

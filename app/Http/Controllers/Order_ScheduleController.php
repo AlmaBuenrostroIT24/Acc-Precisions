@@ -369,6 +369,7 @@ class Order_ScheduleController extends Controller
     //----------------------------------------------------------------------------------------------------------------------------
     //Orders Statistics--------------------------------------------------------------------------------------------------------------
 
+
     public function statistics(Request $request)
     {
         $today = Carbon::today();
@@ -628,7 +629,6 @@ class Order_ScheduleController extends Controller
 
     public function updateWoQty(Request $request, $id)
     {
-
         $data = $request->validate([
             'wo_qty' => 'required|integer|min:0',
         ]);
@@ -643,14 +643,16 @@ class Order_ScheduleController extends Controller
             // 2) Determinar el padre del grupo (si es hijo, su padre; si es padre, él mismo)
             $parentId = $order->parent_id ?: $order->id;
 
-            // 3) Recalcular total del grupo como SUM(wo_qty) de padre + hijos
-            //    (si quieres excluir 'sent', agrega ->where('status', '<>', 'sent'))
+            // 3) Recalcular total del grupo SOLO con filas cuyo work_id NO esté vacío y was_work_id_null = 1
+            //    (si quieres excluir 'sent', añade ->where('status', '<>', 'sent'))
             $groupTotal = OrderSchedule::query()
                 ->where(function ($q) use ($parentId) {
                     $q->where('id', $parentId)
                         ->orWhere('parent_id', $parentId);
                 })
-                ->sum(DB::raw('COALESCE(wo_qty,0)'));
+                ->whereRaw("NULLIF(TRIM(work_id), '') IS NOT NULL") // work_id no vacío ni null (ignora espacios)
+                ->where('was_work_id_null', 0)
+                ->sum(DB::raw('COALESCE(wo_qty, 0)'));
 
             // 4) Guardar el total en el padre
             OrderSchedule::whereKey($parentId)->update([
@@ -659,14 +661,15 @@ class Order_ScheduleController extends Controller
 
             // 5) Responder al front con info útil para actualizar UI
             return response()->json([
-                'success'       => true,
-                'order_id'      => $order->id,
-                'parent_id'     => $parentId,
-                'wo_qty_saved'  => (int) $order->wo_qty,
-                'group_wo_qty'  => (int) $groupTotal,
+                'success'      => true,
+                'order_id'     => $order->id,
+                'parent_id'    => $parentId,
+                'wo_qty_saved' => (int) $order->wo_qty,
+                'group_wo_qty' => (int) $groupTotal,
             ]);
         });
     }
+
 
 
     public function create()
@@ -903,13 +906,62 @@ class Order_ScheduleController extends Controller
         return response()->json(['success' => true, 'notes' => $request->notes]);
     }
 
-    public function ajaxUpdateWorkId(Request $request, OrderSchedule  $order)
+    public function ajaxUpdateWorkId(Request $request, OrderSchedule $order)
     {
-        $order->work_id = $request->input('work_id');
-        $order->save();
+        $data = $request->validate([
+            'work_id' => 'nullable|string|max:191',
+        ]);
 
-        return response()->json(['success' => true]);
+        return DB::transaction(function () use ($order, $data) {
+
+            /** @var \App\Models\OrderSchedule $o */
+            $o = OrderSchedule::lockForUpdate()->findOrFail($order->id);
+
+            // 1) Actualizar work_id (sin tocar was_work_id_null)
+            // Normaliza: "" -> NULL (con trim)
+            $wi = isset($data['work_id']) ? trim($data['work_id']) : null;
+            $o->work_id = ($wi === '') ? null : $wi;
+
+            // 2) Recalcular group_key (PN#work_id | PN#NO-WO)
+            $o->group_key = $o->PN . '#' . ($o->work_id ? $o->work_id : 'NO-WO');
+
+            $o->save();
+
+            // 3) Identificar padre del grupo
+            $parentId = $o->parent_id ?: $o->id;
+
+            // 4) Recalcular total del grupo:
+            //    - SIEMPRE suma el padre
+            //    - + hijos con work_id no vacío y was_work_id_null = 1
+            //    (si quieres excluir 'sent', añade ->where('status','<>','sent') donde se indica)
+            $parentQty = (int) OrderSchedule::whereKey($parentId)
+                //->where('status','<>','sent')
+                ->value(DB::raw('COALESCE(wo_qty,0)'));
+
+            $childrenSum = (int) OrderSchedule::where('parent_id', $parentId)
+                //->where('status','<>','sent')
+                ->whereRaw("NULLIF(TRIM(work_id),'') IS NOT NULL")
+                ->where('was_work_id_null', 1)
+                ->sum(DB::raw('COALESCE(wo_qty,0)'));
+
+            $groupTotal = $parentQty + $childrenSum;
+
+            OrderSchedule::whereKey($parentId)->update([
+                'group_wo_qty' => (int) $groupTotal,
+            ]);
+
+            // 5) Responder con todo lo necesario para refrescar la UI
+            return response()->json([
+                'success'       => true,
+                'order_id'      => $o->id,
+                'parent_id'     => $parentId,
+                'work_id'       => $o->work_id,
+                'group_key'     => $o->group_key,
+                'group_wo_qty'  => (int) $groupTotal,
+            ]);
+        });
     }
+
 
     public function updateStation(Request $request, OrderSchedule $order)
     {

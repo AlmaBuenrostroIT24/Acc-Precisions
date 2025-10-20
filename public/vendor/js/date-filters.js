@@ -210,7 +210,7 @@
         format: 'YYYY-MM-DD',
         viewMode: 'days',
         useCurrent: false,
-        keepOpen: false
+        keepOpen: false,
       });
 
       const initDay = $day.val();
