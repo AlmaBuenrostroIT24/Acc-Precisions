@@ -332,7 +332,7 @@ return [
             'text' => 'Quality Assurance',
             'icon' => 'nav-icon fas fa-cogs',
             // El padre se muestra si el usuario tiene AL MENOS UNO de estos permisos
-            'can'  => ['QA/Calibrations', 'QA/Instruments', 'qa/partsrevision'],
+            'can'  => ['QA/Calibrations', 'QA/Instruments', 'qa/partsrevision','QA/NonConformace'],
             'submenu' => [
                 [
                     'text' => 'Calibration',
@@ -348,6 +348,11 @@ return [
                     'text' => 'FAI Summary',
                     'url'  => 'qa/partsrevision',
                     'can'  => 'qa/partsrevision',
+                ],
+                  [
+                    'text' => 'Non Conformance',
+                    'url'  => 'QA/NonConformace',
+                    'can'  => 'QA/NonConformace',
                 ],
             ],
         ],

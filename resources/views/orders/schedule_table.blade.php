@@ -101,19 +101,24 @@
                         <td style="white-space: nowrap; width: 100px;" class="texsty">
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
+                            $hasWorkId = isset($order->work_id) && trim($order->work_id) !== '';
+                            // Editable si NO está restringido y (venía vacío o AHORA está vacío)
+                            $canEdit = !$isRestricted && ($order->was_work_id_null || !$hasWorkId);
                             @endphp
 
-                            @if ($order->was_work_id_null)
+                            @if ($canEdit)
                             <span
-                                class="{{ $order->work_id ? 'text-success fw-bold' : 'text-muted' }} 
-                   {{ $isRestricted  ? '' : 'editable-work-id text-decoration-underline' }}"
+                                class="{{ $hasWorkId ? 'text-success fw-bold' : 'text-muted' }} editable-work-id text-decoration-underline"
                                 data-id="{{ $order->id }}"
-                                data-value="{{ $order->work_id ?? '' }}"
-                                style="{{ $isRestricted ? '' : 'cursor:pointer;' }}">
-                                {{ $order->work_id ?? 'Add' }}
+                                data-value="{{ $hasWorkId ? e($order->work_id) : '' }}"
+                                style="cursor:pointer;">
+                                {{ $hasWorkId ? $order->work_id : 'Add' }}
                             </span>
                             @else
-                            {{ $order->work_id }}
+                            {{-- Texto no editable; igual mostramos "Add" si ahora está vacío --}}
+                            <span class="{{ $hasWorkId ? '' : 'text-muted' }}">
+                                {{ $hasWorkId ? $order->work_id : 'Add' }}
+                            </span>
                             @endif
                         </td>
                         <td class="texsty" style="min-width: 120px;">{{ $order->PN }}</td>
