@@ -102,7 +102,7 @@ class OrderScheduleImportService
         'cur_break_total_prepay',
     ];
 
-public function relabelParents(): void
+ public function relabelParents(): void
     {
         DB::transaction(function () {
 
@@ -121,86 +121,52 @@ public function relabelParents(): void
         ");
 
             // 2) Asignar UN solo padre por PN (ignora work_id)
-    DB::statement("
-UPDATE orders_schedule os
-JOIN (
-  SELECT t.PN, MAX(t.id) AS parent_id
-  FROM orders_schedule t
-  JOIN (
-     SELECT PN,
-            MAX(
-              COALESCE(
-                STR_TO_DATE(due_date, '%Y-%m-%d'),
-                STR_TO_DATE(due_date, '%b-%d-%y'),
-                STR_TO_DATE(due_date, '%m/%d/%Y')
-              )
-            ) AS max_due
-     FROM orders_schedule
-     WHERE LOWER(status) <> 'sent'
-     GROUP BY PN
-  ) g ON g.PN = t.PN
-     AND COALESCE(
-           STR_TO_DATE(t.due_date, '%Y-%m-%d'),
-           STR_TO_DATE(t.due_date, '%b-%d-%y'),
-           STR_TO_DATE(t.due_date, '%m/%d/%Y'),
-           STR_TO_DATE('1970-01-01', '%Y-%m-%d')
-         ) = g.max_due
-  WHERE LOWER(t.status) <> 'sent'
-  GROUP BY t.PN
-) p ON p.PN = os.PN
-SET os.parent_id = CASE
-  WHEN os.id = p.parent_id THEN NULL
-  ELSE p.parent_id
-END
-WHERE LOWER(os.status) <> 'sent'
-");
-
+            DB::statement("
+            UPDATE orders_schedule os
+            JOIN (
+              SELECT t.PN,
+                     MAX(t.id) AS parent_id
+              FROM orders_schedule t
+              JOIN (
+                 SELECT PN,
+                        MAX(due_date) AS max_due
+                 FROM orders_schedule
+                 WHERE LOWER(status) <> 'sent'
+                 GROUP BY PN
+              ) g ON g.PN = t.PN
+                 AND IFNULL(t.due_date,'1970-01-01') = IFNULL(g.max_due,'1970-01-01')
+              WHERE LOWER(t.status) <> 'sent'
+              GROUP BY t.PN
+            ) p ON p.PN = os.PN
+            SET os.parent_id = CASE
+              WHEN os.id = p.parent_id THEN NULL   -- el elegido queda como padre
+              ELSE p.parent_id                     -- el resto pasa a hijo
+            END
+            WHERE LOWER(os.status) <> 'sent'
+        ");
 
             // 2.5) Copiar qty → wo_qty SOLO en hijos con wo_qty vacío/0
-DB::statement("
-UPDATE orders_schedule c
-LEFT JOIN (
-  /* Penúltima fecha (DESC) por grupo raíz: padre + hijos */
-  SELECT pen.id AS penultimate_id, pen.grp_id
-  FROM (
-    SELECT
-      x.id,
-      COALESCE(x.parent_id, x.id) AS grp_id,
-      ROW_NUMBER() OVER (
-        PARTITION BY COALESCE(x.parent_id, x.id)
-        ORDER BY
-          COALESCE(
-            STR_TO_DATE(x.due_date, '%Y-%m-%d'),
-            STR_TO_DATE(x.due_date, '%b-%d-%y'),
-            STR_TO_DATE(x.due_date, '%m/%d/%Y'),
-            STR_TO_DATE('1970-01-01', '%Y-%m-%d')
-          ) DESC,
-          x.id DESC
-      ) AS rn
-    FROM orders_schedule x
-    WHERE x.parent_id IS NOT NULL OR x.parent_id IS NULL
-  ) pen
-  WHERE pen.rn = 2  -- penúltima del grupo completo
-) p ON p.grp_id = c.parent_id  -- los hijos comparten grp_id = parent_id
-SET c.wo_qty = COALESCE(c.qty, 0)
-WHERE c.parent_id IS NOT NULL
-  AND (c.wo_qty IS NULL OR c.wo_qty = 0)
-  AND (p.penultimate_id IS NULL OR c.id <> p.penultimate_id)
-");
-
+            DB::statement("
+            UPDATE orders_schedule
+            SET wo_qty = COALESCE(qty, 0)
+            WHERE parent_id IS NOT NULL
+              AND (wo_qty IS NULL OR wo_qty = 0)
+        ");
 
             // 3) Guardar TOTAL del grupo en el PADRE (recalcular SIEMPRE)
-            DB::statement("
-            UPDATE orders_schedule p
-            JOIN (
-                SELECT COALESCE(parent_id, id) AS grp_parent_id,
-                       SUM(COALESCE(wo_qty,0)) AS total_qty
-                FROM orders_schedule
-                GROUP BY COALESCE(parent_id, id)
-            ) s  ON s.grp_parent_id = p.id
-            SET p.group_wo_qty = s.total_qty
-            WHERE p.parent_id IS NULL
-        ");
+    DB::statement("
+    UPDATE orders_schedule p
+    JOIN (
+        SELECT COALESCE(parent_id, id) AS grp_parent_id,
+               SUM(COALESCE(wo_qty,0))   AS total_qty
+        FROM orders_schedule
+        WHERE NULLIF(work_id,'') IS NOT NULL   -- work_id no vacío
+          AND was_work_id_null = 0
+        GROUP BY COALESCE(parent_id, id)
+    ) s  ON s.grp_parent_id = p.id
+    SET p.group_wo_qty = s.total_qty
+    WHERE p.parent_id IS NULL
+");
 
             // 4) Limpiar total en hijos (si tienen algo)
             DB::statement("
@@ -211,6 +177,8 @@ WHERE c.parent_id IS NOT NULL
         ");
         });
     }
+
+
 
 
 
