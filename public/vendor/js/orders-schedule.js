@@ -1270,12 +1270,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
             // 1) Preguntar por la inspección primero
             Swal.fire({
-                title: "¿Inspección terminada?",
-                text: "¿Quieres marcar 'status_inspection' como COMPLETED antes de continuar?",
+                title: "¿Inspection completed?",
+                text: "¿Do you want to set 'Inspection' to COMPLETED before continuing?",
                 icon: "question",
                 showCancelButton: true,
-                confirmButtonText: "Sí, completada",
-                cancelButtonText: "Cancelar",
+                confirmButtonText: "Yes, completed",
+                cancelButtonText: "Cancel",
                 reverseButtons: true,
             }).then((insp) => {
                 if (!insp.isConfirmed) {
