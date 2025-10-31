@@ -1042,11 +1042,26 @@ document.addEventListener("DOMContentLoaded", () => {
             : "";
 
         const enviarCambioStatus = () => {
+            // 👇 lee la confirmación de inspección si existe
+            const insp = JSON.parse(
+                localStorage.getItem("inspection-change") || "null"
+            );
+
+            // payload mínimo
+            const payload = { status: newStatus };
+
+            // si se confirmó la inspección, añadimos el campo
+            if (insp && insp.orderId === orderId) {
+                payload.status_inspection = insp.status_inspection; // "completed"
+            }
             handlePostJsonWithAlerts(
                 `/orders/${orderId}/update-status`,
-                { status: newStatus },
+                payload,
                 (data) => {
                     if (data.success) {
+                        // limpiar la bandera ya aplicada
+                        localStorage.removeItem("inspection-change");
+
                         localStorage.setItem(
                             "status-change",
                             JSON.stringify({
@@ -1248,29 +1263,56 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // ✅ Confirmación si cambia a 'deburring' o 'shipping' desde 'Yarnell'
+        // ✅ Flujo: 1) Confirmar inspección -> 2) Confirmar mover a Hearst y cambiar status
         if (
             (newStatus === "deburring" || newStatus === "shipping") &&
             currentLocation.toLowerCase() === "yarnell"
         ) {
+            // 1) Preguntar por la inspección primero
             Swal.fire({
-                title: "¿Are you sure?",
-                text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
-                icon: "warning",
+                title: "¿Inspección terminada?",
+                text: "¿Quieres marcar 'status_inspection' como COMPLETED antes de continuar?",
+                icon: "question",
                 showCancelButton: true,
-                confirmButtonText: "Yes, Change",
-                cancelButtonText: "No, Cancel",
+                confirmButtonText: "Sí, completada",
+                cancelButtonText: "Cancelar",
                 reverseButtons: true,
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    localStorage.setItem(
-                        "location-change",
-                        JSON.stringify({ orderId, location: "hearst" })
-                    );
-                    enviarCambioStatus();
-                } else {
-                    select.val(oldStatus); // Revertir
+            }).then((insp) => {
+                if (!insp.isConfirmed) {
+                    // Cancelan aquí → no se hace nada y se revierte el cambio
+                    select.val(oldStatus);
+                    return;
                 }
+
+                // Marcar inspección como completed
+                localStorage.setItem(
+                    "inspection-change",
+                    JSON.stringify({ orderId, status_inspection: "completed" })
+                );
+
+                // 2) Confirmar el cambio que moverá a Hearst
+                Swal.fire({
+                    title: "¿Are you sure?",
+                    text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, Change",
+                    cancelButtonText: "No, Cancel",
+                    reverseButtons: true,
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.setItem(
+                            "location-change",
+                            JSON.stringify({ orderId, location: "hearst" })
+                        );
+                        enviarCambioStatus(); // tu AJAX que aplica el cambio de status (y puedes leer los extras del localStorage)
+                    } else {
+                        // Si cancelan aquí, también revertimos el select
+                        select.val(oldStatus);
+                    }
+                });
             });
+
             return;
         }
 

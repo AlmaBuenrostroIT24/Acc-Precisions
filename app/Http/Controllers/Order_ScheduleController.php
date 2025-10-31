@@ -769,12 +769,32 @@ class Order_ScheduleController extends Controller
             $request->validate([
                 'status' => 'required|string|max:50',
                 'target_date' => 'nullable|date',
+                'status_inspection' => 'nullable|in:pending,in_progress,completed',
             ]);
 
             $newStatus = strtolower($request->status);
             // Captura el estado anterior antes de sobrescribirlo
             $previousStatus = $order->status;
+
+            // 1) Captura el estado de inspección previo ANTES de modificarlo
+            $prevInspection = $order->status_inspection;
+
             $order->status = $newStatus;
+
+            // 2) Si viene status_inspection, asigna y setea inspection_endate si pasa a completed
+            if ($request->filled('status_inspection')) {
+                $newInspection = strtolower($request->status_inspection);
+                $order->status_inspection = $newInspection;
+
+                // Solo poner fecha si es transición a completed (y no estaba completed antes)
+                if ($newInspection === 'completed' && $prevInspection !== 'completed') {
+                    $order->inspection_endate = now(); // se guarda solo una vez
+                }
+                // (Opcional) si quieres limpiar al revertir:
+                // if (in_array($newInspection, ['pending','in_progress']) && $prevInspection === 'completed') {
+                //     $order->inspection_endate = null;
+                // }
+            }
 
             // ✅ Guardar previous_status si se cambia a "sent"
             if ($newStatus === 'sent') {
