@@ -229,6 +229,14 @@
     <br>
 
 
+    @php
+    $op = (int)($header['operation'] ?? 0);
+    @endphp
+
+    @if($op !== 0)
+
+    {{-- === SOLO SECCIÓN DE TABLA + RESUMEN + FIRMAS CUANDO operation != 0 === --}}
+
     {{-- Tabla de filas UNO A UNO --}}
     <table class="grid">
         <thead>
@@ -274,13 +282,11 @@
 
     <br>
 
-
-
     {{-- Resumen FAI/IPI (inyectado) --}}
-    @php $isOk = !$summary['has_missing']; @endphp
+    @php $isOk = !($summary['has_missing'] ?? false); @endphp
     <div class="summary-box {{ $isOk ? 'summary-ok' : 'summary-warn' }}">
         <div class="summary-body">
-            {!! $summary['html'] !!}
+            {!! $summary['html'] ?? '' !!}
         </div>
     </div>
 
@@ -302,6 +308,37 @@
             </td>
         </tr>
     </table>
+
+    @else
+
+    {{-- === CUANDO operation == 0: MOSTRAR SOLO LA NOTA DE INSPECCIÓN === --}}
+    <div class="summary-box summary-warn" style="width:100%;">
+        <div class="h1" style="margin-bottom:6px;">Inspection Note</div>
+        <div class="summary-body">
+            {{ $header['inspection_note'] ?? '—' }}
+        </div>
+    </div>
+
+      <table style="width:100%; border-collapse:separate; border-spacing:0;">
+        <tr>
+            <td>
+                <strong>FINAL INSP QTY:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+            </td>
+        </tr>
+        <br>
+        <tr>
+            <td>
+                <strong>COMPLT. INIT & DATE:</strong>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;">
+                    {{ $user->name ?? '—' }} ( {{ $generatedAt->format('m/d/Y') }} )
+                </span>
+                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+            </td>
+        </tr>
+    </table>
+
+    @endif
 
 </body>
 

@@ -610,6 +610,7 @@ class QaFaiSummaryController extends Controller
             'total_fai'         => (int)($order->total_fai ?? 0),
             'total_ipi'         => (int)($order->total_ipi ?? 0),
             'status_inspection' => $order->status_inspection,
+            'inspection_note' => $order->inspection_note,
         ];
 
         // 2) Líneas "DELIVER ... PIECES BY ... PO#..." sólo de HIJOS (agrupado por due_date+cust_po)
