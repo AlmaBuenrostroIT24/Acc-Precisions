@@ -1046,6 +1046,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const insp = JSON.parse(
                 localStorage.getItem("inspection-change") || "null"
             );
+            const note = JSON.parse(
+                localStorage.getItem("inspection-note-change") || "null"
+            );
 
             // payload mínimo
             const payload = { status: newStatus };
@@ -1054,6 +1057,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (insp && insp.orderId === orderId) {
                 payload.status_inspection = insp.status_inspection; // "completed"
             }
+            if (note && note.orderId === orderId)
+                payload.inspection_note = note.inspection_note;
             handlePostJsonWithAlerts(
                 `/orders/${orderId}/update-status`,
                 payload,
@@ -1061,7 +1066,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (data.success) {
                         // limpiar la bandera ya aplicada
                         localStorage.removeItem("inspection-change");
-
+                        localStorage.removeItem("inspection-note-change");
                         localStorage.setItem(
                             "status-change",
                             JSON.stringify({
@@ -1264,61 +1269,150 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Confirmación si cambia a 'deburring' o 'shipping' desde 'Yarnell'
         // ✅ Flujo: 1) Confirmar inspección -> 2) Confirmar mover a Hearst y cambiar status
+        // ✅ Flujo: 1) Confirmar inspección -> (si operation=0 pedir nota) -> 2) Confirmar mover a Hearst y cambiar status
         if (
             (newStatus === "deburring" || newStatus === "shipping") &&
-            currentLocation.toLowerCase() === "yarnell"
+            String(currentLocation).toLowerCase() === "yarnell"
         ) {
-            // 1) Preguntar por la inspección primero
-            Swal.fire({
-                title: "¿Inspection completed?",
-                text: "¿Do you want to set 'Inspection' to COMPLETED before continuing?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Yes, completed",
-                cancelButtonText: "Cancel",
-                reverseButtons: true,
-            }).then((insp) => {
-                if (!insp.isConfirmed) {
-                    // Cancelan aquí → no se hace nada y se revierte el cambio
-                    select.val(oldStatus);
-                    return;
-                }
+            // 0) Traer operation desde BD
+            fetchOpsMeta(orderId)
+                .then(function ({ operation, parent_id }) {
+                    // 1) Preguntar por la inspección primero
+                    Swal.fire({
+                        title: "¿Inspection completed?",
+                        text: "¿Do you want to set 'Inspection' to COMPLETED before continuing?",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, completed",
+                        cancelButtonText: "Cancel",
+                        reverseButtons: true,
+                    }).then((insp) => {
+                        if (!insp.isConfirmed) {
+                            select.val(oldStatus).trigger("change.select2");
+                            return;
+                        }
 
-                // Marcar inspección como completed
-                localStorage.setItem(
-                    "inspection-change",
-                    JSON.stringify({ orderId, status_inspection: "completed" })
-                );
-
-                // 2) Confirmar el cambio que moverá a Hearst
-                Swal.fire({
-                    title: "¿Are you sure?",
-                    text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Yes, Change",
-                    cancelButtonText: "No, Cancel",
-                    reverseButtons: true,
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                        // Marcar inspección como completed
                         localStorage.setItem(
-                            "location-change",
-                            JSON.stringify({ orderId, location: "hearst" })
+                            "inspection-change",
+                            JSON.stringify({
+                                orderId,
+                                status_inspection: "completed",
+                            })
                         );
-                        enviarCambioStatus(); // tu AJAX que aplica el cambio de status (y puedes leer los extras del localStorage)
-                    } else {
-                        // Si cancelan aquí, también revertimos el select
-                        select.val(oldStatus);
-                    }
-                });
-            });
 
+                        // 2) Si operation = 0, pedir comentario; si no, ir directo a confirmar Hearst
+                        // 👉 Ahora la condición usa operation === 0 **y** parent_id IS NULL
+                        const isParentNull =
+                            parent_id === null || parent_id === undefined;
+                        if (Number(operation) === 0 && isParentNull) {
+                            Swal.fire({
+                                title: "Inspection note",
+                                input: "textarea",
+                                inputLabel:
+                                    "Enter a reason for not completing the Inspection.",
+                                inputPlaceholder: "Reason / context…",
+                                inputAttributes: {
+                                    "aria-label": "Inspection note",
+                                },
+                                showCancelButton: false,
+                                confirmButtonText: "Save note",
+                                reverseButtons: true,
+                                inputValidator: (value) => {
+                                    if (!value || value.trim().length < 50) {
+                                        return "Write a short note (min 50 characters).";
+                                    }
+                                },
+                            }).then((noteResult) => {
+                                if (!noteResult.isConfirmed) {
+                                    select
+                                        .val(oldStatus)
+                                        .trigger("change.select2");
+                                    return;
+                                }
+
+                                const inspectionNote = noteResult.value.trim();
+                                localStorage.setItem(
+                                    "inspection-note-change",
+                                    JSON.stringify({
+                                        orderId,
+                                        inspection_note: inspectionNote,
+                                    })
+                                );
+
+                                confirmarCambioHearst(); // pasa al paso 2
+                            });
+                        } else {
+                            confirmarCambioHearst(); // pasa al paso 2 sin nota
+                        }
+
+                        // Paso 2: confirmar mover a Hearst y cambiar status
+                        function confirmarCambioHearst() {
+                            Swal.fire({
+                                title: "¿Are you sure?",
+                                text: `Change status to '${newStatus}' will move the location to 'Hearst'.`,
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Yes, Change",
+                                cancelButtonText: "No, Cancel",
+                                reverseButtons: true,
+                            }).then((result) => {
+                                if (!result.isConfirmed) {
+                                    select
+                                        .val(oldStatus)
+                                        .trigger("change.select2");
+                                    return;
+                                }
+
+                                localStorage.setItem(
+                                    "location-change",
+                                    JSON.stringify({
+                                        orderId,
+                                        location: "hearst",
+                                    })
+                                );
+
+                                // tu AJAX que aplica el cambio de status (lee extras desde localStorage)
+                                enviarCambioStatus();
+                            });
+                        }
+                    });
+                })
+                .fail(function () {
+                    select.val(oldStatus).trigger("change.select2");
+                    Swal.fire({
+                        title: "Error",
+                        text: "Couldn't fetch operation.",
+                        icon: "error",
+                    });
+                });
+
+            // importante: no sigas el flujo normal
             return;
         }
 
         // ✅ Enviar directamente si no requiere confirmación
         enviarCambioStatus();
     });
+
+    // ---- helpers/operation.js ----
+    const OPS_META_CACHE = {};
+    function fetchOpsMeta(orderId) {
+        if (OPS_META_CACHE[orderId]) {
+            return $.Deferred().resolve(OPS_META_CACHE[orderId]).promise();
+        }
+        return $.getJSON(`/orders/${orderId}/ops-meta`).then(function (r) {
+            const meta = {
+                operation: Number((r && r.operation) || 0),
+                parent_id:
+                    r && typeof r.parent_id !== "undefined"
+                        ? r.parent_id
+                        : null,
+            };
+            OPS_META_CACHE[orderId] = meta;
+            return meta;
+        });
+    }
 
     //----
     function triggerEditableDueDate(orderId) {

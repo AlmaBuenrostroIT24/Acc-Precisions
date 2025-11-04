@@ -770,6 +770,7 @@ class Order_ScheduleController extends Controller
                 'status' => 'required|string|max:50',
                 'target_date' => 'nullable|date',
                 'status_inspection' => 'nullable|in:pending,in_progress,completed',
+                'inspection_note'   => 'nullable|string|max:500', // 👈 nuevo
             ]);
 
             $newStatus = strtolower($request->status);
@@ -780,6 +781,11 @@ class Order_ScheduleController extends Controller
             $prevInspection = $order->status_inspection;
 
             $order->status = $newStatus;
+
+            // guardar nota si vino
+            if ($request->filled('inspection_note')) {
+                $order->inspection_note = $request->inspection_note;
+            }
 
             // 2) Si viene status_inspection, asigna y setea inspection_endate si pasa a completed
             if ($request->filled('status_inspection')) {
@@ -870,6 +876,15 @@ class Order_ScheduleController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    public function getOpsMeta(\App\Models\OrderSchedule $order)
+    {
+        return response()->json([
+            'operation' => $order->operation ?? 0,
+            'parent_id' => $order->parent_id, // null si no tiene padre
+        ]);
     }
 
 
