@@ -31,7 +31,6 @@ class QaFaiSummaryController extends Controller
     }
     //	31009/1
 
-
     public function partsrevisionData(Request $request)
     {
         $bucket = $request->query('bucket');
@@ -49,7 +48,7 @@ class QaFaiSummaryController extends Controller
             'Part_description',
             'operation',
             'wo_qty',
-            'group_wo_qty',   // 👈 usar total guardado en el padre
+            'group_wo_qty',   // 👈 total guardado en el padre
             'due_date',
             'location',
             'status_inspection',
@@ -83,7 +82,7 @@ class QaFaiSummaryController extends Controller
 
         $data = $rows->map(function ($r) use ($bucket, $opName) {
             $pn   = trim((string) $r->PN);
-            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
+            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ',')); // antes de la coma
             $part = $pn . ' - ' . $desc;
             $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
 
@@ -128,11 +127,12 @@ class QaFaiSummaryController extends Controller
             ];
 
             if ($bucket === 'process') {
-                $ops = (int) ($r->operation ?? 0);
-                $sampling = (int) ($r->sampling ?? 0);
-                $perOpReq = 1 + $sampling;
+                $ops      = (int) ($r->operation ?? 0);
+                $sampling = (int) ($r->sampling  ?? 0);
+                $ipiReq   = max(0, $sampling - 1);          // 👈 requisito real de IPI (= sampling - 1)
+                $perOpReq = 1 + $ipiReq;                    // 👈 FAI(1) + IPI requeridos
                 $totalReq = $ops * $perOpReq;
-                $done = 0;
+                $done     = 0;
 
                 if ($ops > 0) {
                     $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
@@ -149,22 +149,24 @@ class QaFaiSummaryController extends Controller
                     $fai = [];
                     $ipi = [];
                     foreach ($pass as $p) {
-                        $name = (string)$p->operation;
-                        $q = (int)$p->qty;
-                        $type = strtoupper((string)$p->insp_type);
+                        $name = (string) $p->operation;
+                        $q    = (int) $p->qty;
+                        $type = strtoupper((string) $p->insp_type);
                         if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
                         if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
                     }
+
                     for ($i = 1; $i <= $ops; $i++) {
                         $name = $opName($i);
-                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $sampling);
+                        // FAI cuenta máximo 1, IPI cuenta máximo ipiReq
+                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq); // 👈 usa ipiReq
                     }
                 }
 
                 $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
-                  <div class="progress-bar bg-secondary" role="progressbar"
-                       style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-                </div>';
+              <div class="progress-bar bg-secondary" role="progressbar"
+                   style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>';
                 $row['progress_pct'] = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
             }
 
@@ -173,6 +175,7 @@ class QaFaiSummaryController extends Controller
 
         return response()->json(['data' => $data]);
     }
+
 
 
 
@@ -212,7 +215,7 @@ class QaFaiSummaryController extends Controller
             $smp = (int) ($order->sampling ?? 0);
 
             $order->total_fai = $op;          // 1 por operación
-            $order->total_ipi = $op * $smp-$order->total_fai;   // operación * muestreo
+            $order->total_ipi = $op * $smp - $order->total_fai;   // operación * muestreo
         }
 
         $order->save();
