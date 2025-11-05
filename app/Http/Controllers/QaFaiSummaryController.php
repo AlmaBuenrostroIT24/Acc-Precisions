@@ -212,7 +212,7 @@ class QaFaiSummaryController extends Controller
             $smp = (int) ($order->sampling ?? 0);
 
             $order->total_fai = $op;          // 1 por operación
-            $order->total_ipi = $op * $smp;   // operación * muestreo
+            $order->total_ipi = $op * $smp-$order->total_fai;   // operación * muestreo
         }
 
         $order->save();
