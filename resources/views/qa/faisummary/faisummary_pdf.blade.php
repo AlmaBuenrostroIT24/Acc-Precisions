@@ -187,7 +187,9 @@
         <tr>
             <td><strong>CO QTY:</strong> {{ $header['qty'] }}</td>
             <td><strong>WO QTY:</strong> {{ $header['group_wo_qty'] }}</td>
-            <td colspan="2"><strong>DUE DATE:</strong> {{ $header['due_date'] ? \Carbon\Carbon::parse($header['due_date'])->format('m/d/Y') : '' }}</td>
+            <td colspan="2"><strong>DUE DATE:</strong>
+                {{ $header['due_date'] ? \Carbon\Carbon::parse($header['due_date'])->format('m/d/Y') : '' }}
+            </td>
             <td colspan="2"><strong>CO#:</strong> {{ $header['co'] }}</td>
             <td colspan="2"><strong>CUST PO#:</strong> {{ $header['cust_po'] }}</td>
         </tr>
@@ -220,7 +222,9 @@
         <tr>
             <td colspan="8" style="padding-top:4px;">
                 @foreach($header['deliveries'] as $d)
-                <div><strong>DELIVER {{ $d['pieces'] }} PIECES</strong> BY: {{ $d['date'] }}&nbsp;&nbsp;PO#{{ $d['cust_po'] }}</div>
+                <div><strong>DELIVER {{ $d['pieces'] }} PIECES</strong> BY:
+                    {{ $d['date'] }}&nbsp;&nbsp;PO#{{ $d['cust_po'] }}
+                </div>
                 @endforeach
             </td>
         </tr>
@@ -294,17 +298,26 @@
         <tr>
             <td>
                 <strong>FINAL INSP QTY:</strong>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+                <span
+                    style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
             </td>
         </tr>
         <br>
+        @php
+        $completedUser = $order->completedByUser ?? $user ?? null;
+        @endphp
+
         <tr>
             <td>
                 <strong>COMPLT. INIT & DATE:</strong>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;">
-                    {{ $user->name ?? '—' }} ( {{ $generatedAt->format('m/d/Y') }} )
+                <span style="display:inline-block; border-bottom:1px solid #000; width:200px; text-align:center;">
+                    {{ $completedUser->name ?? '—' }}
+                    (
+                    {{ $order->inspection_endate ? \Carbon\Carbon::parse($order->inspection_endate)->format('m/d/Y') : '—' }}
+                    )
                 </span>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+                <span
+                    style="display:inline-block; border-bottom:1px solid #000; width:200px; text-align:center;"></span>
             </td>
         </tr>
     </table>
@@ -319,21 +332,30 @@
         </div>
     </div>
 
-      <table style="width:100%; border-collapse:separate; border-spacing:0;">
+    <table style="width:100%; border-collapse:separate; border-spacing:0;">
         <tr>
             <td>
                 <strong>FINAL INSP QTY:</strong>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+                <span
+                    style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
             </td>
         </tr>
         <br>
+        @php
+        $completedUser = $order->completedByUser ?? $user ?? null;
+        @endphp
+
         <tr>
             <td>
                 <strong>COMPLT. INIT & DATE:</strong>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;">
-                    {{ $user->name ?? '—' }} ( {{ $generatedAt->format('m/d/Y') }} )
+                <span style="display:inline-block; border-bottom:1px solid #000; width:200px; text-align:center;">
+                    {{ $completedUser->name ?? '—' }}
+                    (
+                    {{ $order->inspection_endate ? \Carbon\Carbon::parse($order->inspection_endate)->format('m/d/Y') : '—' }}
+                    )
                 </span>
-                <span style="display:inline-block; border-bottom:1px solid #000; width:150px; text-align:center;"></span>
+                <span
+                    style="display:inline-block; border-bottom:1px solid #000; width:200px; text-align:center;"></span>
             </td>
         </tr>
     </table>

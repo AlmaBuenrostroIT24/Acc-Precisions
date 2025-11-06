@@ -14,6 +14,7 @@ use PDF;
 use App\Services\InspectionSummary;
 use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
 
 use App\Exports\BladeTableExport;
 
@@ -368,19 +369,47 @@ class QaFaiSummaryController extends Controller
     public function updateStatusInspection(Request $request, $id)
     {
         $request->validate([
-            'status_inspection' => 'required|in:pending,in_progress,completed'
+            'status_inspection' => 'required|in:pending,in_progress,completed',
+            'inspection_note'   => 'nullable|string|max:500',
         ]);
 
         $order = OrderSchedule::findOrFail($id);
-        $order->status_inspection = $request->status_inspection;
 
-        // ✅ Si pasa a "completed", guarda la fecha/hora
-        if ($request->status_inspection === 'completed') {
-            $order->inspection_endate = now();
+        $prev = strtolower((string) $order->status_inspection);
+        $new  = strtolower($request->status_inspection);
+
+        // Guarda nota si viene
+        if ($request->filled('inspection_note')) {
+            $order->inspection_note = $request->inspection_note;
         }
+
+        $order->status_inspection = $new;
+
+        // ✅ Transición real a COMPLETED: sellar una sola vez
+        if ($new === 'completed' && $prev !== 'completed') {
+            if (empty($order->inspection_endate)) {
+                $order->inspection_endate = now();
+            }
+            if (empty($order->completed_by)) {
+                $order->completed_by = Auth::id();
+            }
+        }
+
+        // ❌ Si regresa a pending/in_progress, NO borres por defecto los sellos.
+        // (Opcional) si quieres limpiar al revertir, descomenta:
+         if (in_array($new, ['pending', 'in_progress']) && $prev === 'completed') {
+             $order->inspection_endate = null;
+            $order->completed_by = null;
+         }
+
         $order->save();
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success'           => true,
+            'status_inspection' => $order->status_inspection,
+            'inspection_endate' => $order->inspection_endate,
+            'completed_by'      => $order->completed_by,
+        ]);
     }
 
     public function destroy($id)

@@ -92,4 +92,11 @@ class OrderSchedule extends Model
     {
         return $this->hasMany(\App\Models\QaFaiSummary::class, 'order_schedule_id');
     }
+
+    public function completedByUser()
+{
+    return $this->belongsTo(User::class, 'completed_by');
+}
+
+
 }
