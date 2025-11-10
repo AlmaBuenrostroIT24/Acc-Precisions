@@ -38,59 +38,6 @@
     {{-- Columna izquierda: KPI / otro contenido --}}
     <div class="col-lg-3">
         <div class="row">
-
-
-            {{-- Columna B: KPI/Resumen --}}
-            <div class="col-md-12">
-                <div class="card mb-3 sticky-top" style="top: 10px;">
-                    <div class="card-header py-2">
-                        <strong><i class="fas fa-chart-bar mr-2"></i>Summary</strong>
-                    </div>
-
-                    <div class="card-body p-2">
-                        {{-- KPI principal --}}
-                        <div class="info-box info-box-sm bg-info mb-2">
-                            <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Closed inspections</span>
-                                <h5 class="mb-0" id="kpiTotal">0</h5>
-                            </div>
-                        </div>
-
-                        {{-- Fila con 2 KPIs en paralelo --}}
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="info-box info-box-sm bg-secondary mb-2">
-                                    <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Completed</span>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0" id="kpiPass">0</h5>
-                                            <small class="text-white-50">100%</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="info-box info-box-sm bg-light mb-2">
-                                    <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Incomplete</span>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0" id="kpiFail">0</h5>
-                                            <small class="text-white-50">&lt; 100%</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {{-- Fin fila --}}
-                    </div>
-                </div>
-            </div>
-
-
             {{-- Columna A: Filtros --}}
             <div class="col-md-12">
                 <div class="card mb-3 sticky-top" style="top: 10px;">
@@ -215,6 +162,57 @@
                                 </a>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+
+            {{-- Columna B: KPI/Resumen --}}
+            <div class="col-md-12">
+                <div class="card mb-3 sticky-top" style="top: 10px;">
+                    <div class="card-header py-2">
+                        <strong><i class="fas fa-chart-bar mr-2"></i>Summary</strong>
+                    </div>
+
+                    <div class="card-body p-2">
+                        {{-- KPI principal --}}
+                        <div class="info-box info-box-sm bg-info mb-2">
+                            <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Closed inspections</span>
+                                <h5 class="mb-0" id="kpiTotal">0</h5>
+                            </div>
+                        </div>
+
+                        {{-- Fila con 2 KPIs en paralelo --}}
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="info-box info-box-sm bg-secondary mb-2">
+                                    <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Completed</span>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0" id="kpiPass">0</h5>
+                                            <small class="text-white-50">100%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="info-box info-box-sm bg-light mb-2">
+                                    <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Incomplete</span>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0" id="kpiFail">0</h5>
+                                            <small class="text-white-50">&lt; 100%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- Fin fila --}}
                     </div>
                 </div>
             </div>
