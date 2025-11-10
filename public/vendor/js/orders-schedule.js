@@ -1319,8 +1319,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 confirmButtonText: "Save note",
                                 reverseButtons: true,
                                 inputValidator: (value) => {
-                                    if (!value || value.trim().length < 50) {
-                                        return "Write a short note (min 50 characters).";
+                                    if (!value || value.trim().length < 20) {
+                                        return "Write a short note (min 20 characters).";
                                     }
                                 },
                             }).then((noteResult) => {
