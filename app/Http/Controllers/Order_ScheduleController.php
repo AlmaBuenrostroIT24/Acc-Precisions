@@ -788,27 +788,26 @@ class Order_ScheduleController extends Controller
             }
 
             // 2) Si viene status_inspection, asigna y setea inspection_endate si pasa a completed
-      // 2) Si viene status_inspection, asigna y setea inspection_endate si pasa a completed
-if ($request->filled('status_inspection')) {
-    $newInspection = strtolower($request->status_inspection);
-    $order->status_inspection = $newInspection;
+            if ($request->filled('status_inspection')) {
+                $newInspection = strtolower($request->status_inspection);
+                $order->status_inspection = $newInspection;
 
-    // Solo si ANTES no estaba completed y AHORA sí
-    if ($newInspection === 'completed' && $prevInspection !== 'completed') {
-        if (empty($order->inspection_endate)) {
-            $order->inspection_endate = now();
-        }
-        if (empty($order->completed_by)) {
-            $order->completed_by = Auth::id();
-        }
-    }
+                // Solo si ANTES no estaba completed y AHORA sí
+                if ($newInspection === 'completed' && $prevInspection !== 'completed') {
+                    if (empty($order->inspection_endate)) {
+                        $order->inspection_endate = now();
+                    }
+                    if (empty($order->completed_by)) {
+                        $order->completed_by = Auth::id();
+                    }
+                }
 
-    // (Opcional) Si quieres limpiar al revertir desde completed:
-    // if (in_array($newInspection, ['pending','in_progress']) && $prevInspection === 'completed') {
-    //     $order->inspection_endate = null;
-    //     $order->completed_by = null;
-    // }
-}
+                // (Opcional) Si quieres limpiar al revertir desde completed:
+                if (in_array($newInspection, ['pending', 'in_progress']) && $prevInspection === 'completed') {
+                    $order->inspection_endate = null;
+                    $order->completed_by = null;
+                }
+            }
 
             // ✅ Guardar previous_status si se cambia a "sent"
             if ($newStatus === 'sent') {

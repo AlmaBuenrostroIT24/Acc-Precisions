@@ -378,29 +378,33 @@ class QaFaiSummaryController extends Controller
         $prev = strtolower((string) $order->status_inspection);
         $new  = strtolower($request->status_inspection);
 
-        // Guarda nota si viene
+        // Early return (opcional): si no cambia nada y no hay nota nueva
+        if ($prev === $new && !$request->filled('inspection_note')) {
+            return response()->json([
+                'success'           => true,
+                'status_inspection' => $order->status_inspection,
+                'inspection_endate' => $order->inspection_endate,
+                'completed_by'      => $order->completed_by,
+            ]);
+        }
+
         if ($request->filled('inspection_note')) {
             $order->inspection_note = $request->inspection_note;
         }
 
         $order->status_inspection = $new;
 
-        // ✅ Transición real a COMPLETED: sellar una sola vez
+        // Transición a COMPLETED → sellar una vez
         if ($new === 'completed' && $prev !== 'completed') {
-            if (empty($order->inspection_endate)) {
-                $order->inspection_endate = now();
-            }
-            if (empty($order->completed_by)) {
-                $order->completed_by = Auth::id();
-            }
+            $order->inspection_endate = $order->inspection_endate ?? now();
+            $order->completed_by      = $order->completed_by ?? Auth::id();
         }
 
-        // ❌ Si regresa a pending/in_progress, NO borres por defecto los sellos.
-        // (Opcional) si quieres limpiar al revertir, descomenta:
-         if (in_array($new, ['pending', 'in_progress']) && $prev === 'completed') {
-             $order->inspection_endate = null;
-            $order->completed_by = null;
-         }
+        // Reversión desde COMPLETED → limpiar (tú lo quieres así)
+        if (in_array($new, ['pending', 'in_progress'], true) && $prev === 'completed') {
+            $order->inspection_endate = null;
+            $order->completed_by      = null;
+        }
 
         $order->save();
 
