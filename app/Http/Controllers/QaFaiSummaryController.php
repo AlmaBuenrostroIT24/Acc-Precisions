@@ -59,14 +59,28 @@ class QaFaiSummaryController extends Controller
 
         $rows = OrderSchedule::query()
             ->select($select)
-            ->where('status', '<>', 'sent')
-            ->whereNull('parent_id')                 // 👈 solo padres
+            ->where('status', '<>', 'sent') // 👈 excluye las enviadas
+            ->where(function ($q) {
+                $q->whereNull('status_inspection')
+                    ->orWhere('status_inspection', '<>', 'completed'); // 👈 excluye completadas
+            })
+            ->whereNull('parent_id') // solo padres
             ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
-            ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-            ->when($user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
+            ->when(
+                $user && $user->hasRole('QAdmin'),
+                fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell'])
+            )
+            ->when(
+                $user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),
+                fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst'])
+            )
             ->when(
                 $bucket === 'empty',
-                fn($q) => $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
+                fn($q) => $q->where(
+                    fn($w) =>
+                    $w->whereNull('status_inspection')
+                        ->orWhere('status_inspection', 'pending')
+                ),
                 fn($q) => $q->where('status_inspection', 'in_progress')
             )
             ->orderByDesc('due_date')
