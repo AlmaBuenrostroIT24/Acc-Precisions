@@ -63,7 +63,7 @@ class QaFaiSummaryController extends Controller
             ->whereNull('parent_id')                 // 👈 solo padres
             ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
             ->when($user && $user->hasRole('QAdmin'), fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-            ->when($user && $user->hasRole('QA'),     fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
+            ->when($user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
             ->when(
                 $bucket === 'empty',
                 fn($q) => $q->where(fn($w) => $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
