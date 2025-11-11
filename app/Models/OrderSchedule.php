@@ -70,6 +70,7 @@ class OrderSchedule extends Model
         'sent_at' => 'datetime',
         'endate_mach' => 'datetime',
         'inspection_endate' => 'datetime',
+        'inspection_progress' => 'integer', // 👈 nuevo
     ];
 
     // Relaciones con el modelo User

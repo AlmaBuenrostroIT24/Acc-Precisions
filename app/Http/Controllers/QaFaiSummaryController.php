@@ -30,10 +30,10 @@ class QaFaiSummaryController extends Controller
         // Solo devuelve la vista; las tablas vendrán por AJAX
         return view('qa.faisummary.faisummary_partsrevision');
     }
-    //	31009/1
 
-    public function partsrevisionData(Request $request)
-    {
+public function partsrevisionData(Request $request)
+{
+    try {
         $bucket = $request->query('bucket');
         if (!in_array($bucket, ['empty', 'process'], true)) {
             return response()->json(['data' => []]);
@@ -42,91 +42,72 @@ class QaFaiSummaryController extends Controller
         $user = auth()->user();
 
         $select = [
-            'id',
-            'parent_id',
-            'work_id',
-            'PN',
-            'Part_description',
-            'operation',
-            'wo_qty',
-            'group_wo_qty',   // 👈 total guardado en el padre
-            'due_date',
-            'location',
-            'status_inspection',
-            'sampling',
-            'sampling_check',
+            'id','parent_id','work_id','PN','Part_description','operation',
+            'wo_qty','group_wo_qty','due_date','location','status_inspection',
+            'sampling','sampling_check','inspection_progress',
         ];
 
         $rows = OrderSchedule::query()
             ->select($select)
-            ->where('status', '<>', 'sent') // 👈 excluye las enviadas
+            ->where('status', '<>', 'sent')
             ->where(function ($q) {
                 $q->whereNull('status_inspection')
-                    ->orWhere('status_inspection', '<>', 'completed'); // 👈 excluye completadas
+                  ->orWhere('status_inspection', '<>', 'completed');
             })
-            ->whereNull('parent_id') // solo padres
+            ->whereNull('parent_id')
             ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
-            ->when(
-                $user && $user->hasRole('QAdmin'),
-                fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell'])
-            )
-            ->when(
-                $user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),
-                fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst'])
-            )
+            ->when($user && $user->hasRole('QAdmin'),
+                fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
+            ->when($user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),
+                fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
             ->when(
                 $bucket === 'empty',
-                fn($q) => $q->where(
-                    fn($w) =>
-                    $w->whereNull('status_inspection')
-                        ->orWhere('status_inspection', 'pending')
-                ),
+                fn($q) => $q->where(fn($w) =>
+                    $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
                 fn($q) => $q->where('status_inspection', 'in_progress')
             )
             ->orderByDesc('due_date')
             ->get();
 
         $opName = function (int $i): string {
-            return match ($i) {
-                1 => '1st Op',
-                2 => '2nd Op',
-                3 => '3rd Op',
-                default => "{$i}th Op"
-            };
+            return match ($i) { 1 => '1st Op', 2 => '2nd Op', 3 => '3rd Op', default => "{$i}th Op" };
         };
 
-        $data = $rows->map(function ($r) use ($bucket, $opName) {
+        $updates = [];
+
+        // 👇 **IMPORTANTE**: capturar &$updates por referencia
+        $data = $rows->map(function ($r) use ($bucket, $opName, &$updates) {
             $pn   = trim((string) $r->PN);
-            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ',')); // antes de la coma
+            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
             $part = $pn . ' - ' . $desc;
             $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
 
-            $sum = (int) ($r->group_wo_qty ?? 0); // 👈 total del grupo desde DB
+            $sum = (int) ($r->group_wo_qty ?? 0);
 
             $btn = '<button class="btn btn-sm btn-primary"
-          data-toggle="modal" data-target="#editModal"
-          data-id="' . e($r->id) . '"
-          data-workid="' . e($r->work_id) . '"
-          data-woqty="' . e($sum) . '"
-          data-operation="' . e($r->operation) . '"
-          data-pn="' . e($r->PN) . '"
-          data-description="' . e($r->Part_description) . '"
-          data-sampling="' . e($r->sampling ?? 0) . '"
-          data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
-          <i class="fas fa-edit"></i>
-        </button>';
+              data-toggle="modal" data-target="#editModal"
+              data-id="' . e($r->id) . '"
+              data-workid="' . e($r->work_id) . '"
+              data-woqty="' . e($sum) . '"
+              data-operation="' . e($r->operation) . '"
+              data-pn="' . e($r->PN) . '"
+              data-description="' . e($r->Part_description) . '"
+              data-sampling="' . e($r->sampling ?? 0) . '"
+              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+              <i class="fas fa-edit"></i>
+            </button>';
 
             $btnOther = '';
             if ($bucket === 'empty') {
                 $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
-                data-toggle="modal" data-target="#otherModal"
-                data-id="' . e($r->id) . '"
-                data-pn="' . e($r->PN) . '"
-                data-description="' . e($r->Part_description) . '"
-                data-woqty="' . e($sum) . '"
-                data-location="' . e($r->location) . '">
-                <i class="fas fa-clipboard-list"></i>
-            </button>';
+                    data-toggle="modal" data-target="#otherModal"
+                    data-id="' . e($r->id) . '"
+                    data-pn="' . e($r->PN) . '"
+                    data-description="' . e($r->Part_description) . '"
+                    data-woqty="' . e($sum) . '"
+                    data-location="' . e($r->location) . '">
+                    <i class="fas fa-clipboard-list"></i>
+                </button>';
             }
 
             $row = [
@@ -135,7 +116,7 @@ class QaFaiSummaryController extends Controller
                 'work_id'        => trim((string) $r->work_id),
                 'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
                 'ops'            => (int) ($r->operation ?? 0),
-                'wo_qty'         => $sum,                  // 👈 total del grupo
+                'wo_qty'         => $sum,
                 'sampling'       => (int) ($r->sampling ?? 0),
                 'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
                 'due_date'       => $dueFormatted,
@@ -144,8 +125,8 @@ class QaFaiSummaryController extends Controller
             if ($bucket === 'process') {
                 $ops      = (int) ($r->operation ?? 0);
                 $sampling = (int) ($r->sampling  ?? 0);
-                $ipiReq   = max(0, $sampling - 1);          // 👈 requisito real de IPI (= sampling - 1)
-                $perOpReq = 1 + $ipiReq;                    // 👈 FAI(1) + IPI requeridos
+                $ipiReq   = max(0, $sampling - 1);
+                $perOpReq = 1 + $ipiReq;
                 $totalReq = $ops * $perOpReq;
                 $done     = 0;
 
@@ -173,23 +154,60 @@ class QaFaiSummaryController extends Controller
 
                     for ($i = 1; $i <= $ops; $i++) {
                         $name = $opName($i);
-                        // FAI cuenta máximo 1, IPI cuenta máximo ipiReq
-                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq); // 👈 usa ipiReq
+                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq);
                     }
                 }
 
+                $pct = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
+
                 $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
-              <div class="progress-bar bg-secondary" role="progressbar"
-                   style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-            </div>';
-                $row['progress_pct'] = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
+                  <div class="progress-bar bg-secondary" role="progressbar"
+                       style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>';
+                $row['progress_pct'] = $pct;
+
+                // guardar solo si cambió
+                if ((int) ($r->inspection_progress ?? 0) !== $pct) {
+                    $updates[] = [
+                        'id' => (int)$r->id,
+                        'inspection_progress' => $pct,
+                    ];
+                }
             }
 
             return $row;
         });
 
-        return response()->json(['data' => $data]);
+        // --- GUARDAR EN LOTE con UPDATE ... CASE (sin upsert) ---
+        if (!empty($updates)) {
+            $ids = array_column($updates, 'id');
+            $caseSql = 'CASE id ';
+            foreach ($updates as $u) {
+                $caseSql .= 'WHEN ' . (int)$u['id'] . ' THEN ' . (int)$u['inspection_progress'] . ' ';
+            }
+            $caseSql .= 'END';
+
+            \DB::table('orders_schedule')
+                ->whereIn('id', $ids)
+                ->update([
+                    'inspection_progress' => \DB::raw($caseSql),
+                ]);
+        }
+
+        return response()->json([
+            'data' => $data->values()->all(),
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+
+    } catch (\Throwable $e) {
+        \Log::error('partsrevisionData error', [
+            'msg' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+        return response()->json(['data' => [], 'error' => 'Server error'], 500);
     }
+}
+
 
 
 

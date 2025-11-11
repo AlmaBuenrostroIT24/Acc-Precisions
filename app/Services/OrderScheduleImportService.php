@@ -280,6 +280,7 @@ class OrderScheduleImportService
             'total_ipi'        => $row['total_ipi'] ?? '0',
             'sampling'        => $row['sampling'] ?? '0',
             'status_inspection'        => $row['status_inspection'] ?? 'pending',
+            'operation'       => $row['inspection_progress'] ?? '0',
             'created_by'      => auth()->check() ? auth()->id() : null,
         ]);
     }
