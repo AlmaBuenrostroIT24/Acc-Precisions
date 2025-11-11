@@ -1026,6 +1026,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Actualizar Status con confirmación SweetAlert
+    // Actualizar Status con confirmación SweetAlert
     tableElement.on("change", ".status-select", function () {
         const scrollTopBefore = $(window).scrollTop();
         const select = $(this);
@@ -1059,14 +1060,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (note && note.orderId === orderId)
                 payload.inspection_note = note.inspection_note;
+
             handlePostJsonWithAlerts(
                 `/orders/${orderId}/update-status`,
                 payload,
                 (data) => {
                     if (data.success) {
-                        // limpiar la bandera ya aplicada
+                        // limpiar banderas ya aplicadas
                         localStorage.removeItem("inspection-change");
                         localStorage.removeItem("inspection-note-change");
+
                         localStorage.setItem(
                             "status-change",
                             JSON.stringify({
@@ -1087,10 +1090,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             label
                                 .html(
                                     `
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-map-marker-alt me-1"></i> Yarnell
-                                    </span>
-                                `
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-map-marker-alt me-1"></i> Yarnell
+                                </span>
+                            `
                                 )
                                 .show();
                         } else {
@@ -1160,10 +1163,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         const diasTd = document.getElementById(
                             `dias-restantes-${orderId}`
                         );
-
                         if (diasTd) {
                             const dias = data.dias_restantes;
-
                             diasTd.textContent = `${dias} days`;
                             diasTd.className =
                                 dias < 0
@@ -1173,9 +1174,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     : "text-success fw-bold";
                         }
 
-                        //------------------------------------------------------------------------------
-
-                        //✅Actualizar alerta
+                        // ✅Actualizar alerta
                         const alertaDiv = document.querySelector(
                             `#alerta-${orderId} .progress-bar`
                         );
@@ -1184,10 +1183,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 "progress-bar " + data.alertColor;
                             alertaDiv.textContent = data.alertLabel;
                         }
-                        // ✅ Actualiza el valor de referencia para futuros cambios
-                        select.data("old-status", newStatus);
 
-                        //✅ Guardar estado como "viejo" para siguiente edición
+                        // ✅ Actualiza el valor de referencia para futuros cambios
                         select.data("old-status", newStatus);
                     } else {
                         alert("Hubo un problema al actualizar el estado.");
@@ -1220,9 +1217,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     text: "Before selecting as 'sent', you must capture a valid value in WO_QTY.",
                     confirmButtonText: "OK",
                 }).then(() => {
-                    // Revertir select
                     select.val(oldStatus).trigger("change");
-                    // Tip: enfocar el input para que el usuario lo capture
                     if ($inp.length) $inp.focus().select();
                 });
                 return; // 🚫 no continuar
@@ -1249,14 +1244,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ✅ Activar edición del due_date si es "onhold"
         const dueSpan = row.find(`.editable-due-date[data-id="${orderId}"]`);
-
         if (newStatus === "onhold") {
             // 🔓 Activar edición
             if (dueSpan.length) {
                 dueSpan.attr("data-enabled", "1");
                 dueSpan.css("cursor", "pointer");
                 dueSpan.addClass("fw-bold");
-                triggerEditableDueDate(orderId); // ✅ aquí sí debe abrirse
+                triggerEditableDueDate(orderId); // ✅ abre de inmediato
             }
         } else {
             // 🔒 Desactivar edición
@@ -1267,9 +1261,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // ✅ Confirmación si cambia a 'deburring' o 'shipping' desde 'Yarnell'
-        // ✅ Flujo: 1) Confirmar inspección -> 2) Confirmar mover a Hearst y cambiar status
-        // ✅ Flujo: 1) Confirmar inspección -> (si operation=0 pedir nota) -> 2) Confirmar mover a Hearst y cambiar status
+        // =======================
+        // BLOQUE 1: YARNELL ➜ mover a Hearst (deburring/shipping)
+        // =======================
         if (
             (newStatus === "deburring" || newStatus === "shipping") &&
             String(currentLocation).toLowerCase() === "yarnell"
@@ -1301,8 +1295,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             })
                         );
 
-                        // 2) Si operation = 0, pedir comentario; si no, ir directo a confirmar Hearst
-                        // 👉 Ahora la condición usa operation === 0 **y** parent_id IS NULL
+                        // 👉 Condición con operation===0 y parent_id IS NULL → pedir nota
                         const isParentNull =
                             parent_id === null || parent_id === undefined;
                         if (Number(operation) === 0 && isParentNull) {
@@ -1391,16 +1384,129 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+
+        // =======================
+        // BLOQUE 2: HEARST (deburring/shipping/ready) sin mover ubicación
+        // Sin confirmar el cambio de estatus (directo a enviarCambioStatus)
+        // =======================
+        if (
+            ["deburring", "shipping", "ready"].includes(newStatus) &&
+            String(currentLocation).toLowerCase() === "hearst"
+        ) {
+            fetchOpsMeta(orderId)
+                .then(function ({ operation, parent_id, status_inspection }) {
+                    const insp = String(status_inspection || "").toLowerCase();
+
+                    // ✅ Si la inspección YA está 'completed' ⇒ no confirmamos nada, aplicar cambio de status directo
+                    if (insp === "completed") {
+                        enviarCambioStatus();
+                        return;
+                    }
+
+                    // 🔻 Inspección NO completed ⇒ pedir confirmación para marcarla como completed
+                    Swal.fire({
+                        title: "¿Inspection completed?",
+                        text: "¿Do you want to set 'Inspection' to COMPLETED before continuing?",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, completed",
+                        cancelButtonText: "Cancel",
+                        reverseButtons: true,
+                    }).then((res) => {
+                        if (!res.isConfirmed) {
+                            // Revertimos el select si no quisieron completar inspección
+                            select.val(oldStatus).trigger("change.select2");
+                            return;
+                        }
+
+                        // Bandera para que el backend selle completed
+                        localStorage.setItem(
+                            "inspection-change",
+                            JSON.stringify({
+                                orderId,
+                                status_inspection: "completed",
+                            })
+                        );
+
+                        const isParentNull =
+                            parent_id === null || parent_id === undefined;
+
+                        // Si operation = 0 y es padre ⇒ pedir nota
+                        if (Number(operation) === 0 && isParentNull) {
+                            Swal.fire({
+                                title: "Inspection note",
+                                input: "textarea",
+                                inputLabel:
+                                    "Enter a reason for not completing the Inspection.",
+                                inputPlaceholder: "Reason / context…",
+                                inputAttributes: {
+                                    "aria-label": "Inspection note",
+                                },
+                                showCancelButton: false,
+                                confirmButtonText: "Save note",
+                                reverseButtons: true,
+                                inputValidator: (value) => {
+                                    if (!value || value.trim().length < 20) {
+                                        return "Write a short note (min 20 characters).";
+                                    }
+                                },
+                            }).then((noteResult) => {
+                                if (!noteResult.isConfirmed) {
+                                    select
+                                        .val(oldStatus)
+                                        .trigger("change.select2");
+                                    return;
+                                }
+
+                                const inspectionNote = noteResult.value.trim();
+                                localStorage.setItem(
+                                    "inspection-note-change",
+                                    JSON.stringify({
+                                        orderId,
+                                        inspection_note: inspectionNote,
+                                    })
+                                );
+
+                                // ❌ Sin confirmación final de status: aplicar directo
+                                enviarCambioStatus();
+                            });
+                        } else {
+                            // ❌ Sin confirmación final de status: aplicar directo
+                            enviarCambioStatus();
+                        }
+                    });
+                })
+                .fail(function () {
+                    select.val(oldStatus).trigger("change.select2");
+                    Swal.fire({
+                        title: "Error",
+                        text: "Couldn't fetch order meta.",
+                        icon: "error",
+                    });
+                });
+
+            // ❗ Importante: no sigas el flujo normal
+            return;
+        }
+
         // ✅ Enviar directamente si no requiere confirmación
         enviarCambioStatus();
     });
 
     // ---- helpers/operation.js ----
     const OPS_META_CACHE = {};
+    /**
+     * Trae { operation, parent_id, status_inspection } de BD y hace cache por orderId.
+     * Sigue siendo compatible con consumidores que solo usan operation/parent_id.
+     */
     function fetchOpsMeta(orderId) {
         if (OPS_META_CACHE[orderId]) {
-            return $.Deferred().resolve(OPS_META_CACHE[orderId]).promise();
+            // Devolver una copia para evitar mutaciones externas del cache
+            return $.Deferred()
+                .resolve({ ...OPS_META_CACHE[orderId] })
+                .promise();
         }
+
         return $.getJSON(`/orders/${orderId}/ops-meta`).then(function (r) {
             const meta = {
                 operation: Number((r && r.operation) || 0),
@@ -1408,9 +1514,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     r && typeof r.parent_id !== "undefined"
                         ? r.parent_id
                         : null,
+                status_inspection: String(
+                    (r && r.status_inspection) || ""
+                ).toLowerCase(), // 👈 nuevo
             };
             OPS_META_CACHE[orderId] = meta;
-            return meta;
+            return { ...meta };
         });
     }
 

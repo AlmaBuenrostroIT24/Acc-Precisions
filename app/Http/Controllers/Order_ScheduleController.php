@@ -891,6 +891,7 @@ class Order_ScheduleController extends Controller
         return response()->json([
             'operation' => $order->operation ?? 0,
             'parent_id' => $order->parent_id, // null si no tiene padre
+            'status_inspection'  => strtolower((string) $order->status_inspection), // null|pending|in_progress|completed
         ]);
     }
 
