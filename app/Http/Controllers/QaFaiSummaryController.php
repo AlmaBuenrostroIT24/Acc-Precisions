@@ -30,6 +30,7 @@ class QaFaiSummaryController extends Controller
         // Solo devuelve la vista; las tablas vendrán por AJAX
         return view('qa.faisummary.faisummary_partsrevision');
     }
+    //	31009/1
 
 public function partsrevisionData(Request $request)
 {
@@ -135,8 +136,8 @@ public function partsrevisionData(Request $request)
                         ? 'qty_pcs'
                         : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
 
-                    $pass = \DB::table('qa_faisummary')
-                        ->select('operation', 'insp_type', \DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
+                    $pass = DB::table('qa_faisummary')
+                        ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
                         ->where('order_schedule_id', $r->id)
                         ->whereRaw('LOWER(results) = ?', ['pass'])
                         ->groupBy('operation', 'insp_type')
@@ -187,10 +188,10 @@ public function partsrevisionData(Request $request)
             }
             $caseSql .= 'END';
 
-            \DB::table('orders_schedule')
+            DB::table('orders_schedule')
                 ->whereIn('id', $ids)
                 ->update([
-                    'inspection_progress' => \DB::raw($caseSql),
+                    'inspection_progress' => DB::raw($caseSql),
                 ]);
         }
 
@@ -199,11 +200,11 @@ public function partsrevisionData(Request $request)
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 
     } catch (\Throwable $e) {
-        \Log::error('partsrevisionData error', [
+       /* Log::error('partsrevisionData error', [
             'msg' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
-        ]);
+        ]);*/
         return response()->json(['data' => [], 'error' => 'Server error'], 500);
     }
 }
