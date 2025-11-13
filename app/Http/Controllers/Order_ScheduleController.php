@@ -892,6 +892,7 @@ class Order_ScheduleController extends Controller
             'operation' => $order->operation ?? 0,
             'parent_id' => $order->parent_id, // null si no tiene padre
             'status_inspection'  => strtolower((string) $order->status_inspection), // null|pending|in_progress|completed
+            'inspection_progress'  => (int) ($order->inspection_progress ?? 0),
         ]);
     }
 
