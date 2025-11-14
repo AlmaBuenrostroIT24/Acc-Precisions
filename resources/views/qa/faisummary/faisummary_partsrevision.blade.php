@@ -347,23 +347,39 @@
       const desc = button.data('description') || '';
       $modal.find('#edit-fullpart').val(`${pn} - ${desc.split(',')[0]}`);
 
-      // Limpiar tbody
-      ctx.modal.$rowsContainer.empty();
+      // ✅ Traer sampling desde atributos del botón (lo que viene de BD)
+      const samplingFromBtn = parseInt(button.data('sampling'), 10) || 0; // número
+      const samplingCheckFromBtn = (button.data('sampling_check') || 'normal').toString().toLowerCase(); // 'normal' | 'tightened'
 
-      // Cargar filas guardadas + armar reporte y progreso
+      // Pintar en el modal SIN trigger
+      $modal.find('#edit-sampling-type').val(samplingCheckFromBtn);
+      if (samplingFromBtn > 0) {
+        $modal.find('#edit-sampling-result').val(samplingFromBtn);
+      } else {
+        $modal.find('#edit-sampling-result').val(''); // deja vacío para que se calcule
+      }
+
+      // Limpiar tbody y cargar filas guardadas
+      ctx.modal.$rowsContainer.empty();
       const orderId = id;
       loadFaiRows(orderId, () => {
         updateInspectionMissing();
       });
 
-      updateSamplingQty();
-
-      const opsNow = parseInt(ctx.modal.$operationInput.val()) || 0;
-
-      // Habilitar / deshabilitar Agregar fila
-      $('#addRowBtn').prop('disabled', opsNow === 0);
-      refreshProgress(orderId, opsNow, null); // 👈 deja que calcule ipiReq = sampling-1 internamente
+      // Si BD ya trae sampling (>0), NO recalcular; si no, calcula con tu endpoint
+      if (samplingFromBtn > 0) {
+        const opsNow = parseInt(ctx.modal.$operationInput.val(), 10) || 0;
+        $('#addRowBtn').prop('disabled', opsNow === 0);
+        refreshProgress(orderId, opsNow, null); // usa sampling-1 internamente
+      } else {
+        // aquí calculará vía /sampling-plan y luego refrescará
+        updateSamplingQty();
+        const opsNow = parseInt(ctx.modal.$operationInput.val(), 10) || 0;
+        $('#addRowBtn').prop('disabled', opsNow === 0);
+        refreshProgress(orderId, opsNow, null);
+      }
     });
+
 
     $('#editModal').on('hidden.bs.modal', function() {
       if (ctx.dtEmpty) ctx.dtEmpty.ajax.reload(null, false);
