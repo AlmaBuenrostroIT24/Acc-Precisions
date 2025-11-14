@@ -25,6 +25,7 @@ class QaFaiSummary extends Model
         'inspector',
         'status_operation',
         'order_schedule_id',
+        'loc_inspection',
     ];
 
     // Relación con OrderSchedule (si existe ese modelo)

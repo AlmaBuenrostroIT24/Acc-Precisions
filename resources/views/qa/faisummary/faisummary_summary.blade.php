@@ -149,6 +149,7 @@
                                 <th>Observation</th>
                                 <th>Station</th>
                                 <th>Method</th>
+                                <th>Qty Insp.</th>
                                 <th>Inspector</th>
                                 <th>Location</th>
                             </tr>
@@ -195,8 +196,9 @@
                                 </td>
                                 <td>{{ $inspection->station }}</td>
                                 <td>{{ $inspection->method }}</td>
+                                <td>{{ $inspection->qty_pcs }}</td>
                                 <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
-                                <td>{{ strtoupper($inspection->orderSchedule->location ?? '') }}</td>
+                                <td>{{ $inspection->loc_inspection }}</td>
                             </tr>
                             @empty
                             {{-- vacío: DataTables muestra su mensaje --}}

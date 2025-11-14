@@ -32,60 +32,80 @@ class QaFaiSummaryController extends Controller
     }
     //	31009/1
 
-public function partsrevisionData(Request $request)
-{
-    try {
-        $bucket = $request->query('bucket');
-        if (!in_array($bucket, ['empty', 'process'], true)) {
-            return response()->json(['data' => []]);
-        }
+    public function partsrevisionData(Request $request)
+    {
+        try {
+            $bucket = $request->query('bucket');
+            if (!in_array($bucket, ['empty', 'process'], true)) {
+                return response()->json(['data' => []]);
+            }
 
-        $user = auth()->user();
+            $user = auth()->user();
 
-        $select = [
-            'id','parent_id','work_id','PN','Part_description','operation',
-            'wo_qty','group_wo_qty','due_date','location','status_inspection',
-            'sampling','sampling_check','inspection_progress',
-        ];
+            $select = [
+                'id',
+                'parent_id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'operation',
+                'wo_qty',
+                'group_wo_qty',
+                'due_date',
+                'location',
+                'status_inspection',
+                'sampling',
+                'sampling_check',
+                'inspection_progress',
+            ];
 
-        $rows = OrderSchedule::query()
-            ->select($select)
-            ->where('status', '<>', 'sent')
-            ->where(function ($q) {
-                $q->whereNull('status_inspection')
-                  ->orWhere('status_inspection', '<>', 'completed');
-            })
-            ->whereNull('parent_id')
-            ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
-            ->when($user && $user->hasRole('QAdmin'),
-                fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell']))
-            ->when($user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),
-                fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst']))
-            ->when(
-                $bucket === 'empty',
-                fn($q) => $q->where(fn($w) =>
+            $rows = OrderSchedule::query()
+                ->select($select)
+                ->where('status', '<>', 'sent')
+                ->where(function ($q) {
+                    $q->whereNull('status_inspection')
+                        ->orWhere('status_inspection', '<>', 'completed');
+                })
+                ->whereNull('parent_id')
+                ->whereRaw('LOWER(location) IN (?, ?)', ['yarnell', 'hearst'])
+                ->when(
+                    $user && $user->hasRole('QAdmin'),
+                    fn($q) => $q->whereRaw('LOWER(location) = ?', ['yarnell'])
+                )
+                ->when(
+                    $user && ($user->hasRole('QA') || $user->hasRole('QASupportHearst')),
+                    fn($q) => $q->whereRaw('LOWER(location) = ?', ['hearst'])
+                )
+                ->when(
+                    $bucket === 'empty',
+                    fn($q) => $q->where(fn($w) =>
                     $w->whereNull('status_inspection')->orWhere('status_inspection', 'pending')),
-                fn($q) => $q->where('status_inspection', 'in_progress')
-            )
-            ->orderByDesc('due_date')
-            ->get();
+                    fn($q) => $q->where('status_inspection', 'in_progress')
+                )
+                ->orderByDesc('due_date')
+                ->get();
 
-        $opName = function (int $i): string {
-            return match ($i) { 1 => '1st Op', 2 => '2nd Op', 3 => '3rd Op', default => "{$i}th Op" };
-        };
+            $opName = function (int $i): string {
+                return match ($i) {
+                    1 => '1st Op',
+                    2 => '2nd Op',
+                    3 => '3rd Op',
+                    default => "{$i}th Op"
+                };
+            };
 
-        $updates = [];
+            $updates = [];
 
-        // 👇 **IMPORTANTE**: capturar &$updates por referencia
-        $data = $rows->map(function ($r) use ($bucket, $opName, &$updates) {
-            $pn   = trim((string) $r->PN);
-            $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
-            $part = $pn . ' - ' . $desc;
-            $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
+            // 👇 **IMPORTANTE**: capturar &$updates por referencia
+            $data = $rows->map(function ($r) use ($bucket, $opName, &$updates) {
+                $pn   = trim((string) $r->PN);
+                $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
+                $part = $pn . ' - ' . $desc;
+                $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
 
-            $sum = (int) ($r->group_wo_qty ?? 0);
+                $sum = (int) ($r->group_wo_qty ?? 0);
 
-            $btn = '<button class="btn btn-sm btn-primary"
+                $btn = '<button class="btn btn-sm btn-primary"
               data-toggle="modal" data-target="#editModal"
               data-id="' . e($r->id) . '"
               data-workid="' . e($r->work_id) . '"
@@ -98,9 +118,9 @@ public function partsrevisionData(Request $request)
               <i class="fas fa-edit"></i>
             </button>';
 
-            $btnOther = '';
-            if ($bucket === 'empty') {
-                $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
+                $btnOther = '';
+                if ($bucket === 'empty') {
+                    $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
                     data-toggle="modal" data-target="#otherModal"
                     data-id="' . e($r->id) . '"
                     data-pn="' . e($r->PN) . '"
@@ -109,105 +129,104 @@ public function partsrevisionData(Request $request)
                     data-location="' . e($r->location) . '">
                     <i class="fas fa-clipboard-list"></i>
                 </button>';
-            }
-
-            $row = [
-                'id'             => (int) $r->id,
-                'part'           => $part,
-                'work_id'        => trim((string) $r->work_id),
-                'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
-                'ops'            => (int) ($r->operation ?? 0),
-                'wo_qty'         => $sum,
-                'sampling'       => (int) ($r->sampling ?? 0),
-                'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
-                'due_date'       => $dueFormatted,
-            ];
-
-            if ($bucket === 'process') {
-                $ops      = (int) ($r->operation ?? 0);
-                $sampling = (int) ($r->sampling  ?? 0);
-                $ipiReq   = max(0, $sampling - 1);
-                $perOpReq = 1 + $ipiReq;
-                $totalReq = $ops * $perOpReq;
-                $done     = 0;
-
-                if ($ops > 0) {
-                    $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
-                        ? 'qty_pcs'
-                        : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
-
-                    $pass = DB::table('qa_faisummary')
-                        ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
-                        ->where('order_schedule_id', $r->id)
-                        ->whereRaw('LOWER(results) = ?', ['pass'])
-                        ->groupBy('operation', 'insp_type')
-                        ->get();
-
-                    $fai = [];
-                    $ipi = [];
-                    foreach ($pass as $p) {
-                        $name = (string) $p->operation;
-                        $q    = (int) $p->qty;
-                        $type = strtoupper((string) $p->insp_type);
-                        if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
-                        if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
-                    }
-
-                    for ($i = 1; $i <= $ops; $i++) {
-                        $name = $opName($i);
-                        $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq);
-                    }
                 }
 
-                $pct = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
+                $row = [
+                    'id'             => (int) $r->id,
+                    'part'           => $part,
+                    'work_id'        => trim((string) $r->work_id),
+                    'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
+                    'ops'            => (int) ($r->operation ?? 0),
+                    'wo_qty'         => $sum,
+                    'sampling'       => (int) ($r->sampling ?? 0),
+                    'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
+                    'due_date'       => $dueFormatted,
+                ];
 
-                $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
+                if ($bucket === 'process') {
+                    $ops      = (int) ($r->operation ?? 0);
+                    $sampling = (int) ($r->sampling  ?? 0);
+                    $ipiReq   = max(0, $sampling - 1);
+                    $perOpReq = 1 + $ipiReq;
+                    $totalReq = $ops * $perOpReq;
+                    $done     = 0;
+
+                    if ($ops > 0) {
+                        $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                            ? 'qty_pcs'
+                            : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx') ? 'sample_idx' : '1');
+
+                        $pass = DB::table('qa_faisummary')
+                            ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
+                            ->where('order_schedule_id', $r->id)
+                            ->whereRaw('LOWER(results) = ?', ['pass'])
+                            ->groupBy('operation', 'insp_type')
+                            ->get();
+
+                        $fai = [];
+                        $ipi = [];
+                        foreach ($pass as $p) {
+                            $name = (string) $p->operation;
+                            $q    = (int) $p->qty;
+                            $type = strtoupper((string) $p->insp_type);
+                            if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
+                            if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
+                        }
+
+                        for ($i = 1; $i <= $ops; $i++) {
+                            $name = $opName($i);
+                            $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq);
+                        }
+                    }
+
+                    $pct = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
+
+                    $row['progress'] = '<div class="progress" data-order-id="' . e($r->id) . '" style="height:18px;">
                   <div class="progress-bar bg-secondary" role="progressbar"
                        style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                 </div>';
-                $row['progress_pct'] = $pct;
+                    $row['progress_pct'] = $pct;
 
-                // guardar solo si cambió
-                if ((int) ($r->inspection_progress ?? 0) !== $pct) {
-                    $updates[] = [
-                        'id' => (int)$r->id,
-                        'inspection_progress' => $pct,
-                    ];
+                    // guardar solo si cambió
+                    if ((int) ($r->inspection_progress ?? 0) !== $pct) {
+                        $updates[] = [
+                            'id' => (int)$r->id,
+                            'inspection_progress' => $pct,
+                        ];
+                    }
                 }
+
+                return $row;
+            });
+
+            // --- GUARDAR EN LOTE con UPDATE ... CASE (sin upsert) ---
+            if (!empty($updates)) {
+                $ids = array_column($updates, 'id');
+                $caseSql = 'CASE id ';
+                foreach ($updates as $u) {
+                    $caseSql .= 'WHEN ' . (int)$u['id'] . ' THEN ' . (int)$u['inspection_progress'] . ' ';
+                }
+                $caseSql .= 'END';
+
+                DB::table('orders_schedule')
+                    ->whereIn('id', $ids)
+                    ->update([
+                        'inspection_progress' => DB::raw($caseSql),
+                    ]);
             }
 
-            return $row;
-        });
-
-        // --- GUARDAR EN LOTE con UPDATE ... CASE (sin upsert) ---
-        if (!empty($updates)) {
-            $ids = array_column($updates, 'id');
-            $caseSql = 'CASE id ';
-            foreach ($updates as $u) {
-                $caseSql .= 'WHEN ' . (int)$u['id'] . ' THEN ' . (int)$u['inspection_progress'] . ' ';
-            }
-            $caseSql .= 'END';
-
-            DB::table('orders_schedule')
-                ->whereIn('id', $ids)
-                ->update([
-                    'inspection_progress' => DB::raw($caseSql),
-                ]);
-        }
-
-        return response()->json([
-            'data' => $data->values()->all(),
-        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-
-    } catch (\Throwable $e) {
-       /* Log::error('partsrevisionData error', [
+            return response()->json([
+                'data' => $data->values()->all(),
+            ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (\Throwable $e) {
+            /* Log::error('partsrevisionData error', [
             'msg' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
         ]);*/
-        return response()->json(['data' => [], 'error' => 'Server error'], 500);
+            return response()->json(['data' => [], 'error' => 'Server error'], 500);
+        }
     }
-}
 
 
 
@@ -281,6 +300,13 @@ public function partsrevisionData(Request $request)
             'inspector' => 'required|string',
             'qty_pcs'   => 'nullable|integer|min:1',
         ]);
+
+        // 🔍 Obtener la ubicación del order_schedule
+        $order = \App\Models\OrderSchedule::find($validated['order_schedule_id']);
+        if ($order) {
+            $validated['loc_inspection'] = $order->location; // 👈 Aquí copiamos location
+        }
+        
         if ($request->has('id')) {
             $row = \App\Models\QaFaiSummary::find($request->id);
             if (!$row) {
