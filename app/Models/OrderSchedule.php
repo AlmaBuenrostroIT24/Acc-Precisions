@@ -57,7 +57,9 @@ class OrderSchedule extends Model
         'sampling',
         'status_inspection',
         'sampling_check',
-        'inspection_date'
+        'inspection_date',
+        'group_wo_qty',
+        'group_key',
     ];
 
     // Casts para manejar tipos de datos correctamente

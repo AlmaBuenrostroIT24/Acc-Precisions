@@ -489,142 +489,181 @@ class Order_ScheduleController extends Controller
     //----------------------------------------------------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------------------------------------------------
 
-    public function store(Request $request)
-    {
-        // Log::info('Request completo:', $request->all());
+public function store(Request $request)
+{
+    $mapping = [
+        'col_text_0'  => 'location',
+        'col_text_1'  => 'work_id',
+        'col_text_2'  => 'PN',
+        'col_text_3'  => 'Part_description',
+        'col_text_4'  => 'costumer',
+        'col_text_5'  => 'qty',
+        'col_text_6'  => 'wo_qty',
+        'col_text_7'  => 'status',
+        'col_text_8'  => 'machining_date',
+        'col_text_9'  => 'due_date',
+        'col_text_10' => 'days',
+        'col_text_11' => 'alert',
+        'col_text_12' => 'report',
+        'col_text_13' => 'our_source',
+        'col_text_14' => 'station',
+        'col_text_15' => 'notes',
+    ];
 
-        $mapping = [
-            'col_text_0'  => 'location',
-            'col_text_1'  => 'work_id',
-            'col_text_2'  => 'PN',
-            'col_text_3'  => 'Part_description',
-            'col_text_4'  => 'costumer',
-            'col_text_5'  => 'qty',
-            'col_text_6'  => 'wo_qty',
-            'col_text_7'  => 'status',
-            'col_text_8'  => 'machining_date',
-            'col_text_9' => 'due_date',
-            'col_text_10' => 'days',
-            'col_text_11' => 'alert',
-            'col_text_12' => 'report',
-            'col_text_13' => 'our_source',
-            'col_text_14' => 'station',
-            'col_text_15' => 'notes',
-        ];
+    // Helper: normalizar enteros (acepta "1,200", "1 200")
+    $normalizeInt = function ($v) {
+        if ($v === null) return null;
+        if (is_int($v)) return $v;
+        $n = preg_replace('/[^\d\-]/', '', (string)$v);
+        return ($n === '' || $n === '-') ? null : (int)$n;
+    };
 
-        try {
-            $input = $request->only(array_keys($mapping));
-
-            $data = [];
-            foreach ($input as $key => $value) {
-                if (isset($mapping[$key])) {
-                    $data[$mapping[$key]] = $value;
-                }
-            }
-            // 🔎 DEBUG: original_id recibido
-            // Log::info('original_id recibido:', ['original_id' => $request->input('original_id')]);
-            // --- 👇 Aquí inyectamos co y cust_po desde la orden original ---
-            if ($request->filled('original_id')) {
-                $orig = OrderSchedule::select('co', 'cust_po')
-                    ->find($request->input('original_id'));
-                if ($orig) {
-                    $data['co']      = $orig->co;
-                    $data['cust_po'] = $orig->cust_po;
-                }
-            }
-            // ---------------------------------------------------------------
-
-            // Limpiar cadenas
-            foreach ($data as $field => &$value) {
-                if (is_string($value)) {
-                    $value = trim(preg_replace('/\s+/', ' ', $value));
-                }
-            }
-            unset($value);
-
-            // Extraer solo el número para 'days'
-            if (!empty($data['days'])) {
-                preg_match('/\d+/', $data['days'], $matches);
-                $data['days'] = isset($matches[0]) ? (int)$matches[0] : null;
-            }
-
-            // Convertir fechas con Carbon (manejar excepciones)
+    // Helper: parsear fechas de forma segura
+    $parseDateSafe = function ($v) {
+        if (empty($v)) return null;
+        $cands = ['Y-m-d','m/d/Y','d/m/Y','Y-m-d H:i:s','m/d/Y H:i','d/m/Y H:i'];
+        foreach ($cands as $fmt) {
             try {
-                if (!empty($data['machining_date'])) {
-                    $data['machining_date'] = \Carbon\Carbon::parse($data['machining_date'])->format('Y-m-d');
-                }
-            } catch (\Exception $e) {
-                $data['machining_date'] = null;
-            }
-            try {
-                if (!empty($data['due_date'])) {
-                    $data['due_date'] = \Carbon\Carbon::parse($data['due_date'])->format('Y-m-d');
-                }
-            } catch (\Exception $e) {
-                $data['due_date'] = null;
-            }
-
-            // Defaults
-            $data['alert']             = $data['alert'] ?? '';
-            $data['priority']          = $data['priority'] ?? 'no';
-            $data['status_order']      = $data['status_order'] ?? 'active';
-            $data['operation']         = $data['operation'] ?? '0';
-            $data['total_fai']         = $data['total_fai'] ?? '0';
-            $data['total_ipi']         = $data['total_ipi'] ?? '0';
-            $data['sampling']          = $data['sampling'] ?? '0';
-            $data['status_inspection'] = $data['status_inspection'] ?? 'pending';
-
-
-            $validatedData = validator($data, [
-                'work_id'        => 'nullable|string|max:255',
-                'PN'             => 'nullable|string|max:255',
-                'Part_description' => 'nullable|string|max:255',
-                'qty'            => 'nullable|integer|min:0',
-                'costumer'       => 'required|string|max:255',
-                'wo_qty'         => 'nullable|integer',
-                'status'         => 'nullable|string|max:255',
-                'machining_date' => 'nullable|date',
-                'due_date'       => 'nullable|date',
-                'days'           => 'nullable|integer',
-                'alert'          => 'nullable|string',
-                'report'         => 'nullable|string',
-                'our_source'     => 'nullable|string|max:255',
-                'station'        => 'nullable|string|max:255',
-                'notes'          => 'nullable|string',
-                'location'       => 'nullable|string|max:255',
-                'priority'       => 'nullable|string|max:10',
-                'status_order'   => 'nullable|string|max:10',
-                'operation'      => 'nullable|string|max:255',
-                'total_fai'      => 'nullable|integer',
-                'total_ipi'      => 'nullable|integer',
-                'sampling'       => 'nullable|integer',
-                'status_inspection'  => 'nullable|string|max:50',
-                'co'             => 'nullable|string|max:255',
-                'cust_po'        => 'nullable|string|max:255',
-            ])->validate();
-
-            $order = OrderSchedule::create($validatedData);
-
-            return response()->json([
-                'success' => true,
-                'order_id' => $order->id,
-                'message' => 'Orden creada correctamente',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $ve) {
-            Log::warning('Validación fallida en store: ' . $ve->getMessage());
-            return response()->json([
-                'success' => false,
-                'errors'  => $ve->errors(),
-                'message' => 'Error de validación en los datos.',
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Error inesperado en store: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error interno del servidor. Contacta al administrador.',
-            ], 500);
+                $dt = \Carbon\Carbon::createFromFormat($fmt, trim((string)$v));
+                if ($dt !== false) return $dt->format('Y-m-d');
+            } catch (\Throwable $e) {}
         }
+        try {
+            return \Carbon\Carbon::parse($v)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    };
+
+    try {
+        // 1) Mapear SIEMPRE todas las columnas (aunque vengan vacías)
+        $data = [];
+        foreach ($mapping as $colKey => $field) {
+            $value = $request->input($colKey, null);
+            $data[$field] = is_string($value)
+                ? trim(preg_replace('/\s+/', ' ', $value))
+                : $value;
+        }
+
+        // 2) Copiar co / cust_po desde la orden original (si viene original_id)
+        if ($request->filled('original_id')) {
+            $orig = \App\Models\OrderSchedule::select('co','cust_po')->find($request->input('original_id'));
+            if ($orig) {
+                $data['co']      = $orig->co;
+                $data['cust_po'] = $orig->cust_po;
+            }
+        }
+
+        // 3) Normalizaciones previas
+        // status → lowercase
+        if (!empty($data['status'])) $data['status'] = strtolower($data['status']);
+
+        // days: si viene con texto, extraer dígitos
+        if (!empty($data['days'])) {
+            preg_match('/\d+/', (string)$data['days'], $m);
+            $data['days'] = isset($m[0]) ? (int)$m[0] : null;
+        }
+
+        // fechas
+        $data['machining_date'] = !empty($data['machining_date']) ? $parseDateSafe($data['machining_date']) : null;
+        $data['due_date']       = !empty($data['due_date'])       ? $parseDateSafe($data['due_date'])       : null;
+
+        // enteros
+        $data['qty']    = array_key_exists('qty', $data)    ? $normalizeInt($data['qty'])    : null;
+        $data['wo_qty'] = array_key_exists('wo_qty', $data) ? $normalizeInt($data['wo_qty']) : null;
+
+        // Defaults
+        $data['alert']             = $data['alert'] ?? '';
+        $data['priority']          = $data['priority'] ?? 'no';
+        $data['status_order']      = $data['status_order'] ?? 'active';
+        $data['operation']         = $data['operation'] ?? '0';
+        $data['total_fai']         = $normalizeInt($data['total_fai'] ?? 0);
+        $data['total_ipi']         = $normalizeInt($data['total_ipi'] ?? 0);
+        $data['sampling']          = $normalizeInt($data['sampling']   ?? 0);
+        $data['status_inspection'] = $data['status_inspection'] ?? 'pending';
+
+        // 4) group_key con datos de la NUEVA orden
+        //    CONCAT(PN, '#', COALESCE(NULLIF(work_id,''), 'NO-WO'))
+        $pn = trim((string)($data['PN'] ?? ''));
+        $wo = trim((string)($data['work_id'] ?? ''));
+        $data['group_key'] = $pn . '#' . ($wo !== '' ? $wo : 'NO-WO');
+
+        // 5) Validación
+        $validated = validator($data, [
+            'work_id'          => 'nullable|string|max:255',
+            'PN'               => 'nullable|string|max:255',
+            'Part_description' => 'nullable|string|max:255',
+            'qty'              => 'nullable|integer|min:0',
+            'costumer'         => 'required|string|max:255',
+            'wo_qty'           => 'nullable|integer|min:0',
+            'status'           => 'nullable|string|max:255',
+            'machining_date'   => 'nullable|date',
+            'due_date'         => 'nullable|date',
+            'days'             => 'nullable|integer',
+            'alert'            => 'nullable|string',
+            'report'           => 'nullable|string',
+            'our_source'       => 'nullable|string|max:255',
+            'station'          => 'nullable|string|max:255',
+            'notes'            => 'nullable|string',
+            'location'         => 'nullable|string|max:255',
+            'priority'         => 'nullable|string|max:10',
+            'status_order'     => 'nullable|string|max:10',
+            'operation'        => 'nullable|string|max:255',
+            'total_fai'        => 'nullable|integer|min:0',
+            'total_ipi'        => 'nullable|integer|min:0',
+            'sampling'         => 'nullable|integer|min:0',
+            'status_inspection'=> 'nullable|string|max:50',
+            'co'               => 'nullable|string|max:255',
+            'cust_po'          => 'nullable|string|max:255',
+            'group_key'        => 'nullable|string|max:255',
+            // group_wo_qty lo agregamos tras validar
+        ])->validate();
+
+        // 6) Si no vino days y hay due_date → calcular (hoy → due_date)
+        if (!isset($validated['days']) && !empty($validated['due_date'])) {
+            try {
+                $today = \Carbon\Carbon::today();
+                $due   = \Carbon\Carbon::createFromFormat('Y-m-d', $validated['due_date']);
+                $validated['days'] = $today->diffInDays($due, false); // negativo si vencido
+            } catch (\Throwable $e) {
+                $validated['days'] = null;
+            }
+        }
+
+        // 7) AHORA sí: group_wo_qty desde el wo_qty ya validado/normalizado
+        $validated['group_wo_qty'] = $validated['wo_qty'] ?? 0;
+
+        // (opcional) Log para depurar rápidamente
+        // \Log::info('STORE check', [
+        //     'req_col_text_6'   => $request->input('col_text_6'),
+        //     'validated_wo_qty' => $validated['wo_qty'] ?? null,
+        //     'group_wo_qty'     => $validated['group_wo_qty'] ?? null,
+        // ]);
+
+        // 8) Crear registro
+        $order = \App\Models\OrderSchedule::create($validated);
+
+        return response()->json([
+            'success'  => true,
+            'id'       => $order->id,   // útil para tu JS
+            'order_id' => $order->id,   // compatibilidad si usas order_id
+            'message'  => 'Orden creada correctamente',
+        ]);
+    } catch (\Illuminate\Validation\ValidationException $ve) {
+        Log::warning('Validación fallida en store: ' . $ve->getMessage());
+        return response()->json([
+            'success' => false,
+            'errors'  => $ve->errors(),
+            'message' => 'Error de validación en los datos.',
+        ], 422);
+    } catch (\Throwable $e) {
+        Log::error('Error inesperado en store: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error interno del servidor. Contacta al administrador.',
+        ], 500);
     }
+}
 
 
     public function updateWoQty(Request $request, $id)
@@ -670,52 +709,10 @@ class Order_ScheduleController extends Controller
         });
     }
 
-
-
     public function create()
     {
         return view('orders.create');
     }
-
-    /*  public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'work_id' => 'required|string|max:255',
-            'was_work_id_null' => empty($parsedWorkId),
-            'PN' => 'required|string|max:255',
-            'Part_description' => 'required|string|max:255',
-            'costumer' => 'required|string|max:255',
-            'qty' => 'required|integer',
-            'operation' => 'nullable|string|max:255',
-            'machines' => 'nullable|string|max:255',
-            'done' => 'nullable|boolean',
-            'status' => 'nullable|string|max:255',
-            'machining_date' => 'nullable|date',
-            'due_date' => 'nullable|date',
-            'days' => 'nullable|integer',
-            'alert' => 'nullable|boolean',
-            'report' => 'nullable|string',
-            'our_source' => 'nullable|string|max:255',
-            'station_notes' => 'nullable|string',
-            'location' => 'nullable|in:Yarnell,Hearst', // 👈 Añadir esto
-
-            // Campos adicionales
-            'priority' => 'nullable|string|max:255',
-            'assigned_to' => 'nullable|integer|exists:users,id',
-            'material_type' => 'nullable|string|max:255',
-            'process_time' => 'nullable|integer',
-            'canceled' => 'nullable|boolean',
-            'tracking_number' => 'nullable|string|max:255',
-            'revision' => 'nullable|string|max:255',
-        ]);
-
-        // Agregar usuario autenticado como creador si está logueado
-        $validated['created_by'] = auth()->check() ? auth()->id() : null;
-
-        OrderSchedule::create($validated);
-
-        return redirect()->route('orders.index')->with('success', 'Orden creada correctamente.');
-    }*/
 
     public function edit(OrderSchedule $order)
     {

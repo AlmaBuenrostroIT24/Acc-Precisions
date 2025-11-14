@@ -545,6 +545,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    //==============================
+    //
     // Ultima Location
 
     let lastLocations = {};
@@ -1330,138 +1332,159 @@ document.addEventListener("DOMContentLoaded", () => {
         // =======================
         // BLOQUE 1: YARNELL ➜ mover a Hearst (deburring/shipping)
         // =======================
-       if (
-  (newStatus === "deburring" || newStatus === "shipping") &&
-  String(currentLocation).toLowerCase() === "yarnell"
-) {
-  fetchOpsMeta(orderId)
-    .then(function ({ operation, parent_id, inspection_progress }) {
-      const progress = Number(inspection_progress || 0);
+        if (
+            (newStatus === "deburring" || newStatus === "shipping") &&
+            String(currentLocation).toLowerCase() === "yarnell"
+        ) {
+            fetchOpsMeta(orderId)
+                .then(function ({ operation, parent_id, inspection_progress }) {
+                    const progress = Number(inspection_progress || 0);
 
-      // ⚠️ ÚNICA confirmación si < 100%
-      if (progress < 100) {
-        const html = `
+                    // ⚠️ ÚNICA confirmación si < 100%
+                    if (progress < 100) {
+                        const html = `
           <div class="mb-2">Current inspection progress: <b>${progress}%</b></div>
           <small class="text-muted d-block mt-2">
             If you continue, <b>Inspection</b> will be marked as <b>COMPLETED</b>.
           </small>`;
-        return Swal.fire({
-          title: "Inspection not at 100%",
-          html,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Yes, continue",
-          cancelButtonText: "Review first",
-          reverseButtons: true,
-          focusCancel: true,
-        }).then((resp) => {
-          if (!resp.isConfirmed) {
-            select.val(oldStatus).trigger("change.select2");
-            return $.Deferred().reject("cancelled").promise();
-          }
-          // 👉 Override inmediato para no volver a preguntar en la siguiente vez
-          setInspectionOverrideCompleted(orderId);
-        });
-      }
-    })
-    .then(function () {
-      // Bandera para backend: completar inspección
-      localStorage.setItem(
-        "inspection-change",
-        JSON.stringify({ orderId, status_inspection: "completed" })
-      );
+                        return Swal.fire({
+                            title: "Inspection not at 100%",
+                            html,
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonText: "Yes, continue",
+                            cancelButtonText: "Review first",
+                            reverseButtons: true,
+                            focusCancel: true,
+                        }).then((resp) => {
+                            if (!resp.isConfirmed) {
+                                select.val(oldStatus).trigger("change.select2");
+                                return $.Deferred()
+                                    .reject("cancelled")
+                                    .promise();
+                            }
+                            // 👉 Override inmediato para no volver a preguntar en la siguiente vez
+                            setInspectionOverrideCompleted(orderId);
+                        });
+                    }
+                })
+                .then(function () {
+                    // Bandera para backend: completar inspección
+                    localStorage.setItem(
+                        "inspection-change",
+                        JSON.stringify({
+                            orderId,
+                            status_inspection: "completed",
+                        })
+                    );
 
-      // Refuerza override y cache local
-      setInspectionOverrideCompleted(orderId);
-      if (OPS_META_CACHE[String(orderId)]) {
-        OPS_META_CACHE[String(orderId)].status_inspection = "completed";
-      }
+                    // Refuerza override y cache local
+                    setInspectionOverrideCompleted(orderId);
+                    if (OPS_META_CACHE[String(orderId)]) {
+                        OPS_META_CACHE[String(orderId)].status_inspection =
+                            "completed";
+                    }
 
-      const progress = Number((OPS_META_CACHE[orderId] || {}).inspection_progress || 0);
+                    const progress = Number(
+                        (OPS_META_CACHE[orderId] || {}).inspection_progress || 0
+                    );
 
-      // 📝 Nota SOLO si 0%
-      if (progress === 0) {
-        return Swal.fire({
-          title: "Inspection note",
-          input: "textarea",
-          inputLabel: "Explain why Inspection has 0% progress before completing.",
-          inputPlaceholder: "Reason / context…",
-          inputAttributes: { "aria-label": "Inspection note" },
-          showCancelButton: false,
-          confirmButtonText: "Save note",
-          reverseButtons: true,
-          inputValidator: (value) => {
-            if (!value || value.trim().length < 20) {
-              return "Write a short note (min 20 characters).";
-            }
-          },
-        }).then((noteResult) => {
-          if (!noteResult.isConfirmed) {
-            select.val(oldStatus).trigger("change.select2");
-            return $.Deferred().reject("note-not-provided").promise();
-          }
-          localStorage.setItem(
-            "inspection-note-change",
-            JSON.stringify({ orderId, inspection_note: noteResult.value.trim() })
-          );
-          confirmarCambioHearst();
-        });
-      }
+                    // 📝 Nota SOLO si 0%
+                    if (progress === 0) {
+                        return Swal.fire({
+                            title: "Inspection note",
+                            input: "textarea",
+                            inputLabel:
+                                "Explain why Inspection has 0% progress before completing.",
+                            inputPlaceholder: "Reason / context…",
+                            inputAttributes: {
+                                "aria-label": "Inspection note",
+                            },
+                            showCancelButton: false,
+                            confirmButtonText: "Save note",
+                            reverseButtons: true,
+                            inputValidator: (value) => {
+                                if (!value || value.trim().length < 20) {
+                                    return "Write a short note (min 20 characters).";
+                                }
+                            },
+                        }).then((noteResult) => {
+                            if (!noteResult.isConfirmed) {
+                                select.val(oldStatus).trigger("change.select2");
+                                return $.Deferred()
+                                    .reject("note-not-provided")
+                                    .promise();
+                            }
+                            localStorage.setItem(
+                                "inspection-note-change",
+                                JSON.stringify({
+                                    orderId,
+                                    inspection_note: noteResult.value.trim(),
+                                })
+                            );
+                            confirmarCambioHearst();
+                        });
+                    }
 
-      confirmarCambioHearst();
+                    confirmarCambioHearst();
 
-      function confirmarCambioHearst() {
-        const html = `
+                    function confirmarCambioHearst() {
+                        const html = `
           <p class="text-muted d-block mt-2" style="font-size: 1.05rem;">
             Changing status to <b>${newStatus}</b> will also move the location to <b>HEARST</b>.
           </p>`;
-        Swal.fire({
-          title: "¿Are you sure?",
-          html,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Yes, Change",
-          cancelButtonText: "No, Cancel",
-          reverseButtons: true,
-        }).then((result) => {
-          if (!result.isConfirmed) {
-            select.val(oldStatus).trigger("change.select2");
+                        Swal.fire({
+                            title: "¿Are you sure?",
+                            html,
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonText: "Yes, Change",
+                            cancelButtonText: "No, Cancel",
+                            reverseButtons: true,
+                        }).then((result) => {
+                            if (!result.isConfirmed) {
+                                select.val(oldStatus).trigger("change.select2");
+                                return;
+                            }
+
+                            // mover ubicación
+                            localStorage.setItem(
+                                "location-change",
+                                JSON.stringify({ orderId, location: "hearst" })
+                            );
+
+                            // POST
+                            safeEnviarCambioStatus()
+                                .then(() => {
+                                    // Reafirma override y deja el old-status en el nuevo
+                                    setInspectionOverrideCompleted(orderId);
+                                    select.data("old-status", newStatus);
+                                })
+                                .catch(() => {
+                                    select
+                                        .val(oldStatus)
+                                        .trigger("change.select2");
+                                });
+                        });
+                    }
+                })
+                .fail(function (reason) {
+                    if (
+                        reason !== "cancelled" &&
+                        reason !== "note-not-provided"
+                    ) {
+                        select.val(oldStatus).trigger("change.select2");
+                        Swal.fire({
+                            title: "Error",
+                            text: "Couldn't fetch operation/progress.",
+                            icon: "error",
+                        });
+                    }
+                });
+
+            // ❗ No sigas el flujo normal
             return;
-          }
-
-          // mover ubicación
-          localStorage.setItem(
-            "location-change",
-            JSON.stringify({ orderId, location: "hearst" })
-          );
-
-          // POST
-          safeEnviarCambioStatus()
-            .then(() => {
-              // Reafirma override y deja el old-status en el nuevo
-              setInspectionOverrideCompleted(orderId);
-              select.data("old-status", newStatus);
-            })
-            .catch(() => {
-              select.val(oldStatus).trigger("change.select2");
-            });
-        });
-      }
-    })
-    .fail(function (reason) {
-      if (reason !== "cancelled" && reason !== "note-not-provided") {
-        select.val(oldStatus).trigger("change.select2");
-        Swal.fire({
-          title: "Error",
-          text: "Couldn't fetch operation/progress.",
-          icon: "error",
-        });
-      }
-    });
-
-  // ❗ No sigas el flujo normal
-  return;
-}
+        }
 
         // =======================
         // BLOQUE 2: HEARST (deburring/shipping/ready) sin mover ubicación
@@ -1471,118 +1494,140 @@ document.addEventListener("DOMContentLoaded", () => {
         // =========================================
         // 3) BLOQUE HEARST (deburring/shipping/ready)
         // =========================================
-       if (
-  ["deburring", "shipping", "ready"].includes(newStatus) &&
-  String(currentLocation).toLowerCase() === "hearst"
-) {
-  fetchOpsMeta(orderId)
-    .then(function ({ operation, parent_id, status_inspection, inspection_progress }) {
-      const insp = String(status_inspection || "").toLowerCase();
-      const progress = Number(inspection_progress || 0);
+        if (
+            ["deburring", "shipping", "ready"].includes(newStatus) &&
+            String(currentLocation).toLowerCase() === "hearst"
+        ) {
+            fetchOpsMeta(orderId)
+                .then(function ({
+                    operation,
+                    parent_id,
+                    status_inspection,
+                    inspection_progress,
+                }) {
+                    const insp = String(status_inspection || "").toLowerCase();
+                    const progress = Number(inspection_progress || 0);
 
-      if (insp === "completed") {
-        return safeEnviarCambioStatus()
-          .then(() => {
-            setInspectionOverrideCompleted(orderId);
-            select.data("old-status", newStatus);
-          })
-          .catch(() => {
-            select.val(oldStatus).trigger("change.select2");
-          });
-      }
+                    if (insp === "completed") {
+                        return safeEnviarCambioStatus()
+                            .then(() => {
+                                setInspectionOverrideCompleted(orderId);
+                                select.data("old-status", newStatus);
+                            })
+                            .catch(() => {
+                                select.val(oldStatus).trigger("change.select2");
+                            });
+                    }
 
-      function proceedCompleteAndSend() {
-        localStorage.setItem(
-          "inspection-change",
-          JSON.stringify({ orderId, status_inspection: "completed" })
-        );
-        setInspectionOverrideCompleted(orderId);
-        if (OPS_META_CACHE[String(orderId)]) {
-          OPS_META_CACHE[String(orderId)].status_inspection = "completed";
-        }
+                    function proceedCompleteAndSend() {
+                        localStorage.setItem(
+                            "inspection-change",
+                            JSON.stringify({
+                                orderId,
+                                status_inspection: "completed",
+                            })
+                        );
+                        setInspectionOverrideCompleted(orderId);
+                        if (OPS_META_CACHE[String(orderId)]) {
+                            OPS_META_CACHE[String(orderId)].status_inspection =
+                                "completed";
+                        }
 
-        if (progress === 0) {
-          return Swal.fire({
-            title: "Inspection note",
-            input: "textarea",
-            inputLabel: "Explain why Inspection has 0% progress before completing.",
-            inputPlaceholder: "Reason / context…",
-            inputAttributes: { "aria-label": "Inspection note" },
-            showCancelButton: false,
-            confirmButtonText: "Save note",
-            reverseButtons: true,
-            inputValidator: (value) => {
-              if (!value || value.trim().length < 20) {
-                return "Write a short note (min 20 characters).";
-              }
-            },
-          }).then((noteResult) => {
-            if (!noteResult.isConfirmed) {
-              select.val(oldStatus).trigger("change.select2");
-              return $.Deferred().reject("note-not-provided").promise();
-            }
-            localStorage.setItem(
-              "inspection-note-change",
-              JSON.stringify({ orderId, inspection_note: noteResult.value.trim() })
-            );
-            return safeEnviarCambioStatus().then(() => {
-              setInspectionOverrideCompleted(orderId);
-              select.data("old-status", newStatus);
-            });
-          });
-        }
+                        if (progress === 0) {
+                            return Swal.fire({
+                                title: "Inspection note",
+                                input: "textarea",
+                                inputLabel:
+                                    "Explain why Inspection has 0% progress before completing.",
+                                inputPlaceholder: "Reason / context…",
+                                inputAttributes: {
+                                    "aria-label": "Inspection note",
+                                },
+                                showCancelButton: false,
+                                confirmButtonText: "Save note",
+                                reverseButtons: true,
+                                inputValidator: (value) => {
+                                    if (!value || value.trim().length < 20) {
+                                        return "Write a short note (min 20 characters).";
+                                    }
+                                },
+                            }).then((noteResult) => {
+                                if (!noteResult.isConfirmed) {
+                                    select
+                                        .val(oldStatus)
+                                        .trigger("change.select2");
+                                    return $.Deferred()
+                                        .reject("note-not-provided")
+                                        .promise();
+                                }
+                                localStorage.setItem(
+                                    "inspection-note-change",
+                                    JSON.stringify({
+                                        orderId,
+                                        inspection_note:
+                                            noteResult.value.trim(),
+                                    })
+                                );
+                                return safeEnviarCambioStatus().then(() => {
+                                    setInspectionOverrideCompleted(orderId);
+                                    select.data("old-status", newStatus);
+                                });
+                            });
+                        }
 
-        return safeEnviarCambioStatus().then(() => {
-          setInspectionOverrideCompleted(orderId);
-          select.data("old-status", newStatus);
-        });
-      }
+                        return safeEnviarCambioStatus().then(() => {
+                            setInspectionOverrideCompleted(orderId);
+                            select.data("old-status", newStatus);
+                        });
+                    }
 
-      if (progress < 100) {
-        const html = `
+                    if (progress < 100) {
+                        const html = `
           <div class="mb-2">Current inspection progress: <b>${progress}%</b></div>
           <small class="text-muted d-block mt-2">
             If you continue, <b>Inspection</b> will be marked as <b>COMPLETED</b>.
           </small>`;
-        return Swal.fire({
-          title: "Inspection not at 100%",
-          html,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Yes, continue",
-          cancelButtonText: "Review first",
-          reverseButtons: true,
-          focusCancel: true,
-        }).then((resp) => {
-          if (!resp.isConfirmed) {
-            select.val(oldStatus).trigger("change.select2");
+                        return Swal.fire({
+                            title: "Inspection not at 100%",
+                            html,
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonText: "Yes, continue",
+                            cancelButtonText: "Review first",
+                            reverseButtons: true,
+                            focusCancel: true,
+                        }).then((resp) => {
+                            if (!resp.isConfirmed) {
+                                select.val(oldStatus).trigger("change.select2");
+                                return;
+                            }
+                            return proceedCompleteAndSend().catch((err) => {
+                                if (err !== "note-not-provided") {
+                                    select
+                                        .val(oldStatus)
+                                        .trigger("change.select2");
+                                }
+                            });
+                        });
+                    }
+
+                    return proceedCompleteAndSend().catch((err) => {
+                        if (err !== "note-not-provided") {
+                            select.val(oldStatus).trigger("change.select2");
+                        }
+                    });
+                })
+                .fail(function () {
+                    select.val(oldStatus).trigger("change.select2");
+                    Swal.fire({
+                        title: "Error",
+                        text: "Couldn't fetch order meta.",
+                        icon: "error",
+                    });
+                });
+
             return;
-          }
-          return proceedCompleteAndSend().catch((err) => {
-            if (err !== "note-not-provided") {
-              select.val(oldStatus).trigger("change.select2");
-            }
-          });
-        });
-      }
-
-      return proceedCompleteAndSend().catch((err) => {
-        if (err !== "note-not-provided") {
-          select.val(oldStatus).trigger("change.select2");
         }
-      });
-    })
-    .fail(function () {
-      select.val(oldStatus).trigger("change.select2");
-      Swal.fire({
-        title: "Error",
-        text: "Couldn't fetch order meta.",
-        icon: "error",
-      });
-    });
-
-  return;
-}
 
         // ✅ Enviar directamente si no requiere confirmación
         enviarCambioStatus();
@@ -1639,7 +1684,10 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
     }
-    //----------
+
+    // ===================================================================================================
+    //    START------ Editable-due-date ------
+    // ===================================================================================================
     tableElement.on("click", ".editable-due-date", function () {
         const span = $(this);
         //console.log("📌 Click en due-date span", span[0]);
@@ -1653,13 +1701,11 @@ document.addEventListener("DOMContentLoaded", () => {
             // console.log("⛔ Edición deshabilitada para este campo.");
             return;
         }
-
         const input = $(
             `<input type="date" class="form-control form-control-sm due-date-input">`
         ).val(currentValue);
 
         // console.log("🆕 Input generado:", input[0]);
-
         span.replaceWith(input);
         input.focus();
 
@@ -1669,7 +1715,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 input.replaceWith(span);
                 return;
             }
-
             handlePostJsonWithAlerts(
                 `/orders/${orderId}/update-date-due`,
                 { due_date: newDate },
@@ -1687,7 +1732,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 updatedAt: Date.now(),
                             })
                         );
-
                         const newSpan = createEditableDateSpan(
                             orderId,
                             newDate,
@@ -1735,11 +1779,14 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         });
     });
+    // ===================================================================================================
+    //    END------ Editable-due-date ------
+    // ===================================================================================================
 
-    //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
-    //-------------------------------------------------END-------------------------------------------------------------//
+    // ===================================================================================================
+    //   START------ Tooltips ------
+    // ===================================================================================================
 
-    //-------------------------------------------------
     // Tooltips
     const initTooltips = () => {
         document
@@ -1748,7 +1795,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     initTooltips();
 
-    // Abrir modal notas
+    // ===================================================================================================
+    //   START------ Abrir modal notas ------
+    // ===================================================================================================
 
     tableElement.on("click", ".open-notes-modal", function (event) {
         event.preventDefault();
@@ -1762,7 +1811,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // Aquí: usar jQuery y llamar a modal('show')
         $("#notesModal").modal("show");
     });
-
     // Guardar notas
     $("#notesForm").submit(function (e) {
         //console.log("Interceptando submit del formulario de notas"); // 👈 esto
@@ -1811,9 +1859,11 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     });
 
-    //-------------------------------------------
-    //Es el input para agregar WO QTY
-    // Evento blur en inputs de WO QTY
+    // ===================================================================================================
+    //   START------ Es el input para agregar WO QTY ------
+    //   Evento blur en inputs de WO QTY
+    // ===================================================================================================
+
     $(document).on("blur", ".wo-qty-input", function () {
         const input = $(this);
         const original = input.data("original");
@@ -1822,13 +1872,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (newVal === "") {
             newVal = "0"; // puedes cambiarlo a null si tu backend lo acepta
         }
-
         const qty = parseInt(newVal, 10);
         if (isNaN(qty) || qty < 0) {
             Swal.fire("⚠️ Invalid quantity", "Enter a valid number", "warning");
             return;
         }
-
         if (String(original) === String(qty)) return;
 
         const orderId = input.data("id");
@@ -1869,9 +1917,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     });
 
-    //--------------------------------------------------------
-    // --- Aquí agregamos la lógica para el botón "Agregar" dentro de Part_description ---
+    // ===================================================================================================
+    // --- START Aquí agregamos la lógica para el botón "Agregar" dentro de Part_description ---
     // Insertar botón 'Agregar' en las celdas de Part_description que contienen "kit"
+    // ===================================================================================================
 
     function agregarBotonesKit() {
         tableElement.find("tbody tr").each(function (index) {
