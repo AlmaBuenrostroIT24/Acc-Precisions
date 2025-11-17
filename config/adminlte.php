@@ -328,11 +328,11 @@ return [
             'label_color' => 'success',
         ],
         ['header' => 'account_settings'],
-          [
+        [
             'text' => 'Quality Assurance',
             'icon' => 'nav-icon fas fa-cogs',
             // El padre se muestra si el usuario tiene AL MENOS UNO de estos permisos
-            'can'  => ['QA/Calibrations', 'QA/Instruments', 'qa/partsrevision','QA/NonConformace'],
+            'can'  => ['QA/Calibrations', 'QA/Instruments', 'qa/partsrevision', 'QA/NonConformace','QA/PlanInspection'],
             'submenu' => [
                 [
                     'text' => 'Calibration',
@@ -349,10 +349,15 @@ return [
                     'url'  => 'qa/partsrevision',
                     'can'  => 'qa/partsrevision',
                 ],
-                  [
+                [
                     'text' => 'Non Conformance',
                     'url'  => 'QA/NonConformace',
                     'can'  => 'QA/NonConformace',
+                ],
+                [
+                    'text' => 'Plan Inspection',
+                    'url'  => 'QA/PlanInspection',
+                    'can'  => 'QA/PlanInspection',
                 ],
             ],
         ],
@@ -531,7 +536,7 @@ return [
                     'type' => 'js',
                     'asset' => true,
                     'location' => 'vendor/datatables/dataTables.bootstrap4.min.js',
-                ],  
+                ],
                 //<!-- Botones -->
                 [
                     'type' => 'js',

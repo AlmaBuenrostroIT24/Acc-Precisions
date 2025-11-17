@@ -8,6 +8,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Order_ScheduleController;
 use App\Http\Controllers\QaFaiSummaryController;
 use App\Http\Controllers\NonConformanceController;
+use App\Http\Controllers\QAInspDrawingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -186,12 +187,42 @@ Route::middleware('auth')->group(function () {
 });
 
 
+//================================
+//================================
+//================================
+//++++++++++++++++++++++++++++++++++++++++<-START->INSPECTION PLAN +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+Route::prefix('QA/PlanInspection')->group(function () {
 
+    // 👉 Cuando entras a /QA/PlanInspection por GET, te manda al formulario
+    Route::get('/', function () {
+        return redirect()->route('qa.inspectionplan.create');
+    })->name('qa.inspectionplan.index');
 
+    // Formulario para subir plano
+    Route::get('/create', [QAInspDrawingController::class, 'create'])
+        ->name('qa.inspectionplan.create');
 
+    // Guardar plano (POST /QA/PlanInspection)
+    Route::post('/', [QAInspDrawingController::class, 'store'])
+        ->name('qa.drawings.store');
 
+    // Mostrar plano + globos (GET /QA/PlanInspection/{drawing})
+    Route::get('/{drawing}', [QAInspDrawingController::class, 'show'])
+        ->name('qa.drawings.show');
 
+    // Crear característica (globo)
+    Route::post('/{drawing}/characteristics', [QAInspDrawingController::class, 'storeCharacteristic'])
+        ->name('qa.drawings.characteristics.store');
+
+    // Actualizar posición o datos del globo
+    Route::put('/{drawing}/characteristics/{char}', [QAInspDrawingController::class, 'updateCharacteristic'])
+        ->name('qa.drawings.characteristics.update');
+
+    // Eliminar globo
+    Route::delete('/{drawing}/characteristics/{char}', [QAInspDrawingController::class, 'destroyCharacteristic'])
+        ->name('qa.drawings.characteristics.destroy');
+});
 
 
 
