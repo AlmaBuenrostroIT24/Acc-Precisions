@@ -26,7 +26,7 @@
 
 
     {{-- PANEL CENTRAL: plano + globos --}}
-    <div class="col-md-10">
+    <div class="col-md-8">
         <div class="card h-100">
             <div class="card-header p-2">
                 <strong>Plano</strong>
@@ -115,7 +115,7 @@
     </div>
 
         {{-- PANEL IZQUIERDO: lista de características --}}
-    <div class="col-md-6">
+    <div class="col-md-2">
         <div class="card h-100">
             <div class="card-header p-2">
                 <strong>Características</strong>
@@ -154,8 +154,8 @@
 <style>
     .balloon {
         position:absolute;
-        width:32px;
-        height:32px;
+        width:22px;
+        height:22px;
         border-radius:50%;
         border:2px solid #007bff;
         color:#007bff;
@@ -189,8 +189,39 @@
     const wrap  = document.getElementById('wrap');
     const token = '{{ csrf_token() }}';
 
+    // ⭐ GRID PARA CALCULAR REFERENCE LOCATION (3D, 4B, etc.)
+    const GRID_COLS = 8; // columnas numeradas 8..1
+    const GRID_ROWS = 4; // filas D..A
+
+    // ⭐ DESPLAZAMIENTO DEL GLOBO RESPECTO AL PUNTO CLICADO
+    const BALLOON_OFFSET = 0.04; // 6% del ancho/alto de la imagen (ajusta a gusto)
+
+    function calcRefLocation(rx, ry) {
+        // =====================
+        // COLUMNA INVERTIDA 8..1
+        // =====================
+        let colIndex = Math.floor(rx * GRID_COLS); // 0..7
+        colIndex = Math.max(0, Math.min(GRID_COLS - 1, colIndex));
+
+        let col = GRID_COLS - colIndex;
+        // rx=0.0 → index 0 → col = 8
+        // rx=1.0 → index 7 → col = 1
+
+        // =====================
+        // FILA INVERTIDA D..A
+        // =====================
+        let rowIndex = Math.floor(ry * GRID_ROWS); // 0..3
+        rowIndex = Math.max(0, Math.min(GRID_ROWS - 1, rowIndex));
+
+        // 0 → D, 1 → C, 2 → B, 3 → A
+        const rowLetter = String.fromCharCode('D'.charCodeAt(0) - rowIndex);
+
+        // Si quieres D3 → return `${rowLetter}${col}`;
+        return `${col}${rowLetter}`; // ejemplo: 8D, 3C, 1A
+    }
+
     // Datos de características para rellenar el panel derecho
-const CHAR_DATA = @json($charData);
+    const CHAR_DATA = @json($charData);
 
     const storeUrl = @json(route('qa.drawings.characteristics.store', ['drawing' => $drawing->id]));
     const updateUrlTemplate = @json(
@@ -201,22 +232,18 @@ const CHAR_DATA = @json($charData);
     function setActive(id) {
         if (!CHAR_DATA[id]) return;
 
-        // guardar id activo
         document.getElementById('active-char-id').value = id;
 
-        // resaltar lista
         document.querySelectorAll('.char-item').forEach(li => {
             li.classList.toggle('active', li.dataset.id === String(id));
         });
 
-        // resaltar globos
         document.querySelectorAll('.balloon').forEach(b => {
             b.classList.toggle('active', b.dataset.id === String(id));
         });
 
         const c = CHAR_DATA[id];
 
-        // rellenar formulario
         document.getElementById('char-no').value          = c.char_no ?? '';
         document.getElementById('char-ref-loc').value     = c.reference_location ?? '';
         document.getElementById('char-designator').value  = c.characteristic_designator ?? '';
@@ -237,19 +264,17 @@ const CHAR_DATA = @json($charData);
     // clic en globo
     document.querySelectorAll('.balloon').forEach(b => {
         b.addEventListener('click', function (e) {
-            // evitar que el clic dispare el 'wrap click' (crear globo)
             e.stopPropagation();
             setActive(this.dataset.id);
         });
     });
 
-    // seleccionar la primera al entrar
     const first = document.querySelector('.char-item');
     if (first) {
         setActive(first.dataset.id);
     }
 
-    // ========= crear nuevo globo al clic en la imagen =========
+    // ========= crear nuevo globo al clic en la imagen (MODO PRO) =========
     wrap.addEventListener('click', function (e) {
         if (e.target !== img) return;
 
@@ -257,8 +282,24 @@ const CHAR_DATA = @json($charData);
         const xpx  = e.clientX - rect.left;
         const ypx  = e.clientY - rect.top;
 
-        const rx = xpx / img.clientWidth;
-        const ry = ypx / img.clientHeight;
+        // Punto EXACTO donde hizo clic el inspector (dimensión)
+        const anchorRx = xpx / img.clientWidth;
+        const anchorRy = ypx / img.clientHeight;
+
+        // Vector desde el centro del plano hacia el punto clicado
+        let vx = anchorRx - 0.2;
+        let vy = anchorRy - 0.2;
+        const len = Math.sqrt(vx*vx + vy*vy) || 1;
+        vx /= len;
+        vy /= len;
+
+        // Posición final del globo: un poco MÁS allá de la dimensión
+        let rx = anchorRx + vx * BALLOON_OFFSET;
+        let ry = anchorRy + vy * BALLOON_OFFSET;
+
+        // Clamp para no salirnos del plano
+        rx = Math.max(0.02, Math.min(0.98, rx));
+        ry = Math.max(0.02, Math.min(0.98, ry));
 
         fetch(storeUrl, {
             method: 'POST',
@@ -266,15 +307,19 @@ const CHAR_DATA = @json($charData);
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': token
             },
+            // Guardamos la posición del GLOBO (no la del clic)
             body: JSON.stringify({ x: rx, y: ry })
         })
         .then(r => r.json())
         .then(c => {
+            // calcular referencia según posición del globo
+            const ref = calcRefLocation(c.x, c.y);
+
             // agregar a datos
             CHAR_DATA[c.id] = {
                 id: c.id,
                 char_no: c.char_no,
-                reference_location: null,
+                reference_location: ref,
                 characteristic_designator: null,
                 requirement: null,
                 results: null,
@@ -289,7 +334,8 @@ const CHAR_DATA = @json($charData);
             const li = document.createElement('li');
             li.className = 'list-group-item py-1 px-2 char-item';
             li.dataset.id = c.id;
-            li.innerHTML = `<span class="badge badge-primary mr-1">${c.char_no}</span><small> Nueva</small>`;
+            li.innerHTML = `<span class="badge badge-primary mr-1">${c.char_no}</span>
+                            <small>${ref}</small>`;
             li.addEventListener('click', function () {
                 setActive(this.dataset.id);
             });
@@ -327,7 +373,7 @@ const CHAR_DATA = @json($charData);
         el.dataset.ry = ry;
     }
 
-    // ========= drag & drop globos (igual que antes, pero usando updateUrlTemplate) =========
+    // ========= drag & drop globos =========
     document.querySelectorAll('.balloon').forEach(makeDraggable);
 
     function makeDraggable(el) {
@@ -367,7 +413,14 @@ const CHAR_DATA = @json($charData);
             const rx = parseFloat(el.dataset.rx);
             const ry = parseFloat(el.dataset.ry);
 
+            const ref = calcRefLocation(rx, ry);
             const url = updateUrlTemplate.replace('__ID__', id);
+
+            const payload = {
+                x: rx,
+                y: ry,
+                reference_location: ref
+            };
 
             fetch(url, {
                 method: 'PUT',
@@ -375,8 +428,28 @@ const CHAR_DATA = @json($charData);
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': token
                 },
-                body: JSON.stringify({ x: rx, y: ry })
+                body: JSON.stringify(payload)
             }).catch(err => console.error(err));
+
+            if (CHAR_DATA[id]) {
+                CHAR_DATA[id].x = rx;
+                CHAR_DATA[id].y = ry;
+                CHAR_DATA[id].reference_location = ref;
+            }
+
+            const activeId = document.getElementById('active-char-id').value;
+            if (String(activeId) === String(id)) {
+                document.getElementById('char-ref-loc').value = ref;
+            }
+
+            const li = document.querySelector(`.char-item[data-id="${id}"]`);
+            if (li) {
+                let labelReq = CHAR_DATA[id].requirement || '';
+                if (labelReq.length > 20) labelReq = labelReq.substring(0,20);
+                li.innerHTML =
+                    `<span class="badge badge-primary mr-1">${CHAR_DATA[id].char_no}</span>
+                     <small>${ref}${labelReq ? ' – ' + labelReq : ''}</small>`;
+            }
         });
     }
 
@@ -407,15 +480,15 @@ const CHAR_DATA = @json($charData);
         })
         .then(r => r.json())
         .then(() => {
-            // actualizar cache local
             Object.assign(CHAR_DATA[id], payload);
 
-            // actualizar texto en lista
             const li = document.querySelector(`.char-item[data-id="${id}"]`);
             if (li) {
+                let labelReq = CHAR_DATA[id].requirement || '';
+                if (labelReq.length > 20) labelReq = labelReq.substring(0,20);
                 li.innerHTML = `<span class="badge badge-primary mr-1">${CHAR_DATA[id].char_no}</span>
                     <small>${CHAR_DATA[id].reference_location || 'Sin ref.'}
-                    ${CHAR_DATA[id].requirement ? ' – ' + CHAR_DATA[id].requirement.substring(0,20) : ''}</small>`;
+                    ${labelReq ? ' – ' + labelReq : ''}</small>`;
             }
         })
         .catch(err => console.error(err));
@@ -423,5 +496,6 @@ const CHAR_DATA = @json($charData);
 
 })();
 </script>
+
 
 @endpush

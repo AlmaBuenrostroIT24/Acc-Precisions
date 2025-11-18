@@ -163,9 +163,10 @@ Route::post('/qa/faisummary/completed/export/excel', [QaFaiSummaryController::cl
 Route::post('/qa/faisummary/completed/export/pdf', [QaFaiSummaryController::class, 'exportCompletedPdf'])->name('faisummary.completed.export.pdf');
 // -----------------------------------faistatiscs-------------------------------------------------------
 Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
-    // NUEVO: breakdown por operador/inspector
+// NUEVO: breakdown por operador/inspector
 Route::get('/qa/faistatistics/by', [QaFaiSummaryController::class, 'faistatisticsBy'])->name('faisummary.statistics.by'); // ?year=2025&group=operator|inspector
 Route::get('/qa/faistatistics/operators', [QaFaiSummaryController::class, 'operatorsList'])->name('faisummary.operators');
+
 use App\Http\Controllers\FaiSummaryController;
 
 Route::get('/faisummary/statistics/by-quarter-operator', [QaFaiSummaryController::class, 'faistatisticsByQuarterOperator'])->name('faisummary.statistics.byQuarterOperator');
@@ -200,28 +201,25 @@ Route::prefix('QA/PlanInspection')->group(function () {
     })->name('qa.inspectionplan.index');
 
     // Formulario para subir plano
-    Route::get('/create', [QAInspDrawingController::class, 'create'])
-        ->name('qa.inspectionplan.create');
+    Route::get('/create', [QAInspDrawingController::class, 'create'])->name('qa.inspectionplan.create');
 
     // Guardar plano (POST /QA/PlanInspection)
-    Route::post('/', [QAInspDrawingController::class, 'store'])
-        ->name('qa.drawings.store');
+    Route::post('/', [QAInspDrawingController::class, 'store'])->name('qa.drawings.store');
 
     // Mostrar plano + globos (GET /QA/PlanInspection/{drawing})
-    Route::get('/{drawing}', [QAInspDrawingController::class, 'show'])
-        ->name('qa.drawings.show');
+    Route::get('/{drawing}', [QAInspDrawingController::class, 'show'])->name('qa.drawings.show');
 
     // Crear característica (globo)
-    Route::post('/{drawing}/characteristics', [QAInspDrawingController::class, 'storeCharacteristic'])
-        ->name('qa.drawings.characteristics.store');
+    Route::post('/{drawing}/characteristics', [QAInspDrawingController::class, 'storeCharacteristic'])->name('qa.drawings.characteristics.store');
 
     // Actualizar posición o datos del globo
-    Route::put('/{drawing}/characteristics/{char}', [QAInspDrawingController::class, 'updateCharacteristic'])
-        ->name('qa.drawings.characteristics.update');
+    Route::put('/{drawing}/characteristics/{char}', [QAInspDrawingController::class, 'updateCharacteristic'])->name('qa.drawings.characteristics.update');
 
     // Eliminar globo
-    Route::delete('/{drawing}/characteristics/{char}', [QAInspDrawingController::class, 'destroyCharacteristic'])
-        ->name('qa.drawings.characteristics.destroy');
+    Route::delete('/{drawing}/characteristics/{char}', [QAInspDrawingController::class, 'destroyCharacteristic'])->name('qa.drawings.characteristics.destroy');
+
+    // OCR de un snippet alrededor del globo
+    Route::post('/{drawing}/ocr-snippet', [QAInspDrawingController::class, 'ocrSnippet'])->name('qa.drawings.ocr.snippet');
 });
 
 

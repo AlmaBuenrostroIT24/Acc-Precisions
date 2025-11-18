@@ -53,7 +53,6 @@ class QAInspDrawingController extends Controller
             $this->convertPdfToPng($pdfFull, Storage::disk('public')->path($pngPath));
 
             $pathForDrawing = $pngPath;
-
         } else {
             // ===========================
             //  SI ES IMAGEN (PNG/JPG)
@@ -124,34 +123,34 @@ class QAInspDrawingController extends Controller
     // ===========================
     //  MOSTRAR PLANO + GLOBOS
     // ===========================
-public function show(QAInspDrawing $drawing)
-{
-    $drawing->load('characteristics');
+    public function show(QAInspDrawing $drawing)
+    {
+        $drawing->load('characteristics');
 
-    // Construimos los datos de características para el panel derecho
-    $charData = $drawing->characteristics->mapWithKeys(function ($c) {
-        return [
-            $c->id => [
-                'id'          => $c->id,
-                'char_no'     => $c->char_no,
-                'reference_location'        => $c->reference_location,
-                'characteristic_designator' => $c->characteristic_designator,
-                'requirement'               => $c->requirement,
-                'results'                   => $c->results,
-                'tooling'                   => $c->tooling,
-                'non_conformance_number'    => $c->non_conformance_number,
-                'comments'                  => $c->comments,
-                'x'                         => $c->x,
-                'y'                         => $c->y,
-            ],
-        ];
-    });
+        // Construimos los datos de características para el panel derecho
+        $charData = $drawing->characteristics->mapWithKeys(function ($c) {
+            return [
+                $c->id => [
+                    'id'          => $c->id,
+                    'char_no'     => $c->char_no,
+                    'reference_location'        => $c->reference_location,
+                    'characteristic_designator' => $c->characteristic_designator,
+                    'requirement'               => $c->requirement,
+                    'results'                   => $c->results,
+                    'tooling'                   => $c->tooling,
+                    'non_conformance_number'    => $c->non_conformance_number,
+                    'comments'                  => $c->comments,
+                    'x'                         => $c->x,
+                    'y'                         => $c->y,
+                ],
+            ];
+        });
 
-    return view('qa.inspectionplan.show', [
-        'drawing'  => $drawing,
-        'charData' => $charData,
-    ]);
-}
+        return view('qa.inspectionplan.show', [
+            'drawing'  => $drawing,
+            'charData' => $charData,
+        ]);
+    }
 
     // ===========================
     //  CREAR GLOBO
@@ -212,5 +211,101 @@ public function show(QAInspDrawing $drawing)
         $char->delete();
 
         return response()->json(['ok' => true]);
+    }
+
+    public function ocrSnippet(Request $request, QAInspDrawing $drawing)
+    {
+        $data = $request->validate([
+            'x' => 'required|numeric', // 0..1
+            'y' => 'required|numeric', // 0..1
+        ]);
+
+        $imgPath = Storage::disk('public')->path($drawing->file_path);
+
+        // Cargar imagen (asumo PNG/JPG)
+        $imageInfo = getimagesize($imgPath);
+        if ($imageInfo === false) {
+            return response()->json(['text' => null, 'error' => 'No se pudo leer la imagen'], 422);
+        }
+
+        [$w, $h, $type] = $imageInfo;
+
+        switch ($type) {
+            case IMAGETYPE_PNG:
+                $img = imagecreatefrompng($imgPath);
+                break;
+            case IMAGETYPE_JPEG:
+                $img = imagecreatefromjpeg($imgPath);
+                break;
+            default:
+                return response()->json(['text' => null, 'error' => 'Formato no soportado'], 422);
+        }
+
+        // Centro en px según x,y normalizados
+        $cx = (int) round($data['x'] * $w);
+        $cy = (int) round($data['y'] * $h);
+
+        // Tamaño del recorte (ajústalo según tu plano)
+        $cropW = 220;
+        $cropH = 80;
+
+        $srcX = max(0, $cx - (int)($cropW / 2));
+        $srcY = max(0, $cy - (int)($cropH / 2));
+
+        if ($srcX + $cropW > $w) $srcX = $w - $cropW;
+        if ($srcY + $cropH > $h) $srcY = $h - $cropH;
+
+        $rect = [
+            'x'      => $srcX,
+            'y'      => $srcY,
+            'width'  => $cropW,
+            'height' => $cropH,
+        ];
+
+        $cropped = imagecrop($img, $rect);
+        if ($cropped === false) {
+            imagedestroy($img);
+            return response()->json(['text' => null, 'error' => 'No se pudo recortar'], 422);
+        }
+
+        // Guardar recorte temporal
+        $tmpName = uniqid('ocr_', true) . '.png';
+        $tmpPath = storage_path('app/tmp/' . $tmpName);
+
+        if (!is_dir(dirname($tmpPath))) {
+            mkdir(dirname($tmpPath), 0775, true);
+        }
+
+        imagepng($cropped, $tmpPath);
+        imagedestroy($cropped);
+        imagedestroy($img);
+
+        // Ejecutar Tesseract en ese recorte
+        $tesseract = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'; // ajusta si está en otra ruta
+
+        $cmd = sprintf(
+            '"%s" %s stdout -l eng --psm 6',
+            $tesseract,
+            escapeshellarg($tmpPath)
+        );
+
+        $output = [];
+        $returnVar = 0;
+        exec($cmd . ' 2>&1', $output, $returnVar);
+
+        // borrar temp
+        @unlink($tmpPath);
+
+        if ($returnVar !== 0) {
+            Log::warning('Tesseract error', ['out' => $output, 'code' => $returnVar]);
+            return response()->json(['text' => null, 'error' => 'OCR error'], 500);
+        }
+
+        $text = trim(implode("\n", $output));
+
+        // Opcional: filtrar solo cosas tipo dimensiones (ej. .096, 2.875±.005, etc.)
+        // $text = preg_replace('/[^\d\.\-\+\sXR]/i', '', $text);
+
+        return response()->json(['text' => $text]);
     }
 }

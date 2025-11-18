@@ -809,7 +809,7 @@ public function store(Request $request)
             // ✅ Guardar previous_status si se cambia a "sent"
             if ($newStatus === 'sent') {
                 $order->previous_status = $previousStatus;
-                $order->sent_at = now(); // También mantén esto aquí
+                $order->endate_mach = now(); // También mantén esto aquí
             }
 
             // ✅ Si el status es "deburring" o "shipping", actualizar la location a "hearst"
@@ -819,7 +819,7 @@ public function store(Request $request)
             ) {
                 $order->last_location = $order->location; // Guardar ubicación anterior
                 $order->location = 'Hearst';
-                $order->endate_mach = now(); // Guardar fecha y hora del cambio en endate_mach
+                $order->sent_at = now(); // Guardar fecha y hora del cambio en endate_mach
             }
 
             // Guardar la fecha cuando cambia a "sent"
