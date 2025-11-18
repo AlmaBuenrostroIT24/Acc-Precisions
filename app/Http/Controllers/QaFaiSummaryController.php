@@ -306,7 +306,7 @@ class QaFaiSummaryController extends Controller
         if ($order) {
             $validated['loc_inspection'] = $order->location; // 👈 Aquí copiamos location
         }
-        
+
         if ($request->has('id')) {
             $row = \App\Models\QaFaiSummary::find($request->id);
             if (!$row) {
@@ -575,6 +575,102 @@ class QaFaiSummaryController extends Controller
             'day',
             'monthStats'
         ));
+    }
+
+    public function general(Request $request)
+    {
+        $data = $this->getFaiSummaryData($request);
+
+        return view('qa.faisummary.index_schedule', $data);
+    }
+
+    /**
+     * 🔁 Reutiliza esta función para vista, Excel y PDF
+     */
+    protected function getFaiSummaryData(Request $request): array
+    {
+        $query = QaFaiSummary::with('orderSchedule');
+
+        // === filtros EXACTOS como los del formulario ===
+        if ($request->filled('operator')) {
+            $query->where('operator', $request->operator);
+        }
+
+        if ($request->filled('inspector')) {
+            $query->where('inspector', $request->inspector);
+        }
+
+        if ($request->filled('location')) {
+            $query->where('loc_inspection', $request->location);
+        }
+
+        // Filtros de fecha (year/month/day) según tu lógica actual
+        if ($request->filled('year')) {
+            $query->whereYear('date', $request->year);
+        }
+
+        if ($request->filled('month')) {
+            $query->whereMonth('date', $request->month);
+        }
+
+        if ($request->filled('day')) {
+            $query->whereDate('date', $request->day);
+        }
+
+        $inspections = $query->orderByDesc('created_at')->get();
+
+        // === monthStats (usa tu lógica actual; aquí solo un ejemplo) ===
+        $month = $request->input('month', now()->month);
+        $year  = $request->input('year', now()->year);
+
+        $monthQuery = QaFaiSummary::whereYear('date', $year)
+            ->whereMonth('date', $month);
+
+        $total = (clone $monthQuery)->count();
+        $pass  = (clone $monthQuery)->where('results', 'pass')->count();
+        $fail  = (clone $monthQuery)->where('results', 'no pass')->count();
+
+        $rate = $total > 0 ? round($pass * 100 / $total, 1) : 0;
+
+        $monthStats = [
+            'total' => $total,
+            'pass'  => $pass,
+            'fail'  => $fail,
+            'rate'  => $rate,
+            'month' => $month,
+            'year'  => $year,
+        ];
+
+        return compact('inspections', 'monthStats');
+    }
+
+    // ================== EXCEL ==================
+    public function exportExcel(Request $request)
+    {
+        $data = $this->getFaiSummaryData($request);
+
+        $view = 'qa.faisummary.faisummary_summaryexcel';
+
+        $fileName = 'FAI_Summary_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(
+            new BladeTableExport($view, $data),
+            $fileName
+        );
+    }
+
+    // ================== PDF ==================
+    public function exportPdf(Request $request)
+    {
+        $data = $this->getFaiSummaryData($request);
+
+        // Puedes reutilizar la MISMA vista del Excel o hacer otra
+        $pdf = Pdf::loadView('qa.faisummary.exports.fai_general_excel', $data)
+            ->setPaper('letter', 'landscape');
+
+        $fileName = 'FAI_Summary_' . now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->download($fileName);
     }
 
 

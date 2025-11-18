@@ -14,10 +14,10 @@
         <nav aria-label="breadcrumb" class="mb-0 ml-auto">
             <ol class="breadcrumb mb-0 bg-transparent p-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">FAI Summary</li>
-            </ol>
-        </nav>
-    </div>
+<li class="breadcrumb-item active" aria-current="page">FAI Summary</li>
+</ol>
+</nav>
+</div>
 </div>
 @endsection
 --}}
@@ -351,6 +351,19 @@
                         <a class="btn btn-outline-secondary flex-fill"
                             href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
                             <i class="far fa-calendar mr-1"></i> Year
+                        </a>
+                    </div>
+
+                    {{-- Botones de exportación --}}
+                    <div class="d-flex justify-content-end mb-2">
+                        <a href="{{ route('faisummary.export.excel', request()->query()) }}"
+                            class="btn btn-success btn-sm mr-2">
+                            <i class="far fa-file-excel mr-1"></i> Export Excel
+                        </a>
+
+                        <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
+                            class="btn btn-danger btn-sm">
+                            <i class="far fa-file-pdf mr-1"></i> Export PDF
                         </a>
                     </div>
                 </form>

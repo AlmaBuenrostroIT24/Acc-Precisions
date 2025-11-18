@@ -141,7 +141,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
 });
-
+//=========================================================================================================
+// -----------------------------------faisummary-------------------------------------------------------
+//===========================================================================================================
 Route::post('/orders-schedule/{id}/update-operation', [QaFaiSummaryController::class, 'updateOperation'])->name('orders-schedule.updateOperation');
 Route::post('/qa/faisummary/store-single', [QaFaiSummaryController::class, 'storeSingle']);
 Route::get('/qa/faisummary/by-order/{orderScheduleId}', [QaFaiSummaryController::class, 'getByOrder']);
@@ -154,19 +156,29 @@ Route::get('/qa/faisummary/{order}/pdf', [QaFaiSummaryController::class, 'pdf'])
 Route::get('/orders-schedule/{order}/validate-ops', [QaFaiSummaryController::class, 'validateOps']);
 
 Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
+// -----------------------------------faisummary PDF y EXCEL-------------------------------------------------------
 
+Route::get('/faisummary/general', [QaFaiSummaryController::class, 'general'])->name('faisummary.general');
+
+Route::get('/faisummary/export/excel', [QaFaiSummaryController::class, 'exportExcel'])->name('faisummary.export.excel');
+
+Route::get('/faisummary/export/pdf', [QaFaiSummaryController::class, 'exportPdf'])->name('faisummary.export.pdf');
+
+//=========================================================================================================
 // -----------------------------------faicompleted-------------------------------------------------------
-
+//=========================================================================================================
 Route::post('/qa/faisummary/completed/export/excel', [QaFaiSummaryController::class, 'exportCompletedExcel'])->name('faisummary.completed.export.excel');
 
 Route::post('/qa/faisummary/completed/export/pdf', [QaFaiSummaryController::class, 'exportCompletedPdf'])->name('faisummary.completed.export.pdf');
+
+//=========================================================================================================
 // -----------------------------------faistatiscs-------------------------------------------------------
+//=========================================================================================================
 Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
     // NUEVO: breakdown por operador/inspector
 Route::get('/qa/faistatistics/by', [QaFaiSummaryController::class, 'faistatisticsBy'])->name('faisummary.statistics.by'); // ?year=2025&group=operator|inspector
 Route::get('/qa/faistatistics/operators', [QaFaiSummaryController::class, 'operatorsList'])->name('faisummary.operators');
 use App\Http\Controllers\FaiSummaryController;
-
 Route::get('/faisummary/statistics/by-quarter-operator', [QaFaiSummaryController::class, 'faistatisticsByQuarterOperator'])->name('faisummary.statistics.byQuarterOperator');
 
 //++++++++++++++++++++++++++++++++++++++++ <-END-> QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -184,15 +196,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/QA/NonConformace/stats', [NonConformanceController::class, 'stats'])->name('nonconformance.stats');
 });
-
-
-
-
-
-
-
-
-
 
 
 
