@@ -257,7 +257,7 @@ public function relabelParents(): void
             'costumer'        => $row['customer_id'],
             'qty'             => $row['line_qty'],
             'co'             => $row['order_id'],
-            'cust_po'             => $row['customer_po_ref'],
+               'cust_po'          => $row['customer_po_ref']   ?? null,  // 👈 ya no truena
             'operation'       => $row['operation'] ?? '0',
             'machines'        => $row['machines'] ?? 'default_value',
             'done'            => $row['done'] ?? '1',
@@ -284,6 +284,7 @@ public function relabelParents(): void
             'sampling'        => $row['sampling'] ?? '0',
             'status_inspection'        => $row['status_inspection'] ?? 'pending',
             'operation'       => $row['inspection_progress'] ?? '0',
+            'inspection_progress' => $row['inspection_progress'] ?? 0,
             'created_by'      => auth()->check() ? auth()->id() : null,
         ]);
     }

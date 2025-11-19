@@ -159,9 +159,7 @@ Route::get('/sampling-plan', [QaFaiSummaryController::class, 'get']);
 // -----------------------------------faisummary PDF y EXCEL-------------------------------------------------------
 
 Route::get('/faisummary/general', [QaFaiSummaryController::class, 'general'])->name('faisummary.general');
-
-Route::get('/faisummary/export/excel', [QaFaiSummaryController::class, 'exportExcel'])->name('faisummary.export.excel');
-
+Route::get('/faisummary/export/excel', [QaFaiSummaryController::class, 'exportFai14'])->name('faisummary.export.excel');
 Route::get('/faisummary/export/pdf', [QaFaiSummaryController::class, 'exportPdf'])->name('faisummary.export.pdf');
 
 //=========================================================================================================

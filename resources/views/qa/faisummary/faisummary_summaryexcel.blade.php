@@ -1,5 +1,25 @@
 <table>
     <thead>
+        {{-- Fila 1 reservada para logo (A1) y título (B1:L1) que ponemos desde styles() --}}
+        <tr>
+            {{-- 14 celdas vacías para alinear con A..L (¡importante que sean 12!) --}}
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+
+        {{-- Fila 2: aquí sí van los encabezados reales --}}
         <tr>
             <th>Date</th>
             <th>Part/Revision</th>
@@ -19,28 +39,28 @@
     </thead>
     <tbody>
         @foreach($inspections as $inspection)
-            @php
-                $tz = config('app.timezone', 'UTC');
-                $dtCreated = $inspection->created_at
-                    ? $inspection->created_at->copy()->setTimezone($tz)
-                    : null;
-            @endphp
-            <tr>
-                <td>{{ $dtCreated?->format('Y-m-d H:i') }}</td>
-                <td>{{ $inspection->orderSchedule->PN ?? '' }}</td>
-                <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
-                <td>{{ $inspection->insp_type }}</td>
-                <td>{{ $inspection->operation }}</td>
-                <td>{{ $inspection->operator }}</td>
-                <td>{{ $inspection->results }}</td>
-                <td>{{ $inspection->sb_is }}</td>
-                <td>{{ $inspection->observation }}</td>
-                <td>{{ $inspection->station }}</td>
-                <td>{{ $inspection->method }}</td>
-                <td>{{ $inspection->qty_pcs }}</td>
-                <td>{{ $inspection->inspector }}</td>
-                <td>{{ $inspection->loc_inspection }}</td>
-            </tr>
+        @php
+        $tz = config('app.timezone', 'UTC');
+        $dtCreated = $inspection->created_at
+        ? $inspection->created_at->copy()->setTimezone($tz)
+        : null;
+        @endphp
+        <tr>
+            <td>{{ $dtCreated?->format('Y-m-d H:i') }}</td>
+            <td>{{ $inspection->orderSchedule->PN ?? '' }}</td>
+            <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
+            <td>{{ $inspection->insp_type }}</td>
+            <td>{{ $inspection->operation }}</td>
+            <td>{{ $inspection->operator }}</td>
+            <td>{{ $inspection->results }}</td>
+            <td>{{ $inspection->sb_is }}</td>
+            <td>{{ $inspection->observation }}</td>
+            <td>{{ $inspection->station }}</td>
+            <td>{{ $inspection->method }}</td>
+            <td>{{ $inspection->qty_pcs }}</td>
+            <td>{{ $inspection->inspector }}</td>
+            <td>{{ $inspection->loc_inspection }}</td>
+        </tr>
         @endforeach
     </tbody>
 </table>

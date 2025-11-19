@@ -14,84 +14,120 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
+
+
 class BladeTableExport implements FromView, WithStyles, WithColumnFormatting, ShouldAutoSize, WithDrawings
 {
-    public function __construct(public string $view, public array $data) {}
+    public function __construct(
+        public string $view,
+        public array $data,
+        public string $title = 'Report',
+        // formatos por columna (A,B,C...)
+        public array $columnFormats = [],
+        // estilos por columnas
+        public array $centerCols = [],
+        public array $rightCols  = [],
+        public array $wrapCols   = [],
+    ) {}
 
     public function view(): View
     {
         return view($this->view, $this->data);
     }
 
-    /** Logo en A1 (asegúrate de la extensión real .png/.PNG) */
+    /** Logo en A1 */
     public function drawings()
     {
         $path = public_path('vendor/adminlte/dist/img/accl.png'); // <- ajusta si es .PNG
-        // Si quieres validar:
-        // if (!file_exists($path)) { throw new \RuntimeException("Logo no encontrado: $path"); }
 
         $drawing = new Drawing();
         $drawing->setName('Company Logo');
         $drawing->setDescription('Logo');
         $drawing->setPath($path);
         $drawing->setHeight(55);
-        $drawing->setCoordinates('A1');   // Logo en A1
+        $drawing->setCoordinates('A1');
         $drawing->setOffsetX(10);
         $drawing->setOffsetY(4);
+
         return $drawing;
     }
 
-    /** Formatos */
+    /** Formatos de columnas (dinámico por constructor) */
     public function columnFormats(): array
     {
-        return [
-            'A' => NumberFormat::FORMAT_DATE_YYYYMMDD, // DATE
-            'G' => NumberFormat::FORMAT_NUMBER,        // WO QTY
-            'H' => NumberFormat::FORMAT_NUMBER,        // SAMP.
-            'L' => NumberFormat::FORMAT_PERCENTAGE_00, // PROG. (debe venir 0..1)
-        ];
+        return $this->columnFormats;
     }
 
-    /** Estilos seguros */
     public function styles(Worksheet $sheet)
     {
-        $lastRow = $sheet->getHighestRow();
-        $lastCol = 'L';
+        $lastRow = $sheet->getHighestRow();      // última fila con datos
+        $lastCol = $sheet->getHighestColumn();   // última columna real (A..L / A..N / A..P etc.)
 
-
-        // Título (fila 1): B1:L1 fusionado (A1 lo ocupa el logo)
+        // ============== TÍTULO (fila 1) ==============
         $sheet->mergeCells('B1:' . $lastCol . '1');
-        $sheet->setCellValue('B1', "FAI / IPI Completed Report\n" . now()->format('m-d-Y H:i'));
-        $sheet->getStyle('B1')->getAlignment()->setWrapText(true); // permite salto de línea
+        $sheet->setCellValue(
+            'B1',
+            $this->title . "\n" . now()->format('m-d-Y H:i')
+        );
+        $sheet->getStyle('B1')->getAlignment()->setWrapText(true);
 
         $sheet->getStyle('B1')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 20, 'color' => ['rgb' => '1F4E78']],
-            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+            'font' => [
+                'bold'  => true,
+                'size'  => 20,
+                'color' => ['rgb' => '1F4E78'],
+            ],
+            'alignment' => [
+                'horizontal' => 'center',
+                'vertical'   => 'center',
+            ],
         ]);
         $sheet->getRowDimension(1)->setRowHeight(50);
 
-        // Encabezados en fila 2
+        // ============== ENCABEZADOS (fila 2) ==============
+        // OJO: la vista Blade debe tener la fila dummy primero.
         $sheet->getStyle('A2:' . $lastCol . '2')->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => '4F81BD']],
-            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+            'font' => [
+                'bold'  => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'color'    => ['rgb' => '4F81BD'],
+            ],
+            'alignment' => [
+                'horizontal' => 'center',
+                'vertical'   => 'center',
+            ],
         ]);
         $sheet->getRowDimension(2)->setRowHeight(22);
 
-        // Bordes desde encabezado hasta última fila
-        $sheet->getStyle('A2:' . $lastCol . $lastRow)->getBorders()
-            ->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        // ============== BORDES ==============
+        $sheet->getStyle('A2:' . $lastCol . $lastRow)
+            ->getBorders()
+            ->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN);
 
-        // Alineaciones de datos (desde fila 3)
-        foreach (['B', 'C', 'D', 'F', 'I', 'J', 'K'] as $c) {
-            $sheet->getStyle($c . '3:' . $c . $lastRow)->getAlignment()->setHorizontal('center');
+        // ============== ALINEACIONES (desde fila 3) ==============
+        foreach ($this->centerCols as $c) {
+            $sheet->getStyle($c . '3:' . $c . $lastRow)
+                ->getAlignment()
+                ->setHorizontal('center');
         }
-        foreach (['G', 'H', 'L'] as $c) {
-            $sheet->getStyle($c . '3:' . $c . $lastRow)->getAlignment()->setHorizontal('right');
-        }
-        $sheet->getStyle('E3:E' . $lastRow)->getAlignment()->setWrapText(true);
 
-        // Autofiltro + freeze pane
+        foreach ($this->rightCols as $c) {
+            $sheet->getStyle($c . '3:' . $c . $lastRow)
+                ->getAlignment()
+                ->setHorizontal('right');
+        }
+
+        foreach ($this->wrapCols as $c) {
+            $sheet->getStyle($c . '3:' . $c . $lastRow)
+                ->getAlignment()
+                ->setWrapText(true);
+        }
+
+        // ============== AUTOFILTRO + FREEZE ==============
         $sheet->setAutoFilter('A2:' . $lastCol . '2');
         $sheet->freezePane('A3');
 

@@ -15,7 +15,7 @@ use App\Services\InspectionSummary;
 use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
-
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use App\Exports\BladeTableExport;
 
 class QaFaiSummaryController extends Controller
@@ -581,7 +581,7 @@ class QaFaiSummaryController extends Controller
     {
         $data = $this->getFaiSummaryData($request);
 
-        return view('qa.faisummary.index_schedule', $data);
+        return view('qa.faisummary.faisummary_summary', $data);
     }
 
     /**
@@ -645,18 +645,24 @@ class QaFaiSummaryController extends Controller
     }
 
     // ================== EXCEL ==================
-    public function exportExcel(Request $request)
+    public function exportFai14(Request $request)
     {
-        $data = $this->getFaiSummaryData($request);
+        $data = $this->getFaiSummaryData($request); // lo que ya tienes
 
-        $view = 'qa.faisummary.faisummary_summaryexcel';
-
-        $fileName = 'FAI_Summary_' . now()->format('Ymd_His') . '.xlsx';
-
-        return Excel::download(
-            new BladeTableExport($view, $data),
-            $fileName
+        $export = new BladeTableExport(
+            view: 'qa.faisummary.faisummary_summaryexcel',
+            data: $data,
+            title: 'FAI / IPI Summary Report',
+            columnFormats: [
+                'A' => NumberFormat::FORMAT_DATE_DATETIME,
+                'L' => NumberFormat::FORMAT_NUMBER, // Qty Insp.
+            ],
+            centerCols: ['B', 'C', 'D', 'E', 'F', 'G', 'J', 'K', 'M', 'N'],
+            rightCols: ['L'],
+            wrapCols: ['H', 'I'], // SB/IS y Observation
         );
+
+        return Excel::download($export, 'FAI_Summary_' . now()->format('Ymd_His') . '.xlsx');
     }
 
     // ================== PDF ==================
@@ -664,14 +670,50 @@ class QaFaiSummaryController extends Controller
     {
         $data = $this->getFaiSummaryData($request);
 
-        // Puedes reutilizar la MISMA vista del Excel o hacer otra
-        $pdf = Pdf::loadView('qa.faisummary.exports.fai_general_excel', $data)
-            ->setPaper('letter', 'landscape');
+        /** @var \Illuminate\Support\Collection $inspections */
+        $inspections = $data['inspections'];
 
-        $fileName = 'FAI_Summary_' . now()->format('Ymd_His') . '.pdf';
+        // 📊 RESUMEN basado SOLO en los registros del PDF
+        $total = $inspections->count();
 
-        return $pdf->download($fileName);
+        $pass = $inspections->filter(function ($row) {
+            return strcasecmp(trim((string)$row->results), 'pass') === 0;
+        })->count();
+
+        $fail = $inspections->filter(function ($row) {
+            return strcasecmp(trim((string)$row->results), 'no pass') === 0;
+        })->count();
+
+        $rate = $total > 0 ? round($pass * 100 / $total, 1) : 0;
+
+        $pdfStats = [
+            'total' => $total,
+            'pass'  => $pass,
+            'fail'  => $fail,
+            'rate'  => $rate,
+        ];
+
+        // 👇 estos vienen de los filtros del formulario
+        $month = $request->input('month');   // puede ser null
+        $year  = $request->input('year');    // puede ser null
+
+        $generatedAt = now();
+        $user        = auth()->user();
+
+        $pdf = Pdf::loadView('qa.faisummary.faisummary_summarypdf', [
+            'inspections' => $inspections,
+            'pdfStats'    => $pdfStats,
+            'generatedAt' => $generatedAt,
+            'user'        => $user,
+
+            // 👉 los mandamos a la vista para el Period:
+            'month'       => $month,
+            'year'        => $year,
+        ])->setPaper('letter', 'landscape');
+
+        return $pdf->stream('FAI_Summary_' . $generatedAt->format('Ymd_His') . '.pdf');
     }
+
 
 
 
@@ -760,9 +802,6 @@ class QaFaiSummaryController extends Controller
 
         return response()->json(['success' => true]);
     }
-
-
-
 
 
 
@@ -911,9 +950,6 @@ class QaFaiSummaryController extends Controller
         return $dompdf->stream($filename, ['Attachment' => false]);
     }
 
-
-
-
     public function completedView(OrderSchedule $order)
     {
         $summary = app(InspectionSummary::class)->summarize($order, $order->operation, $order->sampling);
@@ -923,7 +959,6 @@ class QaFaiSummaryController extends Controller
             'summary' => $summary,
         ]);
     }
-
 
     protected function baseCompletedQuery(Request $request)
     {
@@ -999,12 +1034,14 @@ class QaFaiSummaryController extends Controller
                 ->whereIn('id', $ids)
                 ->withSum([
                     'faiSummaries as fai_pass_qty' => function ($q) {
-                        $q->where('insp_type', 'FAI')->whereRaw('LOWER(results) = "pass"');
+                        $q->where('insp_type', 'FAI')
+                            ->whereRaw('LOWER(results) = "pass"');
                     },
                 ], 'qty_pcs')
                 ->withSum([
                     'faiSummaries as ipi_pass_qty' => function ($q) {
-                        $q->where('insp_type', 'IPI')->whereRaw('LOWER(results) = "pass"');
+                        $q->where('insp_type', 'IPI')
+                            ->whereRaw('LOWER(results) = "pass"');
                     },
                 ], 'qty_pcs')
                 ->orderByDesc('inspection_endate')
@@ -1013,11 +1050,40 @@ class QaFaiSummaryController extends Controller
             $rows = $this->baseCompletedQuery($request)->get();
         }
 
+        // ============================
+        // EXPORT REUTILIZABLE (12 columnas)
+        // ============================
+
         return Excel::download(
-            new \App\Exports\BladeTableExport('qa.faisummary.excel_completed_table', ['rows' => $rows]),
-            'FAI_Completed.xlsx'
+            new \App\Exports\BladeTableExport(
+                view: 'qa.faisummary.excel_completed_table',
+                data: ['rows' => $rows],
+
+                title: 'FAI / IPI Completed Report',
+
+                // ==== FORMATOS DE CADA COLUMNA (A..L = 12 columnas) ====
+                columnFormats: [
+                    'A' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DATETIME, // fecha
+                    'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,        // wo_qty
+                    'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,        // group_wo_qty
+                    'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,        // total_fai
+                    'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE,        // total_ipi
+                ],
+
+                // ==== COLUMNAS PARA CENTRAR ====
+                centerCols: ['B', 'C', 'D', 'F', 'G', 'I', 'J'],
+
+                // ==== COLUMNAS NUMÉRICAS A LA DERECHA ====
+                rightCols: ['H', 'K', 'L'],
+
+                // ==== ENVOLVER TEXTO (si aplica) ====
+                wrapCols: ['F'], // Part_description (si es larga)
+            ),
+
+            'FAI_Completed_' . now()->format('Ymd_His') . '.xlsx'
         );
     }
+
 
     public function exportCompletedPdf(Request $request)
     {

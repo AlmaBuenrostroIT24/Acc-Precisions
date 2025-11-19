@@ -32,7 +32,7 @@ class OrderSchedule extends Model
         'status_order',
         'sent_at',
         'target_date',
-        'enddate_mach',
+        'endate_mach',
         'target_mach',
         'machining_date',
         'due_date',
@@ -59,7 +59,7 @@ class OrderSchedule extends Model
         'sampling_check',
         'inspection_date',
         'group_wo_qty',
-        'group_key',
+        'inspection_progress',
     ];
 
     // Casts para manejar tipos de datos correctamente

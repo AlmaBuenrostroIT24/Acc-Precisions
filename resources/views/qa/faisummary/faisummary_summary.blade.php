@@ -358,12 +358,13 @@
                     <div class="d-flex justify-content-end mb-2">
                         <a href="{{ route('faisummary.export.excel', request()->query()) }}"
                             class="btn btn-success btn-sm mr-2">
-                            <i class="far fa-file-excel mr-1"></i> Export Excel
+                            <i class="far fa-file-excel mr-1"></i>Excel
                         </a>
 
                         <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
-                            class="btn btn-danger btn-sm">
-                            <i class="far fa-file-pdf mr-1"></i> Export PDF
+                            class="btn btn-danger btn-sm"
+                            target="_blank">
+                            <i class="far fa-file-pdf mr-1"></i>PDF
                         </a>
                     </div>
                 </form>
