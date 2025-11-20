@@ -1231,101 +1231,7 @@ class Order_ScheduleController extends Controller
     }
 
 
-    //--------------------------------------------------------------------------------------------------------------
-    // Resumen sin filtro (todo)
-    public function summaryByCustomer()
-    {
-        $data = DB::table('orders_schedule')
-            ->select('costumer', DB::raw('count(*) as total'))
-            ->groupBy('costumer')
-            ->orderBy('total', 'desc')
-            ->get();
 
-        return $this->formatChartData($data);
-    }
-
-    // Filtro por año
-    public function summaryByCustomerYear($year)
-    {
-        $query = DB::table('orders_schedule')
-            ->select('costumer', DB::raw('count(*) as total'))
-            ->whereYear('created_at', $year)
-            ->groupBy('costumer')
-            ->orderBy('total', 'desc');
-
-        $data = $query->get();
-        $totalAll = $data->sum('total');
-
-        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
-            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
-            return $item;
-        });
-
-        return response()->json([
-            'labels' => $dataWithPercentage->pluck('costumer'),
-            'totals' => $dataWithPercentage->pluck('total'),
-            'percentages' => $dataWithPercentage->pluck('percentage'),
-            'totalAll' => $totalAll,
-        ]);
-    }
-
-    // Filtro Año: summaryByCustomerYear
-    public function summaryByCustomerMonth($year, $month)
-    {
-        $query = DB::table('orders_schedule')
-            ->select('costumer', DB::raw('count(*) as total'))
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->groupBy('costumer')
-            ->orderBy('total', 'desc');
-
-        $data = $query->get();
-
-        $totalAll = $data->sum('total');
-
-        // Añadimos el porcentaje a cada registro
-        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
-            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
-            return $item;
-        });
-
-        // Preparar datos para la gráfica
-        $labels = $dataWithPercentage->pluck('costumer');
-        $totals = $dataWithPercentage->pluck('total');
-        $percentages = $dataWithPercentage->pluck('percentage');
-
-        return response()->json([
-            'labels' => $labels,
-            'totals' => $totals,
-            'percentages' => $percentages,
-            'totalAll' => $totalAll,
-        ]);
-    }
-
-    // Filtro por semana
-    public function summaryByCustomerWeek($year, $week)
-    {
-        $query = DB::table('orders_schedule')
-            ->select('costumer', DB::raw('count(*) as total'))
-            ->whereRaw('YEARWEEK(created_at, 1) = ?', ["{$year}{$week}"])
-            ->groupBy('costumer')
-            ->orderBy('total', 'desc');
-
-        $data = $query->get();
-        $totalAll = $data->sum('total');
-
-        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
-            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
-            return $item;
-        });
-
-        return response()->json([
-            'labels' => $dataWithPercentage->pluck('costumer'),
-            'totals' => $dataWithPercentage->pluck('total'),
-            'percentages' => $dataWithPercentage->pluck('percentage'),
-            'totalAll' => $totalAll,
-        ]);
-    }
 
 
 
@@ -1554,7 +1460,10 @@ class Order_ScheduleController extends Controller
         ));
     }
 
-    /** 🟢 VERIFIED: TABLE-> Orders This Week- Select week */
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟢 VERIFIED: TABLE-> Orders This Week- Select week
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
     public function getOrdersByWeekAjax(Request $request)
     {
         $weekInput = $request->query('week'); // ejemplo: "2025-W29"
@@ -1576,6 +1485,205 @@ class Order_ScheduleController extends Controller
         return response()->json([
             'html' => view('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenes])->render(),
             'count' => $ordenes->count(),
+        ]);
+    }
+
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟡 FILTERS & ORDERS CHARTS FOR ORDER: For All "Year", "Month", "Week" 
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+    // 🟨============== 1. FILTERS  For "Year"===================================== 
+    public function summaryByYear(Request $request, $year)
+    {
+        $query = OrderSchedule::query()
+            ->whereYear('created_at', $year)
+            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        $data = $query
+            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $labels = $data->pluck('month')->map(function ($m) {
+            return date('F', mktime(0, 0, 0, $m, 10)); // nombre del mes
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+    // 🟨============== 2. FILTERS  For "Month"===================================== 
+    public function summaryByMonth(Request $request, $year, $month)
+    {
+        $query = OrderSchedule::query()
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        $data = $query
+            ->select(DB::raw('DAY(created_at) as day'), DB::raw('COUNT(*) as total'))
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $labels = $data->pluck('day')->map(function ($d) use ($month, $year) {
+            return date('d M', strtotime("$year-$month-$d"));
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+
+    // 🟨============== 3. FILTERS  For "Week"===================================== 
+    public function summaryByWeek(Request $request, $year, $week)
+    {
+        $query = OrderSchedule::query()
+            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        // Filtrar por semana usando YEARWEEK MySQL (o puedes usar Carbon para fechas)
+        $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT); // ej: "202523"
+
+        $data = $query
+            ->select(DB::raw('DAYOFWEEK(created_at) as weekday'), DB::raw('COUNT(*) as total'))
+            ->whereRaw("YEARWEEK(created_at, 1) = ?", [$weekString]) // 1 = lunes como primer día
+            ->groupBy('weekday')
+            ->orderBy('weekday')
+            ->get();
+
+        // Día de la semana en nombre corto (Dom, Lun, ...)
+        $labels = $data->pluck('weekday')->map(function ($w) {
+            $days = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
+            return $days[$w - 1] ?? 'Día';
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟡 FILTERS & ORDERS CHARTS FOR ORDER: For CUSTOMER"Year", "Month", "Week" 
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+
+    // 🟨============== 1. FILTERS  For Customer "sin filtro (todo)"===================================== 
+    public function summaryByCustomer()
+    {
+        $data = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->groupBy('costumer')
+            ->orderBy('total', 'desc')
+            ->where('status_order', 'active')
+            ->get();
+
+        return $this->formatChartData($data);
+    }
+    // 🟨============== 2. FILTERS  For Customer "Year"===================================== 
+    public function summaryByCustomerYear($year)
+    {
+        $query = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->whereYear('created_at', $year)
+            ->groupBy('costumer')
+            ->where('status_order', 'active')
+            ->orderBy('total', 'desc');
+
+        $data = $query->get();
+        $totalAll = $data->sum('total');
+
+        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
+            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
+            return $item;
+        });
+
+        return response()->json([
+            'labels' => $dataWithPercentage->pluck('costumer'),
+            'totals' => $dataWithPercentage->pluck('total'),
+            'percentages' => $dataWithPercentage->pluck('percentage'),
+            'totalAll' => $totalAll,
+        ]);
+    }
+
+    // 🟨============== 3. FILTERS  For Customer "Month===================================== 
+    public function summaryByCustomerMonth($year, $month)
+    {
+        $query = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->groupBy('costumer')
+            ->where('status_order', 'active')
+            ->orderBy('total', 'desc');
+
+        $data = $query->get();
+
+        $totalAll = $data->sum('total');
+
+        // Añadimos el porcentaje a cada registro
+        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
+            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
+            return $item;
+        });
+
+        // Preparar datos para la gráfica
+        $labels = $dataWithPercentage->pluck('costumer');
+        $totals = $dataWithPercentage->pluck('total');
+        $percentages = $dataWithPercentage->pluck('percentage');
+
+        return response()->json([
+            'labels' => $labels,
+            'totals' => $totals,
+            'percentages' => $percentages,
+            'totalAll' => $totalAll,
+        ]);
+    }
+
+    // 🟨============== 4. FILTERS  For Customer "Week"=====================================
+    public function summaryByCustomerWeek($year, $week)
+    {
+        $query = DB::table('orders_schedule')
+            ->select('costumer', DB::raw('count(*) as total'))
+            ->whereRaw('YEARWEEK(created_at, 1) = ?', ["{$year}{$week}"])
+            ->groupBy('costumer')
+            ->where('status_order', 'active')
+            ->orderBy('total', 'desc');
+
+        $data = $query->get();
+        $totalAll = $data->sum('total');
+
+        $dataWithPercentage = $data->map(function ($item) use ($totalAll) {
+            $item->percentage = $totalAll ? round(($item->total / $totalAll) * 100, 2) : 0;
+            return $item;
+        });
+
+        return response()->json([
+            'labels' => $dataWithPercentage->pluck('costumer'),
+            'totals' => $dataWithPercentage->pluck('total'),
+            'percentages' => $dataWithPercentage->pluck('percentage'),
+            'totalAll' => $totalAll,
         ]);
     }
 
@@ -1685,105 +1793,8 @@ class Order_ScheduleController extends Controller
     }
 
 
-    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     * 🟡 FILTERS & ORDERS CHARTS FOR ORDER: For "Year", "Month", "Week" 
-     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     */
-    //============== 1. FILTERS  For "Year"===================================== 
-    public function summaryByYear(Request $request, $year)
-    {
-        $query = OrderSchedule::query()
-            ->whereYear('created_at', $year)
-            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
 
-        if ($request->has('customer') && $request->customer) {
-            $query->where('costumer', $request->customer);
-        }
 
-        $data = $query
-            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-
-        $labels = $data->pluck('month')->map(function ($m) {
-            return date('F', mktime(0, 0, 0, $m, 10)); // nombre del mes
-        });
-
-        $values = $data->pluck('total');
-
-        return response()->json([
-            'labels' => $labels,
-            'data' => $values,
-        ]);
-    }
-    //============== 2. FILTERS  For "Month"===================================== 
-    public function summaryByMonth(Request $request, $year, $month)
-    {
-        $query = OrderSchedule::query()
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
-
-        if ($request->has('customer') && $request->customer) {
-            $query->where('costumer', $request->customer);
-        }
-
-        $data = $query
-            ->select(DB::raw('DAY(created_at) as day'), DB::raw('COUNT(*) as total'))
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get();
-
-        $labels = $data->pluck('day')->map(function ($d) use ($month, $year) {
-            return date('d M', strtotime("$year-$month-$d"));
-        });
-
-        $values = $data->pluck('total');
-
-        return response()->json([
-            'labels' => $labels,
-            'data' => $values,
-        ]);
-    }
-
-    //============== 3. FILTERS  For "Week"===================================== 
-    public function summaryByWeek(Request $request, $year, $week)
-    {
-        $query = OrderSchedule::query()
-            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
-
-        if ($request->has('customer') && $request->customer) {
-            $query->where('costumer', $request->customer);
-        }
-
-        // Filtrar por semana usando YEARWEEK MySQL (o puedes usar Carbon para fechas)
-        $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT); // ej: "202523"
-
-        $data = $query
-            ->select(DB::raw('DAYOFWEEK(created_at) as weekday'), DB::raw('COUNT(*) as total'))
-            ->whereRaw("YEARWEEK(created_at, 1) = ?", [$weekString]) // 1 = lunes como primer día
-            ->groupBy('weekday')
-            ->orderBy('weekday')
-            ->get();
-
-        // Día de la semana en nombre corto (Dom, Lun, ...)
-        $labels = $data->pluck('weekday')->map(function ($w) {
-            $days = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
-            return $days[$w - 1] ?? 'Día';
-        });
-
-        $values = $data->pluck('total');
-
-        return response()->json([
-            'labels' => $labels,
-            'data' => $values,
-        ]);
-    }
-
-    /**
-     * +++++++++++++++++++++++++++++++++++++++++++++++++++++END+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     */
 
 
     //------------------------------------------------------------------------------------------------
