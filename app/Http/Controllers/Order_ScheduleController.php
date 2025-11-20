@@ -365,139 +365,6 @@ class Order_ScheduleController extends Controller
     }
 
 
-    /**
-     * ===================================================================================================================
-     * TAB "Order Statistics" CONSULTAS
-     * ===================================================================================================================
-     */
-
-    public function statistics(Request $request)
-    {
-        $today = Carbon::today();
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek = Carbon::now()->endOfWeek();
-
-        $ordenesSemana = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])->get();
-
-        $ordenesAtrasadas = OrderSchedule::where('due_date', '<', $today)
-            ->where('status', '!=', 'sent')
-            ->get();
-
-        $cantidadAtrasadas = $ordenesAtrasadas->count();
-
-        // 👉 Semana pasada: lunes a domingo
-        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
-        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
-
-        // Cantidad de órdenes de la semana pasada que no tienen status 'sent' y ya vencieron
-        $cantidadAtrasadasSemanaPasada = OrderSchedule::whereBetween('due_date', [$startOfLastWeek, $endOfLastWeek])
-            ->where('due_date', '<', $today)
-            ->where('status', '!=', 'sent')
-            ->count();
-
-        /** 🟢 VERIFIED: Box text-> total Order Summary */
-        $totalOrdenes = OrderSchedule::where('status', '!=', 'sent')
-            ->where('status_order', '!=', 'inactive')
-            ->count();
-
-        /** 🟢 VERIFIED: Box text-> total Hearst */
-        $cantidadHearst = OrderSchedule::where('location', 'hearst')
-            ->where('status', '!=', 'sent')
-            ->where('status_order', '!=', 'inactive')
-            ->count();
-
-        /** 🟢 VERIFIED: Box text-> total Yarnell */
-        $cantidadYarnell = OrderSchedule::where('location', 'yarnell')
-            ->where('status', '!=', 'sent')
-            ->where('status_order', '!=', 'inactive')
-            ->count();
-
-        /** 🟢 VERIFIED: Box text-> total Floor */
-        $cantidadFloor = OrderSchedule::where('location', 'floor')
-            ->where('status', '!=', 'sent')
-            ->where('status_order', '!=', 'inactive')
-            ->count();
-
-        $ordenesPorCliente = OrderSchedule::select('costumer', DB::raw('count(*) as total'))
-            ->where('status', '!=', 'sent')
-            ->groupBy('costumer')
-            ->get();
-
-        // Órdenes creadas esta semana
-        $ordenesAgregadasSemana = OrderSchedule::whereBetween('created_at', [$startOfWeek, $endOfWeek])->get();
-
-        // Cantidad total de esas órdenes
-        $totalAgregadasSemana = $ordenesAgregadasSemana->count();
-
-        $customers = OrderSchedule::select('costumer')
-            ->whereNotNull('costumer')
-            ->distinct()
-            ->orderBy('costumer')
-            ->pluck('costumer');
-        //-------------------------------------------------------------------------------------------
-        //Utiliza whereBetween con la fecha de due_date o target_date según tu sistema para obtener solo las órdenes de esta semana:
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek = Carbon::now()->endOfWeek();
-        $weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
-            ->orderBy('due_date', 'asc')
-            ->get();
-        // Retornar un resumen
-        $resumen = [
-            'total' => $weeklyOrders->count(),
-            'send' => $weeklyOrders->where('status', 'sent')->count(),
-            'pendients' => $weeklyOrders->where('status', '!=', 'sent')->count(),
-            'all_shipping' => $weeklyOrders->every(fn($o) => $o->status === 'sent'),
-        ];
-        //--------------------------------------------------------------------------------------
-        //Controlador con filtro hasta la semana actual
-        $orders = DB::table('orders_schedule')
-            ->selectRaw('
-        YEARWEEK(due_date, 1) as week,
-        COUNT(*) as total,SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as completed,
-        SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late')
-            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)') //órdenes cuya due_date está hasta la semana actual (inclusive), ignorando futuras semanas.
-            ->groupBy('week')
-            ->orderBy('week', 'desc')
-            ->get();
-        //------------------------------------------------------------------
-        //65% de las semanas cumplieron con todas las órdenes a tiempo
-        $totalWeeks = DB::table('orders_schedule')
-            ->selectRaw('YEARWEEK(due_date, 1) as week')
-            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
-            ->groupBy('week')
-            ->get()
-            ->count();
-
-        $weeksOnTime = DB::table('orders_schedule')
-            ->selectRaw('YEARWEEK(due_date, 1) as week')
-            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
-            ->groupBy('week')
-            ->havingRaw('SUM(CASE WHEN status != "sent" THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN sent_at > due_date THEN 1 ELSE 0 END) = 0')
-            ->get()
-            ->count();
-
-        $percentageOnTime = $totalWeeks > 0 ? round(($weeksOnTime / $totalWeeks) * 100) : 0;
-        //-------------------------------------------------------------------------------------
-        // 👇 Asegúrate de enviar $locations y $statuses a la vista
-        return view('orders.schedule_statistics', compact(
-            'ordenesSemana',
-            'ordenesAtrasadas',
-            'cantidadAtrasadasSemanaPasada',
-            'cantidadAtrasadas',
-            'cantidadHearst',
-            'cantidadYarnell',
-            'cantidadFloor',
-            'totalOrdenes',
-            'ordenesPorCliente',
-            'ordenesAgregadasSemana',
-            'totalAgregadasSemana',
-            'customers',
-            'resumen',
-            'weeklyOrders',
-            'orders',
-            'percentageOnTime'
-        ));
-    }
     //----------------------------------------------------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------------------------------------------------
 
@@ -1503,6 +1370,232 @@ class Order_ScheduleController extends Controller
 
 
 
+
+    /**
+     * ==================================================================================================
+     * PONER UNA ORDEN EN EL CAMPO "status_order"
+     * en 'inactive' o en su caso 'active'
+     * ===================================================================================================
+     */
+
+    public function deactivate(OrderSchedule $order)
+    {
+        $order->status_order = 'inactive';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Order deleted.');
+    }
+
+    /**
+     * =====================================================================================================
+     * PONER UNA ORDEN COMO PRIORIDAD EN EL CAMPO "priority"
+     * en 'yes' o  en su caso 'no'
+     * ======================================================================================================
+     */
+
+    public function setPriority(OrderSchedule $order)
+    {
+        $order->priority = 'yes';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Orden marcada como prioridad.');
+    }
+
+    public function togglePriority(OrderSchedule $order)
+    {
+        $order->priority = $order->priority === 'yes' ? 'no' : 'yes'; // ✅ evita null
+        $order->save();
+
+        $message = $order->priority === 'yes'
+            ? 'Order marked as priority.'
+            : 'Priority removed from order.';
+
+        return redirect()->back()->with('success', $message);
+    }
+
+
+    public function search(Request $request)
+    {
+        $search = $request->input('term');
+
+        $orders = OrderSchedule::query()
+            ->where(function ($q) {
+                $q->whereNull('status_order')
+                    ->orWhere('status_order', 'active');
+            })
+            ->whereNull('sent_at') // 🛑 Asegura que no se haya enviado
+            ->where(function ($query) use ($search) {
+                $query->where('work_id', 'LIKE', "%{$search}%")
+                    ->orWhere('PN', 'LIKE', "%{$search}%")
+                    ->orWhere('Part_description', 'LIKE', "%{$search}%")
+                    ->orWhere('costumer', 'LIKE', "%{$search}%")
+                    ->orWhereDate('due_date', $search);
+            })
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'due_date',
+                'priority', // ✅ Necesario para saber si ya está priorizado
+            ])
+            ->limit(10)
+            ->get();
+
+        return response()->json($orders);
+    }
+
+
+
+
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * TAB "Order Statistics" CONSULTAS
+     * ===================================================================================================================
+     */
+
+    public function statistics(Request $request)
+    {
+        $today = Carbon::today();
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        /** 🟢 VERIFIED: Table-> Orders This Week */
+        $ordenesSemana = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
+            ->get();
+
+        /** 🟢 VERIFIED: Table-> Late Orders */
+        $ordenesAtrasadas = OrderSchedule::where('due_date', '<', $today)
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->get();
+
+        $cantidadAtrasadas = $ordenesAtrasadas->count();
+
+        // 👉 Semana pasada: lunes a domingo
+        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
+        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
+
+        // Cantidad de órdenes de la semana pasada que no tienen status 'sent' y ya vencieron
+        $cantidadAtrasadasSemanaPasada = OrderSchedule::whereBetween('due_date', [$startOfLastWeek, $endOfLastWeek])
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->count();
+
+        /** 🟢 VERIFIED: Box text-> total Order Summary */
+        $totalOrdenes = OrderSchedule::where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->count();
+
+        /** 🟢 VERIFIED: Box text-> total Hearst */
+        $cantidadHearst = OrderSchedule::where('location', 'hearst')
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->count();
+
+        /** 🟢 VERIFIED: Box text-> total Yarnell */
+        $cantidadYarnell = OrderSchedule::where('location', 'yarnell')
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->count();
+
+        /** 🟢 VERIFIED: Box text-> total Floor */
+        $cantidadFloor = OrderSchedule::where('location', 'floor')
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->count();
+
+        /** 🟢 VERIFIED: Circle text-> Ordenes por cliente */
+        $ordenesPorCliente = OrderSchedule::select('costumer', DB::raw('count(*) as total'))
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->groupBy('costumer')
+            ->get();
+
+        // Órdenes creadas esta semana
+        $ordenesAgregadasSemana = OrderSchedule::whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->where('status_order', '!=', 'inactive')
+            ->get();
+
+        // Cantidad total de esas órdenes
+        $totalAgregadasSemana = $ordenesAgregadasSemana->count();
+
+        $customers = OrderSchedule::select('costumer')
+            ->whereNotNull('costumer')
+            ->distinct()
+            ->orderBy('costumer')
+            ->pluck('costumer');
+        //-------------------------------------------------------------------------------------------
+        //Utiliza whereBetween con la fecha de due_date o target_date según tu sistema para obtener solo las órdenes de esta semana:
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+        $weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Retornar un resumen
+        $resumen = [
+            'total' => $weeklyOrders->count(),
+            'send' => $weeklyOrders->where('status', 'sent')->count(),
+            'pendients' => $weeklyOrders->where('status', '!=', 'sent')->count(),
+            'all_shipping' => $weeklyOrders->every(fn($o) => $o->status === 'sent'),
+        ];
+        //--------------------------------------------------------------------------------------
+        //Controlador con filtro hasta la semana actual
+        $orders = DB::table('orders_schedule')
+            ->selectRaw('
+        YEARWEEK(due_date, 1) as week,
+        COUNT(*) as total,SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late')
+            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)') //órdenes cuya due_date está hasta la semana actual (inclusive), ignorando futuras semanas.
+            ->groupBy('week')
+            ->orderBy('week', 'desc')
+            ->get();
+        //------------------------------------------------------------------
+        //65% de las semanas cumplieron con todas las órdenes a tiempo
+        $totalWeeks = DB::table('orders_schedule')
+            ->selectRaw('YEARWEEK(due_date, 1) as week')
+            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->groupBy('week')
+            ->get()
+            ->count();
+
+        $weeksOnTime = DB::table('orders_schedule')
+            ->selectRaw('YEARWEEK(due_date, 1) as week')
+            ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->groupBy('week')
+            ->havingRaw('SUM(CASE WHEN status != "sent" THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN sent_at > due_date THEN 1 ELSE 0 END) = 0')
+            ->get()
+            ->count();
+
+        $percentageOnTime = $totalWeeks > 0 ? round(($weeksOnTime / $totalWeeks) * 100) : 0;
+        //-------------------------------------------------------------------------------------
+        // 👇 Asegúrate de enviar $locations y $statuses a la vista
+        return view('orders.schedule_statistics', compact(
+            'ordenesSemana',
+            'ordenesAtrasadas',
+            'cantidadAtrasadasSemanaPasada',
+            'cantidadAtrasadas',
+            'cantidadHearst',
+            'cantidadYarnell',
+            'cantidadFloor',
+            'totalOrdenes',
+            'ordenesPorCliente',
+            'ordenesAgregadasSemana',
+            'totalAgregadasSemana',
+            'customers',
+            'resumen',
+            'weeklyOrders',
+            'orders',
+            'percentageOnTime'
+        ));
+    }
+
+    /** 🟢 VERIFIED: TABLE-> Orders This Week- Select week */
     public function getOrdersByWeekAjax(Request $request)
     {
         $weekInput = $request->query('week'); // ejemplo: "2025-W29"
@@ -1517,7 +1610,9 @@ class Order_ScheduleController extends Controller
         $start = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
         $end = $start->copy()->endOfWeek();
 
-        $ordenes = OrderSchedule::whereBetween('due_date', [$start, $end])->get();
+        $ordenes = OrderSchedule::whereBetween('due_date', [$start, $end])
+            ->where('status_order', '!=', 'inactive')
+            ->get();
 
         return response()->json([
             'html' => view('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenes])->render(),
@@ -1631,79 +1726,11 @@ class Order_ScheduleController extends Controller
     }
 
     /**
-     * ==================================================================================================
-     * PONER UNA ORDEN EN EL CAMPO "status_order"
-     * en 'inactive' o en su caso 'active'
-     * ===================================================================================================
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++END+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * TAB "Order Statistics" CONSULTAS
+     * ===================================================================================================================
      */
-
-    public function deactivate(OrderSchedule $order)
-    {
-        $order->status_order = 'inactive';
-        $order->save();
-
-        return redirect()->back()->with('success', 'Order deleted.');
-    }
-
-    /**
-     * =====================================================================================================
-     * PONER UNA ORDEN COMO PRIORIDAD EN EL CAMPO "priority"
-     * en 'yes' o  en su caso 'no'
-     * ======================================================================================================
-     */
-
-    public function setPriority(OrderSchedule $order)
-    {
-        $order->priority = 'yes';
-        $order->save();
-
-        return redirect()->back()->with('success', 'Orden marcada como prioridad.');
-    }
-
-    public function togglePriority(OrderSchedule $order)
-    {
-        $order->priority = $order->priority === 'yes' ? 'no' : 'yes'; // ✅ evita null
-        $order->save();
-
-        $message = $order->priority === 'yes'
-            ? 'Order marked as priority.'
-            : 'Priority removed from order.';
-
-        return redirect()->back()->with('success', $message);
-    }
-
-
-    public function search(Request $request)
-    {
-        $search = $request->input('term');
-
-        $orders = OrderSchedule::query()
-            ->where(function ($q) {
-                $q->whereNull('status_order')
-                    ->orWhere('status_order', 'active');
-            })
-            ->whereNull('sent_at') // 🛑 Asegura que no se haya enviado
-            ->where(function ($query) use ($search) {
-                $query->where('work_id', 'LIKE', "%{$search}%")
-                    ->orWhere('PN', 'LIKE', "%{$search}%")
-                    ->orWhere('Part_description', 'LIKE', "%{$search}%")
-                    ->orWhere('costumer', 'LIKE', "%{$search}%")
-                    ->orWhereDate('due_date', $search);
-            })
-            ->select([
-                'id',
-                'work_id',
-                'PN',
-                'Part_description',
-                'costumer',
-                'due_date',
-                'priority', // ✅ Necesario para saber si ya está priorizado
-            ])
-            ->limit(10)
-            ->get();
-
-        return response()->json($orders);
-    }
 
 
     //------------------------------------------------------------------------------------------------

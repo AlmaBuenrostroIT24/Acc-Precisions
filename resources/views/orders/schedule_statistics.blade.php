@@ -95,7 +95,7 @@
                 </span>
                 <div class="info-box-content">
                     <span class="info-box-text">New Orders this week</span>
-                    <span class="info-box-number">{{ $totalAgregadasSemana }}</span>
+                    <h4 class="mb-0 fw-bold">{{ $totalAgregadasSemana }}</h4>
                 </div>
             </div>
         </div>
