@@ -472,8 +472,18 @@ $(function() {
                     // 1️⃣ Si NO hay operaciones y NO hay sampling → solo "Done"
                     if (ops === 0 && sampling === 0) {
                         return `
-<span class="badge badge-secondary">
-    <i class="fas fa-exclamation"></i> No Inspection
+<span class="badge" style="
+    background:#6c757d;   /* Bootstrap secondary */
+    color:white;
+    padding:4px 10px;
+    border-radius:6px;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+">
+    <i class="fas fa-exclamation"></i>
+    No Inspection
 </span>
                     `;
                     }
