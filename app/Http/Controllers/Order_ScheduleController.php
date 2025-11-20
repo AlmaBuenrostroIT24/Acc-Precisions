@@ -20,12 +20,13 @@ use Maatwebsite\Excel\HeadingRowImport;
 
 class Order_ScheduleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
 
-    //------------------------------------------------INTERFACE VIEWS--------------------------------------------------------------
-    //General Schedule-------------------------------------------------------------------------------------------------------------
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 1. TAB "General Schedule" CONSULTAS
+     * ===================================================================================================================
+     */
 
     public function index(Request $request)
     {
@@ -93,280 +94,10 @@ class Order_ScheduleController extends Controller
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
 
-
-    //----------------------------------------------------------------------------------------------------------------------------
-    public function workhearst(Request $request)
-    {
-        $orders = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->whereIn('status', [
-                'pending',
-                'waitingformaterial',
-                'cutmaterial',
-                'grinding',
-                'onrack',
-                'programming',
-                'setup',
-                'machining',
-                'marking'
-            ])
-            ->get();
-
-        $ordersReady = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'ready')
-            ->get();
-
-        $ordersDeburring = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'deburring')
-            ->get();
-
-        $ordersReady = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'ready')
-            ->get();
-
-        $ordersOutsource = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'outsource')
-            ->get();
-
-        $ordersProcessend = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->whereIn('status', [
-                'assembly',
-                'shipping',
-                'onhold'
-            ])
-            ->get();
-        // Define la ubicación para la sincronización
-        $location = 'workhearst';
-
-        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource', 'ordersProcessend', 'location'));
-    }
-
-    public function partialDeburring()
-    {
-        $ordersDeburring = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'deburring')
-            ->get();
-
-        return view('orders.partials.deburring_table_body', compact('ordersDeburring'));
-    }
-
-    public function partialReady()
-    {
-        $ordersReady = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'ready')
-            ->get();
-
-        return view('orders.partials.ready_table_body', compact('ordersReady'));
-    }
-
-    public function partialOutsource()
-    {
-        $ordersOutsource = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'outsource')
-            ->get();
-
-        return view('orders.partials.outsource_table_body', compact('ordersOutsource'));
-    }
-
-    public function partialProcessend()
-    {
-        $ordersProcessend = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->whereIn('status', ['assembly', 'shipping', 'onhold'])
-            ->get();
-
-        return view('orders.partials.processend_table_body', compact('ordersProcessend'));
-    }
-
-    public function partialWorkhearst()
-    {
-        $orders = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->whereIn('status', [
-                'pending',
-                'waitingformaterial',
-                'cutmaterial',
-                'grinding',
-                'onrack',
-                'programming',
-                'setup',
-                'machining',
-                'marking',
-            ])
-            ->get();
-
-        return view('orders.partials.workhearst_table_body', compact('orders'));
-    }
-
-
-
-    //Orders Yarnell--------------------------------------------------------------------------------------------------------------
-
-    public function endyarnell(Request $request)
-    {
-
-        // Parámetros de filtro
-        $year     = $request->integer('year');
-        $month    = $request->integer('month');
-        $day      = $request->input('day');
-
-        $query = OrderSchedule::latest()
-            ->where('last_location', 'Yarnell')
-            ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
-
-        // 📅 Filtro de fechas (prioridad como en summary)
-        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
-        if ($day) {
-            $query->whereDate('endate_mach', Carbon::parse($day)->toDateString());
-        } elseif ($year && $month) {
-            $query->whereYear('endate_mach', $year)->whereMonth('endate_mach', $month);
-        } elseif ($year) {
-            $query->whereYear('endate_mach', $year);
-        } elseif ($month) {
-            $query->whereYear('endate_mach', now()->year)->whereMonth('endate_mach', $month);
-        } else {
-            // Por defecto: mes actual para no traer dataset enorme
-            $query->whereBetween('endate_mach', [now()->startOfMonth(), now()->endOfMonth()]);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $orders = $query->get();
-
-        // 👇 obtenemos los valores únicos
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
-        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
-
-        $currentYear = now()->year;
-        $years  = range($currentYear, $currentYear - 5);
-        $months = [
-            1 => 'Jan',
-            2 => 'Feb',
-            3 => 'Mar',
-            4 => 'Apr',
-            5 => 'May',
-            6 => 'Jun',
-            7 => 'Jul',
-            8 => 'Aug',
-            9 => 'Sep',
-            10 => 'Oct',
-            11 => 'Nov',
-            12 => 'Dec'
-        ];
-
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
-
-        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers', 'years', 'months', 'year', 'month', 'day'));
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------------
-    //Completed Orders--------------------------------------------------------------------------------------------------------------
-
-    public function finished(Request $request)
-    {
-        // ⬇️ Cambia esto a 'sent_at' si tu "Finished" se basa en esa fecha
-        $dateField = 'sent_at';
-
-        $query = OrderSchedule::query();
-
-        // Por defecto, mostrar solo terminados (ajusta si tu flujo usa otro status)
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        } else {
-            $query->where('status', 'sent'); // o 'finished' si así lo guardas
-        }
-
-        // Location (server-side)
-        if ($request->filled('location')) {
-            $query->where('location', $request->location);
-        }
-
-        // === Filtros Year / Month / Day sobre $dateField ===
-        // Prioridad: DAY > (YEAR+MONTH) > YEAR
-        $hasDay   = $request->filled('day');
-        $hasYear  = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year);
-        $hasMonth = $request->filled('month') && preg_match('/^\d{1,2}$/', (string) $request->month);
-
-        if ($hasDay) {
-            // Día exacto
-            try {
-                $day = Carbon::parse($request->day)->startOfDay();
-                $query->whereDate($dateField, $day->toDateString());
-            } catch (\Throwable $e) {
-                // si el día no es válido, ignorar filtro
-            }
-        } else {
-            if ($hasYear) {
-                $query->whereYear($dateField, (int) $request->year);
-            }
-            if ($hasMonth) {
-                $query->whereMonth($dateField, (int) $request->month);
-            }
-        }
-
-        // Orden principal por fecha de finalización (coincide con tu DataTable col 11)
-        $query->orderByDesc($dateField);
-
-        $orders = $query->get();
-
-        // Catálogos para filtros (sin afectar resultado)
-        $locations = OrderSchedule::select('location')->distinct()->pluck('location');
-        $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
-        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
-
-        // Si aún necesitas dias_restantes (aunque sea "finished")
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
-
-        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
-    }
-
-    public function returnPreviousStatus(Request $request, OrderSchedule $order)
-    {
-        try {
-            if (!$order->previous_status) {
-                return response()->json(['success' => false, 'message' => 'No hay estado anterior registrado.'], 400);
-            }
-
-            $order->status = $order->previous_status;
-            $order->previous_status = null;
-            $order->sent_at = null; // limpiar si lo deseas
-            $order->target_date = null; // limpiar si lo deseas
-            $order->save();
-
-            return response()->json([
-                'success' => true,
-                'newStatus' => $order->status,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-
-    //----------------------------------------------------------------------------------------------------------------------------
-    //----------------------------------------------------------------------------------------------------------------------------
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟢 SAVE: Agregar nuevas ordenes, desde el kit.  
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
 
     public function store(Request $request)
     {
@@ -433,9 +164,7 @@ class Order_ScheduleController extends Controller
                     $data['cust_po'] = $orig->cust_po;
                 }
             }
-
             // 3) Normalizaciones previas
-            // status → lowercase
             if (!empty($data['status'])) $data['status'] = strtolower($data['status']);
 
             // days: si viene con texto, extraer dígitos
@@ -545,6 +274,81 @@ class Order_ScheduleController extends Controller
         }
     }
 
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵IMPORT: Importar el archivo excel de ordenes en el tab Genera;l Shedule
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+
+    protected $service;
+    // Inyectar el servicio en el constructor
+    public function __construct(OrderScheduleImportService $service)
+    {
+        $this->service = $service;
+    }
+
+    public function import(Request $request, OrderScheduleImportService $svc)
+    {
+        // 0) Validación (sube el max si necesitas más de 20MB)
+        $request->validate([
+            'csv_file' => 'required|file|max:20480|mimes:csv,txt,xlsx,xls',
+        ]);
+        if (!$request->hasFile('csv_file')) {
+            return back()->withErrors(['csv_file' => 'No llegó ningún archivo (hasFile=false).']);
+        }
+        $file = $request->file('csv_file');
+        if (!$file->isValid()) {
+            Log::error('Upload inválido', ['error_code' => $file->getError()]);
+            return back()->withErrors(['csv_file' => 'El archivo subido no es válido. Código: ' . $file->getError()]);
+        }
+        // 1) Guardar copia estable
+        $storedPath = $file->storeAs(
+            'tmp_imports',
+            now()->format('Ymd_His') . '__' . $file->getClientOriginalName()
+        );
+        $absPath = storage_path('app/' . $storedPath);
+
+        // 2) (Opcional) inspeccionar encabezados
+        try {
+            $heads = (new HeadingRowImport)->toArray($absPath);
+            // Log::info('Encabezados', ['headings' => $heads[0][0] ?? []]);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudieron leer encabezados', ['msg' => $e->getMessage()]);
+        }
+
+        try {
+            // 3) Ejecutar import (inyecta el service CORRECTO)
+            $importer = new OrderScheduleImport($svc);
+            Excel::import($importer, $absPath);
+
+            // 4) Re-etiquetar padres/hijos (¡después del import!)
+            $svc->relabelParents();
+
+            $count = $svc->importedCount ?? 0;
+            if ($count === 0) {
+                Log::warning('Import terminó con 0 filas. Revisa el parseo de due_date / claves / duplicados.');
+            }
+            return redirect()
+                ->route('schedule.general')
+                ->with('success', "{$count} records were imported successfully.");
+        } catch (ExcelValidationException $e) {
+            // Errores por fila (WithValidation)
+            $msgs = collect($e->failures())
+                ->map(fn($f) => "Row {$f->row()}: " . implode(', ', $f->errors()))
+                ->take(20)
+                ->implode(' | ');
+
+            Log::warning('Fallos de validación por fila', ['count' => count($e->failures())]);
+            return back()->withErrors(['import' => 'Errores de validación: ' . $msgs]);
+        } catch (\Throwable $e) {
+            Log::error('Excepción durante import', ['msg' => $e->getMessage()]);
+            return back()->with('error', 'No se pudo importar: ' . $e->getMessage());
+        }
+    }
+
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "WOQTY" 
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
 
     public function updateWoQty(Request $request, $id)
     {
@@ -589,54 +393,10 @@ class Order_ScheduleController extends Controller
         });
     }
 
-    public function create()
-    {
-        return view('orders.create');
-    }
-
-    public function edit(OrderSchedule $order)
-    {
-        return view('orders.edit', compact('order'));
-    }
-
-    public function update(Request $request, OrderSchedule $order)
-    {
-        $validated = $request->validate([
-            'work_id' => 'required|string|max:255',
-            'PN' => 'required|string|max:255',
-            'Part_description' => 'required|string|max:255',
-            'costumer' => 'required|string|max:255',
-            'qty' => 'required|integer',
-            'operation' => 'nullable|string|max:255',
-            'machines' => 'nullable|string|max:255',
-            'done' => 'nullable|boolean',
-            'status' => 'nullable|string|max:255',
-            'machining_date' => 'nullable|date',
-            'due_date' => 'nullable|date',
-            'days' => 'nullable|integer',
-            'alert' => 'nullable|boolean',
-            'report' => 'nullable|string',
-            'our_source' => 'nullable|string|max:255',
-            'station_notes' => 'nullable|string',
-            'location' => 'nullable|in:Yarnell,Hearst', // 👈 Añadir esto
-
-            // Campos adicionales
-            'priority' => 'nullable|string|max:255',
-            'assigned_to' => 'nullable|integer|exists:users,id',
-            'material_type' => 'nullable|string|max:255',
-            'process_time' => 'nullable|integer',
-            'canceled' => 'nullable|boolean',
-            'tracking_number' => 'nullable|string|max:255',
-            'revision' => 'nullable|string|max:255',
-        ]);
-
-        $order->update($validated);
-
-        return redirect()->route('orders.index')->with('success', 'Orden actualizada correctamente.');
-    }
-
-
-
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "STATUS"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
     public function updateStatus(Request $request, OrderSchedule $order)
     {
         try {
@@ -773,7 +533,10 @@ class Order_ScheduleController extends Controller
         ]);
     }
 
-
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "LOCATION"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
 
     public function updateLocation(Request $request, OrderSchedule $order)
     {
@@ -793,7 +556,10 @@ class Order_ScheduleController extends Controller
         ]);
     }
 
-
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "REPORT"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
     public function updateReport(Request $request, OrderSchedule $order)
     {
         $order->report = $request->input('report');
@@ -802,6 +568,11 @@ class Order_ScheduleController extends Controller
         return response()->json(['success' => true]);
     }
 
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "OUTSOURCE"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+
     public function updateSource(Request $request, OrderSchedule $order)
     {
         $order->our_source = $request->our_source;
@@ -809,6 +580,11 @@ class Order_ScheduleController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "NOTES"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
 
     public function updateNotes(Request $request, $orderId)
     {
@@ -826,6 +602,11 @@ class Order_ScheduleController extends Controller
 
         return response()->json(['success' => true, 'notes' => $request->notes]);
     }
+
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "WORK ID"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
 
     public function ajaxUpdateWorkId(Request $request, OrderSchedule $order)
     {
@@ -883,6 +664,11 @@ class Order_ScheduleController extends Controller
         });
     }
 
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar en el tab General Shedule dentro de la tabla el campo "Status"
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+
 
     public function updateStation(Request $request, OrderSchedule $order)
     {
@@ -897,6 +683,343 @@ class Order_ScheduleController extends Controller
             'station' => $order->station, // será null o el string "X,Y,Z"
         ]);
     }
+
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 2. TAB "Schedule Hearst" CONSULTAS
+     * ===================================================================================================================
+     */
+
+    public function workhearst(Request $request)
+    {
+        $orders = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', [
+                'pending',
+                'waitingformaterial',
+                'cutmaterial',
+                'grinding',
+                'onrack',
+                'programming',
+                'setup',
+                'machining',
+                'marking'
+            ])
+            ->get();
+
+        $ordersReady = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'ready')
+            ->get();
+
+        $ordersDeburring = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'deburring')
+            ->get();
+
+        $ordersReady = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'ready')
+            ->get();
+
+        $ordersOutsource = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'outsource')
+            ->get();
+
+        $ordersProcessend = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', [
+                'assembly',
+                'shipping',
+                'onhold'
+            ])
+            ->get();
+        // Define la ubicación para la sincronización
+        $location = 'workhearst';
+
+        return view('orders.schedule_workhearst', compact('orders', 'ordersReady', 'ordersDeburring', 'ordersOutsource', 'ordersProcessend', 'location'));
+    }
+
+    public function partialDeburring()
+    {
+        $ordersDeburring = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'deburring')
+            ->get();
+        return view('orders.partials.deburring_table_body', compact('ordersDeburring'));
+    }
+
+    public function partialReady()
+    {
+        $ordersReady = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'ready')
+            ->get();
+        return view('orders.partials.ready_table_body', compact('ordersReady'));
+    }
+
+    public function partialOutsource()
+    {
+        $ordersOutsource = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->where('status', 'outsource')
+            ->get();
+        return view('orders.partials.outsource_table_body', compact('ordersOutsource'));
+    }
+
+    public function partialProcessend()
+    {
+        $ordersProcessend = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', ['assembly', 'shipping', 'onhold'])
+            ->get();
+        return view('orders.partials.processend_table_body', compact('ordersProcessend'));
+    }
+
+    public function partialWorkhearst()
+    {
+        $orders = OrderSchedule::latest()
+            ->where('location', 'Hearst')
+            ->whereIn('status', [
+                'pending',
+                'waitingformaterial',
+                'cutmaterial',
+                'grinding',
+                'onrack',
+                'programming',
+                'setup',
+                'machining',
+                'marking',
+            ])
+            ->get();
+        return view('orders.partials.workhearst_table_body', compact('orders'));
+    }
+
+
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 3. TAB "Orders Yarnell" CONSULTAS
+     * ===================================================================================================================
+     */
+
+    public function endyarnell(Request $request)
+    {
+        // Parámetros de filtro
+        $year     = $request->integer('year');
+        $month    = $request->integer('month');
+        $day      = $request->input('day');
+
+        $query = OrderSchedule::latest()
+            ->where('last_location', 'Yarnell')
+            ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
+
+        // 📅 Filtro de fechas (prioridad como en summary)
+        // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
+        if ($day) {
+            $query->whereDate('endate_mach', Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $query->whereYear('endate_mach', $year)->whereMonth('endate_mach', $month);
+        } elseif ($year) {
+            $query->whereYear('endate_mach', $year);
+        } elseif ($month) {
+            $query->whereYear('endate_mach', now()->year)->whereMonth('endate_mach', $month);
+        } else {
+            // Por defecto: mes actual para no traer dataset enorme
+            $query->whereBetween('endate_mach', [now()->startOfMonth(), now()->endOfMonth()]);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        $orders = $query->get();
+
+        // 👇 obtenemos los valores únicos
+        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
+        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+        $currentYear = now()->year;
+        $years  = range($currentYear, $currentYear - 5);
+        $months = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Aug',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Dec'
+        ];
+
+        foreach ($orders as $order) {
+            $order->dias_restantes = $this->calcularDiasInterno(
+                $order->status,
+                $order->due_date,
+                $order->machining_date
+            );
+        }
+        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers', 'years', 'months', 'year', 'month', 'day'));
+    }
+
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 4. TAB "Completed Orders" CONSULTAS
+     * ===================================================================================================================
+     */
+
+    public function finished(Request $request)
+    {
+        // ⬇️ Cambia esto a 'sent_at' si tu "Finished" se basa en esa fecha
+        $dateField = 'sent_at';
+
+        $query = OrderSchedule::query();
+
+        // Por defecto, mostrar solo terminados (ajusta si tu flujo usa otro status)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'sent'); // o 'finished' si así lo guardas
+        }
+
+        // Location (server-side)
+        if ($request->filled('location')) {
+            $query->where('location', $request->location);
+        }
+
+        // === Filtros Year / Month / Day sobre $dateField ===
+        // Prioridad: DAY > (YEAR+MONTH) > YEAR
+        $hasDay   = $request->filled('day');
+        $hasYear  = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year);
+        $hasMonth = $request->filled('month') && preg_match('/^\d{1,2}$/', (string) $request->month);
+
+        if ($hasDay) {
+            // Día exacto
+            try {
+                $day = Carbon::parse($request->day)->startOfDay();
+                $query->whereDate($dateField, $day->toDateString());
+            } catch (\Throwable $e) {
+                // si el día no es válido, ignorar filtro
+            }
+        } else {
+            if ($hasYear) {
+                $query->whereYear($dateField, (int) $request->year);
+            }
+            if ($hasMonth) {
+                $query->whereMonth($dateField, (int) $request->month);
+            }
+        }
+
+        // Orden principal por fecha de finalización (coincide con tu DataTable col 11)
+        $query->orderByDesc($dateField);
+
+        $orders = $query->get();
+
+        // Catálogos para filtros (sin afectar resultado)
+        $locations = OrderSchedule::select('location')->distinct()->pluck('location');
+        $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
+        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+
+        // Si aún necesitas dias_restantes (aunque sea "finished")
+        foreach ($orders as $order) {
+            $order->dias_restantes = $this->calcularDiasInterno(
+                $order->status,
+                $order->due_date,
+                $order->machining_date
+            );
+        }
+        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+    }
+
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟣 RETURN: Regresar ornedes al tab General Schedule con el ultimo status 
+     * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+
+    public function returnPreviousStatus(Request $request, OrderSchedule $order)
+    {
+        try {
+            if (!$order->previous_status) {
+                return response()->json(['success' => false, 'message' => 'No hay estado anterior registrado.'], 400);
+            }
+            $order->status = $order->previous_status;
+            $order->previous_status = null;
+            $order->sent_at = null; // limpiar si lo deseas
+            $order->target_date = null; // limpiar si lo deseas
+            $order->save();
+            return response()->json([
+                'success' => true,
+                'newStatus' => $order->status,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
+    //----------------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------------------
+
+
+
+    public function create()
+    {
+        return view('orders.create');
+    }
+
+    public function edit(OrderSchedule $order)
+    {
+        return view('orders.edit', compact('order'));
+    }
+
+    public function update(Request $request, OrderSchedule $order)
+    {
+        $validated = $request->validate([
+            'work_id' => 'required|string|max:255',
+            'PN' => 'required|string|max:255',
+            'Part_description' => 'required|string|max:255',
+            'costumer' => 'required|string|max:255',
+            'qty' => 'required|integer',
+            'operation' => 'nullable|string|max:255',
+            'machines' => 'nullable|string|max:255',
+            'done' => 'nullable|boolean',
+            'status' => 'nullable|string|max:255',
+            'machining_date' => 'nullable|date',
+            'due_date' => 'nullable|date',
+            'days' => 'nullable|integer',
+            'alert' => 'nullable|boolean',
+            'report' => 'nullable|string',
+            'our_source' => 'nullable|string|max:255',
+            'station_notes' => 'nullable|string',
+            'location' => 'nullable|in:Yarnell,Hearst', // 👈 Añadir esto
+
+            // Campos adicionales
+            'priority' => 'nullable|string|max:255',
+            'assigned_to' => 'nullable|integer|exists:users,id',
+            'material_type' => 'nullable|string|max:255',
+            'process_time' => 'nullable|integer',
+            'canceled' => 'nullable|boolean',
+            'tracking_number' => 'nullable|string|max:255',
+            'revision' => 'nullable|string|max:255',
+        ]);
+
+        $order->update($validated);
+
+        return redirect()->route('orders.index')->with('success', 'Orden actualizada correctamente.');
+    }
+
+
+
+
+
+
+
+
 
     public function yarnellSchedule(Request $request)
     {
@@ -1107,171 +1230,7 @@ class Order_ScheduleController extends Controller
         }
     }
 
-    //--------------------------------------------------------------------------------------------------------------
-    ///////////////////Imporr Excel 
 
-    protected $service;
-
-    // Inyectar el servicio en el constructor
-    public function __construct(OrderScheduleImportService $service)
-    {
-        $this->service = $service;
-    }
-    public function import(Request $request, OrderScheduleImportService $svc)
-    {
-        // 0) Validación (sube el max si necesitas más de 20MB)
-        $request->validate([
-            'csv_file' => 'required|file|max:20480|mimes:csv,txt,xlsx,xls',
-        ]);
-
-        if (!$request->hasFile('csv_file')) {
-            return back()->withErrors(['csv_file' => 'No llegó ningún archivo (hasFile=false).']);
-        }
-
-        $file = $request->file('csv_file');
-        if (!$file->isValid()) {
-            Log::error('Upload inválido', ['error_code' => $file->getError()]);
-            return back()->withErrors(['csv_file' => 'El archivo subido no es válido. Código: ' . $file->getError()]);
-        }
-
-        // 1) Guardar copia estable
-        $storedPath = $file->storeAs(
-            'tmp_imports',
-            now()->format('Ymd_His') . '__' . $file->getClientOriginalName()
-        );
-        $absPath = storage_path('app/' . $storedPath);
-
-        // 2) (Opcional) inspeccionar encabezados
-        try {
-            $heads = (new HeadingRowImport)->toArray($absPath);
-            // Log::info('Encabezados', ['headings' => $heads[0][0] ?? []]);
-        } catch (\Throwable $e) {
-            Log::warning('No se pudieron leer encabezados', ['msg' => $e->getMessage()]);
-        }
-
-        try {
-            // 3) Ejecutar import (inyecta el service CORRECTO)
-            $importer = new OrderScheduleImport($svc);
-            Excel::import($importer, $absPath);
-
-            // 4) Re-etiquetar padres/hijos (¡después del import!)
-            $svc->relabelParents();
-
-            $count = $svc->importedCount ?? 0;
-            if ($count === 0) {
-                Log::warning('Import terminó con 0 filas. Revisa el parseo de due_date / claves / duplicados.');
-            }
-
-            return redirect()
-                ->route('schedule.general')
-                ->with('success', "{$count} records were imported successfully.");
-        } catch (ExcelValidationException $e) {
-            // Errores por fila (WithValidation)
-            $msgs = collect($e->failures())
-                ->map(fn($f) => "Row {$f->row()}: " . implode(', ', $f->errors()))
-                ->take(20)
-                ->implode(' | ');
-
-            Log::warning('Fallos de validación por fila', ['count' => count($e->failures())]);
-
-            // Si quieres, aún aquí podrías recalcular padres si algunas filas sí pasaron:
-            // $svc->relabelParents();
-
-            return back()->withErrors(['import' => 'Errores de validación: ' . $msgs]);
-        } catch (\Throwable $e) {
-            Log::error('Excepción durante import', ['msg' => $e->getMessage()]);
-            return back()->with('error', 'No se pudo importar: ' . $e->getMessage());
-        }
-    }
-
-    //--------------------------------------------------------------------------------------------------------------
-    // Por año (meses)
-    public function summaryByYear(Request $request, $year)
-    {
-        $query = OrderSchedule::query()
-            ->whereYear('created_at', $year);
-
-        if ($request->has('customer') && $request->customer) {
-            $query->where('costumer', $request->customer);
-        }
-
-        $data = $query
-            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-
-        $labels = $data->pluck('month')->map(function ($m) {
-            return date('F', mktime(0, 0, 0, $m, 10)); // nombre del mes
-        });
-
-        $values = $data->pluck('total');
-
-        return response()->json([
-            'labels' => $labels,
-            'data' => $values,
-        ]);
-    }
-    // Por mes (días)
-    public function summaryByMonth(Request $request, $year, $month)
-    {
-        $query = OrderSchedule::query()
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month);
-
-        if ($request->has('customer') && $request->customer) {
-            $query->where('costumer', $request->customer);
-        }
-
-        $data = $query
-            ->select(DB::raw('DAY(created_at) as day'), DB::raw('COUNT(*) as total'))
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get();
-
-        $labels = $data->pluck('day')->map(function ($d) use ($month, $year) {
-            return date('d M', strtotime("$year-$month-$d"));
-        });
-
-        $values = $data->pluck('total');
-
-        return response()->json([
-            'labels' => $labels,
-            'data' => $values,
-        ]);
-    }
-
-    public function summaryByWeek(Request $request, $year, $week)
-    {
-        $query = OrderSchedule::query();
-
-        if ($request->has('customer') && $request->customer) {
-            $query->where('costumer', $request->customer);
-        }
-
-        // Filtrar por semana usando YEARWEEK MySQL (o puedes usar Carbon para fechas)
-        $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT); // ej: "202523"
-
-        $data = $query
-            ->select(DB::raw('DAYOFWEEK(created_at) as weekday'), DB::raw('COUNT(*) as total'))
-            ->whereRaw("YEARWEEK(created_at, 1) = ?", [$weekString]) // 1 = lunes como primer día
-            ->groupBy('weekday')
-            ->orderBy('weekday')
-            ->get();
-
-        // Día de la semana en nombre corto (Dom, Lun, ...)
-        $labels = $data->pluck('weekday')->map(function ($w) {
-            $days = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
-            return $days[$w - 1] ?? 'Día';
-        });
-
-        $values = $data->pluck('total');
-
-        return response()->json([
-            'labels' => $labels,
-            'data' => $values,
-        ]);
-    }
     //--------------------------------------------------------------------------------------------------------------
     // Resumen sin filtro (todo)
     public function summaryByCustomer()
@@ -1452,7 +1411,7 @@ class Order_ScheduleController extends Controller
     /**
      * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
      * ===================================================================================================================
-     * TAB "Order Statistics" CONSULTAS
+     * 5. TAB "Order Statistics" CONSULTAS
      * ===================================================================================================================
      */
 
@@ -1725,11 +1684,105 @@ class Order_ScheduleController extends Controller
         ]);
     }
 
+
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟡 FILTERS & ORDERS CHARTS FOR ORDER: For "Year", "Month", "Week" 
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+    //============== 1. FILTERS  For "Year"===================================== 
+    public function summaryByYear(Request $request, $year)
+    {
+        $query = OrderSchedule::query()
+            ->whereYear('created_at', $year)
+            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        $data = $query
+            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $labels = $data->pluck('month')->map(function ($m) {
+            return date('F', mktime(0, 0, 0, $m, 10)); // nombre del mes
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+    //============== 2. FILTERS  For "Month"===================================== 
+    public function summaryByMonth(Request $request, $year, $month)
+    {
+        $query = OrderSchedule::query()
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        $data = $query
+            ->select(DB::raw('DAY(created_at) as day'), DB::raw('COUNT(*) as total'))
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $labels = $data->pluck('day')->map(function ($d) use ($month, $year) {
+            return date('d M', strtotime("$year-$month-$d"));
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+
+    //============== 3. FILTERS  For "Week"===================================== 
+    public function summaryByWeek(Request $request, $year, $week)
+    {
+        $query = OrderSchedule::query()
+            ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
+
+        if ($request->has('customer') && $request->customer) {
+            $query->where('costumer', $request->customer);
+        }
+
+        // Filtrar por semana usando YEARWEEK MySQL (o puedes usar Carbon para fechas)
+        $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT); // ej: "202523"
+
+        $data = $query
+            ->select(DB::raw('DAYOFWEEK(created_at) as weekday'), DB::raw('COUNT(*) as total'))
+            ->whereRaw("YEARWEEK(created_at, 1) = ?", [$weekString]) // 1 = lunes como primer día
+            ->groupBy('weekday')
+            ->orderBy('weekday')
+            ->get();
+
+        // Día de la semana en nombre corto (Dom, Lun, ...)
+        $labels = $data->pluck('weekday')->map(function ($w) {
+            $days = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
+            return $days[$w - 1] ?? 'Día';
+        });
+
+        $values = $data->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $values,
+        ]);
+    }
+
     /**
      * +++++++++++++++++++++++++++++++++++++++++++++++++++++END+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     * ===================================================================================================================
-     * TAB "Order Statistics" CONSULTAS
-     * ===================================================================================================================
      */
 
 
