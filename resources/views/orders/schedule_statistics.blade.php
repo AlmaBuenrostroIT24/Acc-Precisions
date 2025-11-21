@@ -352,7 +352,6 @@
         </div>
         <div class="card-body">
             <div class="row">
-
                 <!-- Columna derecha: segundo filtro + botón + gráfica -->
                 <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
                     <div class="mb-3">
@@ -360,14 +359,12 @@
                             Orders Due - Next 8 Weeks
                         </h5>
                     </div>
-
                     <div class="col-md-4">
                         <button onclick="printChart('nextWeeksChart', 'ORDERS NEXT 8 WEEKS')"
                             class="btn btn-secondary mb-2 w-100">
                             Print Chart
                         </button>
                     </div>
-
                     <div class="d-flex flex-column align-items-center">
                         <canvas id="nextWeeksChart" width="400" height="200"></canvas>
                     </div>
@@ -377,7 +374,6 @@
                     <div class="mb-2">
                         <h5 class="text-center font-weight-bold">On Time vs Late Deliveries</h5>
                     </div>
-
                     <!-- Filtros -->
                     <div class="row mb-2">
                         <div class="col-4">
@@ -400,20 +396,16 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="col-12">
                         <button onclick="printChart('onTimeChart', 'ON TIME VS LATE')"
                             class="btn btn-secondary btn-sm mb-2 w-100">
                             Print Chart
                         </button>
                     </div>
-
                     <div class="d-flex flex-column align-items-center">
                         <canvas id="onTimeChart" style="width: 250%; height: 500px;"></canvas>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -976,7 +968,10 @@
             updateChart();
         }
 
-        //-----------------------------------------------------------
+        /**
+         * =================================================================
+         * 🟣📊Gráfico: Orders Due- NExt 8 weeks (summaryNextWeeks)
+         */
         document.addEventListener('DOMContentLoaded', () => {
             const ctx = document.getElementById('nextWeeksChart')?.getContext('2d');
             const chartRef = {
@@ -1043,14 +1038,23 @@
                     });
                 })
 
-            // 🔵 Nuevo gráfico: entregas a tiempo vs tarde con filtros
+            /**
+             * ===================================================================================
+             * 🟣📊Gráfico: entregas a tiempo vs tarde con filtros (Método summaryOnTimeFiltered)
+             */
             const onTimeCtx = document.getElementById('onTimeChart')?.getContext('2d');
             const monthFilter = document.getElementById('monthFilter');
-            const yearFilter = document.getElementById('yearFilter'); // 🆕
+            const yearFilter = document.getElementById('yearFilter');
             const customerFilterOnTime = document.getElementById('customerFilterOnTime');
+
             const onTimeChartRef = {
                 chart: null
             };
+
+            // Registrar plugin de datalabels (una sola vez)
+            if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+            }
 
             function loadOnTimeChart() {
                 if (!onTimeCtx) return;
@@ -1062,7 +1066,7 @@
                 let displayMonth = '';
 
                 if (month) {
-                    const [year, monthNum] = month.split('-'); // ejemplo: "2025-07" → ["2025", "07"]
+                    const [yearStr, monthNum] = month.split('-'); // "2025-07"
                     const monthNames = [
                         'January', 'February', 'March', 'April', 'May', 'June',
                         'July', 'August', 'September', 'October', 'November', 'December'
@@ -1078,11 +1082,11 @@
                 const params = new URLSearchParams();
 
                 if (month) params.append('month', month);
-                if (year) params.append('year', year); // 🆕
+                if (year) params.append('year', year);
                 if (customer) params.append('customer', customer);
 
                 if (params.toString()) url += `?${params.toString()}`;
-                console.log("🔗 URL:", url);
+                //console.log('🔗 URL:', url);
 
                 fetch(url)
                     .then(res => res.json())
@@ -1093,7 +1097,12 @@
                         selectedCustomer,
                         selectedYear
                     }) => {
-                        if (onTimeChartRef.chart) onTimeChartRef.chart.destroy();
+                        // 🔢 Asegurar NUMÉRICOS
+                        const numericData = (data || []).map(v => Number(v) || 0);
+
+                        if (onTimeChartRef.chart) {
+                            onTimeChartRef.chart.destroy();
+                        }
 
                         const colorMap = {
                             'Early': '#007bff',
@@ -1101,10 +1110,14 @@
                             'Late': '#dc3545'
                         };
 
-                        const totalOrders = total ?? data.reduce((a, b) => a + b, 0);
+                        const totalOrders =
+                            total !== undefined && total !== null ?
+                            Number(total) :
+                            numericData.reduce((a, b) => a + b, 0);
 
                         const displayCustomer = selectedCustomer ?
-                            selectedCustomer.charAt(0).toUpperCase() + selectedCustomer.slice(1).toLowerCase() :
+                            selectedCustomer.charAt(0).toUpperCase() +
+                            selectedCustomer.slice(1).toLowerCase() :
                             'All';
 
                         const displayYear = selectedYear || '';
@@ -1115,12 +1128,13 @@
                         const fullTitle = titleParts.join(' | ');
 
                         const colors = labels.map(label => colorMap[label] || '#999');
+
                         onTimeChartRef.chart = new Chart(onTimeCtx, {
                             type: 'doughnut',
                             data: {
                                 labels,
                                 datasets: [{
-                                    data,
+                                    data: numericData,
                                     backgroundColor: colors,
                                     borderColor: '#fff',
                                     borderWidth: 2
@@ -1145,9 +1159,21 @@
                                             size: 14
                                         },
                                         formatter: (value, context) => {
-                                            const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                            const percent = sum ? Math.round((value / sum) * 100) : 0;
-                                            return `${value} (${percent}%)`;
+                                            const dataset = context.chart.data.datasets[0];
+
+                                            // 👇 AQUI el FIX: asegurar que value sea número
+                                            const numericValue = Number(value) || 0;
+
+                                            const sum = dataset.data.reduce(
+                                                (a, b) => a + Number(b || 0),
+                                                0
+                                            );
+
+                                            const percent = sum ?
+                                                Math.round((numericValue / sum) * 100) :
+                                                0;
+
+                                            return `${numericValue} (${percent}%)`;
                                         }
                                     },
                                     legend: {
@@ -1162,18 +1188,19 @@
                             },
                             plugins: [ChartDataLabels]
                         });
+                    })
+                    .catch(err => {
+                        console.error('Error cargando On Time chart:', err);
                     });
             }
 
-            // 👉 Cargar al iniciar
+            // Cargar al iniciar
             if (onTimeCtx) loadOnTimeChart();
 
-            // 👉 Escuchar cambios en filtros
+            // Escuchar cambios en filtros
             monthFilter?.addEventListener('change', loadOnTimeChart);
-            yearFilter?.addEventListener('change', loadOnTimeChart); // 🆕
+            yearFilter?.addEventListener('change', loadOnTimeChart);
             customerFilterOnTime?.addEventListener('change', loadOnTimeChart);
-
-
         });;
 
 
@@ -1189,7 +1216,7 @@
                 // ✅ Detectar cambio de semana
                 weekFilter.addEventListener("change", function() {
                     const week = this.value;
-                    console.log("Semana seleccionada:", week);
+                    // console.log("Semana seleccionada:", week);
 
                     fetch(`/orders/by-week/ajax?week=${week}`, {
                             headers: {
@@ -1205,13 +1232,11 @@
                                 console.warn("No se encontró tbody o contador.");
                                 return;
                             }
-
                             // 💡 Destruir DataTable anterior si existe
                             const table = $("#tableweek");
                             if ($.fn.DataTable.isDataTable(table)) {
                                 table.DataTable().clear().destroy();
                             }
-
                             // 💡 Actualizar tbody con nuevas filas
                             tbody.innerHTML = data.html;
 

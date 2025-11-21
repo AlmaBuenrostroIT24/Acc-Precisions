@@ -1409,8 +1409,13 @@ class Order_ScheduleController extends Controller
             'pendients' => $weeklyOrders->where('status', '!=', 'sent')->count(),
             'all_shipping' => $weeklyOrders->every(fn($o) => $o->status === 'sent'),
         ];
-        //--------------------------------------------------------------------------------------
-        //Controlador con filtro hasta la semana actual
+
+        /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         * 🟢 VERIFIED: TABLE-> Weekly Orders
+         * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         */
+
+        //1. Controlador con filtro hasta la semana actual
         $orders = DB::table('orders_schedule')
             ->selectRaw('
         YEARWEEK(due_date, 1) as week,
@@ -1418,13 +1423,15 @@ class Order_ScheduleController extends Controller
         SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)') //órdenes cuya due_date está hasta la semana actual (inclusive), ignorando futuras semanas.
             ->groupBy('week')
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->orderBy('week', 'desc')
             ->get();
-        //------------------------------------------------------------------
-        //65% de las semanas cumplieron con todas las órdenes a tiempo
+     
+        //2. 65% de las semanas cumplieron con todas las órdenes a tiempo
         $totalWeeks = DB::table('orders_schedule')
             ->selectRaw('YEARWEEK(due_date, 1) as week')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->groupBy('week')
             ->get()
             ->count();
@@ -1432,13 +1439,17 @@ class Order_ScheduleController extends Controller
         $weeksOnTime = DB::table('orders_schedule')
             ->selectRaw('YEARWEEK(due_date, 1) as week')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->groupBy('week')
             ->havingRaw('SUM(CASE WHEN status != "sent" THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN sent_at > due_date THEN 1 ELSE 0 END) = 0')
             ->get()
             ->count();
 
         $percentageOnTime = $totalWeeks > 0 ? round(($weeksOnTime / $totalWeeks) * 100) : 0;
-        //-------------------------------------------------------------------------------------
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.schedule_statistics', compact(
             'ordenesSemana',
@@ -1475,7 +1486,7 @@ class Order_ScheduleController extends Controller
         $year = (int)$matches[1];
         $week = (int)$matches[2];
 
-        $start = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
+        $start = Carbon::now()->setISODate($year, $week)->startOfWeek();
         $end = $start->copy()->endOfWeek();
 
         $ordenes = OrderSchedule::whereBetween('due_date', [$start, $end])
@@ -1687,53 +1698,93 @@ class Order_ScheduleController extends Controller
         ]);
     }
 
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟡 Orders Due-Next 8 Weeks 
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
 
-    ///-----------------------------------------------------
     public function summaryNextWeeks($weeks = 8)
     {
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $endDate = $startOfWeek->copy()->addWeeks($weeks);
+        try {
 
-        // Agrupar por semana y contar total y enviados
-        $ordersByWeek = DB::table('orders_schedule')
-            ->selectRaw("YEARWEEK(due_date, 1) as yearweek")
-            ->selectRaw("COUNT(*) as total")
-            ->selectRaw("SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent_count")
-            ->whereBetween('due_date', [$startOfWeek, $endDate])
-            ->whereNotNull('due_date')
-            ->groupBy('yearweek')
-            ->orderBy('yearweek')
-            ->get();
+            $weeks = (int) $weeks;
 
-        $labels = [];
-        $totalData = [];
-        $sentData = [];
+            // Lunes de esta semana (00:00)
+            $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
+            $endDate     = $startOfWeek->copy()->addWeeks($weeks);
 
-        foreach ($ordersByWeek as $row) {
-            $year = substr($row->yearweek, 0, 4);
-            $week = substr($row->yearweek, 4);
+            // Traer datos agrupados por año + semana ISO
+            $ordersByWeek = DB::table('orders_schedule')
+                ->whereBetween('due_date', [$startOfWeek, $endDate])
+                ->whereNotNull('due_date')
+                ->where('status_order', 'active')
+                ->selectRaw('
+                YEAR(due_date)            as y,
+                WEEK(due_date, 1)         as w,
+                COUNT(*)                  as total,
+                SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as sent_count
+            ')
+                ->groupByRaw('YEAR(due_date), WEEK(due_date, 1)')
+                ->orderBy('y')
+                ->orderBy('w')
+                ->get()
+                ->keyBy(function ($row) {
+                    return $row->y . '-' . str_pad($row->w, 2, '0', STR_PAD_LEFT);
+                });
 
-            $monday = Carbon::now()->setISODate($year, $week)->format('M d');
+            $labels    = [];
+            $totalData = [];
+            $sentData  = [];
 
-            $labels[] = "Week $week\n($monday)";
-            $totalData[] = $row->total;
-            $sentData[] = $row->sent_count;
+            // Recorremos exactamente $weeks semanas hacia adelante
+            for ($i = 0; $i < $weeks; $i++) {
+                $weekStart = $startOfWeek->copy()->addWeeks($i);
+                $year      = (int) $weekStart->isoWeekYear;
+                $week      = (int) $weekStart->isoWeek;
+
+                $key = $year . '-' . str_pad($week, 2, '0', STR_PAD_LEFT);
+                $row = $ordersByWeek->get($key);
+
+                $labels[]    = 'Week ' . str_pad($week, 2, '0', STR_PAD_LEFT) . "\n(" . $weekStart->format('M d') . ')';
+                $totalData[] = $row->total      ?? 0;
+                $sentData[]  = $row->sent_count ?? 0;
+            }
+
+            return response()->json([
+                'labels' => $labels,
+                'total'  => $totalData,
+                'sent'   => $sentData,
+            ]);
+        } catch (\Throwable $e) {
+
+            // Registrar el error con detalle
+            Log::error('summaryNextWeeks error', [
+                'message' => $e->getMessage(),
+                'line'    => $e->getLine(),
+                'file'    => $e->getFile(),
+            ]);
+
+            // Mostrar el error directo al frontend
+            return response()->json([
+                'error'   => true,
+                'message' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'labels' => $labels,
-            'total' => $totalData,
-            'sent' => $sentData,
-        ]);
     }
-    //--------------------------------------------------------------------
 
 
+
+
+    /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🟡 On Time vs Late Deliveries
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
     public function summaryOnTimeFiltered(Request $request)
     {
         $query = DB::table('orders_schedule')
             ->whereNotNull('due_date')
-            ->whereNotNull('sent_at');
+            ->whereNotNull('sent_at')
+            ->whereRaw("LOWER(status_order) = 'active'"); // ⬅️ SOLO órdenes activas
 
         if ($request->filled('month')) {
             $month = $request->input('month'); // formato YYYY-MM
