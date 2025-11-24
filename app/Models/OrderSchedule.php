@@ -60,6 +60,7 @@ class OrderSchedule extends Model
         'inspection_date',
         'group_wo_qty',
         'inspection_progress',
+        'was_endsentat_modified',
     ];
 
     // Casts para manejar tipos de datos correctamente
@@ -72,7 +73,8 @@ class OrderSchedule extends Model
         'sent_at' => 'datetime',
         'endate_mach' => 'datetime',
         'inspection_endate' => 'datetime',
-        'inspection_progress' => 'integer', // 👈 nuevo
+        'inspection_progress' => 'integer', 
+        'was_endsentat_modified' => 'boolean',
     ];
 
     // Relaciones con el modelo User

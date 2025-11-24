@@ -97,6 +97,8 @@ Route::post('/orders/{order}/update-notes', [Order_ScheduleController::class, 'u
 Route::post('/orders/{order}/update-work-id', [Order_ScheduleController::class, 'ajaxUpdateWorkId'])->name('orders.ajaxUpdateWorkId');
 Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 'updateStation'])->name('orders.update-station');
 Route::post('/orders/{order}/update-date-due', [Order_ScheduleController::class, 'updateDueDate'])->name('orders.update-date-due');
+Route::post('/orders/{order}/update-end-date', [Order_ScheduleController::class, 'updateEndDate'])->name('orders.updateEndDate');
+
 
 Route::post('/orders/{order}/return-previous', [Order_ScheduleController::class, 'returnPreviousStatus'])->name('orders.returnPreviousStatus');
 Route::post('/orders/{order}/calculate-days', [Order_ScheduleController::class, 'calcularDias']);

@@ -164,7 +164,7 @@
 
 
             <div class="card-body">
-                <div class="table-responsive">
+                <div class="table-responsive d-none" id="finishedTableWrapper">
                     {{-- Tabla --}}
 
                     <table id="orders_endscheduleTable" class="table table-bordered table-striped table-sm ">
@@ -180,7 +180,7 @@
                                 <th class="text-center align-middle">REPORT</th>
                                 <th class="text-center align-middle">OUT/SRC</th>
                                 <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
-                                <th style="width: 110px;">END DATE</th>
+                                <th style="width: 130px;">END DATE</th>
                                 <th class="text-center align-middle">TARGET</th>
                                 <th class="text-center align-middle">NOTES</th>
                                 <th class="text-center align-middle">STATUS</th>
@@ -202,21 +202,42 @@
                                 <td>{{ $order->PN }}</td>
                                 <td style="font-size: 12px;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ $order->wo_qty }}</td>
-                                <td>
+                                <td class="text-center">{{ $order->qty }}</td>
+                                <td class="text-center">{{ $order->wo_qty }}</td>
+                                <td class="text-center">
                                     <span class="badge  {{ $order->report ? 'bg-primary' : 'bg-secondary' }} p-2" style="font-size:1rem;">
                                         <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                                     </span>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <span class="badge  {{ $order->our_source ? 'bg-primary' : 'bg-secondary' }} p-2" style="font-size:1rem;">
                                         <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
                                     </span>
                                 </td>
                                 <td>{{ optional($order->due_date)->format('M-d-y') }}</td>
-                                <td data-order="{{ $order->sent_at ? $order->sent_at->format('Y-m-d H:i:s') : '' }}">
-                                    {{ $order->sent_at ? $order->sent_at->format('M-d-y H:i') : '' }}
+                                <td class="text-center editable-end-date"
+                                    data-id="{{ $order->id }}"
+                                    data-enddate="{{ $order->sent_at ? $order->sent_at->format('Y-m-d H:i') : '' }}"
+                                    data-order="{{ $order->sent_at ? $order->sent_at->format('Y-m-d H:i:s') : '' }}">
+
+                                    @php
+                                    $endDateText = $order->sent_at
+                                    ? $order->sent_at->format('M-d-y H:i')
+                                    : '— Set end date —';
+
+                                    $endDateClass = $order->was_endsentat_modified
+                                    ? 'modified-end-date'
+                                    : 'normal-end-date';
+                                    @endphp
+
+                                    <span class="enddate-display {{ $endDateClass }}">
+                                        {{ $endDateText }}
+                                    </span>
+
+                                    {{-- Ícono para editar --}}
+                                    <i class="fas fa-edit text-secondary ml-2 enddate-icon"
+                                        style="cursor:pointer;"
+                                        title="Edit End Date"></i>
                                 </td>
                                 <td class="text-center">
                                     @if ($order->target_date < 0)
@@ -253,10 +274,68 @@
     </div>
 </div>
 
+
+{{-- MODAL: Edit End Date --}}
+<div class="modal fade" id="endDateModal" tabindex="-1" role="dialog" aria-labelledby="endDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <form id="endDateForm">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="endDateModalLabel">
+                        <i class="fas fa-clock mr-1"></i> Edit "SEND DATE"
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body py-2">
+                    <input type="hidden" id="endDateOrderId">
+
+                    <div class="form-group mb-2">
+                        <label for="endDateInput" class="mb-1">End Date (sent_at)</label>
+                        <div class="input-group date" id="endDatePickerWrapper" data-target-input="nearest">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </span>
+                            </div>
+                            <input type="text"
+                                id="endDateInput"
+                                class="form-control datetimepicker-input"
+                                data-toggle="datetimepicker"
+                                data-target="#endDatePickerWrapper"
+                                autocomplete="off"
+                                placeholder="YYYY-MM-DD HH:mm">
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Leave blank to clear the date.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('css')
+<style>
+    .normal-end-date {
+        color: #212529;
+    }
 
+    .modified-end-date {
+        color: #007bff !important;
+        font-weight: 600;
+    }
+</style>
 @endsection
 
 @push('js')
@@ -265,6 +344,8 @@
     $(document).ready(function() {
         const $tableElement = $('#orders_endscheduleTable');
         if (!$tableElement.length) return;
+
+        const $wrapper = $('#finishedTableWrapper'); // 👈 el div que envuelve la tabla
 
         // (Opcional recomendado) Limpiar filtros ext.search previos para evitar efectos colaterales
         $.fn.dataTable.ext.search.length = 0;
@@ -280,7 +361,12 @@
             columnDefs: [{
                 targets: [6, 7, 11],
                 orderable: false
-            }]
+            }],
+            deferRender: true, // 👈 opcional, ayuda a que cargue más suave/rápido
+            initComplete: function() {
+                // 👇 aquí mostramos el contenedor una vez DataTables está listo
+                $wrapper.removeClass('d-none');
+            }
         });
 
         window.table = table;
@@ -418,6 +504,124 @@
         // Al cambiar Location/Customer ya llamas table.draw(), que dispara refreshBadge
         $('#locationFilter, #customerFilter').on('change', function() {
             table.draw();
+        });
+
+        // ---------------------- 8. EDITAR END DATE (sent_at) ----------------------
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        // Inicializar datetimepicker del modal (reutilizando Tempus Dominus)
+        $('#endDatePickerWrapper').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            icons: {
+                time: 'far fa-clock',
+                date: 'far fa-calendar',
+                up: 'fas fa-chevron-up',
+                down: 'fas fa-chevron-down',
+                previous: 'fas fa-chevron-left',
+                next: 'fas fa-chevron-right',
+                today: 'far fa-calendar-check',
+                clear: 'far fa-trash-alt',
+                close: 'far fa-times-circle'
+            }
+        });
+
+        // 🔹 Abrir modal al hacer clic en la celda END DATE
+        $tableElement.on('click', '.enddate-icon', function() {
+            const $td = $(this).closest('.editable-end-date');
+            const orderId = $td.data('id');
+            const currentEndDate = $td.data('enddate') || '';
+
+            $('#endDateOrderId').val(orderId);
+
+            // Setear valor actual en el input
+            $('#endDateInput').val(currentEndDate);
+
+            // Setear valor en el datetimepicker (si existe)
+            const picker = $('#endDatePickerWrapper').data('datetimepicker');
+            if (picker) {
+                picker.date(currentEndDate ? moment(currentEndDate, 'YYYY-MM-DD HH:mm') : null);
+            }
+
+            // Guardar referencia al <td> en el modal (para actualizar después)
+            $('#endDateModal').data('td', $td);
+
+            // Mostrar modal
+            $('#endDateModal').modal('show');
+        });
+
+        // 🔹 Guardar cambios de END DATE
+        $('#endDateForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const orderId = $('#endDateOrderId').val();
+            const $modal = $('#endDateModal');
+            const $td = $modal.data('td');
+
+            let newEndDate = $('#endDateInput').val().trim(); // puede venir vacío
+
+            $.ajax({
+                    url: `/orders/${orderId}/update-end-date`,
+                    method: 'POST',
+                    data: {
+                        _token: csrfToken,
+                        sent_at: newEndDate
+                    }
+                })
+                .done(function(res) {
+                    if (!res.success) {
+                        Swal.fire('Attention', res.message || 'Could not update the end date.', 'warning');
+                        return;
+                    }
+
+                    // ----- 1) Actualizar END DATE (celda clickeada) -----
+                    const displayText = res.sent_at_formatted || '— Set end date —';
+                    const $display = $td.find('.enddate-display'); // 👈 ahora sí definimos $display
+
+                    $display.text(displayText);
+
+                    // Actualizar clases según si fue modificada o no (was_endsentat_modified en BD)
+                    $display.removeClass('normal-end-date modified-end-date');
+                    if (res.was_modified) {
+                        $display.addClass('modified-end-date'); // azul
+                    } else {
+                        $display.addClass('normal-end-date');
+                    }
+
+                    // Actualizar atributos para ordenamiento y para futuros clicks
+                    $td.data('enddate', res.sent_at_value || '');
+                    $td.attr('data-order', res.sent_at_order || '');
+
+                    // ----- 2) Actualizar TARGET DATE (columna 11) -----
+                    // 0=LOCATION, 1=WORKID, 2=PN, 3=DESC, 4=CUSTOMER, 5=CO QTY,
+                    // 6=WO QTY, 7=REPORT, 8=OUT/SRC, 9=DUE, 10=END, 11=TARGET, 12=NOTES, 13=STATUS
+                    const $row = $td.closest('tr');
+                    const $targetTd = $row.find('td').eq(11); // TARGET
+
+                    let targetHtml = '<span>-</span>';
+
+                    if (res.target_date !== null && res.target_date !== undefined) {
+                        const tdVal = Number(res.target_date);
+
+                        if (tdVal < 0) {
+                            targetHtml = `<span class="badge bg-danger">${tdVal} Late</span>`;
+                        } else if (tdVal === 0) {
+                            targetHtml = `<span class="badge bg-success">${tdVal} On time</span>`;
+                        } else if (tdVal > 0) {
+                            targetHtml = `<span class="badge bg-info">${tdVal} Early</span>`;
+                        }
+                    }
+
+                    $targetTd.html(targetHtml);
+
+                    // ----- 3) Avisar a DataTables de los cambios -----
+                    table.row($row).invalidate().draw(false);
+
+                    $modal.modal('hide');
+                    Swal.fire('Done', 'End Date & Target Date updated successfully.', 'success');
+                })
+                .fail(function() {
+                    Swal.fire('Error', 'Error updating End Date.', 'error');
+                });
         });
     });
 </script>
