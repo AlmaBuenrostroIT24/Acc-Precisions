@@ -20,10 +20,13 @@ use App\Exports\BladeTableExport;
 
 class QaFaiSummaryController extends Controller
 {
-    /*===========================================================================================================================
-                                            Todo el tab relacionado a parts revision
-    ============================================================================================================================*/
-    // Mostrar listado de registros
+
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 1. TAB "FAI/IPI SUMMARY" ------------Parts Revision----------------
+     * ===================================================================================================================
+     */
 
     public function partsrevision()
     {
@@ -265,11 +268,6 @@ class QaFaiSummaryController extends Controller
 
 
 
-
-
-
-
-
     public function updateOperation(Request $request, $id)
     {
         $request->validate([
@@ -320,10 +318,10 @@ class QaFaiSummaryController extends Controller
 
     public function storeSingle(Request $request)
     {
-        Log::info('storeSingle called', $request->all());
+        //Log::info('storeSingle called', $request->all());
         $validated = $request->validate([
             'order_schedule_id' => 'required|exists:orders_schedule,id',
-            'date' => 'required|date',
+            'date' => 'required|date_format:Y-m-d',
             'insp_type' => 'required|in:FAI,IPI',
             'operation' => 'required|string',
             'operator' => 'nullable|string',
@@ -335,6 +333,9 @@ class QaFaiSummaryController extends Controller
             'inspector' => 'required|string',
             'qty_pcs'   => 'nullable|integer|min:1',
         ]);
+
+        // ⭐ Convertir fecha a datetime agregando la hora actual
+        $validated['date'] = $validated['date'] . ' ' . now()->format('H:i:s');
 
         // 🔍 Obtener la ubicación del order_schedule
         $order = \App\Models\OrderSchedule::find($validated['order_schedule_id']);
@@ -533,12 +534,12 @@ class QaFaiSummaryController extends Controller
     }
 
 
-    //===========================================================================================================================
-    /*===========================================================================================================================
-         Todo el tab relacionado a parts summary
-    ============================================================================================================================*/
-
-    // Mostrar listado de registros
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 2. TAB "FAI/IPI SUMMARY" ------------Summary---------------
+     * ===================================================================================================================
+     */
 
     public function summary(Request $request)
     {
@@ -553,22 +554,22 @@ class QaFaiSummaryController extends Controller
 
         // 📅 Filtro de fechas (prioridad: día > año+mes > año > mes > mes actual)
         if ($day) {
-            $q->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
+            $q->whereDate('date', \Carbon\Carbon::parse($day)->toDateString());
         } elseif ($year && $month) {
-            $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+            $q->whereYear('date', $year)->whereMonth('date', $month);
         } elseif ($year) {
-            $q->whereYear('created_at', $year);
+            $q->whereYear('date', $year);
         } elseif ($month) {
-            $q->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+            $q->whereYear('date', now()->year)->whereMonth('date', $month);
         } else {
             // Por defecto: mes actual
-            $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+            $q->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
             $year  = now()->year;
             $month = now()->month;
         }
 
         // === Ordenar últimos registrados primero
-        $inspections = $q->orderByDesc("$tbl.created_at")
+        $inspections = $q->orderByDesc("$tbl.date")
             ->orderByDesc("$tbl.id")
             ->get();
 
@@ -576,15 +577,15 @@ class QaFaiSummaryController extends Controller
         $statsQuery = \App\Models\QaFaiSummary::query();
 
         if ($day) {
-            $statsQuery->whereDate('created_at', \Carbon\Carbon::parse($day)->toDateString());
+            $statsQuery->whereDate('date', \Carbon\Carbon::parse($day)->toDateString());
         } elseif ($year && $month) {
-            $statsQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+            $statsQuery->whereYear('date', $year)->whereMonth('date', $month);
         } elseif ($year) {
-            $statsQuery->whereYear('created_at', $year);
+            $statsQuery->whereYear('date', $year);
         } elseif ($month) {
-            $statsQuery->whereYear('created_at', now()->year)->whereMonth('created_at', $month);
+            $statsQuery->whereYear('date', now()->year)->whereMonth('date', $month);
         } else {
-            $statsQuery->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+            $statsQuery->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
             $year  = now()->year;
             $month = now()->month;
         }
@@ -652,7 +653,7 @@ class QaFaiSummaryController extends Controller
             $query->whereDate('date', $request->day);
         }
 
-        $inspections = $query->orderByDesc('created_at')->get();
+        $inspections = $query->orderByDesc('date')->get();
 
         // === monthStats (usa tu lógica actual; aquí solo un ejemplo) ===
         $month = $request->input('month', now()->month);
@@ -750,12 +751,14 @@ class QaFaiSummaryController extends Controller
     }
 
 
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 3. TAB "FAI/IPI SUMMARY" ------------Completed FAI Summary----------------
+     * ===================================================================================================================
+     */
 
 
-    //===========================================================================================================================
-    /*===========================================================================================================================
-         Todo el tab relacionado a faicompleted Y GENERACION DE PDF
-    ============================================================================================================================*/
     public function faicompleted(Request $request)
     {
         $year  = $request->integer('year');   // null/0 si no viene
@@ -1175,11 +1178,12 @@ class QaFaiSummaryController extends Controller
     }
 
 
-    //===========================================================================================================================
-
-    /*===========================================================================================================================
-         Todo el tab relacionado a faistatistics Y ESTADISTICAS DE LAS INSPECCIONES
-    ============================================================================================================================*/
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 4. TAB "FAI/IPI SUMMARY" ------------FAI Summary Statistics---------------
+     * ===================================================================================================================
+     */
 
 
     // Mostrar listado de registros

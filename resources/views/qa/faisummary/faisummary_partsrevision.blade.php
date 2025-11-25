@@ -686,7 +686,7 @@
           });
         })
         .fail(xhr => {
-          const msg = xhr.responseJSON?.error ? `Error: ${xhr.responseJSON.error}` : 'Error al guardar la fila';
+          const msg = xhr.responseJSON?.error ? `Error: ${xhr.responseJSON.error}` : 'Error saving inspection';
           swalError('Error', msg);
         });
     });
@@ -1281,7 +1281,13 @@
       const savedQty = parseInt(data.qty_pcs ?? data.sample_idx ?? 1, 10) || 1;
       $row.attr('data-qty_pcs', savedQty);
 
-      $row.append(`<td><input type="date" name="date[]" class="form-control" value="${data.date || ''}" disabled></td>`);
+      const dateOnly = data.date ? data.date.split(' ')[0] : '';
+      $row.append(`
+  <td>
+    <input type="date" name="date[]" class="form-control" value="${dateOnly}" disabled>
+  </td>
+`);
+
       $row.append(`
         <td>
           <select name="insp_type[]" class="form-control" disabled>

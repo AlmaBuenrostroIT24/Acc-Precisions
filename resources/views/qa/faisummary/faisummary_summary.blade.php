@@ -158,18 +158,18 @@
                             @forelse ($inspections as $inspection)
                             @php
                             $tz = config('app.timezone', 'UTC'); // cambia si usas otra zona
-                            $dtCreated = $inspection->created_at
-                            ? $inspection->created_at->copy()->setTimezone($tz)
+                            $dtDate = $inspection->date
+                            ? \Carbon\Carbon::parse($inspection->date)->setTimezone($tz)
                             : null;
 
                             $isPass = strcasecmp(trim((string)$inspection->results), 'pass') === 0;
                             $isFAI = strcasecmp(trim((string)$inspection->insp_type), 'FAI') === 0;
                             @endphp
                             <tr>
-                                <td data-order="{{ $dtCreated?->format('Y-m-d H:i:s') }}">
-                                    {{ $dtCreated?->format('M-d-y') }}
-                                    @if($dtCreated)
-                                    <span class="badge badge-light">{{ $dtCreated->format('H:i') }}</span>
+                                <td data-order="{{ $dtDate?->format('Y-m-d H:i:s') }}">
+                                    {{ $dtDate?->format('M-d-y') }}
+                                    @if($dtDate)
+                                    <span class="badge badge-light">{{ $dtDate->format('H:i') }}</span>
                                     @endif
                                 </td>
                                 <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
