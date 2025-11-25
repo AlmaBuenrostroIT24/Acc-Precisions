@@ -525,6 +525,15 @@
             }
         });
 
+        // ⬇️ Cerrar el calendario automáticamente al elegir fecha
+        $('#endDatePickerWrapper').on('change.datetimepicker', function(e) {
+            if (e.date) {
+                // Actualiza el input por si acaso
+                $('#endDateInput').val(e.date.format('YYYY-MM-DD HH:mm'));
+            }
+            $('#endDatePickerWrapper').datetimepicker('hide');
+        });
+
         // 🔹 Abrir modal al hacer clic en la celda END DATE
         $tableElement.on('click', '.enddate-icon', function() {
             const $td = $(this).closest('.editable-end-date');

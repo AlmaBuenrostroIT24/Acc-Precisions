@@ -682,56 +682,6 @@ class Order_ScheduleController extends Controller
         ]);
     }
 
-    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     * 🔵UPDATE: Actualizar fecha de envio de orden
-     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     */
-    public function updateEndDate(Request $request, OrderSchedule $order)
-    {
-        $validated = $request->validate([
-            'sent_at' => ['nullable', 'date'],
-        ]);
-
-        // Sent_at original
-        $originalSentAt = $order->sent_at
-            ? ($order->sent_at instanceof Carbon ? $order->sent_at : Carbon::parse($order->sent_at))
-            : null;
-
-        // Nueva fecha
-        $newSentAt = $validated['sent_at'] ?? null;
-        $order->sent_at = $newSentAt;
-
-        // Recalcular target_date
-        if ($order->due_date && $order->sent_at) {
-            $due  = $order->due_date instanceof Carbon ? $order->due_date : Carbon::parse($order->due_date);
-            $sent = $order->sent_at instanceof Carbon ? $order->sent_at : Carbon::parse($order->sent_at);
-
-            $order->target_date = $due->diffInDays($sent, false); // con signo
-        } else {
-            $order->target_date = null;
-        }
-
-        // Marcar was_endsentat_modified si cambió
-        $originalStr = $originalSentAt ? $originalSentAt->format('Y-m-d H:i:s') : null;
-        $newStr      = $newSentAt ? Carbon::parse($newSentAt)->format('Y-m-d H:i:s') : null;
-
-        if ($originalStr !== $newStr) {
-            $order->was_endsentat_modified = 1;
-        }
-
-        $order->save();
-
-        $sentAt = $order->sent_at;
-
-        return response()->json([
-            'success'              => true,
-            'sent_at_value'        => $sentAt ? $sentAt->format('Y-m-d H:i') : null,
-            'sent_at_formatted'    => $sentAt ? $sentAt->format('M-d-y H:i') : null,
-            'sent_at_order'        => $sentAt ? $sentAt->format('Y-m-d H:i:s') : null,
-            'target_date'          => $order->target_date,
-            'was_modified'         => (bool)$order->was_endsentat_modified,
-        ]);
-    }
 
 
     /**
@@ -1010,6 +960,64 @@ class Order_ScheduleController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * 🔵UPDATE: Actualizar fecha de envio de orden TAB 
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     */
+    public function updateEndDate(Request $request, OrderSchedule $order)
+    {
+        $validated = $request->validate([
+            'sent_at' => ['nullable', 'date'],
+        ]);
+
+        // Sent_at original
+        $originalSentAt = $order->sent_at
+            ? ($order->sent_at instanceof Carbon ? $order->sent_at : Carbon::parse($order->sent_at))
+            : null;
+
+        // Nueva fecha
+        $newSentAt = $validated['sent_at'] ?? null;
+        $order->sent_at = $newSentAt;
+
+        // Recalcular target_date
+        if ($order->due_date && $order->sent_at) {
+            $sent = $order->sent_at instanceof Carbon
+                ? $order->sent_at
+                : Carbon::parse($order->sent_at);
+
+            $due = $order->due_date instanceof Carbon
+                ? $order->due_date
+                : Carbon::parse($order->due_date);
+
+            // ✅ POSITIVO = EARLY, 0 = ON TIME, NEGATIVO = LATE
+            $order->target_date = $sent->diffInDays($due, false);
+        } else {
+            $order->target_date = null;
+        }
+
+        // Marcar was_endsentat_modified si cambió
+        $originalStr = $originalSentAt ? $originalSentAt->format('Y-m-d H:i:s') : null;
+        $newStr      = $newSentAt ? Carbon::parse($newSentAt)->format('Y-m-d H:i:s') : null;
+
+        if ($originalStr !== $newStr) {
+            $order->was_endsentat_modified = 1;
+        }
+
+        $order->save();
+
+        $sentAt = $order->sent_at;
+
+        return response()->json([
+            'success'              => true,
+            'sent_at_value'        => $sentAt ? $sentAt->format('Y-m-d H:i') : null,
+            'sent_at_formatted'    => $sentAt ? $sentAt->format('M-d-y H:i') : null,
+            'sent_at_order'        => $sentAt ? $sentAt->format('Y-m-d H:i:s') : null,
+            'target_date'          => $order->target_date,
+            'was_modified'         => (bool)$order->was_endsentat_modified,
+        ]);
+    }
+
 
 
     //----------------------------------------------------------------------------------------------------------------------------

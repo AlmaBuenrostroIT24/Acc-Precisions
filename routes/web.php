@@ -83,7 +83,6 @@ Route::get('/workhearst/processend/partial', [Order_ScheduleController::class, '
 Route::get('/workhearst/workinprocess/partial', [Order_ScheduleController::class, 'partialWorkhearst']);
 
 
-
 //Importar archivo en excel
 Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->name('schedule.orders.import');
 
