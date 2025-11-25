@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use App\Models\OrderSchedule;
-use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\OrderScheduleImport;
 use App\Services\OrderScheduleImportService;
@@ -17,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Validators\ValidationException as ExcelValidationException;
 use Maatwebsite\Excel\HeadingRowImport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class Order_ScheduleController extends Controller
 {
@@ -1903,7 +1901,36 @@ class Order_ScheduleController extends Controller
 
 
 
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 6. REGISTRAR CAMBIOS EN EL MODELO ORDERSCHEDULE AUTOMATICAMENTE
+     * ===================================================================================================================
+     */
 
+    public function finishedOrderPdf(OrderSchedule $order)
+    {
+
+        // Obtener logs ordenados (más recientes primero)
+        $logs = \App\Models\OrderScheduleLog::where('order_id', $order->id)
+            ->with('user')  // 👈 para obtener el nombre del usuario
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Carga una vista Blade específica para el PDF
+        $pdf = Pdf::loadView('orders.pdf.finished_order', [
+            'order' => $order,
+            'logs'  => $logs,
+        ])->setPaper('letter', 'portrait');
+
+        // 👉 Si quieres descargar directo:
+        // return $pdf->download("order_{$order->work_id}_finished.pdf");
+
+        // 👉 Si prefieres que se abra en el navegador (y el botón ya abre en nueva pestaña):
+        $cleanWorkId = preg_replace('/[\/\\\\]/', '_', $order->work_id);
+
+        return $pdf->stream("order_{$cleanWorkId}_finished.pdf");
+    }
 
 
     //------------------------------------------------------------------------------------------------

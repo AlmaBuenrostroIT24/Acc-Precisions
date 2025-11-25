@@ -62,6 +62,7 @@ class QaFaiSummaryController extends Controller
             $rows = OrderSchedule::query()
                 ->select($select)
                 ->where('status', '<>', 'sent')
+                ->where('status_order', '!=', 'inactive')
                 ->where(function ($q) {
                     $q->whereNull('status_inspection')
                         ->orWhere('status_inspection', '<>', 'completed');

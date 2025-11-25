@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\OrderScheduleLog;     // 👈 importante
+use Illuminate\Support\Facades\Auth; // 👈 importante
+use Illuminate\Support\Facades\Log;  // 👈 importante
+
 
 class OrderSchedule extends Model
 {
@@ -73,8 +77,8 @@ class OrderSchedule extends Model
         'sent_at' => 'datetime',
         'endate_mach' => 'datetime',
         'inspection_endate' => 'datetime',
-        'inspection_progress' => 'integer', 
-        'was_endsentat_modified' => 'boolean',
+        'inspection_progress' => 'integer', // 👈 nuevo
+        'canceled' => 'boolean',
     ];
 
     // Relaciones con el modelo User
@@ -101,5 +105,35 @@ class OrderSchedule extends Model
     public function completedByUser()
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    protected static function booted()
+    {
+        static::updated(function ($order) {
+
+            // 🔍 DEBUG: Ver si el evento se dispara
+            Log::info('OrderSchedule updated', [
+                'id'      => $order->id,
+                'changes' => $order->getChanges(),
+                'original' => $order->getOriginal(),
+                'user'    => Auth::id(),
+            ]);
+
+            $changes  = $order->getChanges();
+            $original = $order->getOriginal();
+
+            foreach ($changes as $field => $newValue) {
+
+                if ($field === 'updated_at') continue;
+
+                OrderScheduleLog::create([
+                    'order_id'  => $order->id,
+                    'user_id'   => Auth::id(),
+                    'field'     => $field,
+                    'old_value' => $original[$field] ?? null,
+                    'new_value' => $newValue,
+                ]);
+            }
+        });
     }
 }

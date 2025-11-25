@@ -257,12 +257,26 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm toggle-status-btn btn-success"
-                                        title="Return Order"
-                                        data-id="{{ $order->id }}"
-                                        data-status="sent">
-                                        <i class="fas fa-check"></i>
-                                    </button>
+                                    <div class="btn-group btn-group-sm" role="group">
+
+                                        {{-- Botón existente: Return Order --}}
+                                        <button class="btn btn-sm toggle-status-btn btn-success"
+                                            title="Return Order"
+                                            data-id="{{ $order->id }}"
+                                            data-status="sent">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+
+                                        {{-- 🔹 Nuevo botón: PDF --}}
+                                        @can('sched.down.pdf.log')
+                                        <a href="{{ route('schedule.finished.pdf', $order->id) }}"
+                                            class="btn btn-sm btn-danger"
+                                            title="Download PDF"
+                                            target="_blank">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                       @endcan
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
