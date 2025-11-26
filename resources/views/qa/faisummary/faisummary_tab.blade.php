@@ -4,7 +4,7 @@
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('faisummary.partsrevision') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
             href="{{ route('faisummary.partsrevision') }}">
-            <i class="fas fa-exclamation-triangle me-2"></i> Parts Revision
+            <i class="fas fa-cog me-2"></i> Parts Revision
         </a>
     </li>
     @endcan
@@ -12,7 +12,7 @@
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('faisummary.general') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
             href="{{ route('faisummary.general') }}">
-            <i class="fas fa-calendar-alt me-2"></i> Summary
+            <i class="fas fa-list-alt me-2"></i> Summary
         </a>
     </li>
     @endcan
@@ -24,6 +24,14 @@
         </a>
     </li>
     @endcan
+    @can('qa/rejectedfaiorders')
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {{ request()->routeIs('faisummary.rejectedfaiorders') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
+            href="{{ route('faisummary.rejectedfaiorders') }}">
+            <i class="fas fa-exclamation-triangle me-2"></i> Rejected FAI Orders
+        </a>
+    </li>
+    @endcan
     @can('qa/faistatistics')
     <li class="nav-item" role="presentation">
         <a class="nav-link {{ request()->routeIs('faisummary.statistics') ? 'active text-dark fw-semibold border-bottom border-primary' : 'text-secondary' }}"
@@ -32,5 +40,5 @@
         </a>
     </li>
     @endcan
-    
+
 </ul>

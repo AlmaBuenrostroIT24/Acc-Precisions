@@ -168,12 +168,6 @@
                 </div>
 
 
-
-
-
-
-
-
                 <div class="table-responsive">
                     <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
                         <colgroup>

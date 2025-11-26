@@ -142,6 +142,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general');
     Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
+    Route::get('/qa/rejectedfaiorders', [QaFaiSummaryController::class, 'rejectedfaiorders'])->name('faisummary.rejectedfaiorders');
 });
 //=========================================================================================================
 // -----------------------------------faisummary-------------------------------------------------------
@@ -171,6 +172,11 @@ Route::post('/qa/faisummary/completed/export/excel', [QaFaiSummaryController::cl
 
 Route::post('/qa/faisummary/completed/export/pdf', [QaFaiSummaryController::class, 'exportCompletedPdf'])->name('faisummary.completed.export.pdf');
 
+//=========================================================================================================
+// -----------------------------------Rejected FAI Orders-------------------------------------------------------
+//=========================================================================================================
+Route::get(
+    '/qa/rejectedfaiorders/{order}/inspections',[QaFaiSummaryController::class, 'orderInspections'])->name('faisummary.orderInspections');
 //=========================================================================================================
 // -----------------------------------faistatiscs-------------------------------------------------------
 //=========================================================================================================

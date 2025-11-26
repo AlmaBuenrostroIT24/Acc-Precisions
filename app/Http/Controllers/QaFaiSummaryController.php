@@ -1229,7 +1229,96 @@ class QaFaiSummaryController extends Controller
     /**
      * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
      * ===================================================================================================================
-     * 4. TAB "FAI/IPI SUMMARY" ------------FAI Summary Statistics---------------
+     * 4. TAB "FAI/IPI SUMMARY" ------------Reject FAI Orders---------------
+     * ===================================================================================================================
+     */
+
+    public function rejectedfaiorders(Request $request)
+    {
+        // Reutilizamos tu helper
+        $data = $this->getFaiSummaryData($request);
+
+        /** @var \Illuminate\Support\Collection $inspections */
+        $inspections = $data['inspections'];
+
+        $failedOrders = $inspections
+
+            // A) Solo inspecciones FAI y con orden asociada
+            ->filter(function ($i) {
+                return $i->orderSchedule
+                    && strcasecmp(trim((string)$i->insp_type), 'FAI') === 0;
+            })
+
+            // B) Agrupar por orden
+            ->groupBy(function ($i) {
+                return $i->order_schedule_id;
+            })
+
+            // C) Para cada orden:
+            //    - Ver si tiene AL MENOS UN FAI no pass
+            //    - Si sí, regresamos un registro para representar la fila (ej. el último FAI)
+            ->map(function ($group) {
+                $hasNonPass = $group->contains(function ($insp) {
+                    $result = strtolower(trim((string) $insp->results));
+                    return in_array($result, [
+                        'fail',
+                        'no pass',
+                        'nopass',
+                        'no_pass'
+                    ], true);
+                });
+
+                if (! $hasNonPass) {
+                    return null; // Esta orden nunca tuvo FAI no pass → no se incluye
+                }
+
+                // Puedes elegir qué inspección mostrar:
+                // 1) El ÚLTIMO FAI (por fecha)
+                return $group->sortByDesc('date')->first();
+
+                // o 2) El ÚLTIMO FAI NO PASS (descomenta esto si prefieres eso)
+                /*
+            return $group->filter(function ($insp) {
+                    $result = strtolower(trim((string) $insp->results));
+                    return in_array($result, ['fail', 'no pass', 'nopass', 'no_pass'], true);
+                })
+                ->sortByDesc('date')
+                ->first();
+            */
+            })
+
+            // Quitar los null (órdenes sin FAI no pass)
+            ->filter()
+
+            ->values();
+
+        // Puedes mandar solo esto, o también otros datos de $data si quieres
+        return view('qa.faisummary.faisummary_rejectedfaiorders', [
+            'failedOrders' => $failedOrders,
+        ]);
+    }
+
+    public function orderInspections($orderId)
+    {
+        // Todas las inspecciones de esa orden (FAI + IPI, pass + no pass)
+        $inspections = QaFaiSummary::with('orderSchedule')
+            ->where('order_schedule_id', $orderId)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        // Devolvemos solo el HTML de las filas para el modal
+        $html = view('qa.faisummary.faisummary_rejectedfairows', compact('inspections'))->render();
+
+        return response()->json([
+            'html' => $html,
+        ]);
+    }
+
+
+    /**
+     * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     * ===================================================================================================================
+     * 5. TAB "FAI/IPI SUMMARY" ------------FAI Summary Statistics---------------
      * ===================================================================================================================
      */
 
