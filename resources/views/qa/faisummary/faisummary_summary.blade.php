@@ -40,16 +40,20 @@
             <div class="card-body">
 
                 {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
+                @php
+                $hasAlerts = isset($failedOrders) && $failedOrders->count() > 0;
+                $progressHeight = $hasAlerts ? '12px' : '22px';
+                // Si hay alertas => KPIs col-lg-2, si no => col-lg-3
+                $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
+                @endphp
+
                 <div class="row mb-1">
                     {{-- Total Inspections --}}
-                    <div class="col-sm-6 col-lg-3 mb-2">
+                    <div class="{{ $kpiColClass }}">
                         <div class="info-box bg-secondary">
-                            {{-- Icono lateral --}}
                             <span class="info-box-icon">
                                 <i class="fas fa-clipboard-list"></i>
                             </span>
-
-                            {{-- Contenido --}}
                             <div class="info-box-content">
                                 <span class="info-box-text">Inspections</span>
                                 <h3 class="mb-1">{{ number_format($monthStats['total']) }}</h3>
@@ -62,7 +66,7 @@
                     </div>
 
                     {{-- Pass --}}
-                    <div class="col-sm-6 col-lg-3 mb-2">
+                    <div class="{{ $kpiColClass }}">
                         <div class="info-box bg-success">
                             <span class="info-box-icon">
                                 <i class="fas fa-check-circle"></i>
@@ -79,7 +83,7 @@
                     </div>
 
                     {{-- No Pass --}}
-                    <div class="col-sm-6 col-lg-3 mb-2">
+                    <div class="{{ $kpiColClass }}">
                         <div class="info-box bg-danger">
                             <span class="info-box-icon">
                                 <i class="fas fa-times-circle"></i>
@@ -94,30 +98,81 @@
                             </div>
                         </div>
                     </div>
+
                     {{-- % Pass --}}
-                    <div class="col-sm-6 col-lg-3 mb-2">
+                    <div class="{{ $kpiColClass }}">
                         <div class="info-box bg-info">
                             <span class="info-box-icon">
                                 <i class="fas fa-percentage"></i>
                             </span>
                             <div class="info-box-content">
-
-                                {{-- Número y meta en la misma fila --}}
                                 <div class="d-flex justify-content-between align-items-baseline">
-                                    <b>
-                                        <h3 class="mb-0">{{ $monthStats['rate'] }}%</h3>
-                                    </b>
+                                    <h3 class="mb-0 font-weight-bold">{{ $monthStats['rate'] }}%</h3>
                                     <small class="text-white-50">Meta ≥ 95%</small>
                                 </div>
-
-                                {{-- Barra de progreso más gruesa --}}
-                                <div class="progress mt-2" style="height: 22px;">
+                                <div class="progress mt-2" style="height: {{ $progressHeight }};">
                                     <div class="progress-bar bg-light" style="width: {{ $monthStats['rate'] }}%"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {{-- Caja de FAILED FAI ALERTS solo si hay alertas --}}
+                    @if($hasAlerts)
+                    <div class="col-sm-12 col-lg-4 mb-2">
+                        <div class="fai-alert-box mb-0">
+
+                            {{-- Header --}}
+                            <div class="fai-alert-header d-flex align-items-center">
+                                <div class="fai-alert-icon mr-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+
+                                <div class="d-flex flex-column">
+                                    <span class="fai-alert-title">
+                                        FAILED FAI ALERTS
+                                    </span>
+                                    <small class="fai-alert-subtitle">
+                                        Click on a chip to filter the inspection history.
+                                    </small>
+                                </div>
+
+                                <span class="ml-auto fai-alert-count">
+                                    {{ $failedOrders->count() }} jobs
+                                </span>
+                            </div>
+
+                            {{-- Chips --}}
+                            <div class="fai-alert-body d-flex flex-wrap mt-2">
+                                @foreach($failedOrders as $fail)
+                                <div class="fai-chip"
+                                    data-work-id="{{ trim($fail->orderSchedule->work_id ?? '') }}"
+                                    data-pn="{{ trim($fail->orderSchedule->PN ?? '') }}"
+                                    title="Last FAI: {{ \Carbon\Carbon::parse($fail->date)->format('M d, Y H:i') }}">
+
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    <span class="fai-chip-text">
+                                        PN: {{ $fail->orderSchedule->PN ?? 'N/A' }}
+                                        <br>
+                                        <small class="text-muted">
+                                            JOB: {{ $fail->orderSchedule->work_id ?? '?' }} · OP: {{ $fail->operation }}
+                                        </small>
+                                    </span>
+                                </div>
+                                @endforeach
+                            </div>
+
+                        </div>
+                    </div>
+                    @endif
                 </div>
+
+
+
+
+
+
+
 
                 <div class="table-responsive">
                     <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
@@ -334,7 +389,7 @@
 
                         <span class="badge badge-info py-2 px-3" style="font-size: 1rem;">
                             <i class="fas fa-list-ol mr-1"></i>
-                            Total: <span id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
+                            Total: <span id="badgeFinished">{{ isset($inspections) ? $inspections->count() : 0 }}</span>
                         </span>
                     </div>
 
@@ -420,6 +475,95 @@
         font-size: 1.1rem;
         font-weight: 700;
     }
+
+    /* ===== Caja grande de alertas FAI ===== */
+    .fai-alert-box {
+        background: #fff;
+        border-radius: 10px;
+        border: 2px solid #df0c0cff;
+        border-left: 5px solid #df0c0cff;
+        padding: 0.5rem 0.75rem 0.4rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Header */
+    .fai-alert-header {
+        border-bottom: 1px dashed #df0c0cff;
+        padding-bottom: .25rem;
+    }
+
+    .fai-alert-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #c00d1fff;
+        font-size: 1.6rem;
+    }
+
+    .fai-alert-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        color: #db2525ff;
+    }
+
+    .fai-alert-subtitle {
+        font-size: 0.72rem;
+        color: #a66;
+    }
+
+    .fai-alert-count {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #ffe5e5;
+        color: #b00000;
+        font-weight: 600;
+    }
+
+    /* Body (contenedor de chips) */
+    .fai-alert-body {
+        padding-top: .3rem;
+    }
+
+    /* Chips (puedes combinar con lo que ya tienes) */
+    .fai-chip {
+        display: inline-flex;
+        align-items: flex-start;
+        background: #ffecec;
+        border: 1px solid #f4b6b6;
+        border-radius: 12px;
+        padding: 4px 8px;
+        margin: 3px 6px 3px 0;
+        font-size: 0.78rem;
+        color: #b00000;
+        cursor: pointer;
+        transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
+    }
+
+    .fai-chip:hover {
+        background: #ffdede;
+        box-shadow: 0 1px 3px rgba(220, 53, 69, 0.25);
+        transform: translateY(-1px);
+    }
+
+    .fai-chip i {
+        font-size: 0.75rem;
+        margin-top: 1px;
+    }
+
+    .fai-chip-text {
+        line-height: 1.15;
+    }
+
+    /* chip activo cuando filtra */
+    .fai-chip-active {
+        border-color: #c82333;
+        box-shadow: 0 0 4px rgba(200, 35, 51, 0.4);
+    }
 </style>
 
 @endsection
@@ -485,8 +629,8 @@
             result: 6,
             station: 9,
             method: 10,
-            inspector: 11,
-            location: 12,
+            inspector: 12,
+            location: 13,
         };
 
         // =========================
@@ -622,6 +766,65 @@
                 initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
             });
         }
+
+        // =========================
+        //  Click en chips: filtrar historial de esa orden (toggle)
+        // =========================
+        $(document).on('click', '.fai-chip', function() {
+            if (!$.fn.DataTable.isDataTable('#faiTable')) {
+                return;
+            }
+
+            const dt = $('#faiTable').DataTable(); // instancia segura
+            const $chip = $(this);
+
+            // 🧲 Si este chip YA está activo ⇒ quitar filtro y salir
+            if ($chip.hasClass('fai-chip-active')) {
+                // Limpia búsquedas de DataTables
+                dt.search('');
+                dt.columns().search('');
+                dt.draw();
+
+                // Quita marcado visual
+                $('.fai-chip').removeClass('fai-chip-active');
+                return;
+            }
+
+            // 🔄 Si es un chip NUEVO ⇒ aplicar filtro
+            let pn = $chip.data('pn') || '';
+            let workId = $chip.data('work-id') || '';
+
+            pn = pn.toString().trim();
+            workId = workId.toString().trim();
+
+            // Limpia búsquedas previas
+            dt.search('');
+            dt.columns().search('');
+
+            // Índices: 0=DATE, 1=PART/REVISION, 2=JOB
+            const PN_COL = 1;
+            const JOB_COL = 2;
+
+            // Filtrar por JOB (work_id)
+            if (workId) {
+                dt.column(JOB_COL).search(workId, false, false);
+            }
+
+            // Filtrar también por PN
+            if (pn) {
+                dt.column(PN_COL).search(pn, false, false);
+            }
+
+            dt.draw();
+
+            // Marcar este chip como activo y limpiar los demás
+            $('.fai-chip').removeClass('fai-chip-active');
+            $chip.addClass('fai-chip-active');
+        });
+
+
+
+
     });
 </script>
 

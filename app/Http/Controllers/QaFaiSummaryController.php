@@ -617,8 +617,56 @@ class QaFaiSummaryController extends Controller
     {
         $data = $this->getFaiSummaryData($request);
 
+        /** @var \Illuminate\Support\Collection $inspections */
+        $inspections = $data['inspections'];
+
+        // ===============================
+        // SOLO para failedOrders:
+        // excluir órdenes cuya inspección esté COMPLETED
+        // ===============================
+        $failedOrders = $inspections
+
+            // A) Solo inspecciones FAI y con orden asociada
+            ->filter(function ($i) {
+                return $i->orderSchedule
+                    && strcasecmp(trim((string)$i->insp_type), 'FAI') === 0;
+            })
+
+            // B) EXCLUIR órdenes COMPLETED (solo para chips)
+            ->filter(function ($i) {
+                return strtolower($i->orderSchedule->status_inspection ?? '') !== 'completed';
+            })
+
+            // C) Agrupar por orden
+            ->groupBy(function ($i) {
+                return $i->order_schedule_id;
+            })
+
+            // D) Último FAI
+            ->map(function ($group) {
+                return $group->sortByDesc('date')->first();
+            })
+
+            // E) Último FAI sea FAIL/NO PASS
+            ->filter(function ($latest) {
+                $result = strtolower(trim((string) $latest->results));
+
+                return in_array($result, [
+                    'fail',
+                    'no pass',
+                    'nopass',
+                    'no_pass'
+                ], true);
+            })
+
+            ->values();
+
+        $data['failedOrders'] = $failedOrders;
+
         return view('qa.faisummary.faisummary_summary', $data);
     }
+
+
 
     /**
      * 🔁 Reutiliza esta función para vista, Excel y PDF
