@@ -6,7 +6,7 @@
                     <th>Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                    <th style="width: 65px;">LOCATION</th>
+                    <th style="width: 55px;">LOCATION</th>
                     <th style="width: 55px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
                     <th style="width: 190px;">PART/DESCRIPTION</th>
@@ -14,15 +14,17 @@
                     <th style="width: 30px;">COQTY</th>
                     <th style="width: 40px;">WOQTY</th>
                     <th style="width: 100px;">STATUS</th>
-                    <th style="width: 70px;">MACH. DATE</th>
+                    <th style="width: 55px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
-                    <th style="width: 70px;">DUE DATE</th>
+                    <th style="width: 55px;">DUE DATE</th>
                     <th style="width: 30px;">DAYS</th>
-                    <th style="width: 55px;">ALERT</th>
+                    <th style="width: 50px;">ALERT</th>
                     <th style="width: 20px;">REP.</th>
                     <th style="width: 20px;">OUT</th>
                     <th style="width: 30px;">STATION</th>
-                    <th style="width: 50px;">NOTES</th>
+                    <th style="width: 65px;">NOTES</th>
+                    <th style="width: 40px;">ORD ID</th>
+                    <th style="width: 60px;">CUST PO</th>
                 </tr>
             </thead>
             <tbody>
@@ -235,10 +237,10 @@
                                 {{ optional($order->due_date)->format('M-d-y') }}
                             </span>
                         </td>
-                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
+                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px " >
                             {{ $dias }} days
                         </td>
-                        <td>
+                        <td class="text-center">
                             <div id="alerta-{{ $order->id }}" class="progress" style="width: 80px; height: 30px;">
                                 <div class="progress-bar {{ $alertColor }}" role="progressbar"
                                     style="width: 100%; height: 30px; line-height: 30px; font-size: 18px; font-weight: bold;">
@@ -246,7 +248,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <button
                                 class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
                                 data-id="{{ $order->id }}"
@@ -257,7 +259,7 @@
                             </button>
                         </td>
 
-                        <td>
+                        <td class="text-center">
                             <button
                                 class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
                                 data-id="{{ $order->id }}"
@@ -305,7 +307,8 @@
                             </span>
                             @endif
                         </td>
-
+                        <td class="texsty">{{ $order->co}}</td>
+                        <td class="texsty">{{ $order->cust_po}}</td>
                         </tr>
                         @empty
                         <tr>

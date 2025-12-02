@@ -30,7 +30,6 @@ class OrderScheduleImportService
         'line_selling_um',
         'backorder_amount',
         'edi_release_no',
-        'line_no',
         'lot_id',
         'split_id',
         'co_user_1',
@@ -257,7 +256,8 @@ public function relabelParents(): void
             'costumer'        => $row['customer_id'],
             'qty'             => $row['line_qty'],
             'co'             => $row['order_id'],
-               'cust_po'          => $row['customer_po_ref']   ?? null,  // 👈 ya no truena
+           'cust_po' => $row['customer_po_ref'] . '/' . $row['line_no'],
+            //'cust_po'          => $row['customer_po_ref']   ?? null,  // 👈 ya no truena
             'operation'       => $row['operation'] ?? '0',
             'machines'        => $row['machines'] ?? 'default_value',
             'done'            => $row['done'] ?? '1',
