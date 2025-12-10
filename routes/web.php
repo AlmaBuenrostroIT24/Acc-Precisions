@@ -8,6 +8,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Order_ScheduleController;
 use App\Http\Controllers\QaFaiSummaryController;
 use App\Http\Controllers\NonConformanceController;
+use App\Http\Controllers\Machines\MachCodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -205,6 +206,12 @@ Route::middleware('auth')->group(function () {
 
 
 
+//++++++++++++++++++++++++++++++++++++++++<-START->MACHINES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-// -----------------------------------Machines-------------------------------------------------------
+//Route::resource('machines', MachineMachineryController::class);
+Route::resource('/machines/codes', MachCodeController::class);
+Route::get('/type-work/next-code', [MachCodeController::class, 'getNextCode'])->name('type-work.next-code');
+Route::get('/machine-codes/next-code-by-brand', [MachCodeController::class, 'getNextCodeByBrand']);
+Route::get('/machine-codes/brands', [MachCodeController::class, 'getBrandsByType']);
+Route::get('/machine-brands', [MachCodeController::class, 'getMachineBrands']);
+Route::post('/machines-codes/{id}/toggle-status', [MachCodeController::class, 'toggleStatus'])->name('codes.toggle-status');
