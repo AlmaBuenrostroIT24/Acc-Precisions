@@ -4,12 +4,10 @@ namespace App\Models\Machines;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MachineCode extends Model
 {
     use HasFactory;
-    use SoftDeletes;
 
     protected $table = 'machines_codes';
 
@@ -23,5 +21,8 @@ class MachineCode extends Model
         'status',
     ];
 
-    protected $dates = ['deleted_at'];
+    public function machineries()
+    {
+        return $this->hasMany(MachineMachinary::class, 'machine_code_id');
+    }
 }

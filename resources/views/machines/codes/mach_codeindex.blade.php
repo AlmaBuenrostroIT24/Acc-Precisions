@@ -406,8 +406,6 @@
         </div>
     </div>
 </div>
-
-
 @endsection
 
 @section('css')

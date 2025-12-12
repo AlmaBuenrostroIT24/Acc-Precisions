@@ -359,12 +359,12 @@ return [
         [
             'text' => 'Machines',
             'icon' => 'nav-icon fas fa-industry',
-            'can' => ['machines/machinery', 'machines/otherequipment', 'machines/maintenance', 'machines/batteries', 'machines/manuals', 'machines/codes'], // <- este es el truco
+            'can' => ['machines/machinary', 'machines/otherequipment', 'machines/maintenance', 'machines/batteries', 'machines/manuals', 'machines/codes'], // <- este es el truco
             'submenu' => [
                 [
-                    'text' => 'Machinery',
-                    'url' => 'machines/machinery',
-                    'can' => 'machines/machinery',
+                    'text' => 'Machinary',
+                    'url' => 'machines/machinary',
+                    'can' => 'machines/machinary',
                 ],
                 [
                     'text' => 'Other Equipment',

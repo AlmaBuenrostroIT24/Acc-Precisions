@@ -170,8 +170,7 @@ class MachCodeController extends Controller
 
             $prefix = $this->prefixMap[$typeWork];
 
-            $last = MachineCode::withTrashed()
-                ->where('code', 'like', $prefix . '%')   // antes: "$prefix-%"
+            $last = MachineCode::where('code', 'like', $prefix . '%')   // antes: "$prefix-%"
                 ->orderBy('code', 'desc')
                 ->first();
 
@@ -195,8 +194,7 @@ class MachCodeController extends Controller
             $prefix = $this->machineBrands[$brand]; // ej. 'YCM', 'Mori'
 
             // Buscar último código YCMxxx, Morixxx, etc.
-            $last = MachineCode::withTrashed()
-                ->where('code', 'like', $prefix . '%')   // antes: "$prefix-%"
+            $last = MachineCode::where('code', 'like', $prefix . '%')   // antes: "$prefix-%"
                 ->orderBy('code', 'desc')
                 ->first();
 
