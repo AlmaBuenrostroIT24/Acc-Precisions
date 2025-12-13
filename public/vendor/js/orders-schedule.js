@@ -135,6 +135,25 @@ document.addEventListener("DOMContentLoaded", () => {
         now.getDate()
     )} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
 
+    // 2025-12-15: hook global para ocultar Standby+Onhold salvo filtro Standby o búsqueda
+    let standbyFilterHookAdded = false;
+    function ensureStandbyFilterHook() {
+        if (standbyFilterHookAdded) return;
+        $.fn.dataTable.ext.search.push(function (settings, data) {
+            if (!settings.nTable || settings.nTable.id !== "orders_scheduleTable") return true;
+            const loc = String(data[1] || "").toLowerCase(); // col oculta location
+            const status = String(data[2] || "").toLowerCase(); // col oculta status
+            const locationFilterVal = (document.getElementById("locationFilter")?.value || "").toLowerCase();
+            const globalSearch = ((settings.oPreviousSearch && settings.oPreviousSearch.sSearch) || "").trim();
+            const isStandbyOnhold = loc === "standby" && status === "onhold";
+            if (locationFilterVal === "standby") return true; // mostrar todo si filtra Standby
+            if (globalSearch) return true; // permitir búsqueda global
+            if (isStandbyOnhold) return false; // ocultar en vista normal
+            return true;
+        });
+        standbyFilterHookAdded = true;
+    }
+
     function initOrdersTable(tableElement, options = {}) {
         const baseOptions = {
             paging: true,
@@ -361,6 +380,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (loader) loader.style.display = "block";
         if (wrapper) wrapper.style.display = "none";
 
+        // 2025-12-15: asegurar filtro Standby+Onhold antes de inicializar DataTable
+        ensureStandbyFilterHook();
+
         //  Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
 
@@ -583,6 +605,10 @@ document.addEventListener("DOMContentLoaded", () => {
     applyFilter("#locationFilter", 1);
     applyFilter("#statusFilter", 2);
     applyFilter("#customerFilter", 7);
+    // 2025-12-15: forzar redraw para que el filtro Standby aplique el ext.search
+    $("#locationFilter").on("change", function () {
+        if (window.table) window.table.draw(false);
+    });
 
     //-------------------------------------------------------------------------------------
 
