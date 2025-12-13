@@ -14,9 +14,9 @@
                     <th style="width: 30px;">COQTY</th>
                     <th style="width: 40px;">WOQTY</th>
                     <th style="width: 100px;">STATUS</th>
-                    <th style="width: 55px;">MAC. DATE</th>
+                    <th style="width: 80px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
-                    <th style="width: 55px;">DUE DATE</th>
+                    <th style="width: 80px;">DUE DATE</th>
                     <th style="width: 30px;">DAYS</th>
                     <th style="width: 50px;">ALERT</th>
                     <th style="width: 20px;">REP.</th>

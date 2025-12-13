@@ -1,0 +1,77 @@
+[33mcommit 6c5264a021eb181a5735a3e79470c29e53f861bc[m[33m ([m[1;36mHEAD -> [m[1;32mschedule[m[33m, [m[1;32mmaster[m[33m, [m[1;32mmachines[m[33m)[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Fri Dec 12 08:01:49 2025 -0800
+
+    Add la interfaz de maquinas
+
+[33mcommit 8e5a3bf573a41afaf4ea56d32ae76a97939291a2[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Wed Dec 10 07:12:19 2025 -0800
+
+    Add la interfaz de los codes para maquinas y equipment
+
+[33mcommit 299036c29c6005cc5b341f1728249e18e5b97261[m[33m ([m[1;32mfaisummary[m[33m)[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Tue Dec 2 09:06:21 2025 -0800
+
+    Se add en la tabla principal las columnas ord id y cust po y en la columna cust po se concateno la line_no
+
+[33mcommit 992a59af340dad1bf59a25d50fd07f7d36f3977c[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Wed Nov 26 11:29:23 2025 -0800
+
+    Se add en el tab summary -failed fai alerts- con su respectiva tabla y su detalle
+
+[33mcommit c95a2cea6214399d0b28ad90de118b43de596bb2[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Wed Nov 26 09:08:01 2025 -0800
+
+    Se add en el tab summary -failed fai alerts-
+
+[33mcommit 8fea4053e2841037de019c6e3ed46a967ca2d918[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Tue Nov 25 08:51:13 2025 -0800
+
+    Se change campo date como datetime y se ajusto tanto en part revision y summary
+
+[33mcommit 6f9df8272e32b8150c257a975fe9b9188c964ffb[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Tue Nov 25 07:08:23 2025 -0800
+
+    Fix el usuario por medio de permisos ver btn log
+
+[33mcommit 597b09f8f6f1b71e2309037f7862ca7bde30c21e[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Tue Nov 25 06:55:09 2025 -0800
+
+    Se add la tabla de orders_schedule_logs y un pdf en el tab Completed orders solo lo puede ver el usuarios AdminIT
+
+[33mcommit a4fbeffebda4334b9ef13232f83515686a541605[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Mon Nov 24 07:00:56 2025 -0800
+
+    Se add en el tab completeOrders el btn de edit fecha end date y se corrigio el efecto de la tabla al momento de carhar
+
+[33mcommit cb87734f9b43560dd966a62848b74d7192162046[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Fri Nov 21 09:35:19 2025 -0800
+
+    Se mejoraron los detalles del tab Order statistics
+
+[33mcommit 2cb49d170510bbc955db221eed9e96c35108f820[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Thu Nov 20 11:15:59 2025 -0800
+
+    Fix Filter &Orders Charts for Customer  year, month,week only orders_staus=active
+
+[33mcommit b72a204dd53194fdd44db32a7ab8e75af3d0dc17[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Thu Nov 20 11:01:38 2025 -0800
+
+    Fix Filter &Orders Charts for year, month,week only orders_staus=active
+
+[33mcommit b96b098ebf533a615e4f9adbf5a1ab982a3abf81[m
+Author: supportalma-hash <support.alma@accprecision.com>
+Date:   Thu Nov 20 09:58:02 2025 -0800
+
+    Fix circle customer order & tables late orders & orders whis week

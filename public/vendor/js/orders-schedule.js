@@ -432,6 +432,78 @@ document.addEventListener("DOMContentLoaded", () => {
         if (status) $row.addClass(`bg-status-${status}`);
     }
 
+    // 2025-12-15: Calcula fecha restando solo días hábiles (omite sábado/domingo)
+    function subtractBusinessDays(dateStr, daysBack = 5) {
+        const d = new Date(`${dateStr}T12:00:00`);
+        let count = 0;
+        while (count < daysBack) {
+            d.setDate(d.getDate() - 1);
+            const dow = d.getDay();
+            if (dow !== 0 && dow !== 6) count++;
+        }
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    }
+
+    // 2025-12-15: Ajusta machining_date automáticamente 5 días hábiles antes del due_date
+    function autoUpdateMachiningDate(orderId, dueDate, statusForStyle) {
+        const newMach = subtractBusinessDays(dueDate, 5);
+        handlePostJsonWithAlerts(
+            `/orders/${orderId}/update-date-machining`,
+            { machining_date: newMach },
+            (mData) => {
+                if (!mData.success) return;
+
+                const machSpan = $(
+                    `.editable-machining-date[data-id="${orderId}"]`
+                );
+                const newSpan = createEditableDateSpan(orderId, newMach, {
+                    cssClass: "editable-machining-date",
+                    underline: true,
+                    bold: true,
+                });
+                if (machSpan.length) machSpan.replaceWith(newSpan);
+
+                const diasVal =
+                    typeof mData.dias_restantes === "number"
+                        ? mData.dias_restantes
+                        : null;
+                if (diasVal !== null) {
+                    const diasTd = document.getElementById(
+                        `dias-restantes-${orderId}`
+                    );
+                    if (diasTd) {
+                        diasTd.textContent = `${diasVal} days`;
+                        diasTd.className =
+                            diasVal < 0
+                                ? "text-danger fw-bold"
+                                : diasVal <= 2
+                                ? "text-warning fw-bold"
+                                : "text-success fw-bold";
+                    }
+                }
+
+                const alertaDiv = document.querySelector(
+                    `#alerta-${orderId} .progress-bar`
+                );
+                if (alertaDiv && mData.alertColor) {
+                    alertaDiv.className = "progress-bar " + mData.alertColor;
+                    alertaDiv.textContent =
+                        mData.alertLabel || alertaDiv.textContent;
+                }
+
+                applyRowLateStyle(
+                    orderId,
+                    diasVal !== null ? diasVal : 0,
+                    mData.status || statusForStyle || ""
+                );
+            },
+            "Error al ajustar machining_date desde due_date."
+        );
+    }
+
     // Filtrado con regex exacto
     const applyFilter = (selector, columnIndex) => {
         $(selector).on("change", function () {
@@ -1769,6 +1841,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         applyRowLateStyle(
                             orderId,
                             data.dias_restantes,
+                            data.status || ""
+                        );
+
+                        // 2025-12-15: Ajuste automático de machining_date (-5 días hábiles)
+                        autoUpdateMachiningDate(
+                            orderId,
+                            newDate,
                             data.status || ""
                         );
                     } else {
