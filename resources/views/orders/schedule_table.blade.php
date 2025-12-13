@@ -215,7 +215,8 @@
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             $hasSource = $order->our_source;
                             $dateValue = optional($order->machining_date)->format('Y-m-d');
-                            $dateLabel = optional($order->machining_date)->format('M-d-y');
+                            // 2025-12-15: Se muestra en tabla como Nov-25-2025
+                            $dateLabel = optional($order->machining_date)->format('M-d-Y');
                             @endphp
 
                             <span
@@ -234,7 +235,7 @@
                                 data-enabled="{{ $order->status === 'onhold' ? 1 : 0 }}"
                                 data-value="{{ optional($order->due_date)->format('Y-m-d') }}"
                                 style="{{ $order->status === 'onhold' ? 'cursor:pointer;' : '' }}">
-                                {{ optional($order->due_date)->format('M-d-y') }}
+                                {{ optional($order->due_date)->format('M-d-Y') }} {{-- 2025-12-15: formato Nov-25-2025 --}}
                             </span>
                         </td>
                         <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px " >
