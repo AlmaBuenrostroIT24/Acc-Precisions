@@ -101,12 +101,12 @@ class OrderScheduleImportService
         'cur_break_total_prepay',
     ];
 
-public function relabelParents(): void
-{
-    DB::transaction(function () {
+    public function relabelParents(): void
+    {
+        DB::transaction(function () {
 
-        // 1) group_key: PN#WORK_ID (normalizado). Si work_id está vacío => group_key = NULL (no agrupar).
-        DB::statement("
+            // 1) group_key: PN#WORK_ID (normalizado). Si work_id está vacío => group_key = NULL (no agrupar).
+            DB::statement("
             UPDATE orders_schedule
             SET group_key = CASE
                 WHEN LOWER(status) <> 'sent'
@@ -117,16 +117,16 @@ public function relabelParents(): void
             WHERE LOWER(status) <> 'sent'
         ");
 
-        // 2) Reiniciar parent_id SOLO para filas agrupables (group_key no nulo)
-        DB::statement("
+            // 2) Reiniciar parent_id SOLO para filas agrupables (group_key no nulo)
+            DB::statement("
             UPDATE orders_schedule
             SET parent_id = NULL
             WHERE LOWER(status) <> 'sent'
               AND group_key IS NOT NULL
         ");
 
-        // 3) Elegir UN padre por group_key (PN#WORK_ID). Tomamos el MAX(id) del grupo.
-        DB::statement("
+            // 3) Elegir UN padre por group_key (PN#WORK_ID). Tomamos el MAX(id) del grupo.
+            DB::statement("
             UPDATE orders_schedule os
             JOIN (
                 SELECT group_key, MAX(id) AS parent_id
@@ -140,16 +140,16 @@ public function relabelParents(): void
               AND LOWER(os.status) <> 'sent'
         ");
 
-        // 3.5) Copiar qty -> wo_qty SOLO en hijos con wo_qty vacío/0
-        DB::statement("
+            // 3.5) Copiar qty -> wo_qty SOLO en hijos con wo_qty vacío/0
+            DB::statement("
             UPDATE orders_schedule
             SET wo_qty = COALESCE(qty,0)
             WHERE parent_id IS NOT NULL
               AND (wo_qty IS NULL OR wo_qty = 0)
         ");
 
-        // 4) Totales: suma wo_qty por grupo (solo filas con group_key, o sea, con work_id válido)
-        DB::statement("
+            // 4) Totales: suma wo_qty por grupo (solo filas con group_key, o sea, con work_id válido)
+            DB::statement("
             UPDATE orders_schedule p
             JOIN (
                 SELECT COALESCE(parent_id, id) AS grp_parent_id,
@@ -163,22 +163,22 @@ public function relabelParents(): void
               AND p.group_key IS NOT NULL
         ");
 
-        // 5) Limpiar total en hijos
-        DB::statement("
+            // 5) Limpiar total en hijos
+            DB::statement("
             UPDATE orders_schedule
             SET group_wo_qty = NULL
             WHERE parent_id IS NOT NULL
               AND group_wo_qty IS NOT NULL
         ");
 
-        // 6) Opcional: en órdenes sin work_id (group_key NULL) no mostrar total de grupo
-        DB::statement("
+            // 6) Opcional: en órdenes sin work_id (group_key NULL) no mostrar total de grupo
+            DB::statement("
             UPDATE orders_schedule
             SET group_wo_qty = NULL
             WHERE group_key IS NULL
         ");
-    });
-}
+        });
+    }
 
 
 
@@ -229,7 +229,10 @@ public function relabelParents(): void
         // Verificar si ya existe en base de datos
         $exists = OrderSchedule::where('PN', $row['part_id'])
             ->where('Part_description', $row['misc_reference'])
-            ->where('due_date', $row['due_date'])
+            ->where(function ($q) use ($row) {
+                $q->where('due_date', $row['due_date'])
+                    ->orWhere('update_duedate', $row['due_date']);
+            })
             ->exists();
 
         if ($exists) {
@@ -256,7 +259,7 @@ public function relabelParents(): void
             'costumer'        => $row['customer_id'],
             'qty'             => $row['line_qty'],
             'co'             => $row['order_id'],
-           'cust_po' => $row['customer_po_ref'] . '/' . $row['line_no'],
+            'cust_po' => $row['customer_po_ref'] . '/' . $row['line_no'],
             //'cust_po'          => $row['customer_po_ref']   ?? null,  // 👈 ya no truena
             'operation'       => $row['operation'] ?? '0',
             'machines'        => $row['machines'] ?? 'default_value',

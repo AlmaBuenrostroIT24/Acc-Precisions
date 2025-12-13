@@ -1204,50 +1204,40 @@ class Order_ScheduleController extends Controller
     }
 
     //---------------------------------------------------------------------------------------------
-    public function updateDueDate(Request $request, OrderSchedule $order)
+            public function updateDueDate(Request $request, OrderSchedule $order)
     {
-        Log::info('Entró al método updateDueDate', [
-            'id' => $order->id,
-            'anterior' => $order->due_date,
-            'nueva_fecha' => $request->due_date
+        // 2025-12-15: si cambia la fecha, copia la anterior en update_duedate y guarda la nueva en due_date
+        $request->validate([
+            'due_date' => 'required|date',
         ]);
 
-        try {
-            $request->validate([
-                'due_date' => 'required|date',
-            ]);
+        $newDate = $request->due_date;
+        $oldDate = $order->due_date;
 
-            $newDate = $request->due_date;
-
-            // Guardar log solo si la fecha cambia
-            if ($order->due_date !== $newDate) {
-                // Aquí podrías crear un log similar si deseas
-                // DueDateLog::create([...]);
-
-                $order->due_date = $newDate;
-                $order->save();
+        if ($oldDate !== $newDate) {
+            // 2025-12-15: conservar la fecha original solo la primera vez
+            if (empty($order->update_duedate)) {
+                $order->update_duedate = $oldDate;
             }
-
-            // Calcular días restantes usando la nueva due_date
-            $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
-
-            $alertColor = $dias < 0 ? 'bg-danger' : ($dias <= 2 ? 'bg-warning' : 'bg-success');
-            $alertLabel = $dias < 0 ? 'Late' : ($dias <= 2 ? 'Expedite' : 'On time');
-
-            return response()->json([
-                'success' => true,
-                'due_date' => $order->due_date,
-                'dias_restantes' => $dias,
-                'alertColor' => $alertColor,
-                'alertLabel' => $alertLabel,
-                'status' => strtolower($order->status),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+            $order->due_date = $newDate;
+            $order->save();
         }
+
+        // Calcular dias restantes usando la nueva due_date
+        $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
+
+        $alertColor = $dias < 0 ? 'bg-danger' : ($dias <= 2 ? 'bg-warning' : 'bg-success');
+        $alertLabel = $dias < 0 ? 'Late' : ($dias <= 2 ? 'Expedite' : 'On time');
+
+        return response()->json([
+            'success' => true,
+            'due_date' => $order->due_date,
+            'update_duedate' => $order->update_duedate,
+            'dias_restantes' => $dias,
+            'alertColor' => $alertColor,
+            'alertLabel' => $alertLabel,
+            'status' => strtolower($order->status),
+        ]);
     }
     //----------------------------------------------------------------------------------------------------------
 
@@ -1941,3 +1931,4 @@ class Order_ScheduleController extends Controller
 
     //------------------------------------------------------------------------------------------------
 }
+
