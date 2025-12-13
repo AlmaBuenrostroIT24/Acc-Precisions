@@ -688,7 +688,21 @@ ${error && error.message ? error.message : error}`);
                         .closest("td")
                         .find(".last-location-label");
 
-                    if (data.last_location === "Yarnell") {
+                    if (
+                        String(newLocation || "").toLowerCase() ===
+                            "standby" &&
+                        data.last_location
+                    ) {
+                        label
+                            .html(
+                                `
+                        <span class="badge bg-secondary text-light">
+                            <i class="fas fa-hourglass-half me-1"></i> ${data.last_location}
+                        </span>
+                    `
+                            )
+                            .show();
+                    } else if (data.last_location === "Yarnell") {
                         label
                             .html(
                                 `
@@ -1167,7 +1181,24 @@ ${error && error.message ? error.message : error}`);
                         }
 
                         const label = row.find(".last-location-label");
-                        if (data.last_location === "Yarnell") {
+                        const currentLoc = String(
+                            (data.location || locationSelect.val() || "")
+                        ).toLowerCase();
+                        if (
+                            currentLoc === "standby" &&
+                            data.last_location &&
+                            data.last_location !== ""
+                        ) {
+                            label
+                                .html(
+                                    `
+                                <span class="badge bg-secondary text-light">
+                                    <i class="fas fa-hourglass-half me-1"></i> ${data.last_location}
+                                </span>
+                            `
+                                )
+                                .show();
+                        } else if (data.last_location === "Yarnell") {
                             label
                                 .html(
                                     `
@@ -1221,6 +1252,25 @@ ${error && error.message ? error.message : error}`);
                                 `hidden-location-${orderId}`
                             );
                             if (hiddenLoc) hiddenLoc.textContent = "standby";
+                        }
+
+                        // 2025-12-15: Si sale de onhold y está en Standby, regresar a last_location (o ubicación actual si viene del backend)
+                        if (
+                            oldStatus === "onhold" &&
+                            newStatus !== "onhold" &&
+                            locationSelect.length &&
+                            String(locationSelect.val() || "").toLowerCase() ===
+                                "standby"
+                        ) {
+                            const targetLoc =
+                                (data.last_location || "").trim() ||
+                                "Floor";
+                            locationSelect.val(targetLoc).trigger("change");
+                            const hiddenLoc = document.getElementById(
+                                `hidden-location-${orderId}`
+                            );
+                            if (hiddenLoc)
+                                hiddenLoc.textContent = targetLoc.toLowerCase();
                         }
 
                         // ✅Agregar nuevo valor al filtro si no existe

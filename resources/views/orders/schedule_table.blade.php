@@ -94,7 +94,11 @@
                             </select>
 
                             <div class="last-location-label mt-1">
-                                @if ($order->last_location === 'Yarnell')
+                                @if ($order->location === 'Standby' && $order->last_location)
+                                <span class="badge bg-secondary text-light">
+                                    <i class="fas fa-hourglass-half me-1"></i> {{ $order->last_location }}
+                                </span>
+                                @elseif ($order->last_location === 'Yarnell')
                                 <span class="badge bg-warning text-dark">
                                     <i class="fas fa-map-marker-alt me-1"></i> Yarnell
                                 </span>
