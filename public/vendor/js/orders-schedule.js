@@ -445,6 +445,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // 2025-12-15: onhold debe conservar su color aunque la fecha esté vencida
+        if (status === "onhold") {
+            if (status) $row.addClass(`bg-status-${status}`);
+            if (priority === "yes") $row.addClass("row-priority");
+            return;
+        }
+
         if (dias !== null && dias < 0) {
             $row.addClass("row-late");
             if (priority === "yes") $row.addClass("row-priority");
@@ -805,6 +812,15 @@ ${error && error.message ? error.message : error}`);
 
         if (isStandbyOnhold) {
             row.classList.add(`bg-status-${statusVal || "onhold"}`);
+            if (String(row.dataset.priority || "").toLowerCase() === "yes") {
+                row.classList.add("row-priority");
+            }
+            return;
+        }
+
+        // 2025-12-15: onhold debe respetar su color (sin marcar por fecha)
+        if (statusVal === "onhold") {
+            row.classList.add(`bg-status-${statusVal}`);
             if (String(row.dataset.priority || "").toLowerCase() === "yes") {
                 row.classList.add("row-priority");
             }
