@@ -28,16 +28,23 @@ document.addEventListener("DOMContentLoaded", () => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                Accept: "application/json", // 2025-12-12: fuerza respuesta JSON para evitar HTML en errores
                 "X-CSRF-TOKEN": csrfToken,
             },
             body: JSON.stringify(data),
-        }).then((res) => {
+        }).then(async (res) => {
+            const rawText = await res.text();
             if (!res.ok) {
-                return res.text().then((text) => {
-                    throw new Error(`HTTP ${res.status}: ${text}`);
-                });
+                const msg = rawText || res.statusText;
+                throw new Error(`HTTP ${res.status}: ${msg}`);
             }
-            return res.json();
+            try {
+                return JSON.parse(rawText);
+            } catch (err) {
+                throw new Error(
+                    `Respuesta no JSON válida: ${rawText.slice(0, 200)}`
+                );
+            }
         });
 
     // ------ Mostrar mensaje de carga al enviar form (si existe) ------
@@ -562,7 +569,8 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch((error) => {
                 console.error("Error en la petición:", error); // Ver error real en consola
-                alert(onErrorMsg);
+                alert(`${onErrorMsg}
+${error && error.message ? error.message : error}`);
             });
     }
 
@@ -1204,6 +1212,15 @@ document.addEventListener("DOMContentLoaded", () => {
                                 .draw(false);
                             $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
                             select.blur(); // quita foco
+                        }
+
+                        // 2025-12-15: Si pasa a onhold, forzar ubicación Standby (con persistencia)
+                        if (newStatus === "onhold" && locationSelect.length) {
+                            locationSelect.val("Standby").trigger("change");
+                            const hiddenLoc = document.getElementById(
+                                `hidden-location-${orderId}`
+                            );
+                            if (hiddenLoc) hiddenLoc.textContent = "standby";
                         }
 
                         // ✅Agregar nuevo valor al filtro si no existe

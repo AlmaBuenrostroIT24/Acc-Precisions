@@ -545,7 +545,7 @@ class Order_ScheduleController extends Controller
     public function updateLocation(Request $request, OrderSchedule $order)
     {
         $request->validate([
-            'location' => 'required|in:Floor,Yarnell,Hearst',
+            'location' => 'required|in:Floor,Yarnell,Hearst,Standby', // 2025-12-15: incluye Standby para onhold
         ]);
 
         $order->last_location = $order->location; // Guardamos la ubicación actual
