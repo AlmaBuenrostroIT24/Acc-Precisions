@@ -6,10 +6,10 @@
                     <th>Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                    <th style="width: 55px;">LOCATION</th>
+                    <th style="width: 70px;">LOCATION</th>
                     <th style="width: 55px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
-                    <th style="width: 190px;">PART/DESCRIPTION</th>
+                    <th style="width: 150px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
                     <th style="width: 30px;">COQTY</th>
                     <th style="width: 40px;">WOQTY</th>
@@ -82,7 +82,7 @@
                             <select
                                 name="location"
                                 class="form-control form-control-sm location-select fw-bold text-capitalize"
-                                style="width: 80px; font-weight: bold; color: black;"
+                                style="width: 90px; font-weight: bold; color: black;"
                                 data-id="{{ $order->id }}"
                                 data-old-status="{{ strtolower($order->status) }}"
                                 @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
@@ -90,6 +90,7 @@
                                 <option value="Floor" {{ $order->location === 'Floor' ? 'selected' : '' }}>Floor</option>
                                 <option value="Yarnell" {{ $order->location === 'Yarnell' ? 'selected' : '' }}>Yarnell</option>
                                 <option value="Hearst" {{ $order->location === 'Hearst' ? 'selected' : '' }}>Hearst</option>
+                                <option value="Standby" {{ $order->location === 'Standby' ? 'selected' : '' }}>Standby</option> {{-- 2025-12-15: nueva ubicación para onhold --}}
                             </select>
 
                             <div class="last-location-label mt-1">

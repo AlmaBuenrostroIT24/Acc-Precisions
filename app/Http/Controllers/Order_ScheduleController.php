@@ -78,6 +78,12 @@ class Order_ScheduleController extends Controller
 
         // Estos catálogos se obtienen aparte (no afectan la consulta principal)
         $locations = OrderSchedule::select('location')->distinct()->pluck('location');
+        // 2025-12-15: asegurar opción Standby para onhold
+        if (!$locations->contains(function ($loc) {
+            return strtolower((string)$loc) === 'standby';
+        })) {
+            $locations->push('Standby');
+        }
         $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 

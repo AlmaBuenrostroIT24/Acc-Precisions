@@ -784,15 +784,14 @@ document.addEventListener("DOMContentLoaded", () => {
             bold = true,
         } = options;
 
-        // Formatear fecha como "Jul-11-25"
+        // 2025-12-15: Formatear fecha como "Jul-11-2025" (año completo)
         const [year, month, day] = date.split("-");
         const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
         const shortMonth = dateObj.toLocaleString("en-US", { month: "short" });
-        const twoDigitYear = year.slice(-2);
         const formatted = `${shortMonth}-${day.padStart(
             2,
             "0"
-        )}-${twoDigitYear}`;
+        )}-${year}`;
 
         // Armar clases
         const classes = [
