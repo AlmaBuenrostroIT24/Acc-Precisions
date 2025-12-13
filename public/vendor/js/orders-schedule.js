@@ -428,6 +428,18 @@ document.addEventListener("DOMContentLoaded", () => {
         $row.removeClass((i, c) => (c.match(/bg-status-\S+/g) || []).join(" "));
 
         if (isStandbyOnhold) {
+            // Limpiar días/alerta en esta vista
+            if (diasTd.length) {
+                diasTd.text("");
+                diasTd.removeClass();
+            }
+            const alertaDiv = $row.find("div[id^='alerta-'] .progress-bar");
+            if (alertaDiv.length) {
+                alertaDiv
+                    .removeClass()
+                    .addClass("progress-bar d-none")
+                    .text("");
+            }
             if (status) $row.addClass(`bg-status-${status}`);
             if (priority === "yes") $row.addClass("row-priority");
             return;
@@ -461,6 +473,94 @@ document.addEventListener("DOMContentLoaded", () => {
             alertaDiv.className = "progress-bar d-none";
             alertaDiv.textContent = "";
         }
+    }
+
+    // 2025-12-15: Calcular fecha restando días hábiles (omite sábado/domingo)
+    function subtractBusinessDays(dateStr, daysBack = 5) {
+        const d = new Date(`${dateStr}T12:00:00`);
+        let count = 0;
+        while (count < daysBack) {
+            d.setDate(d.getDate() - 1);
+            const dow = d.getDay();
+            if (dow !== 0 && dow !== 6) count++;
+        }
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    }
+
+    // 2025-12-15: Ajustar machining_date automáticamente 5 días hábiles antes del due_date
+    function autoUpdateMachiningDate(orderId, dueDate, statusForStyle) {
+        const newMach = subtractBusinessDays(dueDate, 5);
+        handlePostJsonWithAlerts(
+            `/orders/${orderId}/update-date-machining`,
+            { machining_date: newMach },
+            (mData) => {
+                if (!mData.success) return;
+
+                // Refrescar span editable de machining_date
+                const machSpan = $(
+                    `.editable-machining-date[data-id="${orderId}"]`
+                );
+                const newSpan = createEditableDateSpan(orderId, newMach, {
+                    cssClass: "editable-machining-date",
+                    underline: true,
+                    bold: true,
+                });
+                if (machSpan.length) machSpan.replaceWith(newSpan);
+
+                // Actualizar d/alerta si corresponde (respetando Standby+Onhold)
+                const rowEl = document.querySelector(
+                    `tr[data-order-id="${orderId}"]`
+                );
+                const locVal = rowEl
+                    ? String(
+                          $(rowEl).find(".location-select").val() || ""
+                      ).toLowerCase()
+                    : "";
+                const isStandbyOnhold =
+                    (mData.status || statusForStyle) === "onhold" &&
+                    locVal === "standby";
+
+                if (isStandbyOnhold) {
+                    hideDiasYAlerta(orderId);
+                } else {
+                    const diasVal =
+                        typeof mData.dias_restantes === "number"
+                            ? mData.dias_restantes
+                            : null;
+                    const diasTd = document.getElementById(
+                        `dias-restantes-${orderId}`
+                    );
+                    if (diasTd && diasVal !== null) {
+                        diasTd.textContent = `${diasVal} days`;
+                        diasTd.className =
+                            diasVal < 0
+                                ? "text-danger fw-bold"
+                                : diasVal <= 2
+                                ? "text-warning fw-bold"
+                                : "text-success fw-bold";
+                    }
+                    const alertaDiv = document.querySelector(
+                        `#alerta-${orderId} .progress-bar`
+                    );
+                    if (alertaDiv && mData.alertColor) {
+                        alertaDiv.className =
+                            "progress-bar " + mData.alertColor;
+                        alertaDiv.textContent =
+                            mData.alertLabel || alertaDiv.textContent;
+                    }
+                }
+
+                applyRowLateStyle(
+                    orderId,
+                    mData.dias_restantes || 0,
+                    mData.status || statusForStyle || ""
+                );
+            },
+            "Error al ajustar machining_date desde due_date."
+        );
     }
 
 // Filtrado con regex exacto
