@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [], // aqui respetas el orden del backend (status personalizado)
+            order: [[12, "asc"]], // 2025-12-15: ordenar por due_date (col oculta 12)
             info: true,
             autoWidth: false,
             columnDefs: [
@@ -1962,6 +1962,7 @@ ${error && error.message ? error.message : error}`);
                                 bold: true,
                             }
                         );
+                        const newSpanHtml = newSpan.prop("outerHTML"); // 2025-12-15: reusa HTML para DataTable sin ReferenceError
 
                         input.replaceWith(newSpan);
 
@@ -2001,6 +2002,17 @@ ${error && error.message ? error.message : error}`);
                                     "progress-bar " + data.alertColor;
                                 alertaDiv.textContent = data.alertLabel;
                             }
+                        }
+
+                        // 2025-12-15: actualizar due_date oculta y reordenar por col 12 (revalida todas las filas)
+                        if (rowEl && window.table) {
+                            const rowApi = window.table.row(rowEl);
+                            const rowIdx = rowApi.index();
+                            // Actualiza datos internos en las columnas correctas
+                            window.table.cell(rowIdx, 12).data(newDate); // col oculta de ordenamiento
+                            window.table.cell(rowIdx, 13).data(newSpanHtml); // col visible con span
+                            // Reordenar por due_date (col 12)
+                            window.table.order([12, "asc"]).draw(false);
                         }
 
                         applyRowLateStyle(
