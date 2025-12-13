@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return JSON.parse(rawText);
             } catch (err) {
                 throw new Error(
-                    `Respuesta no JSON válida: ${rawText.slice(0, 200)}`
+                    `Respuesta no JSON valida: ${rawText.slice(0, 200)}`
                 );
             }
         });
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 👉 Formateador común para exportar "lo que ves"
+    //  Formateador comun para exportar "lo que ves"
     function exportCellFormatter(data, row, column, node) {
         const $node = $(node);
 
@@ -81,9 +81,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? "Source"
                 : "";
 
-            // ¿Está activo?
+            // ¿Esta activo?
             // Nota: data('value') puede quedar desactualizado si no lo actualizas al hacer toggle;
-            // por eso también verificamos clase e ícono.
+            // por eso también verificamos clase e icono.
             const valAttr = String(
                 $toggle.attr("data-value") || ""
             ).toLowerCase();
@@ -95,12 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Elige el formato que prefieras:
             // return isOn ? '1' : '0';                  // binario
-            // return isOn ? '✔' : '✘';                 // símbolos (ojo con fuentes PDF)
+            // return isOn ? '✔' : '✘';                 // simbolos (ojo con fuentes PDF)
             // return `${label}: ${isOn ? 'Yes' : 'No'}`; // con etiqueta
             return isOn ? "Yes" : "No";
         }
 
-        // 1) Selects → solo opción seleccionada
+        // 1) Selects → solo opcion seleccionada
         const $sel = $("select", $node);
         if ($sel.length) {
             return $sel.find("option:selected").text().trim();
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [], // aquí respetas el orden del backend (status personalizado)
+            order: [], // aqui respetas el orden del backend (status personalizado)
             info: true,
             autoWidth: false,
             columnDefs: [
@@ -150,10 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 { targets: 2, visible: false, searchable: true }, // StatusText
                 { targets: 12, visible: false, searchable: false }, // DueDateText
             ],
-            // ⬇️ Habilita zona para botones (B)
+            // Habilita zona para botones (B)
             dom: "Bfrtip",
 
-            // ⬇️ Botones (se ocultarán visualmente y los dispararemos desde el <select>)
+            //  Botones (se ocultaran visualmente y los dispararemos desde el <select>)
             buttons: [
                 {
                     extend: "excelHtml5",
@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             return visible && !noExport;
                         },
                         modifier: { search: "applied", order: "applied" },
-                        format: { body: exportCellFormatter }, // 👈 AQUÍ
+                        format: { body: exportCellFormatter }, //  AQUi
                     },
                 },
                 {
@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             return visible && !noExport;
                         },
                         modifier: { search: "applied", order: "applied" },
-                        format: { body: exportCellFormatter }, // 👈 AQUÍ
+                        format: { body: exportCellFormatter }, //  AQUi
                     },
                     customize: function (doc) {
                         // sello de tiempo
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             now.getHours()
                         )}:${pad2(now.getMinutes())}`;
 
-                        // ❗ usa el dataURL DIRECTO (sin doc.images)
+                        // usa el dataURL DIRECTO (sin doc.images)
                         if (
                             window.LOGO_BASE64 &&
                             /^data:image\/(png|jpe?g);base64,/.test(
@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             };
                         } else {
                             console.warn(
-                                "Logo omitido: dataURL inválido o formato no soportado (usa PNG/JPG)."
+                                "Logo omitido: dataURL invalido o formato no soportado (usa PNG/JPG)."
                             );
                         }
                         // estilos de tabla y footer
@@ -244,9 +244,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 {
                     extend: "print",
-                    title: "", // dejamos vacío y armamos el header con messageTop
+                    title: "", // dejamos vacio y armamos el header con messageTop
                     messageTop: function () {
-                        // usa el base64 si está disponible; si no, usa la ruta pública
+                        // usa el base64 si esta disponible; si no, usa la ruta pública
                         const src =
                             window.LOGO_BASE64 &&
                             /^data:image\/(png|jpe?g);base64,/.test(
@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             d.getMinutes()
                         )}`;
 
-                        // header HTML (logo izquierda, título/fecha derecha)
+                        // header HTML (logo izquierda, titulo/fecha derecha)
                         return `
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
         <img src="${src}" style="height:46px;"/>
@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             return visible && !noExport;
                         },
                         modifier: { search: "applied", order: "applied" },
-                        format: { body: exportCellFormatter }, // 👈 igual que en PDF/Excel
+                        format: { body: exportCellFormatter }, //  igual que en PDF/Excel
                     },
                     customize: function (win) {
                         // CSS para imprimir en landscape y compactar tabla
@@ -315,13 +315,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (loader) loader.style.display = "none";
                 if (wrapper) {
                     wrapper.style.display = "block";
-                    //console.log("✔️ Forzando mostrar wrapper");
+                    //console.log(" Forzando mostrar wrapper");
                 }
 
-                // 👇 Ajusta columnas si el contenedor estaba oculto
+                //  Ajusta columnas si el contenedor estaba oculto
                 this.api().columns.adjust().draw();
 
-                //console.log("✅ DataTable completamente inicializada");
+                //console.log(" DataTable completamente inicializada");
             },
         };
 
@@ -336,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return dataTableInstance;
     }
 
-    // 🚦 Inicialización condicional por ruta
+    //  Inicializacion condicional por ruta
     if (tableElement.length) {
         const path = window.location.pathname;
 
@@ -355,25 +355,25 @@ document.addEventListener("DOMContentLoaded", () => {
             config.rowCallback = applyRowLateHighlight;
         }
 
-        // ⏳ Mostrar loader antes de inicializar
+        //  Mostrar loader antes de inicializar
         const loader = document.getElementById("loader");
         const wrapper = document.getElementById("table-wrapper");
         if (loader) loader.style.display = "block";
         if (wrapper) wrapper.style.display = "none";
 
-        // ✅ Inicializar tabla
+        //  Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
 
         // Oculta los botones nativos (opcional)
-        setTimeout(() => $(".dt-buttons").hide(), 0); // por si el DOM se pinta después
+        setTimeout(() => $(".dt-buttons").hide(), 0); // por si el DOM se pinta despues
 
-        // Helper para disparar el botón correcto
+        // Helper para disparar el boton correcto
         function triggerExport(action) {
             if (!window.table || typeof window.table.button !== "function") {
                 console.error("DataTable no inicializada o falta Buttons.");
                 return;
             }
-            // Por clase… y si no, por índice (0=excel, 1=pdf, 2=print)
+            // Por clase… y si no, por indice (0=excel, 1=pdf, 2=print)
             if (action === "excel") {
                 window.table.button(".buttons-excel").length
                     ? window.table.button(".buttons-excel").trigger()
@@ -403,30 +403,38 @@ document.addEventListener("DOMContentLoaded", () => {
             triggerExport(this.dataset.action);
         });
     } else {
-        console.error("❌ No se encontró #orders_scheduleTable");
+        console.error(" No se encontro #orders_scheduleTable");
     }
 
+    
     function applyRowLateHighlight(row, data, index) {
         const $row = $(row);
         const priority = String($row.data("priority") || "").toLowerCase();
+        const status = (data[2] || "").toLowerCase();
+        const locationVal = String(
+            (data[1] || $row.find("[id^='hidden-location-']").text() || "")
+                .trim()
+        ).toLowerCase();
 
         const diasTd = $row.find("td[id^='dias-restantes-']");
-        if (!diasTd.length) return;
-
         const diasMatch = (diasTd.text().trim().match(/-?\d+/) || [])[0];
-        if (diasMatch == null) return;
+        const dias = diasMatch != null ? parseInt(diasMatch, 10) : null;
 
-        const dias = parseInt(diasMatch, 10);
-        const status = (data[2] || "").toLowerCase(); // ajusta si cambia
+        const isStandbyOnhold =
+            locationVal === "standby" && status === "onhold";
 
         // limpiar
         $row.removeClass("row-late row-priority");
         $row.removeClass((i, c) => (c.match(/bg-status-\S+/g) || []).join(" "));
 
-        // precedencia: late > priority > status
-        if (dias < 0) {
+        if (isStandbyOnhold) {
+            if (status) $row.addClass(`bg-status-${status}`);
+            if (priority === "yes") $row.addClass("row-priority");
+            return;
+        }
+
+        if (dias !== null && dias < 0) {
             $row.addClass("row-late");
-            // si quieres borde dorado incluso cuando está late:
             if (priority === "yes") $row.addClass("row-priority");
             return;
         }
@@ -439,79 +447,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (status) $row.addClass(`bg-status-${status}`);
     }
 
-    // 2025-12-15: Calcula fecha restando solo días hábiles (omite sábado/domingo)
-    function subtractBusinessDays(dateStr, daysBack = 5) {
-        const d = new Date(`${dateStr}T12:00:00`);
-        let count = 0;
-        while (count < daysBack) {
-            d.setDate(d.getDate() - 1);
-            const dow = d.getDay();
-            if (dow !== 0 && dow !== 6) count++;
+    // Ocultar dias y alerta (Standby + Onhold)
+    function hideDiasYAlerta(orderId) {
+        const diasTd = document.getElementById(`dias-restantes-${orderId}`);
+        if (diasTd) {
+            diasTd.textContent = "";
+            diasTd.className = "";
         }
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
-    }
-
-    // 2025-12-15: Ajusta machining_date automáticamente 5 días hábiles antes del due_date
-    function autoUpdateMachiningDate(orderId, dueDate, statusForStyle) {
-        const newMach = subtractBusinessDays(dueDate, 5);
-        handlePostJsonWithAlerts(
-            `/orders/${orderId}/update-date-machining`,
-            { machining_date: newMach },
-            (mData) => {
-                if (!mData.success) return;
-
-                const machSpan = $(
-                    `.editable-machining-date[data-id="${orderId}"]`
-                );
-                const newSpan = createEditableDateSpan(orderId, newMach, {
-                    cssClass: "editable-machining-date",
-                    underline: true,
-                    bold: true,
-                });
-                if (machSpan.length) machSpan.replaceWith(newSpan);
-
-                const diasVal =
-                    typeof mData.dias_restantes === "number"
-                        ? mData.dias_restantes
-                        : null;
-                if (diasVal !== null) {
-                    const diasTd = document.getElementById(
-                        `dias-restantes-${orderId}`
-                    );
-                    if (diasTd) {
-                        diasTd.textContent = `${diasVal} days`;
-                        diasTd.className =
-                            diasVal < 0
-                                ? "text-danger fw-bold"
-                                : diasVal <= 2
-                                ? "text-warning fw-bold"
-                                : "text-success fw-bold";
-                    }
-                }
-
-                const alertaDiv = document.querySelector(
-                    `#alerta-${orderId} .progress-bar`
-                );
-                if (alertaDiv && mData.alertColor) {
-                    alertaDiv.className = "progress-bar " + mData.alertColor;
-                    alertaDiv.textContent =
-                        mData.alertLabel || alertaDiv.textContent;
-                }
-
-                applyRowLateStyle(
-                    orderId,
-                    diasVal !== null ? diasVal : 0,
-                    mData.status || statusForStyle || ""
-                );
-            },
-            "Error al ajustar machining_date desde due_date."
+        const alertaDiv = document.querySelector(
+            `#alerta-${orderId} .progress-bar`
         );
+        if (alertaDiv) {
+            alertaDiv.className = "progress-bar d-none";
+            alertaDiv.textContent = "";
+        }
     }
 
-    // Filtrado con regex exacto
+// Filtrado con regex exacto
     const applyFilter = (selector, columnIndex) => {
         $(selector).on("change", function () {
             const val = $(this).val()?.toLowerCase() || "";
@@ -568,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 onSuccess(response);
             })
             .catch((error) => {
-                console.error("Error en la petición:", error); // Ver error real en consola
+                console.error("Error en la peticion:", error); // Ver error real en consola
                 alert(`${onErrorMsg}
 ${error && error.message ? error.message : error}`);
             });
@@ -683,7 +635,7 @@ ${error && error.message ? error.message : error}`);
                             .draw(false);
                     }
 
-                    // MOSTRAR ETIQUETA CON ÚLTIMA UBICACIÓN GUARDADA
+                    // MOSTRAR ETIQUETA CON ÚLTIMA UBICACIoN GUARDADA
                     const label = select
                         .closest("td")
                         .find(".last-location-label");
@@ -716,27 +668,31 @@ ${error && error.message ? error.message : error}`);
                         label.hide().html("");
                     }
 
-                    // Actualizamos la variable local para el próximo cambio
+                    // Actualizamos la variable local para el proximo cambio
                     lastLocations[orderId] = newLocation;
-                    $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
+                    $(window).scrollTop(scrollTopBefore); //  restaura scroll
                     select.blur(); // quita foco
                 } else {
-                    alert("Hubo un problema al actualizar la ubicación.");
+                    alert("Hubo un problema al actualizar la ubicacion.");
                 }
             },
             "Error al comunicarse con el servidor."
         );
     });
 
+    
     function applyRowLateStyle(orderId, dias, status) {
         const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
-        if (!row) {
-            // console.warn(`❌ No se encontró la fila para orderId=${orderId}`);
-            return;
-        }
-        // Debug: ver qué datos estamos usando
-        // console.log("🔍 applyRowLateStyle", {orderId,dias, status, rowClassList: row.className, });
-        // Limpiar clases previas de estado y de late
+        if (!row) return;
+
+        const locCell = row.querySelector(`#hidden-location-${orderId}`);
+        const locationVal = locCell
+            ? String(locCell.textContent || "").trim().toLowerCase()
+            : "";
+        const statusVal = String(status || "").toLowerCase();
+        const isStandbyOnhold =
+            locationVal === "standby" && statusVal === "onhold";
+
         row.className = row.className
             .split(" ")
             .filter(
@@ -746,33 +702,36 @@ ${error && error.message ? error.message : error}`);
                     c !== "row-priority"
             )
             .join(" ");
+
+        if (isStandbyOnhold) {
+            row.classList.add(`bg-status-${statusVal || "onhold"}`);
+            if (String(row.dataset.priority || "").toLowerCase() === "yes") {
+                row.classList.add("row-priority");
+            }
+            return;
+        }
+
         if (dias < 0) {
             row.classList.add("row-late");
-            // console.log(`🔴 Orden ${orderId} marcada como LATE`);
-        } else if (status) {
-            row.classList.add(`bg-status-${status.toLowerCase()}`);
-            // console.log(`🟢 Orden ${orderId} con clase: bg-status-${status.toLowerCase()}`);
-        } else {
-            console.log(
-                `⚠️ No se aplicó clase de estado a la orden ${orderId}`
-            );
+        } else if (statusVal) {
+            row.classList.add(`bg-status-${statusVal}`);
         }
     }
 
     //-------------------------------------------------START---------------------------------------------------------------
     ///--------------------------------MANEJO DE BOTONES "report & our_source" --------------------------------------------
     //FUNCIONES AUXILIARES
-    // ✅ 1. Centralizar alertas te ayuda a cambiar el comportamiento fácilmente más adelante
+    //  1. Centralizar alertas te ayuda a cambiar el comportamiento facilmente mas adelante
     function showSourceAlert(currentValue) {
         if (currentValue === 1) {
             alert(
-                "¡Atención! Estás desactivando 'our_source' para esta orden."
+                "¡Atencion! Estas desactivando 'our_source' para esta orden."
             );
         } else {
-            alert("Estás activando 'our_source' para esta orden.");
+            alert("Estas activando 'our_source' para esta orden.");
         }
     }
-    //✅ 2. Evita duplicar lógica de clases e íconos con una función
+    // 2. Evita duplicar logica de clases e iconos con una funcion
     function updateToggleButton(button, newValue) {
         button.data("value", newValue);
         button.toggleClass("btn-primary", newValue === 1);
@@ -784,7 +743,7 @@ ${error && error.message ? error.message : error}`);
                 `fas ${newValue === 1 ? "fa-check-circle" : "fa-times-circle"}`
             );
     }
-    //✅ 3. Extrae función para activar edición de fecha
+    // 3. Extrae funcion para activar edicion de fecha
     function triggerEditableMachiningDate(orderId) {
         const dateSpan = $(`.editable-machining-date[data-id="${orderId}"]`);
         if (dateSpan.length > 0) {
@@ -792,12 +751,12 @@ ${error && error.message ? error.message : error}`);
             setTimeout(() => dateSpan.trigger("click"), 100);
         } else {
             console.warn(
-                "No se encontró el span editable para la orden:",
+                "No se encontro el span editable para la orden:",
                 orderId
             );
         }
     }
-    //✅ 4. Evita crear HTML con strings largos: usa plantillas
+    // 4. Evita crear HTML con strings largos: usa plantillas
     function createEditableDateSpan(orderId, date, options = {}) {
         const {
             cssClass = "editable-date", // clase personalizada
@@ -806,7 +765,7 @@ ${error && error.message ? error.message : error}`);
             bold = true,
         } = options;
 
-        // 2025-12-15: Formatear fecha como "Jul-11-2025" (año completo)
+        // 2025-12-15: Formatear fecha como "Jul-11-2025" (ano completo)
         const [year, month, day] = date.split("-");
         const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
         const shortMonth = dateObj.toLocaleString("en-US", { month: "short" });
@@ -835,7 +794,7 @@ ${error && error.message ? error.message : error}`);
     `);
     }
 
-    // ✅ Main: toggle de botones y edición de fecha
+    //  Main: toggle de botones y edicion de fecha
 
     tableElement.on(
         "click",
@@ -893,7 +852,7 @@ ${error && error.message ? error.message : error}`);
         }
     );
 
-    //✅ Edición de fecha de maquinado
+    // Edicion de fecha de maquinado
 
     tableElement.on("click", ".editable-machining-date", function () {
         const span = $(this);
@@ -945,27 +904,42 @@ ${error && error.message ? error.message : error}`);
                         );
 
                         input.replaceWith(newSpan);
-                        // ✅ Actualizar visualmente días restantes y alerta
-                        const diasTd = document.getElementById(
-                            `dias-restantes-${orderId}`
+                        //  Actualizar visualmente dias/alerta u ocultar si Standby+Onhold
+                        const rowEl = document.querySelector(
+                            `tr[data-order-id="${orderId}"]`
                         );
-                        if (diasTd) {
-                            diasTd.textContent = `${data.dias_restantes} days`;
-                            diasTd.className =
-                                data.dias_restantes < 0
-                                    ? "text-danger fw-bold"
-                                    : data.dias_restantes <= 2
-                                    ? "text-warning fw-bold"
-                                    : "text-success fw-bold";
-                        }
+                        const locVal = rowEl
+                            ? String(
+                                  $(rowEl).find(".location-select").val() || ""
+                              ).toLowerCase()
+                            : "";
+                        const isStandbyOnhold =
+                            data.status === "onhold" && locVal === "standby";
 
-                        const alertaDiv = document.querySelector(
-                            `#alerta-${orderId} .progress-bar`
-                        );
-                        if (alertaDiv) {
-                            alertaDiv.className =
-                                "progress-bar " + data.alertColor;
-                            alertaDiv.textContent = data.alertLabel;
+                        if (isStandbyOnhold) {
+                            hideDiasYAlerta(orderId);
+                        } else {
+                            const diasTd = document.getElementById(
+                                `dias-restantes-${orderId}`
+                            );
+                            if (diasTd) {
+                                diasTd.textContent = `${data.dias_restantes} days`;
+                                diasTd.className =
+                                    data.dias_restantes < 0
+                                        ? "text-danger fw-bold"
+                                        : data.dias_restantes <= 2
+                                        ? "text-warning fw-bold"
+                                        : "text-success fw-bold";
+                            }
+
+                            const alertaDiv = document.querySelector(
+                                `#alerta-${orderId} .progress-bar`
+                            );
+                            if (alertaDiv) {
+                                alertaDiv.className =
+                                    "progress-bar " + data.alertColor;
+                                alertaDiv.textContent = data.alertLabel;
+                            }
                         }
 
                         // ✅ Aplicar estilo visual correcto a la fila , para cuando se cambie la fecha, me detecte el color segun el estatus
@@ -1099,14 +1073,14 @@ ${error && error.message ? error.message : error}`);
                             createSpanStation(orderId, newValues, true)
                         );
                     } else {
-                        alert("Error al guardar la estación");
+                        alert("Error al guardar la estacion");
                         select.select2("destroy");
                         select.replaceWith(
                             createSpanStation(orderId, currentValue)
                         );
                     }
                 },
-                "Error en la conexión"
+                "Error en la conexion"
             );
         });
     });
@@ -1114,20 +1088,20 @@ ${error && error.message ? error.message : error}`);
     //-------------------------------------------------START-------------------------------------------------------------//
     //--------------------------------MANEJO DE DEL SELECT Y FUNCIONALIDADES --------------------------------------------//
 
-    //✅ Captura dinámica del estado anterior. Se agrega este bloque antes del "change" para asegurar que data-old-status siempre tenga el valor actual:
+    // Captura dinamica del estado anterior. Se agrega este bloque antes del "change" para asegurar que data-old-status siempre tenga el valor actual:
     tableElement.on("focus", ".status-select", function () {
         const currentVal = ($(this).val() || "").toLowerCase(); // .toLowerCase() Normalizar el oldStatus a minúsculas
         $(this).data("old-status", currentVal);
     });
 
-    // Actualizar Status con confirmación SweetAlert
-    // Actualizar Status con confirmación SweetAlert
+
+    // Actualizar Status con confirmacion SweetAlert
     tableElement.on("change", ".status-select", function () {
         const scrollTopBefore = $(window).scrollTop();
         const select = $(this);
         const orderId = select.data("id");
 
-        // ✅ Leer valor anterior y new status de forma segura y normalizada
+        //  Leer valor anterior y new status de forma segura y normalizada
         const oldStatus = (select.data("old-status") || "").toLowerCase();
         const newStatus = (select.val() || "").toLowerCase();
 
@@ -1138,7 +1112,7 @@ ${error && error.message ? error.message : error}`);
             : "";
 
         const enviarCambioStatus = () => {
-            // 👇 lee la confirmación de inspección si existe
+            //  lee la confirmacion de inspeccion si existe
             const insp = JSON.parse(
                 localStorage.getItem("inspection-change") || "null"
             );
@@ -1146,10 +1120,10 @@ ${error && error.message ? error.message : error}`);
                 localStorage.getItem("inspection-note-change") || "null"
             );
 
-            // payload mínimo
+            // payload minimo
             const payload = { status: newStatus };
 
-            // si se confirmó la inspección, añadimos el campo
+            // si se confirmo la inspeccion, anadimos el campo
             if (insp && insp.orderId === orderId) {
                 payload.status_inspection = insp.status_inspection; // "completed"
             }
@@ -1241,11 +1215,11 @@ ${error && error.message ? error.message : error}`);
                                 .cell(rowIndex, 2)
                                 .data(data.status.toLowerCase())
                                 .draw(false);
-                            $(window).scrollTop(scrollTopBefore); // 🔄 restaura scroll
+                            $(window).scrollTop(scrollTopBefore); //  restaura scroll
                             select.blur(); // quita foco
                         }
 
-                        // 2025-12-15: Si pasa a onhold, forzar ubicación Standby (con persistencia)
+                        // 2025-12-15: Si pasa a onhold, forzar ubicacion Standby (con persistencia)
                         if (newStatus === "onhold" && locationSelect.length) {
                             locationSelect.val("Standby").trigger("change");
                             const hiddenLoc = document.getElementById(
@@ -1254,7 +1228,7 @@ ${error && error.message ? error.message : error}`);
                             if (hiddenLoc) hiddenLoc.textContent = "standby";
                         }
 
-                        // 2025-12-15: Si sale de onhold y está en Standby, regresar a last_location (o ubicación actual si viene del backend)
+                        // 2025-12-15: Si sale de onhold y esta en Standby, regresar a last_location (o ubicacion actual si viene del backend)
                         if (
                             oldStatus === "onhold" &&
                             newStatus !== "onhold" &&
@@ -1273,7 +1247,7 @@ ${error && error.message ? error.message : error}`);
                                 hiddenLoc.textContent = targetLoc.toLowerCase();
                         }
 
-                        // ✅Agregar nuevo valor al filtro si no existe
+                        // Agregar nuevo valor al filtro si no existe
                         const $statusFilter = $("#statusFilter");
                         const newStatusVal = data.status.toLowerCase();
                         if (
@@ -1299,32 +1273,41 @@ ${error && error.message ? error.message : error}`);
                             if (!inserted) $statusFilter.append(newOption);
                         }
 
-                        // ✅Actualizar días restantes
-                        const diasTd = document.getElementById(
-                            `dias-restantes-${orderId}`
-                        );
-                        if (diasTd) {
-                            const dias = data.dias_restantes;
-                            diasTd.textContent = `${dias} days`;
-                            diasTd.className =
-                                dias < 0
-                                    ? "text-danger fw-bold"
-                                    : dias <= 2
-                                    ? "text-warning fw-bold"
-                                    : "text-success fw-bold";
+                        // Actualizar d\xedas/alerta u ocultar si Standby+Onhold
+                        const locVal = locationSelect.length
+                            ? String(locationSelect.val() || "").toLowerCase()
+                            : String(data.location || "").toLowerCase();
+                        const isStandbyOnhold =
+                            newStatus === "onhold" && locVal === "standby";
+
+                        if (isStandbyOnhold) {
+                            hideDiasYAlerta(orderId);
+                        } else {
+                            const diasTd = document.getElementById(
+                                `dias-restantes-${orderId}`
+                            );
+                            if (diasTd) {
+                                const dias = data.dias_restantes;
+                                diasTd.textContent = `${dias} days`;
+                                diasTd.className =
+                                    dias < 0
+                                        ? "text-danger fw-bold"
+                                        : dias <= 2
+                                        ? "text-warning fw-bold"
+                                        : "text-success fw-bold";
+                            }
+
+                            const alertaDiv = document.querySelector(
+                                `#alerta-${orderId} .progress-bar`
+                            );
+                            if (alertaDiv) {
+                                alertaDiv.className =
+                                    "progress-bar " + data.alertColor;
+                                alertaDiv.textContent = data.alertLabel;
+                            }
                         }
 
-                        // ✅Actualizar alerta
-                        const alertaDiv = document.querySelector(
-                            `#alerta-${orderId} .progress-bar`
-                        );
-                        if (alertaDiv) {
-                            alertaDiv.className =
-                                "progress-bar " + data.alertColor;
-                            alertaDiv.textContent = data.alertLabel;
-                        }
-
-                        // ✅ Actualiza el valor de referencia para futuros cambios
+                        //  Actualiza el valor de referencia para futuros cambios
                         select.data("old-status", newStatus);
                     } else {
                         alert("Hubo un problema al actualizar el estado.");
@@ -1334,12 +1317,12 @@ ${error && error.message ? error.message : error}`);
             );
         };
 
-        // ✅ Confirmación si nuevo estado es 'sent'
+        //  Confirmacion si nuevo estado es 'sent'
         if (newStatus === "sent") {
             // 1) Intentar leer WO_QTY de input y, si no, del td
             const $inp = row.find(".wo-qty-input");
 
-            // 2) Normalizar a número (tolerando comas, espacios, etc.)
+            // 2) Normalizar a numero (tolerando comas, espacios, etc.)
             const toNumber = (v) => {
                 if (v === undefined || v === null) return null;
                 const n = Number(String(v).replace(/[^\d.-]/g, ""));
@@ -1360,10 +1343,10 @@ ${error && error.message ? error.message : error}`);
                     select.val(oldStatus).trigger("change");
                     if ($inp.length) $inp.focus().select();
                 });
-                return; // 🚫 no continuar
+                return; //  no continuar
             }
 
-            // 4) Confirmar envío
+            // 4) Confirmar envio
             Swal.fire({
                 title: "¿Are you sure?",
                 text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
@@ -1382,18 +1365,18 @@ ${error && error.message ? error.message : error}`);
             return;
         }
 
-        // ✅ Activar edición del due_date si es "onhold"
+        //  Activar edicion del due_date si es "onhold"
         const dueSpan = row.find(`.editable-due-date[data-id="${orderId}"]`);
         if (newStatus === "onhold") {
-            // 🔓 Activar edición
+            //  Activar edicion
             if (dueSpan.length) {
                 dueSpan.attr("data-enabled", "1");
                 dueSpan.css("cursor", "pointer");
                 dueSpan.addClass("fw-bold");
-                triggerEditableDueDate(orderId); // ✅ abre de inmediato
+                triggerEditableDueDate(orderId); //  abre de inmediato
             }
         } else {
-            // 🔒 Desactivar edición
+            //  Desactivar edicion
             if (dueSpan.length) {
                 dueSpan.attr("data-enabled", "0");
                 dueSpan.css("cursor", "default");
@@ -1462,7 +1445,7 @@ ${error && error.message ? error.message : error}`);
 
         // ===== Wrapper por si enviarCambioStatus no retorna promesa =====
         function safeEnviarCambioStatus() {
-            const r = enviarCambioStatus(); // tu función existente
+            const r = enviarCambioStatus(); // tu funcion existente
             if (r && typeof r.then === "function") return r;
             return $.Deferred().resolve({}).promise();
         }
@@ -1478,7 +1461,7 @@ ${error && error.message ? error.message : error}`);
                 .then(function ({ operation, parent_id, inspection_progress }) {
                     const progress = Number(inspection_progress || 0);
 
-                    // ⚠️ ÚNICA confirmación si < 100%
+                    //  ÚNICA confirmacion si < 100%
                     if (progress < 100) {
                         const html = `
           <div class="mb-2">Current inspection progress: <b>${progress}%</b></div>
@@ -1501,13 +1484,13 @@ ${error && error.message ? error.message : error}`);
                                     .reject("cancelled")
                                     .promise();
                             }
-                            // 👉 Override inmediato para no volver a preguntar en la siguiente vez
+                            //  Override inmediato para no volver a preguntar en la siguiente vez
                             setInspectionOverrideCompleted(orderId);
                         });
                     }
                 })
                 .then(function () {
-                    // Bandera para backend: completar inspección
+                    // Bandera para backend: completar inspeccion
                     localStorage.setItem(
                         "inspection-change",
                         JSON.stringify({
@@ -1527,7 +1510,7 @@ ${error && error.message ? error.message : error}`);
                         (OPS_META_CACHE[orderId] || {}).inspection_progress || 0
                     );
 
-                    // 📝 Nota SOLO si 0%
+                    //  Nota SOLO si 0%
                     if (progress === 0) {
                         return Swal.fire({
                             title: "Inspection note",
@@ -1585,7 +1568,7 @@ ${error && error.message ? error.message : error}`);
                                 return;
                             }
 
-                            // mover ubicación
+                            // mover ubicacion
                             localStorage.setItem(
                                 "location-change",
                                 JSON.stringify({ orderId, location: "hearst" })
@@ -1620,12 +1603,12 @@ ${error && error.message ? error.message : error}`);
                     }
                 });
 
-            // ❗ No sigas el flujo normal
+            //  No sigas el flujo normal
             return;
         }
 
         // =======================
-        // BLOQUE 2: HEARST (deburring/shipping/ready) sin mover ubicación
+        // BLOQUE 2: HEARST (deburring/shipping/ready) sin mover ubicacion
         // Sin confirmar el cambio de estatus (directo a enviarCambioStatus)
         // =======================
 
@@ -1767,7 +1750,7 @@ ${error && error.message ? error.message : error}`);
             return;
         }
 
-        // ✅ Enviar directamente si no requiere confirmación
+        //  Enviar directamente si no requiere confirmacion
         enviarCambioStatus();
     });
 
@@ -1795,7 +1778,7 @@ ${error && error.message ? error.message : error}`);
                 inspection_progress: Number((r && r.inspection_progress) || 0),
                 status_inspection: String(
                     (r && r.status_inspection) || ""
-                ).toLowerCase(), // 👈 nuevo
+                ).toLowerCase(), //  nuevo
             };
             OPS_META_CACHE[orderId] = meta;
             return { ...meta };
@@ -1805,19 +1788,19 @@ ${error && error.message ? error.message : error}`);
     //----
     function triggerEditableDueDate(orderId) {
         const dateSpan = $(`.editable-due-date[data-id="${orderId}"]`);
-        //console.log("🟢 triggerEditableDueDate llamado para:", orderId);
+        //console.log(" triggerEditableDueDate llamado para:", orderId);
 
         if (dateSpan.length > 0) {
-            // console.log("✅ Span encontrado:", dateSpan[0]);
+            // console.log(" Span encontrado:", dateSpan[0]);
             dateSpan.attr("data-enabled", "1");
 
             setTimeout(() => {
-                //console.log("⏱️ Ejecutando .trigger('click') para:", orderId);
+                //console.log("⏱ Ejecutando .trigger('click') para:", orderId);
                 dateSpan.trigger("click");
             }, 100);
         } else {
             console.warn(
-                "⚠️ No se encontró due-date editable para la orden:",
+                " No se encontro due-date editable para la orden:",
                 orderId
             );
         }
@@ -1828,22 +1811,22 @@ ${error && error.message ? error.message : error}`);
     // ===================================================================================================
     tableElement.on("click", ".editable-due-date", function () {
         const span = $(this);
-        //console.log("📌 Click en due-date span", span[0]);
+        //console.log(" Click en due-date span", span[0]);
         const orderId = span.data("id");
         const isEnabled = parseInt(span.data("enabled")) === 1;
         const currentValue = span.data("value") || "";
 
-        // console.log( "✔️ isEnabled:", isEnabled,"| orderId:",orderId, "| value:",currentValue );
+        // console.log( " isEnabled:", isEnabled,"| orderId:",orderId, "| value:",currentValue );
 
         if (!isEnabled) {
-            // console.log("⛔ Edición deshabilitada para este campo.");
+            // console.log(" Edicion deshabilitada para este campo.");
             return;
         }
         const input = $(
             `<input type="date" class="form-control form-control-sm due-date-input">`
         ).val(currentValue);
 
-        // console.log("🆕 Input generado:", input[0]);
+        // console.log(" Input generado:", input[0]);
         span.replaceWith(input);
         input.focus();
 
@@ -1882,26 +1865,42 @@ ${error && error.message ? error.message : error}`);
 
                         input.replaceWith(newSpan);
 
-                        const diasTd = document.getElementById(
-                            `dias-restantes-${orderId}`
+                        // Actualizar d?as/alerta u ocultar si Standby+Onhold
+                        const rowEl = document.querySelector(
+                            `tr[data-order-id="${orderId}"]`
                         );
-                        if (diasTd) {
-                            diasTd.textContent = `${data.dias_restantes} days`;
-                            diasTd.className =
-                                data.dias_restantes < 0
-                                    ? "text-danger fw-bold"
-                                    : data.dias_restantes <= 2
-                                    ? "text-warning fw-bold"
-                                    : "text-success fw-bold";
-                        }
+                        const locVal = rowEl
+                            ? String(
+                                  $(rowEl).find(".location-select").val() || ""
+                              ).toLowerCase()
+                            : "";
+                        const isStandbyOnhold =
+                            data.status === "onhold" && locVal === "standby";
 
-                        const alertaDiv = document.querySelector(
-                            `#alerta-${orderId} .progress-bar`
-                        );
-                        if (alertaDiv) {
-                            alertaDiv.className =
-                                "progress-bar " + data.alertColor;
-                            alertaDiv.textContent = data.alertLabel;
+                        if (isStandbyOnhold) {
+                            hideDiasYAlerta(orderId);
+                        } else {
+                            const diasTd = document.getElementById(
+                                `dias-restantes-${orderId}`
+                            );
+                            if (diasTd) {
+                                diasTd.textContent = `${data.dias_restantes} days`;
+                                diasTd.className =
+                                    data.dias_restantes < 0
+                                        ? "text-danger fw-bold"
+                                        : data.dias_restantes <= 2
+                                        ? "text-warning fw-bold"
+                                        : "text-success fw-bold";
+                            }
+
+                            const alertaDiv = document.querySelector(
+                                `#alerta-${orderId} .progress-bar`
+                            );
+                            if (alertaDiv) {
+                                alertaDiv.className =
+                                    "progress-bar " + data.alertColor;
+                                alertaDiv.textContent = data.alertLabel;
+                            }
                         }
 
                         applyRowLateStyle(
@@ -1910,7 +1909,7 @@ ${error && error.message ? error.message : error}`);
                             data.status || ""
                         );
 
-                        // 2025-12-15: Ajuste automático de machining_date (-5 días hábiles)
+                        // 2025-12-15: Ajuste automatico de machining_date (-5 dias habiles)
                         autoUpdateMachiningDate(
                             orderId,
                             newDate,
@@ -1953,13 +1952,13 @@ ${error && error.message ? error.message : error}`);
         $("#notesOrderId").val(orderId);
         $("#notesTextarea").val(fullNotes);
 
-        // Aquí: usar jQuery y llamar a modal('show')
+        // Aqui: usar jQuery y llamar a modal('show')
         $("#notesModal").modal("show");
     });
     // Guardar notas
     $("#notesForm").submit(function (e) {
-        //console.log("Interceptando submit del formulario de notas"); // 👈 esto
-        e.preventDefault(); // Esto evita que el form se envíe "normalmente"
+        //console.log("Interceptando submit del formulario de notas"); //  esto
+        e.preventDefault(); // Esto evita que el form se envie "normalmente"
         const orderId = $("#notesOrderId").val();
         const notes = $("#notesTextarea").val();
 
@@ -2019,7 +2018,7 @@ ${error && error.message ? error.message : error}`);
         }
         const qty = parseInt(newVal, 10);
         if (isNaN(qty) || qty < 0) {
-            Swal.fire("⚠️ Invalid quantity", "Enter a valid number", "warning");
+            Swal.fire(" Invalid quantity", "Enter a valid number", "warning");
             return;
         }
         if (String(original) === String(qty)) return;
@@ -2046,7 +2045,7 @@ ${error && error.message ? error.message : error}`);
                 // rowData.wo_qty = data.group_wo_qty;
                 // row.data(rowData).draw(false);
 
-                // 4) Guardar en localStorage para sincronizar entre pestañas (opcional)
+                // 4) Guardar en localStorage para sincronizar entre pestanas (opcional)
                 localStorage.setItem(
                     "wo-qty-change",
                     JSON.stringify({
@@ -2058,19 +2057,19 @@ ${error && error.message ? error.message : error}`);
                 );
                 localStorage.removeItem("wo-qty-change");
             },
-            "❌ Error to save"
+            " Error to save"
         );
     });
 
     // ===================================================================================================
-    // --- START Aquí agregamos la lógica para el botón "Agregar" dentro de Part_description ---
-    // Insertar botón 'Agregar' en las celdas de Part_description que contienen "kit"
+    // --- START Aqui agregamos la logica para el boton "Agregar" dentro de Part_description ---
+    // Insertar boton 'Agregar' en las celdas de Part_description que contienen "kit"
     // ===================================================================================================
 
     function agregarBotonesKit() {
         tableElement.find("tbody tr").each(function (index) {
             const partDescCell = $(this).find("td").eq(3); // columna PART/DESCRIPTION
-            partDescCell.css("position", "relative"); // para posicionar el botón dentro
+            partDescCell.css("position", "relative"); // para posicionar el boton dentro
 
             const texto = partDescCell.text().toLowerCase();
 
@@ -2103,7 +2102,7 @@ ${error && error.message ? error.message : error}`);
                         </button>`
                     );
                     partDescCell.append(btn);
-                    //console.log(`✅ Botón agregado en fila ${index}`);
+                    //console.log(`✅ Boton agregado en fila ${index}`);
                 }
             }
         });
@@ -2114,19 +2113,19 @@ ${error && error.message ? error.message : error}`);
 
     // Re-ejecutar cada vez que se redibuja la tabla
     tableElement.on("draw.dt", function () {
-        //console.log("📢 Evento draw.dt disparado");
+        //console.log(" Evento draw.dt disparado");
         agregarBotonesKit();
     });
 
-    // Manejar el click en botones 'Agregar' dinámicos
+    // Manejar el click en botones 'Agregar' dinamicos
     tableElement.on("click", ".btn-add-kit", function () {
         const btn = $(this);
         const row = btn.closest("tr");
 
-        // 👇   usa data-id en el <tr data-id="123"> y deja este fallback a la col 0
+        //    usa data-id en el <tr data-id="123"> y deja este fallback a la col 0
         const originalId = row.data("orderId");
 
-        // Obtener próximo ID antes de hacer cualquier cosa
+        // Obtener proximo ID antes de hacer cualquier cosa
         fetch("/orders/next-id")
             .then((res) => res.json())
             .then((data) => {
@@ -2138,7 +2137,7 @@ ${error && error.message ? error.message : error}`);
                 copySelectAndInputValues(row, newRow);
                 // console.log("✔ Location clonada: ",newRow.find('select[name="location"]').val());
 
-                // Mostrar cuántas columnas tiene la fila
+                // Mostrar cuantas columnas tiene la fila
                 // console.log( "Total celdas en la fila:",newRow.find("td").length);
 
                 // Mostrar el next_id en la primera celda (columna 0)
@@ -2148,7 +2147,7 @@ ${error && error.message ? error.message : error}`);
                 //   `<input type="hidden" name="id" value="${nextId}">`
                 //  );
 
-                // En las columnas 2, 4 y 6 ponemos inputs vacíos
+                // En las columnas 2, 4 y 6 ponemos inputs vacios
                 [1, 3, 5].forEach((index) => {
                     const cell = newRow.find(`td:eq(${index})`);
                     cell.html(
@@ -2219,13 +2218,13 @@ ${error && error.message ? error.message : error}`);
                         } else {
                             let finalText = "";
 
-                            // 📌 Caso especial para columna de Notas (con .open-notes-modal)
+                            //  Caso especial para columna de Notas (con .open-notes-modal)
                             const noteSpan = cell.find(".open-notes-modal");
                             if (noteSpan.length) {
                                 finalText = noteSpan.data("notes") || "";
                             }
 
-                            // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            //  Caso especial para fecha de maquinado (con .editable-machining-date)
                             else if (
                                 cell.find(".editable-machining-date").length
                             ) {
@@ -2234,7 +2233,7 @@ ${error && error.message ? error.message : error}`);
                                         .find(".editable-machining-date")
                                         .data("value") || "";
                             }
-                            // 📌 Caso especial para fecha de maquinado (con .editable-machining-date)
+                            //  Caso especial para fecha de maquinado (con .editable-machining-date)
                             else if (cell.find(".editable-due-date").length) {
                                 finalText =
                                     cell
@@ -2242,7 +2241,7 @@ ${error && error.message ? error.message : error}`);
                                         .data("value") || "";
                             }
 
-                            // 🔄 Caso general (texto visible, sin hijos como select/div/span)
+                            //  Caso general (texto visible, sin hijos como select/div/span)
                             else {
                                 finalText = cell
                                     .clone()
@@ -2267,10 +2266,10 @@ ${error && error.message ? error.message : error}`);
                         });
                     });
 
-                    // 👇 aquí añadimos el id de la fila original para enviar los valores de co y cust_po
+                    //  aqui anadimos el id de la fila original para enviar los valores de co y cust_po
                     dataToSend.original_id = originalId;
 
-                    //console.log("Datos a enviar:", dataToSend); // Aquí justo antes de enviar
+                    //console.log("Datos a enviar:", dataToSend); // Aqui justo antes de enviar
                     handlePostJsonWithAlerts(
                         "/orders",
                         dataToSend,
@@ -2290,10 +2289,10 @@ ${error && error.message ? error.message : error}`);
 
                             // Recolocar el ID en la columna 0
                             newRow.find("td:eq(0)").text(response.id);
-                            // console.log("⏳ Insertando contenido en la columna 18 (Notas)");
-                            // 🔽 Generar contenido de la columna 18 (Notas)
+                            // console.log(" Insertando contenido en la columna 18 (Notas)");
+                            //  Generar contenido de la columna 18 (Notas)
                             const orderId = response.id;
-                            const safeNotes = ""; // Al guardar nuevo, inicia vacío
+                            const safeNotes = ""; // Al guardar nuevo, inicia vacio
                             const shortNote = "Note";
 
                             const newNotesHtml = `<span class="open-notes-modal" data-id="${orderId}" data-notes="" style="cursor:pointer;" title="">
@@ -2307,7 +2306,7 @@ ${error && error.message ? error.message : error}`);
                                 //console.warn("⚠ La columna 18 no existe en esta fila.");
                             }
 
-                            // Actualizar DataTable si está en uso
+                            // Actualizar DataTable si esta en uso
                             location.reload();
                         },
                         "Error al guardar el registro"
@@ -2315,8 +2314,8 @@ ${error && error.message ? error.message : error}`);
                 }
             })
             .catch((err) => {
-                //console.error("Error obteniendo próximo ID:", err);
-                //alert("No se pudo obtener el próximo ID");
+                //console.error("Error obteniendo proximo ID:", err);
+                //alert("No se pudo obtener el proximo ID");
             });
     });
 
