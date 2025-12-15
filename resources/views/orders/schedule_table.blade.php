@@ -233,15 +233,29 @@
                                 {{ $dateLabel }}
                             </span>
                         </td>
-                        <td style="display:none;">{{ optional($order->due_date)->format('Y-m-d') }}</td>
+                        @php
+                            $dueDateValue = optional($order->due_date)->format('Y-m-d');
+                            $dueDateLabel = optional($order->due_date)->format('M-d-Y');
+                            $updateDateLabel = $order->update_duedate
+                                ? \Carbon\Carbon::parse($order->update_duedate)->format('M-d-Y')
+                                : null;
+                        @endphp
+                        <td style="display:none;">{{ $dueDateValue }}</td>
                         <td>
                             <span class="editable-due-date text-decoration-underline"
                                 data-id="{{ $order->id }}"
                                 data-enabled="{{ $order->status === 'onhold' ? 1 : 0 }}"
-                                data-value="{{ optional($order->due_date)->format('Y-m-d') }}"
+                                data-value="{{ $dueDateValue }}"
                                 style="{{ $order->status === 'onhold' ? 'cursor:pointer;' : '' }}">
-                                {{ optional($order->due_date)->format('M-d-Y') }} {{-- 2025-12-15: formato Nov-25-2025 --}}
+                                {{ $dueDateLabel }} {{-- 2025-12-15: formato Nov-25-2025 --}}
                             </span>
+                            @if (strtolower($order->location ?? '') === 'standby' && strtolower($order->status ?? '') === 'onhold' && $updateDateLabel)
+                                <div class="mt-1">
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-history me-1"></i> {{ $updateDateLabel }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                         <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px " >
                             {{ $dias }} days
