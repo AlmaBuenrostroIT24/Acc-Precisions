@@ -343,9 +343,9 @@
       $modal.find('#edit-woqty').val(button.data('woqty'));
       ctx.modal.$operationInput.val(opIn);
 
-      const pn = button.data('pn');
-      const desc = button.data('description') || '';
-      $modal.find('#edit-fullpart').val(`${pn} - ${desc.split(',')[0]}`);
+      const pn = button.attr('data-pn') || button.data('pn') || '';
+      const desc = button.attr('data-description') || ''; // 👈 siempre string (raw attribute)
+      $modal.find('#edit-fullpart').val(`${pn} - ${String(desc).split(',')[0]}`);
 
       // ✅ Traer sampling desde atributos del botón (lo que viene de BD)
       const samplingFromBtn = parseInt(button.data('sampling'), 10) || 0; // número
