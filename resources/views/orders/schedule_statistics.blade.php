@@ -49,14 +49,17 @@
                         </div>
                         <!-- Segunda columna -->
                         <div class="col-7 text-end">
-                            <span class="badge badge-soft-info" style="font-size: 1rem;">
-                                Hearst: {{ $cantidadHearst }}
+                            <span class="badge badge-soft-info" style="font-size: 0.9rem;">
+                                Hearst: {{ $cantidadHearst ?? 0 }}
                             </span>
-                            <span class="badge badge-soft-info" style="font-size: 1rem;">
-                                Yarnell: {{ $cantidadYarnell }}
+                            <span class="badge badge-soft-info" style="font-size: 0.9rem;">
+                                Yarnell: {{ $cantidadYarnell ?? 0 }}
                             </span>
                             <span class="badge bg-secondary bg-opacity-25">
-                                Floor: {{ $cantidadFloor }}
+                                Floor: {{ $cantidadFloor ?? 0}}
+                            </span>
+                            <span class="badge bg-danger bg-opacity-25">
+                                Standby: {{ $cantidadStandby ?? 0 }}
                             </span>
                         </div>
                     </div>

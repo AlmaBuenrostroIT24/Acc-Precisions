@@ -1424,6 +1424,11 @@ class Order_ScheduleController extends Controller
             ->where('status', '!=', 'sent')
             ->where('status_order', '!=', 'inactive')
             ->count();
+            
+        $cantidadStandby = OrderSchedule::where('location', 'standby')
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->count();
 
         /** 🟢 VERIFIED: Circle text-> Ordenes por cliente */
         $ordenesPorCliente = OrderSchedule::select('costumer', DB::raw('count(*) as total'))
@@ -1511,6 +1516,7 @@ class Order_ScheduleController extends Controller
             'cantidadHearst',
             'cantidadYarnell',
             'cantidadFloor',
+            'cantidadStandby',
             'totalOrdenes',
             'ordenesPorCliente',
             'ordenesAgregadasSemana',
@@ -1542,6 +1548,7 @@ class Order_ScheduleController extends Controller
         $end = $start->copy()->endOfWeek();
 
         $ordenes = OrderSchedule::whereBetween('due_date', [$start, $end])
+            ->where('status', '!=', 'onhold')
             ->where('status_order', '!=', 'inactive')
             ->get();
 
