@@ -1461,6 +1461,7 @@ class Order_ScheduleController extends Controller
         $endOfWeek = Carbon::now()->endOfWeek();
         $weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
+            ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
             ->orderBy('due_date', 'asc')
             ->get();
 
