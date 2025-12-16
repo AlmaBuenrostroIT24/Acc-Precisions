@@ -150,6 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const locationFilterVal = (
                 document.getElementById("locationFilter")?.value || ""
             ).toLowerCase();
+            const statusFilterVal = (
+                document.getElementById("statusFilter")?.value || ""
+            ).toLowerCase();
             const globalSearch = (
                 (settings.oPreviousSearch &&
                     settings.oPreviousSearch.sSearch) ||
@@ -157,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ).trim();
             const isStandbyOnhold = loc === "standby" && status === "onhold";
             if (locationFilterVal === "standby") return true; // mostrar todo si filtra Standby
+            if (statusFilterVal === "onhold") return true; // permitir verlos si el filtro de status es onhold
             if (globalSearch) return true; // permitir búsqueda global
             if (isStandbyOnhold) return false; // ocultar en vista normal
             return true;

@@ -234,11 +234,11 @@
                             </span>
                         </td>
                         @php
-                            $dueDateValue = optional($order->due_date)->format('Y-m-d');
-                            $dueDateLabel = optional($order->due_date)->format('M-d-Y');
-                            $updateDateLabel = $order->update_duedate
-                                ? \Carbon\Carbon::parse($order->update_duedate)->format('M-d-Y')
-                                : null;
+                        $dueDateValue = optional($order->due_date)->format('Y-m-d');
+                        $dueDateLabel = optional($order->due_date)->format('M-d-Y');
+                        $updateDateLabel = $order->update_duedate
+                        ? \Carbon\Carbon::parse($order->update_duedate)->format('M-d-Y')
+                        : null;
                         @endphp
                         <td style="display:none;">{{ $dueDateValue }}</td>
                         <td>
@@ -250,14 +250,14 @@
                                 {{ $dueDateLabel }} {{-- 2025-12-15: formato Nov-25-2025 --}}
                             </span>
                             @if ($updateDateLabel)
-                                <div class="mt-1 update-duedate-badge-wrap">
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-history me-1"></i> {{ $updateDateLabel }}
-                                    </span>
-                                </div>
+                            <div class="mt-1 update-duedate-badge-wrap">
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-history me-1"></i> {{ $updateDateLabel }}
+                                </span>
+                            </div>
                             @endif
                         </td>
-                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px " >
+                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
                             {{ $dias }} days
                         </td>
                         <td class="text-center">

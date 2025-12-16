@@ -1204,7 +1204,7 @@ class Order_ScheduleController extends Controller
     }
 
     //---------------------------------------------------------------------------------------------
-            public function updateDueDate(Request $request, OrderSchedule $order)
+    public function updateDueDate(Request $request, OrderSchedule $order)
     {
         // 2025-12-15: si cambia la fecha, copia la anterior en update_duedate y guarda la nueva en due_date
         $request->validate([
@@ -1931,4 +1931,3 @@ class Order_ScheduleController extends Controller
 
     //------------------------------------------------------------------------------------------------
 }
-

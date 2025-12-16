@@ -122,9 +122,9 @@
                                             <select name="status" id="statusFilter" class="form-control auto-submit">
                                                 <option value="">— All —</option>
                                                 @foreach($orders->pluck('status')->unique() as $status)
-                                                <option value="{{ strtolower($status) }}" {{ strtolower(request('status')) == strtolower($status) ? 'selected' : '' }}>
-                                                    {{ \Illuminate\Support\Str::title(strtolower($status ?? 'Sin estado')) }}
-                                                </option>
+                                                    <option value="{{ strtolower($status) }}" {{ strtolower(request('status')) == strtolower($status) ? 'selected' : '' }}>
+                                                        {{ \Illuminate\Support\Str::title(strtolower($status ?? 'Sin estado')) }}
+                                                    </option>
                                                 @endforeach
                                             </select>
                                         </div>
