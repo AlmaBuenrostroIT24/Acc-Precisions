@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -1478,13 +1478,14 @@ class Order_ScheduleController extends Controller
          * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
          */
 
-        //1. Controlador con filtro hasta la semana actual
+        //1. Controlador con filtro hasta la semana actual (Weekly Orders)
         $orders = DB::table('orders_schedule')
             ->selectRaw('
         YEARWEEK(due_date, 1) as week,
         COUNT(*) as total,SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)') //órdenes cuya due_date está hasta la semana actual (inclusive), ignorando futuras semanas.
+            ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
             ->groupBy('week')
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->orderBy('week', 'desc')
