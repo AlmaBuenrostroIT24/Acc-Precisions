@@ -251,7 +251,7 @@
                             </span>
                             @if (strtolower($order->location ?? '') === 'standby' && strtolower($order->status ?? '') === 'onhold' && $updateDateLabel)
                                 <div class="mt-1">
-                                    <span class="badge bg-warning">
+                                    <span class="badge bg-warning   ">
                                         <i class="fas fa-history me-1"></i> {{ $updateDateLabel }}
                                     </span>
                                 </div>

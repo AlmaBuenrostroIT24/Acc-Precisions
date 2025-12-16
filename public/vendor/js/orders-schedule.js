@@ -1948,6 +1948,45 @@ ${error && error.message ? error.message : error}`);
         }
     }
 
+    // 2025-12-15: formatear fechas a "Mon-25-2025" para badges
+    function formatDateLabel(dateStr) {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+        });
+    }
+
+    // 2025-12-15: render badge de update_duedate bajo due_date
+    function renderUpdateDueBadge(spanEl, updateDateStr, show) {
+        const td = $(spanEl).closest("td");
+        let badgeWrap = td.find(".update-duedate-badge-wrap");
+        if (!show) {
+            if (badgeWrap.length) badgeWrap.remove();
+            return;
+        }
+        const label = formatDateLabel(updateDateStr);
+        if (!badgeWrap.length) {
+            badgeWrap = $(`
+                <div class="mt-1 update-duedate-badge-wrap">
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-history me-1"></i> ${label}
+                    </span>
+                </div>
+            `);
+            td.append(badgeWrap);
+        } else {
+            badgeWrap
+                .find(".badge")
+                .html(`<i class="fas fa-history me-1"></i> ${label}`)
+                .removeClass("bg-secondary text-light")
+                .addClass("bg-warning text-dark");
+        }
+    }
+
     // ===================================================================================================
     //    START------ Editable-due-date ------
     // ===================================================================================================
@@ -2020,6 +2059,28 @@ ${error && error.message ? error.message : error}`);
                         const isStandbyOnhold =
                             data.status === "onhold" && locVal === "standby";
 
+                        // Badge de update_duedate en vivo
+                        const shouldShowBadge =
+                            isStandbyOnhold && !!data.update_duedate;
+                        if (typeof renderUpdateDueBadge === "function") {
+                            renderUpdateDueBadge(
+                                newSpan,
+                                data.update_duedate,
+                                shouldShowBadge
+                            );
+                        }
+                        const badgeHtml = shouldShowBadge
+                            ? `
+                                <div class="mt-1 update-duedate-badge-wrap">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-history me-1"></i> ${formatDateLabel(
+                                            data.update_duedate
+                                        )}
+                                    </span>
+                                </div>
+                              `
+                            : "";
+
                         if (isStandbyOnhold) {
                             hideDiasYAlerta(orderId);
                         } else {
@@ -2052,7 +2113,9 @@ ${error && error.message ? error.message : error}`);
                             const rowIdx = rowApi.index();
                             // Actualiza datos internos en las columnas correctas
                             window.table.cell(rowIdx, 12).data(newDate); // col oculta de ordenamiento
-                            window.table.cell(rowIdx, 13).data(newSpanHtml); // col visible con span
+                            window.table
+                                .cell(rowIdx, 13)
+                                .data(newSpanHtml + badgeHtml); // col visible con span + badge si aplica
                             // Reordenar por due_date (col 12)
                             window.table.order([12, "asc"]).draw(false);
                         }
