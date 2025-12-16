@@ -2060,8 +2060,7 @@ ${error && error.message ? error.message : error}`);
                             data.status === "onhold" && locVal === "standby";
 
                         // Badge de update_duedate en vivo
-                        const shouldShowBadge =
-                            isStandbyOnhold && !!data.update_duedate;
+                        const shouldShowBadge = !!data.update_duedate; // mostrar badge siempre que exista update_duedate
                         if (typeof renderUpdateDueBadge === "function") {
                             renderUpdateDueBadge(
                                 newSpan,

@@ -249,9 +249,9 @@
                                 style="{{ $order->status === 'onhold' ? 'cursor:pointer;' : '' }}">
                                 {{ $dueDateLabel }} {{-- 2025-12-15: formato Nov-25-2025 --}}
                             </span>
-                            @if (strtolower($order->location ?? '') === 'standby' && strtolower($order->status ?? '') === 'onhold' && $updateDateLabel)
-                                <div class="mt-1">
-                                    <span class="badge bg-warning   ">
+                            @if ($updateDateLabel)
+                                <div class="mt-1 update-duedate-badge-wrap">
+                                    <span class="badge bg-warning text-dark">
                                         <i class="fas fa-history me-1"></i> {{ $updateDateLabel }}
                                     </span>
                                 </div>
