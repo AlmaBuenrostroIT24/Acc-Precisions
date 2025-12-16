@@ -1382,11 +1382,13 @@ class Order_ScheduleController extends Controller
         /** 🟢 VERIFIED: Table-> Orders This Week */
         $ordenesSemana = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
+            ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
             ->get();
 
         /** 🟢 VERIFIED: Table-> Late Orders */
         $ordenesAtrasadas = OrderSchedule::where('due_date', '<', $today)
             ->where('status', '!=', 'sent')
+            ->where('status', '!=', 'onhold')
             ->where('status_order', '!=', 'inactive')
             ->get();
 
@@ -1399,6 +1401,7 @@ class Order_ScheduleController extends Controller
         // Cantidad de órdenes de la semana pasada que no tienen status 'sent' y ya vencieron
         $cantidadAtrasadasSemanaPasada = OrderSchedule::whereBetween('due_date', [$startOfLastWeek, $endOfLastWeek])
             ->where('status', '!=', 'sent')
+            ->where('status', '!=', 'onhold')
             ->where('status_order', '!=', 'inactive')
             ->count();
 
@@ -1424,7 +1427,8 @@ class Order_ScheduleController extends Controller
             ->where('status', '!=', 'sent')
             ->where('status_order', '!=', 'inactive')
             ->count();
-            
+
+        /** 🟢 VERIFIED: Box text-> total Standby */
         $cantidadStandby = OrderSchedule::where('location', 'standby')
             ->where('status', '!=', 'sent')
             ->where('status_order', '!=', 'inactive')
@@ -1432,6 +1436,7 @@ class Order_ScheduleController extends Controller
 
         /** 🟢 VERIFIED: Circle text-> Ordenes por cliente */
         $ordenesPorCliente = OrderSchedule::select('costumer', DB::raw('count(*) as total'))
+            ->selectRaw("SUM(CASE WHEN LOWER(status) = 'onhold' THEN 1 ELSE 0 END) AS onhold_total")
             ->where('status', '!=', 'sent')
             ->where('status_order', '!=', 'inactive')
             ->groupBy('costumer')

@@ -153,6 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const statusFilterVal = (
                 document.getElementById("statusFilter")?.value || ""
             ).toLowerCase();
+            const customerFilterVal = (
+                document.getElementById("customerFilter")?.value || ""
+            ).toLowerCase();
             const globalSearch = (
                 (settings.oPreviousSearch &&
                     settings.oPreviousSearch.sSearch) ||
@@ -161,6 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const isStandbyOnhold = loc === "standby" && status === "onhold";
             if (locationFilterVal === "standby") return true; // mostrar todo si filtra Standby
             if (statusFilterVal === "onhold") return true; // permitir verlos si el filtro de status es onhold
+            if (customerFilterVal) return true; // permitir verlos si hay filtro de cliente
             if (globalSearch) return true; // permitir búsqueda global
             if (isStandbyOnhold) return false; // ocultar en vista normal
             return true;

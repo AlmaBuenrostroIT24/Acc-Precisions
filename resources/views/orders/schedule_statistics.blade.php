@@ -105,34 +105,51 @@
     </div>
 
     {{-- Card: Clientes con órdenes --}}
-    <div class="col-md-12 "> {{-- Ocupa toda la fila --}}
+    <div class="col-md-12"> {{-- Ocupa toda la fila --}}
         <div class="card shadow-sm rounded-3 border-0 h-100">
-            <div class="card-body px-3 py-2" style="max-height: 280px; overflow-y: auto;">
-                @if ($ordenesPorCliente->isNotEmpty())
-                <div class="row text-center">
-                    @foreach ($ordenesPorCliente->sortByDesc('total') as $grupo)
-                    @php
-                    if ($grupo->total > 10) {
-                    $circleClass = 'bg-success text-white'; // verde
-                    } elseif ($grupo->total >= 5 && $grupo->total <= 10) { $circleClass='bg-warning text-dark' ; } else
-                        { $circleClass='bg-secondary text-white' ; } @endphp <div
-                        class="col-1 d-flex flex-column align-items-center">
-                        <div class="rounded-circle d-flex justify-content-center align-items-center mx-auto {{ $circleClass }}"
-                            style="width: 50px; height: 50px; font-weight: 600; font-size: 2rem; user-select:none;">
-                            {{ $grupo->total }}
-                        </div>
-                        <small class="text-truncate mt-1" title="{{ ucfirst($grupo->costumer) }}">
-                            {{ ucfirst($grupo->costumer) }}
-                        </small>
+            <div class="card-body px-3 py-2" style="max-height: 320px; overflow-y: auto;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                 </div>
-                @endforeach
+                @if ($ordenesPorCliente->isNotEmpty())
+                    <div class="row g-3 text-center">
+                        @foreach ($ordenesPorCliente->sortByDesc('total') as $grupo)
+                            @php
+                                if ($grupo->total > 10) {
+                                    $circleClass = 'bg-success text-white';
+                                } elseif ($grupo->total >= 5 && $grupo->total <= 10) {
+                                    $circleClass = 'bg-warning text-dark';
+                                } else {
+                                    $circleClass = 'bg-secondary text-white';
+                                }
+                            @endphp
+                            <div class="col-auto" style="min-width: 175px; max-width: 140px;">
+                                <div class="p-2 rounded-3 border bg-light h-100 d-flex flex-column align-items-center shadow-sm"
+                                     style="min-height: 90px;">
+                                    <div class="d-flex align-items-center justify-content-center gap-5" style="min-height: 50px;">
+                                        <div class="rounded-circle d-flex justify-content-center align-items-center mx-auto {{ $circleClass }}"
+                                            style="width: 52px; height: 52px; font-weight: 700; font-size: 1.5rem; user-select:none;">
+                                            {{ $grupo->total }}
+                                        </div>
+                                        @if(($grupo->onhold_total ?? 0) > 0)
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">
+                                                Onhold: {{ $grupo->onhold_total }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <small class="fw-semibold text-truncate mt-2" title="{{ ucfirst($grupo->costumer) }}">
+                                        {{ ucfirst($grupo->costumer) }}
+                                    </small>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center text-muted small py-5">
+                        <i class="bi bi-info-circle fs-2 mb-2"></i>
+                        No orders registered
+                    </div>
+                @endif
             </div>
-            @else
-            <div class="text-center text-muted small py-5">
-                <i class="bi bi-info-circle fs-2 mb-2"></i>
-                No orders registered
-            </div>
-            @endif
         </div>
     </div>
 </div>
