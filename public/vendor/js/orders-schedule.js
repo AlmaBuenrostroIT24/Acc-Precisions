@@ -140,11 +140,21 @@ document.addEventListener("DOMContentLoaded", () => {
     function ensureStandbyFilterHook() {
         if (standbyFilterHookAdded) return;
         $.fn.dataTable.ext.search.push(function (settings, data) {
-            if (!settings.nTable || settings.nTable.id !== "orders_scheduleTable") return true;
+            if (
+                !settings.nTable ||
+                settings.nTable.id !== "orders_scheduleTable"
+            )
+                return true;
             const loc = String(data[1] || "").toLowerCase(); // col oculta location
             const status = String(data[2] || "").toLowerCase(); // col oculta status
-            const locationFilterVal = (document.getElementById("locationFilter")?.value || "").toLowerCase();
-            const globalSearch = ((settings.oPreviousSearch && settings.oPreviousSearch.sSearch) || "").trim();
+            const locationFilterVal = (
+                document.getElementById("locationFilter")?.value || ""
+            ).toLowerCase();
+            const globalSearch = (
+                (settings.oPreviousSearch &&
+                    settings.oPreviousSearch.sSearch) ||
+                ""
+            ).trim();
             const isStandbyOnhold = loc === "standby" && status === "onhold";
             if (locationFilterVal === "standby") return true; // mostrar todo si filtra Standby
             if (globalSearch) return true; // permitir búsqueda global
@@ -152,6 +162,40 @@ document.addEventListener("DOMContentLoaded", () => {
             return true;
         });
         standbyFilterHookAdded = true;
+    }
+
+    // 2025-12-17: ocultar registros con due_date en año 2049 (salvo búsqueda global o filtro customer)
+    let year2049FilterHookAdded = false;
+    function ensureYear2049FilterHook() {
+        if (year2049FilterHookAdded) return;
+        $.fn.dataTable.ext.search.push(function (settings, data) {
+            if (
+                !settings.nTable ||
+                settings.nTable.id !== "orders_scheduleTable"
+            )
+                return true;
+            const globalSearch = (
+                (settings.oPreviousSearch &&
+                    settings.oPreviousSearch.sSearch) ||
+                ""
+            ).trim();
+            const customerFilterVal = (
+                document.getElementById("customerFilter")?.value || ""
+            ).toLowerCase();
+            const dueDateHidden = String(data[12] || "").trim(); // col oculta due_date (YYYY-MM-DD)
+            const dueDateVisible = String(data[13] || "").trim(); // col visible formato M-d-Y
+            const dueDateStr = dueDateHidden || dueDateVisible;
+            const isYear2049 = /2049/.test(dueDateStr);
+
+            // Permitir verlos si hay búsqueda global o filtro customer
+            if (globalSearch) return true;
+            if (customerFilterVal) return true;
+
+            // En vista normal (sin búsqueda ni filtro customer), ocultar 2049
+            if (isYear2049) return false;
+            return true;
+        });
+        year2049FilterHookAdded = true;
     }
 
     function initOrdersTable(tableElement, options = {}) {
@@ -382,6 +426,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 2025-12-15: asegurar filtro Standby+Onhold antes de inicializar DataTable
         ensureStandbyFilterHook();
+        // 2025-12-17: ocultar due_date año 2049 salvo filtro Standby o búsqueda
+        ensureYear2049FilterHook();
 
         //  Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
@@ -428,14 +474,16 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error(" No se encontro #orders_scheduleTable");
     }
 
-    
     function applyRowLateHighlight(row, data, index) {
         const $row = $(row);
         const priority = String($row.data("priority") || "").toLowerCase();
         const status = (data[2] || "").toLowerCase();
         const locationVal = String(
-            (data[1] || $row.find("[id^='hidden-location-']").text() || "")
-                .trim()
+            (
+                data[1] ||
+                $row.find("[id^='hidden-location-']").text() ||
+                ""
+            ).trim()
         ).toLowerCase();
 
         const diasTd = $row.find("td[id^='dias-restantes-']");
@@ -592,7 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-// Filtrado con regex exacto
+    // Filtrado con regex exacto
     const applyFilter = (selector, columnIndex) => {
         $(selector).on("change", function () {
             const val = $(this).val()?.toLowerCase() || "";
@@ -774,8 +822,7 @@ ${error && error.message ? error.message : error}`);
                         .find(".last-location-label");
 
                     if (
-                        String(newLocation || "").toLowerCase() ===
-                            "standby" &&
+                        String(newLocation || "").toLowerCase() === "standby" &&
                         data.last_location
                     ) {
                         label
@@ -813,14 +860,15 @@ ${error && error.message ? error.message : error}`);
         );
     });
 
-    
     function applyRowLateStyle(orderId, dias, status) {
         const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
         if (!row) return;
 
         const locCell = row.querySelector(`#hidden-location-${orderId}`);
         const locationVal = locCell
-            ? String(locCell.textContent || "").trim().toLowerCase()
+            ? String(locCell.textContent || "")
+                  .trim()
+                  .toLowerCase()
             : "";
         const statusVal = String(status || "").toLowerCase();
         const isStandbyOnhold =
@@ -911,10 +959,7 @@ ${error && error.message ? error.message : error}`);
         const [year, month, day] = date.split("-");
         const dateObj = new Date(`${year}-${month}-${day}T12:00:00`);
         const shortMonth = dateObj.toLocaleString("en-US", { month: "short" });
-        const formatted = `${shortMonth}-${day.padStart(
-            2,
-            "0"
-        )}-${year}`;
+        const formatted = `${shortMonth}-${day.padStart(2, "0")}-${year}`;
 
         // Armar clases
         const classes = [
@@ -1236,7 +1281,6 @@ ${error && error.message ? error.message : error}`);
         $(this).data("old-status", currentVal);
     });
 
-
     // Actualizar Status con confirmacion SweetAlert
     tableElement.on("change", ".status-select", function () {
         const scrollTopBefore = $(window).scrollTop();
@@ -1298,7 +1342,7 @@ ${error && error.message ? error.message : error}`);
 
                         const label = row.find(".last-location-label");
                         const currentLoc = String(
-                            (data.location || locationSelect.val() || "")
+                            data.location || locationSelect.val() || ""
                         ).toLowerCase();
                         if (
                             currentLoc === "standby" &&
@@ -1379,8 +1423,7 @@ ${error && error.message ? error.message : error}`);
                                 "standby"
                         ) {
                             const targetLoc =
-                                (data.last_location || "").trim() ||
-                                "Floor";
+                                (data.last_location || "").trim() || "Floor";
                             locationSelect.val(targetLoc).trigger("change");
                             const hiddenLoc = document.getElementById(
                                 `hidden-location-${orderId}`
