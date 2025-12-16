@@ -1782,6 +1782,7 @@ class Order_ScheduleController extends Controller
                 ->whereBetween('due_date', [$startOfWeek, $endDate])
                 ->whereNotNull('due_date')
                 ->where('status_order', 'active')
+                ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
                 ->selectRaw('
                 YEAR(due_date)            as y,
                 WEEK(due_date, 1)         as w,
