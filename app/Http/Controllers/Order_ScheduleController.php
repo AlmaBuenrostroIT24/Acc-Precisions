@@ -370,9 +370,9 @@ class Order_ScheduleController extends Controller
             // 2) Determinar el padre del grupo (si es hijo, su padre; si es padre, él mismo)
             $parentId = $order->parent_id ?: $order->id;
 
-            // 3) Recalcular total del grupo (misma lógica que ajaxUpdateWorkId):
+            // 3) Recalcular total del grupo:
             //    - Siempre suma el padre
-            //    - + hijos con work_id no vacío y was_work_id_null = 1
+            //    - + hijos con work_id no vacío
             $parentQty = (int) OrderSchedule::whereKey($parentId)
                 ->value(DB::raw('COALESCE(wo_qty,0)'));
 
@@ -624,37 +624,93 @@ class Order_ScheduleController extends Controller
             /** @var \App\Models\OrderSchedule $o */
             $o = OrderSchedule::lockForUpdate()->findOrFail($order->id);
 
+            $oldGroupKey = $o->group_key;
+
             // 1) Actualizar work_id (sin tocar was_work_id_null)
             // Normaliza: "" -> NULL (con trim)
             $wi = isset($data['work_id']) ? trim($data['work_id']) : null;
             $o->work_id = ($wi === '') ? null : $wi;
 
-            // 2) Recalcular group_key (PN#work_id | PN#NO-WO)
-            $o->group_key = $o->PN . '#' . ($o->work_id ? $o->work_id : 'NO-WO');
+            // 2) Recalcular group_key (solo si work_id existe)
+            //    PN#WORK_ID (normalizado). Si work_id está vacío => group_key = NULL (no agrupar).
+            $pn = strtoupper(trim((string) $o->PN));
+            $desc = strtolower(trim((string) $o->Part_description));
+            $workIdNorm = $o->work_id ? strtoupper(trim((string) $o->work_id)) : null;
+            $o->group_key = $workIdNorm ? ($pn . '#' . $workIdNorm) : null;
 
             $o->save();
 
-            // 3) Identificar padre del grupo
-            $parentId = $o->parent_id ?: $o->id;
+            // 3) Auto-relacionar:
+            //    - Solo suma al grupo cuando ya tengan work_id (group_key no nulo).
+            //    - Si hay varias filas con el mismo PN + Work ID, elegir un padre (MAX(id)).
+            //    - Si hay filas con el mismo PN + Description y work_id vacío, enlazarlas al padre.
+            $parentId = $o->id;
+            $groupTotal = null;
 
             // 4) Recalcular total del grupo:
             //    - SIEMPRE suma el padre
-            //    - + hijos con work_id no vacío y was_work_id_null = 1
+            //    - + hijos con work_id no vacío
             //    (si quieres excluir 'sent', añade ->where('status','<>','sent') donde se indica)
-            $parentQty = (int) OrderSchedule::whereKey($parentId)
-                //->where('status','<>','sent')
-                ->value(DB::raw('COALESCE(wo_qty,0)'));
+            if (!empty($o->group_key)) {
+                $parentId = (int) OrderSchedule::query()
+                    ->where('group_key', $o->group_key)
+                    ->whereRaw("LOWER(status) <> 'sent'")
+                    ->lockForUpdate()
+                    ->max('id');
 
-            $childrenSum = (int) OrderSchedule::where('parent_id', $parentId)
-                //->where('status','<>','sent')
-                ->whereRaw("NULLIF(TRIM(work_id),'') IS NOT NULL")
-                ->sum(DB::raw('COALESCE(wo_qty,0)'));
+                OrderSchedule::query()
+                    ->where('group_key', $o->group_key)
+                    ->whereRaw("LOWER(status) <> 'sent'")
+                    ->update([
+                        'parent_id' => DB::raw("CASE WHEN id = {$parentId} THEN NULL ELSE {$parentId} END"),
+                    ]);
 
-            $groupTotal = $parentQty + $childrenSum;
+                OrderSchedule::query()
+                    ->whereRaw("LOWER(status) <> 'sent'")
+                    ->whereRaw("UPPER(TRIM(PN)) = ?", [$pn])
+                    ->whereRaw("LOWER(TRIM(Part_description)) = ?", [$desc])
+                    ->whereRaw("NULLIF(TRIM(work_id),'') IS NULL")
+                    ->where('id', '<>', $parentId)
+                    ->lockForUpdate()
+                    ->update(['parent_id' => $parentId]);
 
-            OrderSchedule::whereKey($parentId)->update([
-                'group_wo_qty' => (int) $groupTotal,
-            ]);
+                $groupTotal = (int) OrderSchedule::query()
+                    ->where('group_key', $o->group_key)
+                    ->sum(DB::raw('COALESCE(wo_qty,0)'));
+
+                OrderSchedule::whereKey($parentId)->update([
+                    'group_wo_qty' => (int) $groupTotal,
+                ]);
+
+                OrderSchedule::query()
+                    ->where('parent_id', $parentId)
+                    ->update(['group_wo_qty' => null]);
+            } else {
+                $o->parent_id = null;
+                $o->group_wo_qty = null;
+                $o->save();
+            }
+
+            if (!empty($oldGroupKey) && $oldGroupKey !== $o->group_key) {
+                $oldParentId = (int) OrderSchedule::query()
+                    ->where('group_key', $oldGroupKey)
+                    ->whereRaw("LOWER(status) <> 'sent'")
+                    ->max('id');
+
+                if ($oldParentId > 0) {
+                    $oldTotal = (int) OrderSchedule::query()
+                        ->where('group_key', $oldGroupKey)
+                        ->sum(DB::raw('COALESCE(wo_qty,0)'));
+
+                    OrderSchedule::whereKey($oldParentId)->update([
+                        'group_wo_qty' => $oldTotal,
+                    ]);
+
+                    OrderSchedule::query()
+                        ->where('parent_id', $oldParentId)
+                        ->update(['group_wo_qty' => null]);
+                }
+            }
 
             // 5) Responder con todo lo necesario para refrescar la UI
             return response()->json([
@@ -663,7 +719,7 @@ class Order_ScheduleController extends Controller
                 'parent_id'     => $parentId,
                 'work_id'       => $o->work_id,
                 'group_key'     => $o->group_key,
-                'group_wo_qty'  => (int) $groupTotal,
+                'group_wo_qty'  => $groupTotal !== null ? (int) $groupTotal : null,
             ]);
         });
     }
