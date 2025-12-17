@@ -656,7 +656,10 @@ class Order_ScheduleController extends Controller
                     ->where('group_key', $o->group_key)
                     ->whereRaw("LOWER(status) <> 'sent'")
                     ->lockForUpdate()
-                    ->max('id');
+                    ->orderByRaw("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END")
+                    ->orderBy('due_date', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->value('id');
 
                 OrderSchedule::query()
                     ->where('group_key', $o->group_key)
@@ -695,9 +698,19 @@ class Order_ScheduleController extends Controller
                 $oldParentId = (int) OrderSchedule::query()
                     ->where('group_key', $oldGroupKey)
                     ->whereRaw("LOWER(status) <> 'sent'")
-                    ->max('id');
+                    ->orderByRaw("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END")
+                    ->orderBy('due_date', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->value('id');
 
                 if ($oldParentId > 0) {
+                    OrderSchedule::query()
+                        ->where('group_key', $oldGroupKey)
+                        ->whereRaw("LOWER(status) <> 'sent'")
+                        ->update([
+                            'parent_id' => DB::raw("CASE WHEN id = {$oldParentId} THEN NULL ELSE {$oldParentId} END"),
+                        ]);
+
                     $oldTotal = (int) OrderSchedule::query()
                         ->where('group_key', $oldGroupKey)
                         ->sum(DB::raw('COALESCE(wo_qty,0)'));
