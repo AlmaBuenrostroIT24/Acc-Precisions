@@ -66,7 +66,7 @@ class Order_ScheduleController extends Controller
             && auth()->check()
             && auth()->user()->hasRole('QAdmin')
         ) {
-            $base->whereIn('location', ['yarnell', 'floor']);
+            $base->whereIn('location', ['yarnell', 'floor','standby']);
         }
 
         // 👇 Prioridad primero, luego due_date (NULLs al final)
