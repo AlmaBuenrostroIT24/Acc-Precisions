@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers;
 
@@ -370,16 +370,17 @@ class Order_ScheduleController extends Controller
             // 2) Determinar el padre del grupo (si es hijo, su padre; si es padre, él mismo)
             $parentId = $order->parent_id ?: $order->id;
 
-            // 3) Recalcular total del grupo SOLO con filas cuyo work_id NO esté vacío y was_work_id_null = 1
-            //    (si quieres excluir 'sent', añade ->where('status', '<>', 'sent'))
-            $groupTotal = OrderSchedule::query()
-                ->where(function ($q) use ($parentId) {
-                    $q->where('id', $parentId)
-                        ->orWhere('parent_id', $parentId);
-                })
-                ->whereRaw("NULLIF(TRIM(work_id), '') IS NOT NULL") // work_id no vacío ni null (ignora espacios)
-                ->where('was_work_id_null', 0)
-                ->sum(DB::raw('COALESCE(wo_qty, 0)'));
+            // 3) Recalcular total del grupo (misma lógica que ajaxUpdateWorkId):
+            //    - Siempre suma el padre
+            //    - + hijos con work_id no vacío y was_work_id_null = 1
+            $parentQty = (int) OrderSchedule::whereKey($parentId)
+                ->value(DB::raw('COALESCE(wo_qty,0)'));
+
+            $childrenSum = (int) OrderSchedule::where('parent_id', $parentId)
+                ->whereRaw("NULLIF(TRIM(work_id),'') IS NOT NULL")
+                ->sum(DB::raw('COALESCE(wo_qty,0)'));
+
+            $groupTotal = $parentQty + $childrenSum;
 
             // 4) Guardar el total en el padre
             OrderSchedule::whereKey($parentId)->update([
@@ -647,7 +648,6 @@ class Order_ScheduleController extends Controller
             $childrenSum = (int) OrderSchedule::where('parent_id', $parentId)
                 //->where('status','<>','sent')
                 ->whereRaw("NULLIF(TRIM(work_id),'') IS NOT NULL")
-                ->where('was_work_id_null', 1)
                 ->sum(DB::raw('COALESCE(wo_qty,0)'));
 
             $groupTotal = $parentQty + $childrenSum;
@@ -1366,7 +1366,7 @@ class Order_ScheduleController extends Controller
 
 
 
-    /**
+ /**
      * +++++++++++++++++++++++++++++++++++++++++++++++++++++START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
      * ===================================================================================================================
      * 5. TAB "Order Statistics" CONSULTAS

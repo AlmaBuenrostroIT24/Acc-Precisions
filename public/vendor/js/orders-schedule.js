@@ -2302,7 +2302,9 @@ ${error && error.message ? error.message : error}`);
 
                 // 2) Actualizar el total del grupo en el padre
                 const parentId = data.parent_id;
-                const $parentRow = $(`tr[data-id="${parentId}"]`);
+                const $parentRow = $(
+                    `tr[data-order-id="${parentId}"], tr#row-${parentId}`
+                );
                 $parentRow.find(".cell-group-wo-qty").text(data.group_wo_qty);
 
                 // 3) Si usas DataTables, refrescar datos sin recargar todo:

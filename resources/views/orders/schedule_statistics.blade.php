@@ -265,9 +265,6 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-3">No late orders found.</td>
-                                </tr>
                                 @endforelse
                             </tbody>
                         </table>

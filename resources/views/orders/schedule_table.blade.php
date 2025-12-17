@@ -151,6 +151,12 @@
                                 class="wo-qty-input form-control form-control-sm"
                                 style="width: 60px; font-weight: bold; color: black;"
                                 @if($disabled) disabled @endif>
+                            @if (is_null($order->parent_id))
+                                <div class="small text-muted mt-1">
+                                    Group:
+                                    <span class="cell-group-wo-qty">{{ (int) ($order->group_wo_qty ?? 0) }}</span>
+                                </div>
+                            @endif
                         </td>
                         <td style="min-width: 120px;">
                             <select
