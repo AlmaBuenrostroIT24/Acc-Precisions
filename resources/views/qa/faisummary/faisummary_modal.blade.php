@@ -7,7 +7,7 @@
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header fai-modal-header align-items-center py-2">
                     <div class="d-flex align-items-center">
-                        <span class="fai-modal-icon mr-2"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="fai-modal-icon mr-2"><i class="fas fa-clipboard-check text-info"></i></span>
                         <div>
                             <h5 class="modal-title mb-0 text-dark">Inspection Process</h5>
                             <small class="d-block text-muted">Capture and track FAI / IPI inspections</small>
@@ -74,7 +74,7 @@
                                         <span class="fai-packet-icon mr-2"><i class="fas fa-file-alt"></i></span>
                                         <div>
                                             <label class="mb-0">FAI/IPI Inspection Packet Report</label>
-                                            <small class="text-muted d-block">Resumen y notas del paquete</small>
+                                            <small class="text-muted d-block">Resumen</small>
                                         </div>
                                     </div>
                                     <button type="button" class="btn btn-primary btn-erp btn-sm d-none" id="addRowBtn" disabled>
@@ -141,15 +141,15 @@
 
     .fai-modal-header {
         background: #f8fafc;
-        border-left: 4px solid #0d6efd;
+        border-left: 4px solid #17a2b8; /* info */
     }
 
     .fai-modal-icon {
         width: 36px;
         height: 36px;
         border-radius: 10px;
-        background: rgba(13, 110, 253, 0.12);
-        color: #0d6efd;
+        background: rgba(23, 162, 184, 0.12); /* info soft */
+        color: #17a2b8;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -303,6 +303,10 @@
         line-height: 1;
     }
 
+    .fai-filter {
+        cursor: pointer;
+    }
+
     /* 2025-12-17: marcar filas no editables */
     #dynamicTable tbody tr.fai-row-disabled {
         opacity: 0.55;
@@ -368,6 +372,45 @@
 
         // Exponer helper global por si se necesita llamar manualmente
         window.markDisabledRows = markDisabledRows;
+
+        // ------------------------------
+        // Filtro por operación al hacer click en los badges del resumen
+        // ------------------------------
+        let currentOpFilter = null;
+
+        function getRowOp($row) {
+            const opSel = $row.find('select[name="operation[]"], input[name="operation[]"]');
+            return (opSel.val() || opSel.text() || '').trim().toUpperCase();
+        }
+
+        function applyOpFilter(op) {
+            const target = (op || '').trim().toUpperCase();
+            if (!target) {
+                $tbody.find('tr').show();
+                currentOpFilter = null;
+                return;
+            }
+            $tbody.find('tr').each(function () {
+                const $r = $(this);
+                const opVal = getRowOp($r);
+                if (opVal === target) {
+                    $r.show();
+                } else {
+                    $r.hide();
+                }
+            });
+            currentOpFilter = target;
+        }
+
+        $(document).on('click', '.fai-summary-row', function () {
+            const op = ($(this).data('op') || '').toString();
+            // Toggle: si ya está filtrando por la misma op, quitar filtro
+            if (currentOpFilter === op.toUpperCase()) {
+                applyOpFilter('');
+            } else {
+                applyOpFilter(op);
+            }
+        });
     })();
 </script>
 @endpush

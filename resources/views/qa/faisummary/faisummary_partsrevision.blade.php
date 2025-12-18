@@ -1256,12 +1256,12 @@
           ipiBadgeClass = 'badge badge-warning text-dark';
         }
 
-        const line = `<tr class="text-center">
+        const line = `<tr class="text-center fai-summary-row" data-op="${op}">
             <td><span class="${globalBadgeClass}">${globalLabel}</span></td>
             <td><strong>${op}</strong></td>
-            <td><span class="${faiBadgeClass}">FAI ${faiPass}/${faiReq}</span></td>
+            <td><span class="${faiBadgeClass} fai-filter" data-op="${op}" data-type="FAI">FAI ${faiPass}/${faiReq}</span></td>
             <td class="text-muted small">${faiFail}</td>
-            <td><span class="${ipiBadgeClass}">IPI ${ipiPass}/${ipiReq}</span></td>
+            <td><span class="${ipiBadgeClass} fai-filter" data-op="${op}" data-type="IPI">IPI ${ipiPass}/${ipiReq}</span></td>
             <td class="text-muted small">${ipiFail}</td>
             <td class="text-muted small">${faiRealizadosOp + ipiRealizadosOp}</td>
           </tr>`;
