@@ -1214,7 +1214,9 @@
         if (sum >= 1) ctx.faiDoneOps.add(op);
       for (const [op, sum] of ipiPassMap.entries()) ctx.ipiCountMap.set(op, sum);
 
-      let resumen = '';
+      let resumen = '<table class="table table-sm fai-summary-table mb-0"><thead><tr>'
+        + '<th class="text-center">Status</th><th class="text-center">Op</th><th class="text-center">FAI</th><th class="text-center">NP FAI</th><th class="text-center">IPI</th><th class="text-center">NP IPI</th><th class="text-center">Done</th>'
+        + '</tr></thead><tbody>';
       let faltantes = false;
 
       for (let i = 1; i <= operations; i++) {
@@ -1230,25 +1232,47 @@
         const faiRealizadosOp = faiPass + faiFail;
         const ipiRealizadosOp = ipiPass + ipiFail;
 
-        const faiStatus = (faiPass >= faiReq) ?
-          `✔️ <strong>FAI:</strong> P:(${faiPass}/${faiReq}), NP:${faiFail}, Done:${faiRealizadosOp})` :
-          `❌ <strong>FAI:</strong>P:(${faiPass}/${faiReq}), NP:${faiFail}, Done:${faiRealizadosOp})`;
+        // Icono con badge para mejor visibilidad
+        const globalBadgeClass = (faiPass >= faiReq && ipiPass >= ipiReq)
+          ? 'badge badge-success fai-icon-badge'
+          : (faiPass < faiReq && ipiPass < ipiReq ? 'badge badge-danger fai-icon-badge' : 'badge badge-warning text-dark fai-icon-badge');
+        // Font Awesome 5 friendly icons
+        const globalLabel = (faiPass >= faiReq && ipiPass >= ipiReq)
+          ? '<i class="fas fa-check-circle"></i>'
+          : (faiPass < faiReq && ipiPass < ipiReq
+            ? '<i class="fas fa-times-circle"></i>'
+            : '<i class="fas fa-exclamation-triangle"></i>');
 
-        const ipiStatus = (ipiPass >= ipiReq) ?
-          `✔️ <strong>IPI:</strong> P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, Done:${ipiRealizadosOp})` :
-          `❌ <strong>IPI:</strong> P:(${ipiPass}/${ipiReq}), NP:${ipiFail}, Done:${ipiRealizadosOp})`;
+        let faiBadgeClass = 'badge badge-secondary'; // gris cuando no hay avances
+        if (faiPass >= faiReq) {
+          faiBadgeClass = 'badge badge-success';
+        } else if (faiPass > 0) {
+          faiBadgeClass = 'badge badge-warning text-dark'; // amarillo si tiene al menos 1
+        }
+        let ipiBadgeClass = 'badge badge-secondary';
+        if (ipiPass >= ipiReq) {
+          ipiBadgeClass = 'badge badge-success';
+        } else if (ipiPass > 0) {
+          ipiBadgeClass = 'badge badge-warning text-dark';
+        }
 
-        let globalIcon = '⚠️';
-        if (faiPass >= faiReq && ipiPass >= ipiReq) globalIcon = '✔️';
-        else if (faiPass < faiReq && ipiPass < ipiReq) globalIcon = '❌';
+        const line = `<tr class="text-center">
+            <td><span class="${globalBadgeClass}">${globalLabel}</span></td>
+            <td><strong>${op}</strong></td>
+            <td><span class="${faiBadgeClass}">FAI ${faiPass}/${faiReq}</span></td>
+            <td class="text-muted small">${faiFail}</td>
+            <td><span class="${ipiBadgeClass}">IPI ${ipiPass}/${ipiReq}</span></td>
+            <td class="text-muted small">${ipiFail}</td>
+            <td class="text-muted small">${faiRealizadosOp + ipiRealizadosOp}</td>
+          </tr>`;
 
-        const line = `${globalIcon} ${op} | ${faiStatus} | ${ipiStatus}`;
-
-        resumen += line + '\n';
+        resumen += line;
         if (faiPass < faiReq || ipiPass < ipiReq) faltantes = true;
       }
 
-      if ($pre?.length) $pre.html(resumen.trim().replace(/\n/g, "<br>"));
+      resumen += '</tbody></table>';
+
+      if ($pre?.length) $pre.html(resumen.trim());
       if ($box?.length) {
         $box.removeClass('bg-success bg-warning text-white');
         if (faltantes) $box.addClass('bg-warning text-white');
