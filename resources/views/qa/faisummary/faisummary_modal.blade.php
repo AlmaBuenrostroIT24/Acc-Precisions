@@ -77,7 +77,9 @@
                             <div class="form-group col-md-12">
                                 <div class="d-flex align-items-center justify-content-between mb-1 fai-packet-head">
                                     <div class="d-flex align-items-center">
-                                        <span class="fai-packet-icon mr-2"><i class="fas fa-file-alt"></i></span>
+                                        <span class="fai-packet-icon mr-2" id="openPacketPdfBtn" role="button" title="Open PDF" style="cursor: pointer;">
+                                            <i class="fas fa-file-alt"></i>
+                                        </span>
                                         <div>
                                             <label class="mb-0">FAI/IPI Inspection Packet Report</label>
                                             <small class="text-muted d-block">Resumen</small>
@@ -335,6 +337,7 @@
         const $operationInput = $('#operationInput');
         const $addOperationBtn = $('#addOperationBtn');
         let operationWatchTimer = null;
+        const PDF_BASE = '/qa/faisummary';
 
         function setOperationLocked(locked) {
             $operationInput
@@ -484,6 +487,17 @@
 
         // Exponer helper global por si se necesita llamar manualmente
         window.markDisabledRows = markDisabledRows;
+
+        // Abrir PDF del packet FAI/IPI con el id actual del modal
+        $('#openPacketPdfBtn').on('click', function() {
+            const id = ($('#edit-id').val() || $('#order-id').val() || '').trim();
+            if (!id) {
+                Swal.fire('Sin orden', 'Selecciona una orden para generar el PDF.', 'warning');
+                return;
+            }
+            const url = `${PDF_BASE}/${encodeURIComponent(id)}/pdf`;
+            window.open(url, '_blank');
+        });
 
         // ------------------------------
         // Filtro por operación al hacer click en los badges del resumen

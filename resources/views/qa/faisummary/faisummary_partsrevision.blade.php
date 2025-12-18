@@ -33,12 +33,6 @@
         </div>
         <div class="table-responsive">
           <table id="ordersTableEmpty" class="table table-sm table-hover align-middle w-100 fai-dt-table">
-            <colgroup>
-              <col style="width:58%">
-              <col style="width:14%">
-              <col style="width:18%">
-              <col style="width:10%">
-            </colgroup>
             <thead class="table-light">
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
@@ -59,7 +53,7 @@
       <div class="card-body fai-compact-body">
         <div class="card-title-mini fai-card-title">
           <div class="d-flex align-items-center">
-            <span class="fai-title-icon bg-success text-white">
+            <span class="fai-title-icon bg-success text-white" id="processPdfBtn" role="button" title="Exporting summary in process" style="cursor: pointer;">
               <i class="fas fa-cogs"></i>
             </span>
             <div class="ml-2">
@@ -75,12 +69,6 @@
         </div>
         <div class="table-responsive">
           <table id="ordersTableProcess" class="table table-sm table-hover align-middle w-100 fai-dt-table">
-            <colgroup>
-              <col style="width:52%">
-              <col style="width:14%">
-              <col style="width:24%">
-              <col style="width:10%">
-            </colgroup>
             <thead class="table-light">
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
@@ -118,7 +106,7 @@
   }
 
   .table thead th {
-    white-space: nowrap;
+    white-space: normal; /* permitir salto y evitar overflow */
   }
 
   .card-title-mini {
@@ -251,16 +239,17 @@
     border-spacing: 0;
   }
 
-  /* 2025-12-17: layout fijo para truncar texto (con colgroup) */
+  /* 2025-12-17: layout auto para evitar overflow horizontal */
   .fai-dt-table {
-    table-layout: fixed;
+    table-layout: auto;
   }
 
   /* 2025-12-17: truncado elegante en celdas largas */
   .fai-cell-ellipsis {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
   }
 
   /* DUE DATE más “tabular” y alineado */
@@ -325,6 +314,24 @@
     border-bottom-color: rgba(40, 167, 69, 0.22);
   }
 
+  /* 2025-12-17: encabezado estilo ERP (más contraste y sombra inferior) */
+  .fai-dt-table thead th {
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #0f172a;
+    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.08);
+    font-size: 0.9rem;
+    padding: 0.52rem 0.7rem;
+  }
+
+  #ordersTableEmpty thead th {
+    box-shadow: inset 0 -2px 0 rgba(245, 158, 11, 0.35);
+  }
+
+  #ordersTableProcess thead th {
+    box-shadow: inset 0 -2px 0 rgba(40, 167, 69, 0.30);
+  }
+
   /* 2025-12-17: bordes redondeados en el encabezado */
   #ordersTableEmpty thead th:first-child,
   #ordersTableProcess thead th:first-child {
@@ -339,6 +346,52 @@
   /* 2025-12-17: hover elegante */
   .table tbody tr:hover {
     background: rgba(13, 110, 253, 0.04);
+  }
+
+  /* 2025-12-17: filas estilo ERP con acento lateral (sin desajustar ancho) */
+  .fai-dt-table tbody tr {
+    position: relative;
+    box-shadow: inset 0 0 0 0 rgba(13, 110, 253, 0.75);
+    transition: box-shadow .12s ease, background-color .12s ease;
+  }
+
+  #ordersTableEmpty tbody tr {
+    box-shadow: inset 0 0 0 0 rgba(245, 158, 11, 0.85);
+  }
+
+  .fai-dt-table tbody tr:hover {
+    background: rgba(13, 110, 253, 0.05);
+    box-shadow: inset 4px 0 0 0 rgba(13, 110, 253, 0.85);
+  }
+
+  #ordersTableEmpty tbody tr:hover {
+    box-shadow: inset 4px 0 0 0 rgba(245, 158, 11, 0.9);
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  .fai-dt-table tbody td {
+    padding: 0.42rem 0.6rem;
+  }
+
+  /* Centrar contenido y alinear verticalmente */
+  .fai-dt-table thead th,
+  .fai-dt-table tbody td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* Alinear a la izquierda columnas de PART/DESCRIPCIÓN */
+  #ordersTableEmpty thead th:first-child,
+  #ordersTableEmpty tbody td:first-child,
+  #ordersTableProcess thead th:first-child,
+  #ordersTableProcess tbody td:first-child {
+    text-align: left;
+  }
+
+  /* Tabla: ancho completo sin forzar overflow */
+  .table {
+    width: 100% !important;
+    min-width: 0;
   }
 
   /* 2025-12-17: botones en ACTIONS */
@@ -703,6 +756,246 @@
     $(function() {
       ctx.dtEmpty = makeDT('empty', '#badgePending');
       ctx.dtProcess = makeDT('process', '#badgeProcess');
+    });
+
+    // --------------------------
+    // Export resumen PDF (In Process)
+    // --------------------------
+    function parseProgressVal(raw) {
+      if (raw === undefined || raw === null) return null;
+      if (typeof raw === 'number') return raw;
+      const str = String(raw);
+      const m = str.match(/-?\d+(?:[.,]\d+)?/);
+      if (!m) return null;
+      const num = parseFloat(m[0].replace(',', '.'));
+      return Number.isNaN(num) ? null : num;
+    }
+
+    function computeSummaryFromRows(rows) {
+      if (!rows || !rows.length) return null;
+      const list = [];
+      rows.forEach(r => {
+        const val = parseProgressVal(r?.progress_pct ?? r?.inspection_progress ?? r?.progress);
+        if (val === null) return; // si no hay número, no se cuenta
+        list.push({
+          val,
+          id: r?.id ?? '',
+          part: r?.part ?? '',
+          work_id: r?.work_id ?? ''
+        });
+      });
+
+      const total = list.length;
+      if (total === 0) return null;
+
+      let over50 = 0,
+        mid = 0,
+        below0 = 0,
+        sum = 0;
+
+      list.forEach(({ val }) => {
+        sum += val;
+        if (val > 50) over50++;
+        else if (val > 0) mid++;
+        else below0++;
+      });
+
+      const sorted = [...list].sort((a, b) => a.val - b.val);
+      const median = (sorted.length % 2 === 1)
+        ? sorted[(sorted.length - 1) / 2].val
+        : (sorted[sorted.length / 2 - 1].val + sorted[sorted.length / 2].val) / 2;
+      const topLow = sorted.slice(0, 5);
+      const topHigh = sorted.slice(-5).reverse();
+
+      return {
+        total,
+        over50,
+        mid,
+        below0,
+        avg: sum / total,
+        median,
+        topLow,
+        topHigh
+      };
+    }
+
+    function buildProcessSummaryFromTable() {
+      if (!ctx.dtProcess) return null;
+      const rows = ctx.dtProcess.rows().data().toArray();
+      return computeSummaryFromRows(rows);
+    }
+
+    function buildProcessSummaryFromServer() {
+      return fetchJson(ROUTES.partsData, {
+        data: {
+          bucket: 'process'
+        }
+      }).then(resp => {
+        const rows = Array.isArray(resp?.data) ? resp.data : [];
+        return computeSummaryFromRows(rows);
+      });
+    }
+
+    function openProcessPdf(summary) {
+      const {
+        total,
+        over50,
+        mid,
+        below0,
+        avg,
+        median,
+        topLow = [],
+        topHigh = []
+      } = summary;
+      const pct = (v) => total ? (v / total * 100).toFixed(1) + '%' : '0%';
+      const now = new Date().toLocaleString();
+      const chartSvg = (() => {
+        const data = [
+          { label: '> 50%', value: over50, color: '#10b981' },
+          { label: '0% to 50%', value: mid, color: '#f59e0b' },
+          { label: '<= 0%', value: below0, color: '#ef4444' }
+        ];
+        const max = Math.max(...data.map(d => d.value), 1);
+        const width = 320;
+        const barH = 26;
+        const gap = 10;
+        const height = data.length * (barH + gap);
+        const bars = data.map((d, idx) => {
+          const w = Math.max(4, (d.value / max) * width);
+          const y = idx * (barH + gap);
+          return `
+            <g>
+              <rect x="0" y="${y}" width="${w}" height="${barH}" rx="6" fill="${d.color}" opacity="0.85"></rect>
+              <text x="${w + 6}" y="${y + barH / 2 + 4}" font-size="12" fill="#111827">${d.label}: ${d.value}</text>
+            </g>
+          `;
+        }).join('');
+        return `<svg width="${width + 140}" height="${height}" xmlns="http://www.w3.org/2000/svg">${bars}</svg>`;
+      })();
+      const topRows = topLow.map((r, idx) =>
+        `<tr><td>${idx + 1}</td><td>${r.work_id || ''}</td><td>${r.part || ''}</td><td>${r.val}%</td></tr>`
+      ).join('') || '<tr><td colspan="4">Sin datos</td></tr>';
+      const topHighRows = topHigh.map((r, idx) =>
+        `<tr><td>${idx + 1}</td><td>${r.work_id || ''}</td><td>${r.part || ''}</td><td>${r.val}%</td></tr>`
+      ).join('') || '<tr><td colspan="4">Sin datos</td></tr>';
+
+      const html = `
+        <html>
+          <head>
+            <title>FAI/IPI In Process - Summary</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; color: #111827; }
+              h1 { font-size: 20px; margin-bottom: 4px; }
+              h2 { font-size: 13px; margin: 0 0 16px; color: #6b7280; }
+              table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+              th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: center; }
+              th { background: #f3f4f6; font-weight: 700; letter-spacing: 0.02em; font-size: 12px; }
+              td { font-size: 12px; }
+              tr:nth-child(even) td { background: #f9fafb; }
+              .muted { color: #6b7280; font-size: 11px; }
+            </style>
+          </head>
+          <body>
+            <h1>FAI/IPI - In Process Summary</h1>
+            <h2>Total orders: ${total} <span class="muted">| Generated: ${now}</span></h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Range</th>
+                  <th>Count</th>
+                  <th>% of total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>> 50%</td><td>${over50}</td><td>${pct(over50)}</td></tr>
+                <tr><td>0% to 50%</td><td>${mid}</td><td>${pct(mid)}</td></tr>
+                <tr><td><= 0%</td><td>${below0}</td><td>${pct(below0)}</td></tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top:12px;">${chartSvg}</div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Average (%)</th>
+                  <th>Median (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>${avg?.toFixed ? avg.toFixed(1) : ''}</td><td>${median?.toFixed ? median.toFixed(1) : ''}</td></tr>
+              </tbody>
+            </table>
+
+            <table>
+              <caption style="text-align:left; font-weight:700; padding:6px 0 2px; color:#111827;">Top 5 lowest progress</caption>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>JOB</th>
+                  <th>PART/DESC</th>
+                  <th>Progress (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${topRows}
+              </tbody>
+            </table>
+
+            <table>
+              <caption style="text-align:left; font-weight:700; padding:6px 0 2px; color:#111827;">Top 5 highest progress</caption>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>JOB</th>
+                  <th>PART/DESC</th>
+                  <th>Progress (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${topHighRows}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      $('#processPdfFrame').attr('src', url);
+      $('#processPdfModal').data('pdfUrl', url).modal('show');
+    }
+
+    $('#processPdfBtn').on('click', function() {
+      // Prioriza obtener datos frescos desde el backend
+      buildProcessSummaryFromServer()
+        .then(summary => summary || buildProcessSummaryFromTable())
+        .then(summary => {
+          if (!summary) {
+            Swal.fire('Sin datos', 'No hay órdenes en proceso para generar el PDF.', 'info');
+            return;
+          }
+          openProcessPdf(summary);
+        })
+        .catch(() => {
+          Swal.fire('Error', 'No fue posible obtener los datos.', 'error');
+        });
+    });
+
+    // Limpia el recurso del iframe al cerrar el modal
+    $('#processPdfModal').on('hidden.bs.modal', function() {
+      const url = $(this).data('pdfUrl');
+      if (url) URL.revokeObjectURL(url);
+      $(this).data('pdfUrl', null);
+      $('#processPdfFrame').attr('src', 'about:blank');
+    });
+
+    // Imprimir desde el iframe al presionar el botón en el modal
+    $('#printProcessPdfBtn').on('click', function() {
+      const frame = document.getElementById('processPdfFrame');
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      }
     });
 
     // ================== Modal: show/hidden ==================
@@ -2002,3 +2295,28 @@
 
 
 @endpush
+
+{{-- Modal para mostrar PDF de resumen In Process --}}
+<div class="modal fade" id="processPdfModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title mb-0">Resumen In Process (PDF)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-2">
+        <iframe id="processPdfFrame" src="about:blank" style="width: 100%; height: 78vh; border: none;" title="Resumen In Process"></iframe>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm btn-erp" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i> Close
+        </button>
+        <button type="button" class="btn btn-primary btn-sm btn-erp" id="printProcessPdfBtn">
+          <i class="fas fa-print mr-1"></i> Print
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
