@@ -660,6 +660,16 @@ return [
                 ],
             ],
         ],
+        'CustomHeader' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'vendor/css/custom-header.css',
+                ],
+            ],
+        ],
         'Pace' => [
             'active' => false,
             'files' => [

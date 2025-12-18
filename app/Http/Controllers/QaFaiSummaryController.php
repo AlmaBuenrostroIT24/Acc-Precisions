@@ -114,9 +114,11 @@ class QaFaiSummaryController extends Controller
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
-                $dueFormatted = $r->due_date
-                    ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y')
-                    : null;
+
+                // 2025-12-17: enviar una fecha "sort" (YYYY-MM-DD) para que DataTables ordene correctamente
+                // aunque el display sea M/d/Y.
+                $dueSort = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('Y-m-d') : null;
+                $dueFormatted = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->format('M/d/Y') : null;
 
                 $sum = (int) ($r->group_wo_qty ?? 0);
 
@@ -156,6 +158,7 @@ class QaFaiSummaryController extends Controller
                     'sampling'       => (int) ($r->sampling ?? 0),
                     'sampling_check' => (string) ($r->sampling_check ?? 'Normal'),
                     'due_date'       => $dueFormatted,
+                    'due_date_sort'  => $dueSort,
                 ];
 
                 if ($bucket === 'process') {

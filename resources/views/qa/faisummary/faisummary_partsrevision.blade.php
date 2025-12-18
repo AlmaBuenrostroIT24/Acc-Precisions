@@ -1,26 +1,8 @@
-<!-- resources/views/orders/index_schedule.blade.php -->
+<!-- resources/views/qa/faisummary/faisummary_partsrevision.blade.php -->
 @extends('adminlte::page')
 
-@section('title', 'FAI Summary')
-{{--
-@section('content_header')
-<div class="card shadow-sm mb-2 border-0 bg-light">
-  <div class="card-body d-flex align-items-center py-2 px-3">
-    <h4 class="mb-0 text-dark">
-      <i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>
-      FAI Summary
-    </h4>
+@section('title', 'QA/Parts Revision')
 
-    <nav aria-label="breadcrumb" class="mb-0 ml-auto">
-      <ol class="breadcrumb mb-0 bg-transparent p-0">
-        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item active" aria-current="page">FAI Summary</li>
-</ol>
-</nav>
-</div>
-</div>
-@endsection
---}}
 
 @section('content')
 
@@ -32,14 +14,31 @@
   <!-- Pending -->
   <div class="col">
     <div class="card h-100 shadow-sm rounded-3 border-left-warning">
-      <div class="card-body">
-        <div class="card-title-mini">
-          <i class="fas fa-hourglass-half text-warning"></i>
-          <span>PENDING</span>
-          <span class="badge bg-secondary ms-auto" id="badgePending">0</span>
+      <div class="card-body fai-compact-body">
+        <div class="card-title-mini fai-card-title">
+          <div class="d-flex align-items-center">
+            <span class="fai-title-icon bg-warning text-dark">
+              <i class="fas fa-hourglass-half"></i>
+            </span>
+            <div class="ml-2">
+              <div class="fai-title-text">Pending</div>
+              <small class="text-muted fai-title-sub">Orders waiting to start</small>
+            </div>
+          </div>
+          {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
+          <div class="fai-dt-tools d-flex align-items-center ml-auto">
+            <span class="badge badge-pill badge-light border mr-2 d-none" id="badgePending"></span>
+            <div class="dt-filter-slot" data-dt-filter-slot="empty"></div>
+          </div>
         </div>
         <div class="table-responsive">
-          <table id="ordersTableEmpty" class="table table-sm table-bordered table-hover align-middle w-100 table-striped">
+          <table id="ordersTableEmpty" class="table table-sm table-hover align-middle w-100 fai-dt-table">
+            <colgroup>
+              <col style="width:58%">
+              <col style="width:14%">
+              <col style="width:18%">
+              <col style="width:10%">
+            </colgroup>
             <thead class="table-light">
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
@@ -57,19 +56,36 @@
   <!-- In Process -->
   <div class="col">
     <div class="card h-100 shadow-sm rounded-3 border-left-success">
-      <div class="card-body">
-        <div class="card-title-mini">
-          <i class="fas fa-cogs text-success"></i>
-          <span>IN PROCESS</span>
-          <span class="badge bg-secondary ms-auto" id="badgeProcess">0</span>
+      <div class="card-body fai-compact-body">
+        <div class="card-title-mini fai-card-title">
+          <div class="d-flex align-items-center">
+            <span class="fai-title-icon bg-success text-white">
+              <i class="fas fa-cogs"></i>
+            </span>
+            <div class="ml-2">
+              <div class="fai-title-text">In Process</div>
+              <small class="text-muted fai-title-sub">FAI / IPI progress</small>
+            </div>
+          </div>
+          {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
+          <div class="fai-dt-tools d-flex align-items-center ml-auto">
+            <span class="badge badge-pill badge-light border mr-2 d-none" id="badgeProcess"></span>
+            <div class="dt-filter-slot" data-dt-filter-slot="process"></div>
+          </div>
         </div>
         <div class="table-responsive">
-          <table id="ordersTableProcess" class="table table-sm table-bordered table-hover align-middle w-100 table-striped">
+          <table id="ordersTableProcess" class="table table-sm table-hover align-middle w-100 fai-dt-table">
+            <colgroup>
+              <col style="width:52%">
+              <col style="width:14%">
+              <col style="width:24%">
+              <col style="width:10%">
+            </colgroup>
             <thead class="table-light">
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
-                <th>JOB </th>
-                <th>(WIP) FAI+IPI </th>
+                <th>JOB</th>
+                <th>(WIP) FAI + IPI</th>
                 <th class="actions-col">ACTIONS</th>
               </tr>
             </thead>
@@ -112,11 +128,351 @@
     display: flex;
     align-items: center;
     gap: .5rem;
+    flex-wrap: wrap;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  /* 2025-12-17: encabezado moderno para Pending/In Process */
+  .fai-card-title {
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .fai-title-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.10);
+  }
+
+  .fai-title-icon i {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .fai-title-text {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  .fai-title-sub {
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  /* 2025-12-17: hacer el card-body más compacto en Pending/Process */
+  .fai-compact-body {
+    padding: 0.6rem 0.6rem 0.4rem;
+  }
+
+  .fai-compact-body .card-title-mini {
+    margin-bottom: 0.35rem;
   }
 
   .actions-col {
     width: 1%;
     white-space: nowrap;
+  }
+
+  .card-title-mini .badge {
+    border-radius: 999px;
+    padding: 0.35rem 0.55rem;
+    font-weight: 700;
+  }
+
+  /* 2025-12-17: si el badge está vacío, no mostrarlo */
+  .badge:empty {
+    display: none !important;
+  }
+
+  /* 2025-12-17: Search alineado con el título del card */
+  .fai-dt-tools .dataTables_filter {
+    margin: 0 !important;
+  }
+
+  .fai-dt-tools .dataTables_filter label {
+    margin: 0 !important;
+  }
+
+  .fai-dt-tools .dataTables_filter input {
+    width: 180px;
+  }
+
+  /* 2025-12-17: evitar que el título se “apachurre” cuando el search ocupa espacio */
+  .card-title-mini > span {
+    white-space: nowrap;
+  }
+
+  .fai-dt-tools {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+
+  .dt-filter-slot {
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 575.98px) {
+    .fai-dt-tools {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .fai-dt-tools .dataTables_filter input {
+      width: 100%;
+      max-width: 220px;
+    }
+  }
+
+  /* 2025-12-17: mejoras visuales de tablas (AdminLTE/BS4 + DataTables) */
+  .table-responsive {
+    /* 2025-12-17: quitar efecto "cuadro" alrededor de la tabla */
+    border: 0;
+    border-radius: 0;
+    overflow: auto;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  /* 2025-12-17: layout fijo para truncar texto (con colgroup) */
+  .fai-dt-table {
+    table-layout: fixed;
+  }
+
+  /* 2025-12-17: truncado elegante en celdas largas */
+  .fai-cell-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* DUE DATE más “tabular” y alineado */
+  #ordersTableEmpty td:nth-child(3),
+  #ordersTableEmpty th:nth-child(3) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #ordersTableProcess td:nth-child(2),
+  #ordersTableProcess th:nth-child(2) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Columna ACTIONS centrada */
+  #ordersTableEmpty td:last-child,
+  #ordersTableProcess td:last-child {
+    text-align: center;
+  }
+
+  /* 2025-12-17: líneas suaves (sin borde pesado) */
+  .table thead th,
+  .table tbody td {
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .table thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #334155;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+    vertical-align: middle;
+  }
+
+  .table tbody td {
+    font-size: 0.85rem;
+    color: #0f172a;
+  }
+
+  /* Sticky header dentro del contenedor scroll */
+  .table-responsive thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8fafc;
+    box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+  }
+
+  /* Encabezados por tipo (Pending / In Process) */
+  #ordersTableEmpty thead th {
+    background: linear-gradient(180deg, rgba(255, 193, 7, 0.14) 0%, rgba(255, 193, 7, 0.08) 100%);
+    border-bottom-color: rgba(255, 193, 7, 0.25);
+  }
+
+  #ordersTableProcess thead th {
+    background: linear-gradient(180deg, rgba(40, 167, 69, 0.14) 0%, rgba(40, 167, 69, 0.08) 100%);
+    border-bottom-color: rgba(40, 167, 69, 0.22);
+  }
+
+  /* 2025-12-17: bordes redondeados en el encabezado */
+  #ordersTableEmpty thead th:first-child,
+  #ordersTableProcess thead th:first-child {
+    border-top-left-radius: 10px;
+  }
+
+  #ordersTableEmpty thead th:last-child,
+  #ordersTableProcess thead th:last-child {
+    border-top-right-radius: 10px;
+  }
+
+  /* 2025-12-17: hover elegante */
+  .table tbody tr:hover {
+    background: rgba(13, 110, 253, 0.04);
+  }
+
+  /* 2025-12-17: botones en ACTIONS */
+  .table .btn {
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 1px rgba(16, 24, 40, 0.06);
+    transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+  }
+
+  .table .btn.btn-sm {
+    padding: 0.2rem 0.45rem;
+  }
+
+  /* 2025-12-17: icon-buttons cuadrados (más pro y consistentes) */
+  .table .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
+    filter: brightness(1.02);
+  }
+
+  .table .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(16, 24, 40, 0.10);
+  }
+
+  .table .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 .2rem rgba(13, 110, 253, 0.18), 0 2px 10px rgba(16, 24, 40, 0.10);
+  }
+
+  /* 2025-12-17: iconos centrados dentro del botón */
+  .table .btn i,
+  .table .btn .fas,
+  .table .btn .far {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  /* 2025-12-17: íconos de acciones un poco más grandes */
+  .table .btn i,
+  .table .btn .fas,
+  .table .btn .far {
+    font-size: 0.95rem;
+  }
+
+  /* Controles DataTables */
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate {
+    font-size: 0.85rem;
+  }
+
+  .dataTables_wrapper .dataTables_filter input,
+  .dataTables_wrapper .dataTables_length select {
+    border-radius: 0.5rem !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    padding: 0.25rem 0.5rem !important;
+    height: auto !important;
+    background: #fff;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 0.5rem !important;
+  }
+
+  /* 2025-12-17: paginado más llamativo / moderno */
+  .dataTables_wrapper .dataTables_paginate {
+    /* 2025-12-17: footer (info + paginate) más compacto */
+    margin-top: 0.1rem !important;
+    padding-top: 0.1rem !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  /* 2025-12-17: compactar el contenedor UL de paginación (Bootstrap) */
+  .dataTables_wrapper .dataTables_paginate .pagination {
+    margin: 0 !important;
+  }
+
+  /* Nota: con integración Bootstrap4, el padding real vive en .page-link */
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    border: 1px solid rgba(13, 110, 253, 0.20) !important;
+    background: rgba(13, 110, 253, 0.04) !important;
+    color: #0b5ed7 !important;
+    margin: 0 0.12rem !important;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
+    /* 2025-12-17: botones de paginación un poco más grandes */
+    padding: 0.14rem 0.50rem !important;
+    font-size: 0.88rem !important;
+    line-height: 1.1 !important;
+    border: none !important;
+    background: transparent !important;
+    color: inherit !important;
+    border-radius: 0.5rem;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: rgba(13, 110, 253, 0.10) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
+    color: #fff !important;
+  }
+
+  /* 2025-12-17: hacer más pequeño el texto de "Showing X to Y..." */
+  .dataTables_wrapper .dataTables_info {
+    padding: 0 !important;
+    margin: 0 !important;
+    /* 2025-12-17: footer más pequeño (texto info) */
+    font-size: 0.66rem !important;
+    line-height: 1 !important;
+    color: rgba(15, 23, 42, 0.65);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
+    cursor: default !important;
   }
 </style>
 @endsection
@@ -237,7 +593,11 @@
         },
         {
           data: 'due_date',
-          render: TEXT
+          // 2025-12-17: ordenar por YYYY-MM-DD desde el backend (due_date_sort)
+          render: function (data, type, row) {
+            if (type === 'sort' || type === 'type') return row?.due_date_sort || data || '';
+            return data || '';
+          }
         },
         {
           data: 'actions',
@@ -271,10 +631,29 @@
         responsive: true,
         deferRender: true,
         pageLength: 15,
-        order: [
-          [1, 'desc']
-        ],
+        // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
+        lengthChange: false,
+        // 2025-12-17: search sin label y placeholder elegante
+        language: {
+          search: '',
+          searchPlaceholder: 'Search…'
+        },
+        // 2025-12-17: ordenar por due_date en Pending (bucket=empty), mantener JOB en Process
+        order: bucket === 'empty' ? [[2, 'asc']] : [[1, 'desc']],
         rowId: 'id',
+        // 2025-12-17: truncar Part/Descripción y dejar tooltip con el texto completo
+        createdRow: function(row, data) {
+          const partText = String(data?.part || '').trim();
+          if (partText) $('td:eq(0)', row).attr('title', partText).addClass('fai-cell-ellipsis');
+        },
+        // 2025-12-17: mover el search al header del card (a la altura de PENDING / IN PROCESS)
+        initComplete: function() {
+          const api = this.api();
+          const $container = $(api.table().container());
+          const $filter = $container.find('.dataTables_filter');
+          const $slot = $(`.dt-filter-slot[data-dt-filter-slot="${bucket}"]`);
+          if ($slot.length && $filter.length) $filter.appendTo($slot);
+        },
         ajax: {
           url: ROUTES.partsData,
           data: {
@@ -291,7 +670,10 @@
         drawCallback: function() {
           const api = this.api();
           const total = api.page.info().recordsDisplay;
-          $(badgeSelector).text(total);
+          // Mostrar badge solo cuando haya datos; ocultar si es 0 o vacío
+          $(badgeSelector)
+            .text(total > 0 ? total : '')
+            .toggleClass('d-none', !total);
 
           if (bucket !== 'process') return;
 

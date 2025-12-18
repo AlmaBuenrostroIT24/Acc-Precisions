@@ -1,0 +1,54 @@
+/* 2025-12-17: Header más angosto (AdminLTE navbar) */
+.main-header.navbar {
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    min-height: 38px;
+}
+
+.main-header.navbar .nav-link,
+.main-header.navbar .navbar-nav .nav-link {
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+}
+
+.main-header.navbar .navbar-brand {
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+}
+
+/* Ajusta el input del buscador del header para que encaje */
+.main-header.navbar .form-control-navbar,
+.main-header.navbar .navbar-search-block .form-control {
+    height: 26px;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+}
+
+/* 2025-12-17: centrar iconos del header */
+.main-header.navbar .nav-link > i,
+.main-header.navbar .navbar-nav .nav-link > i,
+.main-header.navbar .nav-link .fas,
+.main-header.navbar .nav-link .far,
+.main-header.navbar .nav-link .fab {
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* 2025-12-17: label del título junto al botón del menú */
+.main-header.navbar .navbar-content-header {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
