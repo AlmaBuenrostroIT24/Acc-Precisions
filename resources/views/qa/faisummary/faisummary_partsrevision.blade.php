@@ -474,6 +474,7 @@
     box-shadow: none;
     cursor: default !important;
   }
+
 </style>
 @endsection
 
@@ -793,12 +794,26 @@
     /*=================== Guardar # de operaciones============================*/
     $('#editModal').on('click', '#addOperationBtn', function() {
       const orderId = $('#order-id').val();
-      const operation = parseInt(ctx.modal.$operationInput.val().trim()) || 0;
-      const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+      const operation = parseInt(ctx.modal.$operationInput.val().trim(), 10) || 0;
+      const sampling = parseInt(ctx.modal.$samplingResult.val(), 10) || 0;
       const samplingType = $('#edit-sampling-type').val();
 
+      if (!orderId) {
+        return swalError('Error', 'No order has been selected.');
+      }
+
+      if (operation <= 0) {
+        return swalWarn('Required field', 'Records the number of operations');
+      }
+
+      if (sampling <= 0 || Number.isNaN(sampling)) {
+        return swalError('Sampling required', 'Calculate the sampling before saving the operations.');
+      }
+
       const total_fai = operation * 1;
-      const total_ipi = operation * sampling - total_fai;
+      const total_ipi = Math.max(operation * sampling - total_fai, 0);
+
+      const $btn = $(this).prop('disabled', true);
 
       $.post(ROUTES.updateOps(orderId), {
           _token: getCsrf(),
@@ -823,7 +838,10 @@
               swalOk('¡Updated!', 'Operation saved successfully');
             });
         })
-        .fail(() => swalError('Error', 'The operation could not be updated.'));
+        .fail(() => swalError('Error', 'The operation could not be updated.'))
+        .always(() => {
+          $btn.prop('disabled', false);
+        });
     });
 
     /*=====Guardar automáticamente cuando cambie el tipo de sampling===========*/
@@ -844,14 +862,14 @@
         const $opInput = (ctx?.modal?.$operationInput?.length ? ctx.modal.$operationInput : $('#operationInput'));
 
         if (!lotSize) {
-          swalError('WO Qty requerido', 'Captura un WO Qty válido para calcular el muestreo.');
+          swalError('WO Qty Required', 'Enter a valid WO Quantity to calculate the sample.');
           return;
         }
         fetchJson(ROUTES.samplingPlan(lotSize, samplingType))
           .then((resp) => {
             const n = toSamplingNumber(resp);
             if (!Number.isFinite(n)) {
-              swalError('Plan inválido', 'No se pudo calcular el tamaño de muestra para ese tipo.');
+              swalError('Invalid plan', 'The sample size could not be calculated for that type.');
               return $.Deferred().reject('invalid-sampling').promise();
             }
             if ($samplingRes.length) $samplingRes.val(n);
@@ -873,7 +891,7 @@
           .fail((xhr) => {
             if (xhr !== 'invalid-sampling') {
               console.warn('Sampling-type change failed:', xhr?.status, xhr?.responseText);
-              swalError('Error', 'No se pudo guardar el cambio de sampling.');
+              swalError('Error', 'The change to the sampling could not be saved.');
             }
           });
       });
@@ -1643,7 +1661,7 @@
       $row.append(`
         <td>
           <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-          <button type="button" class="btn btn-danger btn-sm removeRowBtn">−</button>
+          <button type="button" class="btn btn-danger btn-sm removeRowBtn"><i class="fas fa-minus"></i></button>
         </td>`);
 
       $inspType.on('change', function() {

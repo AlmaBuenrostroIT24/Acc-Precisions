@@ -43,25 +43,31 @@
                                 </div>
                             </div>
                             <div class="row align-items-end mb-3">
-
-                                <div class="form-group col-md-3">
+                                <div class="form-group col-md-3 mb-0">
                                     <label>QTY. TO CHECK</label>
                                     <select class="form-control" id="edit-sampling-type" name="sampling_type">
                                         <option value="normal" selected>Normal</option>
                                         <option value="tightened">Tightened</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-2">
+                                <div class="form-group col-md-2 mb-0">
                                     <label>SAMPLING</label>
                                     <input type="text" class="form-control" id="edit-sampling-result" name="sampling_qty" readonly>
                                 </div>
-                                <div class="form-group col-md-2">
-                                    <label for="edit-extra">NO.OPS</label>
-                                    <div class="d-flex">
-                                        <input type="hidden" id="order-id">
-                                        <input type="text" class="form-control" id="operationInput" name="dynamic_field[]">
-                                        <button type="button" class="btn btn-success btn-erp ml-2" id="addOperationBtn"><i class="fas fa-save mr-1"></i></button>
+                                <div class="form-group col-md-3 mb-0 d-flex align-items-end">
+                                    <div class="w-100">
+                                        <label for="edit-extra">NO.OPS</label>
+                                        <div class="d-flex align-items-end">
+                                            <input type="hidden" id="order-id">
+                                            <input type="text" class="form-control w-auto" style="max-width: 90px;" id="operationInput" name="dynamic_field[]">
+                                            <button type="button" class="btn btn-success btn-erp ml-2 d-none" id="addOperationBtn"><i class="fas fa-save mr-1"></i></button>
+                                        </div>
                                     </div>
+                                </div>
+                                <div class="form-group col-md-4 mb-0 d-flex align-items-end justify-content-end">
+                                    <button type="button" class="btn btn-info btn-erp ml-2" id="addRowBtn" disabled>
+                                        <i class="fas fa-plus mr-1"></i> Inspection
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -77,9 +83,6 @@
                                             <small class="text-muted d-block">Resumen</small>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn btn-primary btn-erp btn-sm d-none" id="addRowBtn" disabled>
-                                        <i class="fas fa-plus mr-1"></i> New Inspection
-                                    </button>
                                 </div>
                                 <div id="inspection-missing-container" class="fai-packet-box">
                                     <pre id="inspection-missing" class="m-0" style="white-space: pre-wrap;"></pre>
@@ -141,14 +144,16 @@
 
     .fai-modal-header {
         background: #f8fafc;
-        border-left: 4px solid #17a2b8; /* info */
+        border-left: 4px solid #17a2b8;
+        /* info */
     }
 
     .fai-modal-icon {
         width: 36px;
         height: 36px;
         border-radius: 10px;
-        background: rgba(23, 162, 184, 0.12); /* info soft */
+        background: rgba(23, 162, 184, 0.12);
+        /* info soft */
         color: #17a2b8;
         display: inline-flex;
         align-items: center;
@@ -268,12 +273,14 @@
     }
 
     .fai-packet-box {
-        min-height: 140px;
-        background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+        min-height: 90px;
+        background: linear-gradient(180deg, #f9fbfd 0%, #eef2f6 100%);
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        border-radius: 10px;
+        padding: 6px 8px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        font-size: 0.9rem;
+        line-height: 1.3;
     }
 
     /* 2025-12-18: tabla resumen ERP compacta */
@@ -281,16 +288,21 @@
         font-size: 0.85rem;
         width: 100%;
         table-layout: fixed;
+        margin-bottom: 0;
     }
 
     .fai-summary-table th {
         background: #f1f5f9;
         color: #0f172a;
         border-bottom: 1px solid #e2e8f0;
+        text-align: center;
+        padding: 4px 6px;
     }
 
     .fai-summary-table td {
         vertical-align: middle;
+        padding: 4px 6px;
+        text-align: center;
     }
 
     .fai-summary-table .badge {
@@ -322,6 +334,22 @@
         const $addRowBtn = $('#addRowBtn');
         const $operationInput = $('#operationInput');
         const $addOperationBtn = $('#addOperationBtn');
+        let operationWatchTimer = null;
+
+        function setOperationLocked(locked) {
+            $operationInput
+                .prop('readonly', locked)
+                .toggleClass('bg-light', locked);
+            $addOperationBtn.toggleClass('d-none', locked);
+        }
+
+        // Arrancar oculto/bloqueado para evitar destellos iniciales
+        setOperationLocked(true);
+
+        function refreshOperationUI() {
+            const hasVal = ($operationInput.val() || '').trim().length > 0;
+            setOperationLocked(hasVal);
+        }
 
         function markDisabledRows() {
             $tbody.find('tr').each(function() {
@@ -333,7 +361,10 @@
         // Observar cambios en el tbody (nuevas filas, ediciones)
         if ($tbody.length) {
             const observer = new MutationObserver(markDisabledRows);
-            observer.observe($tbody[0], { childList: true, subtree: true });
+            observer.observe($tbody[0], {
+                childList: true,
+                subtree: true
+            });
         }
 
         function hideNewInspection() {
@@ -344,8 +375,48 @@
             $addRowBtn.removeClass('d-none').prop('disabled', false);
         }
 
-        // Bandera: operación ya guardada (al abrir) o luego de guardar con el botón verde
+        // Bandera: operacion guardada; arranca true solo si llega valor desde BD
         let operationSaved = (($operationInput.val() || '').trim().length > 0);
+        // Arrancamos bloqueado/oculto para evitar destellos antes de que carguen datos
+        setOperationLocked(true);
+        hideNewInspection();
+
+        function syncOperationState(forceDetect = false) {
+            const hasVal = (($operationInput.val() || '').trim().length > 0);
+            // Si llega valor tardío desde BD, marcalo como guardado solo cuando se fuerza la deteccion
+            if (forceDetect && hasVal) {
+                operationSaved = true;
+            }
+
+            if (operationSaved) {
+                showNewInspection();
+                setOperationLocked(true);
+            } else {
+                hideNewInspection();
+                setOperationLocked(false);
+            }
+        }
+
+        function startOperationWatcher(ms = 8000, interval = 80) {
+            if (operationWatchTimer) clearInterval(operationWatchTimer);
+            const end = Date.now() + ms;
+            const tick = () => {
+                syncOperationState(true);
+                if (Date.now() > end) {
+                    clearInterval(operationWatchTimer);
+                    operationWatchTimer = null;
+                }
+            };
+            operationWatchTimer = setInterval(tick, interval);
+            tick();
+        }
+
+        function stopOperationWatcher() {
+            if (operationWatchTimer) {
+                clearInterval(operationWatchTimer);
+                operationWatchTimer = null;
+            }
+        }
 
         function updateNewInspectionVisibility() {
             if (operationSaved) showNewInspection();
@@ -357,18 +428,59 @@
             const val = ($operationInput.val() || '').trim();
             if (val) {
                 operationSaved = true;
-                showNewInspection();
+                syncOperationState();
             } else {
-                hideNewInspection();
+                operationSaved = false;
+                syncOperationState();
             }
         });
 
-        // Al abrir el modal, habilitar si ya hay operación guardada desde BD
+        // Permitir editar el campo al hacer click y mostrar nuevamente el boton verde
+        $operationInput.on('focus click', function() {
+            stopOperationWatcher();
+            setOperationLocked(false);
+        });
+
+        // Sincronizar al escribir o cambiar valor manualmente
+        $operationInput.on('input change', function() {
+            operationSaved = false;
+            syncOperationState();
+        });
+
+        // Al cambiar de pestaAña (Process / Pending) recalcular visibilidad del botA3n
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+            startOperationWatcher();
+        });
+
+        // Antes de mostrar el modal, resetear estado y recalcular (evita arrastre entre tablas)
+        $('#editModal').on('show.bs.modal', function() {
+            stopOperationWatcher();
+            operationSaved = false;
+            hideNewInspection();
+            setOperationLocked(false);
+            // Recalcula tras que otros listeners (p.e. partsrevision) llenen los campos
+            setTimeout(() => {
+                operationSaved = (($operationInput.val() || '').trim().length > 0);
+                syncOperationState(true);
+                startOperationWatcher();
+            }, 0);
+        });
+
+        // Al cerrar, limpiar flags y estado visual
+        $('#editModal').on('hidden.bs.modal', function() {
+            stopOperationWatcher();
+            operationSaved = false;
+            hideNewInspection();
+            setOperationLocked(false);
+        });
+
+        // Al abrir el modal, habilitar si ya hay operacion guardada desde BD
         $('#editModal').on('shown.bs.modal', function() {
-            operationSaved = (($operationInput.val() || '').trim().length > 0);
-            updateNewInspectionVisibility();
             markDisabledRows();
         });
+
+        // Arrancar watcher inicial para reflejar valores si ya vienen cargados
+        startOperationWatcher();
 
         // Exponer helper global por si se necesita llamar manualmente
         window.markDisabledRows = markDisabledRows;
@@ -390,7 +502,7 @@
                 currentOpFilter = null;
                 return;
             }
-            $tbody.find('tr').each(function () {
+            $tbody.find('tr').each(function() {
                 const $r = $(this);
                 const opVal = getRowOp($r);
                 if (opVal === target) {
@@ -402,7 +514,7 @@
             currentOpFilter = target;
         }
 
-        $(document).on('click', '.fai-summary-row', function () {
+        $(document).on('click', '.fai-summary-row', function() {
             const op = ($(this).data('op') || '').toString();
             // Toggle: si ya está filtrando por la misma op, quitar filtro
             if (currentOpFilter === op.toUpperCase()) {
