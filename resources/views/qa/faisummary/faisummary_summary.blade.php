@@ -56,7 +56,7 @@
                             </span>
                             <div class="info-box-content">
                                 <span class="info-box-text">Inspections</span>
-                                <h3 class="mb-1">{{ number_format($monthStats['total']) }}</h3>
+                                <h3 id="kpi-total" class="mb-1 font-weight-bold">{{ number_format($monthStats['total']) }}</h3>
                                 <div class="d-flex justify-content-between">
                                     <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
                                     <small>{{ $monthStats['year'] }}</small>
@@ -73,7 +73,7 @@
                             </span>
                             <div class="info-box-content">
                                 <span class="info-box-text">Pass</span>
-                                <h3 class="mb-1">{{ number_format($monthStats['pass']) }}</h3>
+                                <h3 id="kpi-pass" class="mb-1 font-weight-bold">{{ number_format($monthStats['pass']) }}</h3>
                                 <div class="d-flex justify-content-between">
                                     <small>Approved</small>
                                     <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
@@ -90,7 +90,7 @@
                             </span>
                             <div class="info-box-content">
                                 <span class="info-box-text">No Pass</span>
-                                <h3 class="mb-1">{{ number_format($monthStats['fail']) }}</h3>
+                                <h3 id="kpi-fail" class="mb-1 font-weight-bold">{{ number_format($monthStats['fail']) }}</h3>
                                 <div class="d-flex justify-content-between">
                                     <small>Rejected</small>
                                     <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
@@ -107,11 +107,11 @@
                             </span>
                             <div class="info-box-content">
                                 <div class="d-flex justify-content-between align-items-baseline">
-                                    <h3 class="mb-0 font-weight-bold">{{ $monthStats['rate'] }}%</h3>
-                                    <small class="text-white-50">Meta ≥ 95%</small>
+                                    <h3 id="kpi-rate" class="mb-0 font-weight-bold">{{ $monthStats['rate'] }}%</h3>
+                                    <small class="text-primary">Meta ≥ 95%</small>
                                 </div>
                                 <div class="progress mt-2" style="height: {{ $progressHeight }};">
-                                    <div class="progress-bar bg-light" style="width: {{ $monthStats['rate'] }}%"></div>
+                                    <div id="kpi-rate-bar" class="progress-bar bg-light" style="width: {{ $monthStats['rate'] }}%"></div>
                                 </div>
                             </div>
                         </div>
@@ -168,22 +168,23 @@
                 </div>
 
 
-                <div class="table-responsive">
-                    <table id="faiTable" class="table table-sm table-striped table-bordered align-middle mb-0">
+                <div class="table-responsive fai-erp-wrap">
+                    <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
                         <colgroup>
-                            <col style="width:200px">
                             <col style="width:140px">
-                            <col style="width:100px">
+                            <col style="width:150px">
+                            <col style="width:90px">
                             <col style="width:70px">
+                            <col class="opet-col">
+                            <col style="width:110px">
+                            <col style="width:80px">
+                            <col style="width:130px">
+                            <col style="width:140px">
+                            <col style="width:90px">
+                            <col style="width:90px">
                             <col style="width:90px">
                             <col style="width:110px">
-                            <col style="width:90px">
-                            <col style="width:160px">
-                            <col style="width:160px">
-                            <col style="width:90px">
-                            <col style="width:100px">
-                            <col style="width:120px">
-                            <col style="width:100px">
+                            <col style="width:110px">
                         </colgroup>
                         <thead class="thead-light sticky-thead">
                             <tr class="text-uppercase ">
@@ -261,7 +262,7 @@
 
     {{-- === Columna derecha: FILTROS === --}}
     <div class="col-md-2">
-        <div class="card shadow-sm mb-3 filters-card-fixed">
+        <div class="card shadow-sm mb-3 filters-card-fixed fai-filters-erp">
             <div class="card-body">
                 <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
                     {{-- Global Search --}}
@@ -377,7 +378,7 @@
 
                     {{-- Clean + Total en la misma fila --}}
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm btn-clean">
                             <i class="fas fa-eraser mr-1"></i> Clean
                         </a>
 
@@ -443,31 +444,122 @@
 <style>
     /* Compactar info-box para KPIs */
     .info-box {
-        min-height: 70px;
-        /* por defecto ~120px */
-        padding: .5rem;
+        min-height: 50px;
+        padding: .32rem .5rem;
+        border-radius: 9px;
+        border: 1px solid rgba(15, 23, 42, 0.04);
+        background: transparent;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.35rem;
+    }
+
+    /* Estado activo al filtrar */
+    .info-box.fai-filter-active {
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25), 0 6px 18px rgba(15, 23, 42, 0.12);
+        border-color: rgba(13, 110, 253, 0.35);
+    }
+
+    /* Acento lateral ERP */
+    .info-box::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background: linear-gradient(180deg, #0d6efd, #2563eb);
+        opacity: .85;
+    }
+
+    /* Ajuste de acento por color contextual */
+    .info-box.bg-secondary::before { background: linear-gradient(180deg, #6c757d, #495057); }
+    .info-box.bg-success::before   { background: linear-gradient(180deg, #198754, #0f5132); }
+    .info-box.bg-danger::before    { background: linear-gradient(180deg, #dc3545, #a71d2a); }
+    .info-box.bg-info::before      { background: linear-gradient(180deg, #159fbbff, #0d6efd); }
+
+    /* Neutralizar fondo sólido de clases bg-* para usar el estilo ERP */
+    .info-box.bg-secondary {
+        background: rgba(108, 117, 125, 0.16) !important;
+        border-color: rgba(108, 117, 125, 0.25) !important;
+        color: #1f2937 !important;
+    }
+    .info-box.bg-success {
+        background: rgba(25, 135, 84, 0.16) !important;
+        border-color: rgba(25, 135, 84, 0.25) !important;
+        color: #0f172a !important;
+        cursor: pointer;
+        user-select: none;
+    }
+    .info-box.bg-danger {
+        background: rgba(220, 53, 69, 0.16) !important;
+        border-color: rgba(220, 53, 69, 0.25) !important;
+        color: #0f172a !important;
+        cursor: pointer;
+        user-select: none;
+    }
+    .info-box.bg-info {
+        background: rgba(13, 110, 253, 0.16) !important;
+        border-color: rgba(13, 110, 253, 0.25) !important;
+        color: #0f172a !important;
     }
 
     .info-box .info-box-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 58px;
-        line-height: 60px;
+        width: 46px;
+        height: 46px;
+        font-size: 34px;
+        line-height: 46px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.7);
+        color: #0d6efd;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.4rem;
+        margin-left: 0.3rem;
     }
 
+    /* Color de íconos por variante */
+    .info-box.bg-secondary .info-box-icon { color: #495057; }
+    .info-box.bg-success .info-box-icon   { color: #198754; }
+    .info-box.bg-danger .info-box-icon    { color: #dc3545; }
+    .info-box.bg-info .info-box-icon      { color: #0d6efd; }
+
     .info-box .info-box-content {
-        margin-left: .5rem;
-        line-height: 1.2;
+        margin-left: .10rem;
+        line-height: 1.15;
+        flex: 1 1 auto;
     }
 
     .info-box .info-box-text {
-        font-size: .8rem;
-        font-weight: 600;
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        white-space: nowrap;
     }
 
     .info-box .info-box-number {
-        font-size: 1.1rem;
-        font-weight: 700;
+        font-size: 0.92rem;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    /* Color destacado para la barra de progreso en los KPIs */
+    .info-box .progress-bar {
+        background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%);
+    }
+
+    .info-box .progress {
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    .info-box .progress,
+    .info-box .progress * {
+        color: #0f172a;
     }
 
     /* ===== Caja grande de alertas FAI ===== */
@@ -558,6 +650,288 @@
         border-color: #c82333;
         box-shadow: 0 0 4px rgba(200, 35, 51, 0.4);
     }
+
+    /* ===================== */
+    /* Tabla ERP: faisummary_summary */
+    /* ===================== */
+    .fai-erp-wrap {
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.4rem;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    #faiTable {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    #faiTable th,
+    #faiTable td {
+        word-break: break-word;
+    }
+
+    /* Columna OPET ajustada a contenido mínimo */
+    #faiTable col.opet-col {
+        width: auto !important;
+    }
+    #faiTable th:nth-child(5),
+    #faiTable td:nth-child(5) {
+        white-space: nowrap;
+        width: auto !important;
+        min-width: 70px;
+    }
+
+    #faiTable thead th {
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: #0f172a;
+        background: linear-gradient(180deg, rgba(13, 110, 253, 0.2) 0%, rgba(13, 110, 253, 0.08) 100%);
+        border-bottom: 1px solid rgba(13, 110, 253, 0.22);
+        padding: 0.55rem 0.7rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    #faiTable thead th:first-child {
+        border-top-left-radius: 10px;
+    }
+
+    #faiTable thead th:last-child {
+        border-top-right-radius: 10px;
+    }
+
+    #faiTable tbody td {
+        padding: 0.45rem 0.7rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    #faiTable tbody tr:hover {
+        background: rgba(13, 110, 253, 0.05);
+    }
+
+    /* Zebra suave */
+    .fai-erp-table tbody tr:nth-child(even) {
+        background: rgba(249, 250, 251, 0.9);
+    }
+
+    /* Alineaciones: fechas/nums centrados, textos a la izquierda */
+    #faiTable tbody td:nth-child(1),
+    #faiTable tbody td:nth-child(3),
+    #faiTable tbody td:nth-child(4),
+    #faiTable tbody td:nth-child(6),
+    #faiTable tbody td:nth-child(7),
+    #faiTable tbody td:nth-child(10),
+    #faiTable tbody td:nth-child(11),
+    #faiTable tbody td:nth-child(12),
+    #faiTable tbody td:nth-child(13) {
+        text-align: center;
+    }
+
+    #faiTable tbody td:nth-child(2),
+    #faiTable tbody td:nth-child(5),
+    #faiTable tbody td:nth-child(8),
+    #faiTable tbody td:nth-child(9),
+    #faiTable tbody td:nth-child(14) {
+        text-align: left;
+    }
+
+    /* Estilo ERP filas con acento lateral */
+    .fai-erp-table tbody tr {
+        position: relative;
+        box-shadow: inset 0 0 0 0 rgba(13, 110, 253, 0.75);
+        transition: box-shadow .12s ease, background-color .12s ease;
+    }
+
+    .fai-erp-table tbody tr:hover {
+        background: rgba(13, 110, 253, 0.05);
+        box-shadow: inset 4px 0 0 0 rgba(13, 110, 253, 0.85);
+    }
+
+    /* Clickable result column */
+    #faiTable tbody td:nth-child(7) {
+        cursor: pointer;
+    }
+
+    /* Fila activa al filtrar por PN/JOB */
+    .fai-row-active {
+        background: rgba(13, 110, 253, 0.12) !important;
+        box-shadow: inset 4px 0 0 0 rgba(13, 110, 253, 0.85);
+    }
+
+    /* Paginado estilo ERP (igual que partsrevision) */
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-top: 0 !important; /* sin línea separadora */
+    }
+
+    .dataTables_wrapper .dataTables_paginate .pagination {
+        margin: 0 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border: 1px solid rgba(13, 110, 253, 0.20) !important;
+        background: rgba(13, 110, 253, 0.04) !important;
+        color: #0b5ed7 !important;
+        margin: 0 0.16rem !important;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+        transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
+        border-radius: 0.65rem !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
+        padding: 0.22rem 0.72rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.15 !important;
+        border: none !important;
+        background: transparent !important;
+        color: inherit !important;
+        border-radius: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: rgba(13, 110, 253, 0.10) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #0d6efd !important;
+        border-color: #0d6efd !important;
+        color: #fff !important;
+        font-weight: 700;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
+        color: #fff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+        opacity: 0.5;
+        transform: none;
+        box-shadow: none;
+        cursor: default !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    /* Alinear info y paginado en la misma línea */
+    .dataTables_wrapper .row:last-child {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        float: none !important;
+    }
+    .dataTables_wrapper .row:last-child > div {
+        display: flex;
+        align-items: center;
+        flex: 1 1 auto;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .dataTables_wrapper .row:last-child > div:first-child {
+        justify-content: flex-start;
+    }
+    .dataTables_wrapper .row:last-child > div:last-child {
+        justify-content: flex-end;
+    }
+
+    /* === Filtros ERP === */
+    .fai-filters-erp {
+        background: linear-gradient(180deg, #f1f5f9 0%, #e7ecf5 100%);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 12px;
+    }
+    .fai-filters-erp .card-body {
+        padding: 0.75rem 0.75rem 0.6rem;
+    }
+    .fai-filters-erp label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        color: #0f172a;
+    }
+    .fai-filters-erp .input-group-text {
+        background: #fff;
+        border-color: rgba(15, 23, 42, 0.12);
+        color: #0d6efd;
+        font-weight: 700;
+    }
+    .fai-filters-erp .form-control,
+    .fai-filters-erp select {
+        border-color: rgba(15, 23, 42, 0.12);
+        background: #fff;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        padding: .35rem .5rem;
+    }
+    .fai-filters-erp .form-control:focus,
+    .fai-filters-erp select:focus {
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.18);
+        border-color: rgba(13, 110, 253, 0.5);
+    }
+    .fai-filters-erp .btn {
+        border-radius: 10px;
+        font-weight: 700;
+    }
+    .fai-filters-erp .btn-outline-secondary {
+        color: #0f172a;
+        border-color: rgba(15, 23, 42, 0.12);
+        background: #fff;
+    }
+    .fai-filters-erp .btn-outline-secondary:hover {
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+    }
+    .fai-filters-erp .btn-secondary {
+        background: #0f172a;
+        border-color: #0f172a;
+    }
+    .fai-filters-erp .btn-clean {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: #fff;
+    }
+    .fai-filters-erp .btn-clean:hover {
+        background: #5b636b;
+        border-color: #5b636b;
+        color: #fff;
+    }
+    .fai-filters-erp .btn-group .btn {
+        padding: 0.35rem 0.5rem;
+    }
+    .fai-filters-erp .badge-info {
+        background: #0d6efd;
+        color: #fff;
+        border-radius: 10px;
+    }
+
+    /* Contenedor tabla: variante ligera (opción 2) */
+    .fai-erp-wrap {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0.25rem;
+    }
 </style>
 
 @endsection
@@ -576,7 +950,7 @@
                 scrollX: false,
                 autoWidth: false,
                 pageLength: 15,
-                dom: 'rtip', // <- sin buscador global nativo
+                dom: 'rtip', // <- sin buscador global nativo, con info
                 order: [
                     [0, 'desc']
                 ],
@@ -588,6 +962,26 @@
         } else {
             window.faiDT = $('#faiTable').DataTable();
         }
+
+        // Filtro inicial: mostrar solo registros del mes seleccionado (si existe)
+        function applyMonthFilter() {
+            if (!$.fn.DataTable.isDataTable('#faiTable')) return;
+            const monthVal = ($('#month').val() || '').trim();
+            if (!monthVal) {
+                faiDT.column(0).search('', true, false).draw();
+                return;
+            }
+            const monthNum = parseInt(monthVal, 10);
+            if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+                faiDT.column(0).search('', true, false).draw();
+                return;
+            }
+            const abbr = new Date(2000, monthNum - 1, 1).toLocaleString('en', { month: 'short' });
+            const regex = '^' + $.fn.dataTable.util.escapeRegex(abbr) + '\\-';
+            faiDT.column(0).search(regex, true, false).draw();
+        }
+        applyMonthFilter();
+        $('#month').on('change', applyMonthFilter);
 
         // =========================
         //  Search global (custom)
@@ -741,8 +1135,30 @@
                 search: 'applied'
             }).count());
         }
-        refreshBadge();
-        faiDT.on('draw.dt search.dt order.dt page.dt', refreshBadge);
+        function updateKpisFromDT() {
+            if (!$('#kpi-total').length) return;
+            const nodes = faiDT.rows({ search: 'applied' }).nodes().toArray();
+            let total = nodes.length;
+            let pass = 0;
+            let fail = 0;
+            nodes.forEach(n => {
+                const res = ($(n).find('td').eq(COLS.result).text() || '').trim().toLowerCase();
+                if (res === 'pass') pass++;
+                else if (res === 'no pass' || res === 'nopass' || res === 'no  pass') fail++;
+            });
+            const rate = total > 0 ? Math.round((pass / total) * 100) : 0;
+            $('#kpi-total').text(total.toLocaleString());
+            $('#kpi-pass').text(pass.toLocaleString());
+            $('#kpi-fail').text(fail.toLocaleString());
+            $('#kpi-rate').text(rate + '%');
+            $('#kpi-rate-bar').css('width', rate + '%');
+        }
+        function refreshUIFromDT() {
+            refreshBadge();
+            updateKpisFromDT();
+        }
+        refreshUIFromDT();
+        faiDT.on('draw.dt search.dt order.dt page.dt', refreshUIFromDT);
 
         // =========================
         //  Tempus Dominus (si usas pickers)
@@ -817,7 +1233,74 @@
         });
 
 
+        // =========================
+        //  Click en columna Result: filtrar por mismo Part/Revision + Job
+        // =========================
+        let activeResultFilter = null;
+        $('#faiTable tbody').on('click', 'td:nth-child(7)', function() {
+            if (!$.fn.DataTable.isDataTable('#faiTable')) return;
+            const $row = $(this).closest('tr');
+            const pn = ($row.find('td').eq(1).text() || '').trim();
+            const job = ($row.find('td').eq(2).text() || '').trim();
+            const hasPn = !!pn;
+            const hasJob = !!job;
+            if (!hasPn && !hasJob) return;
 
+            const isSame = activeResultFilter
+                && activeResultFilter.pn === pn
+                && activeResultFilter.job === job;
+
+            const pnEsc = hasPn ? '^' + $.fn.dataTable.util.escapeRegex(pn) + '$' : '';
+            const jobEsc = hasJob ? '^' + $.fn.dataTable.util.escapeRegex(job) + '$' : '';
+
+            faiDT.column(1).search(isSame ? '' : pnEsc, true, false);
+            faiDT.column(2).search(isSame ? '' : jobEsc, true, false);
+            faiDT.draw();
+
+            $('#faiTable tbody tr').removeClass('fai-row-active');
+            if (!isSame) {
+                $row.addClass('fai-row-active');
+                activeResultFilter = { pn, job };
+            } else {
+                activeResultFilter = null;
+            }
+        });
+
+
+        // =========================
+        //  Click en KPI "Pass": filtrar columna Result = "Pass"
+        // =========================
+        const $kpiPass = $('.info-box.bg-success');
+        $kpiPass.on('click', function() {
+            if (!$.fn.DataTable.isDataTable('#faiTable')) return;
+            const isActive = $(this).hasClass('fai-filter-active');
+            if (isActive) {
+                faiDT.column(COLS.result).search('', true, false).draw();
+                $(this).removeClass('fai-filter-active');
+            } else {
+                faiDT.column(COLS.result).search('^\\s*pass\\s*$', true, false).draw();
+                $('.info-box').removeClass('fai-filter-active');
+                $(this).addClass('fai-filter-active');
+            }
+        });
+
+
+        // =========================
+        //  Click en KPI "No Pass": filtrar columna Result = "No Pass"
+        // =========================
+        const $kpiNoPass = $('.info-box.bg-danger');
+        $kpiNoPass.on('click', function() {
+            if (!$.fn.DataTable.isDataTable('#faiTable')) return;
+            const isActive = $(this).hasClass('fai-filter-active');
+            if (isActive) {
+                faiDT.column(COLS.result).search('', true, false).draw();
+                $(this).removeClass('fai-filter-active');
+            } else {
+                faiDT.column(COLS.result).search('^\\s*no\\s*pass\\s*$', true, false).draw();
+                $('.info-box').removeClass('fai-filter-active');
+                $(this).addClass('fai-filter-active');
+            }
+        });
 
     });
 </script>

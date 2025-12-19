@@ -332,6 +332,14 @@
     box-shadow: inset 0 -2px 0 rgba(40, 167, 69, 0.30);
   }
 
+  /* Ancho mínimo para la columna de progreso en In Process */
+  #ordersTableProcess thead th:nth-child(3),
+  #ordersTableProcess tbody td:nth-child(3) {
+    width: 18%;
+    min-width: 140px;
+    text-align: center;
+  }
+
   /* 2025-12-17: bordes redondeados en el encabezado */
   #ordersTableEmpty thead th:first-child,
   #ordersTableProcess thead th:first-child {
