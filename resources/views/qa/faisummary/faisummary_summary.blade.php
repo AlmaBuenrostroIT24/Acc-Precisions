@@ -963,18 +963,27 @@
             window.faiDT = $('#faiTable').DataTable();
         }
 
-        // Filtro inicial: mostrar solo registros del mes seleccionado (si existe)
+        // Filtro inicial: mes actual (solo si no hay mes ni año) o el mes elegido
         function applyMonthFilter() {
             if (!$.fn.DataTable.isDataTable('#faiTable')) return;
             const monthVal = ($('#month').val() || '').trim();
-            if (!monthVal) {
+            const yearVal = ($('#year').val() || '').trim();
+
+            // Si se filtra por año pero no se eligió mes, no aplicar filtro de mes
+            if (!monthVal && yearVal) {
                 faiDT.column(0).search('', true, false).draw();
                 return;
             }
-            const monthNum = parseInt(monthVal, 10);
+
+            const monthNum = monthVal ? parseInt(monthVal, 10) : (new Date().getMonth() + 1);
             if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
                 faiDT.column(0).search('', true, false).draw();
                 return;
+            }
+            // Si no había mes ni año, fija el hidden al mes actual para consistencia
+            if (!monthVal && !yearVal) {
+                $('#month').val(monthNum);
+                $('#year').val(new Date().getFullYear());
             }
             const abbr = new Date(2000, monthNum - 1, 1).toLocaleString('en', { month: 'short' });
             const regex = '^' + $.fn.dataTable.util.escapeRegex(abbr) + '\\-';
