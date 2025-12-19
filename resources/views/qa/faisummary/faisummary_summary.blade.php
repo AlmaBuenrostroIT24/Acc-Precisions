@@ -42,7 +42,7 @@
                 {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
                 @php
                 $hasAlerts = isset($failedOrders) && $failedOrders->count() > 0;
-                $progressHeight = $hasAlerts ? '12px' : '22px';
+                $progressHeight = $hasAlerts ? '20px' : '22px';
                 // Si hay alertas => KPIs col-lg-2, si no => col-lg-3
                 $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
                 @endphp
@@ -524,10 +524,11 @@
     }
 
     /* Color de íconos por variante */
-    .info-box.bg-secondary .info-box-icon { color: #495057; }
-    .info-box.bg-success .info-box-icon   { color: #198754; }
-    .info-box.bg-danger .info-box-icon    { color: #dc3545; }
-    .info-box.bg-info .info-box-icon      { color: #0d6efd; }
+    /* Iconos con color según el contexto */
+    .info-box.bg-secondary .info-box-icon { color: #495057 !important; }
+    .info-box.bg-success .info-box-icon   { color: #198754 !important; }
+    .info-box.bg-danger .info-box-icon    { color: #dc3545 !important; }
+    .info-box.bg-info .info-box-icon      { color: #0d6efd !important; }
 
     .info-box .info-box-content {
         margin-left: .10rem;
@@ -660,6 +661,12 @@
         border-radius: 12px;
         padding: 0.4rem;
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    /* Evitar scrollbar horizontal en la página */
+    body,
+    .content-wrapper {
+        overflow-x: hidden;
     }
 
     #faiTable {
@@ -924,6 +931,7 @@
         color: #fff;
         border-radius: 10px;
     }
+
 
     /* Contenedor tabla: variante ligera (opción 2) */
     .fai-erp-wrap {
