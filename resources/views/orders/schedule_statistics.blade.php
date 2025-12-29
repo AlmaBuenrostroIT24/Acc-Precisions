@@ -1,8 +1,8 @@
-<!-- resources/views/orders/index_schedule.blade.php -->
+﻿<!-- resources/views/orders/index_schedule.blade.php -->
 @extends('adminlte::page')
 
 @section('title', 'Orders Statistics')
-@section('meta') {{-- ✅ Asegura que el token se inyecta en el <head> --}}
+@section('meta') {{-- Γ£à Asegura que el token se inyecta en el <head> --}}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
@@ -29,7 +29,7 @@
 {{-- Tabs --}}
 @include('orders.schedule_tab')
 
-{{-- MÉTRICAS PRINCIPALES COMPACTAS & ATRACTIVAS --}}
+{{-- M├ëTRICAS PRINCIPALES COMPACTAS & ATRACTIVAS --}}
 <div class="container-fluid py-4">
 
     {{-- Cards resumen principal --}}
@@ -38,7 +38,7 @@
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
                 <span class="info-box-icon bg-success shadow-sm">
-                    <i class="fas fa-cogs"></i> <!-- Ícono de engranaje múltiple -->
+                    <i class="fas fa-cogs"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
                     <div class="row">
@@ -70,7 +70,7 @@
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
                 <span class="info-box-icon bg-danger shadow-sm">
-                    <i class="fas fa-exclamation-triangle"></i> <!-- Ícono de engranaje múltiple -->
+                    <i class="fas fa-exclamation-triangle"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
                     <span class="info-box-text">Late Orders</span>
@@ -82,7 +82,7 @@
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
                 <span class="info-box-icon bg-primary shadow-sm">
-                    <i class="fas fa-calendar-week"></i> <!-- Ícono de engranaje múltiple -->
+                    <i class="fas fa-calendar-week"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
                     <span class="info-box-text">Order this week</span>
@@ -94,7 +94,7 @@
         <div class="col-12 col-sm-6 col-md-3">
             <div class="info-box">
                 <span class="info-box-icon bg-warning shadow-sm">
-                    <i class="fas fa-tasks"></i> <!-- Ícono de engranaje múltiple -->
+                    <i class="fas fa-tasks"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
                     <span class="info-box-text">New Orders this week</span>
@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    {{-- Card: Clientes con órdenes --}}
+    {{-- Card: Clientes con ├│rdenes --}}
     <div class="col-md-12"> {{-- Ocupa toda la fila --}}
         <div class="card shadow-sm rounded-3 border-0 h-100">
             <div class="card-body px-3 py-2" style="max-height: 320px; overflow-y: auto;">
@@ -162,7 +162,7 @@
 
             <div class="card shadow-sm border-0 rounded-3 h-100">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
-                    {{-- Título a la izquierda --}}
+                    {{-- T├¡tulo a la izquierda --}}
                     <div class="d-flex align-items-center mb-2 mb-md-0">
                         <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
                         <h6 class="mb-0 text-success">Orders This Week</h6>
@@ -284,7 +284,7 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <!-- Columna izquierda: primer filtro + botón + gráfica -->
+                <!-- Columna izquierda: primer filtro + bot├│n + gr├ífica -->
                 <div class="col-md-6" style="border-right: 1px solid #ddd; padding-right: 20px;">
                     <!-- Primer bloque de filtros -->
                     <div class="row mb-3">
@@ -326,7 +326,7 @@
                         <canvas id="ordersChart"></canvas>
                     </div>
                 </div>
-                <!-- Columna derecha: segundo filtro + botón + gráfica -->
+                <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
                 <div class="col-md-6" style="padding-left: 20px;">
                     <!-- Segundo bloque de filtros -->
                     <div class="row mb-3">
@@ -369,7 +369,7 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <!-- Columna derecha: segundo filtro + botón + gráfica -->
+                <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
                 <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
                     <div class="mb-3">
                         <h5 class="text-center font-weight-bold">
@@ -386,7 +386,7 @@
                         <canvas id="nextWeeksChart" width="400" height="200"></canvas>
                     </div>
                 </div>
-                <!-- Columna derecha: gráfica de entregas a tiempo vs tarde -->
+                <!-- Columna derecha: gr├ífica de entregas a tiempo vs tarde -->
                 <div class="col-md-4" style="padding-left: 20px;">
                     <div class="mb-2">
                         <h5 class="text-center font-weight-bold">On Time vs Late Deliveries</h5>
@@ -428,7 +428,7 @@
     </div>
 
     <div class="row mb-2">
-        {{-- Card: Clientes con órdenes --}}
+        {{-- Card: Clientes con ├│rdenes --}}
         <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
             <div class="card shadow-sm rounded-3 border-0 h-100">
                 <div
@@ -463,7 +463,7 @@
             </div>
         </div>
 
-        {{-- Card: Órdenes agregadas esta semana --}}
+        {{-- Card: ├ôrdenes agregadas esta semana --}}
         <div class="col-md-4 col-sm-6 mb-3">
             <div class="card shadow rounded-4 border-0 h-100">
                 @if ($resumen['all_shipping'])
@@ -477,7 +477,7 @@
                     <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
                         <strong>{{ $resumen['total'] }}</strong>
                     </p>
-                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">✅ ¡Everything shipped this
+                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">Γ£à ┬íEverything shipped this
                         week!</p>
                 </div>
                 @else
@@ -492,13 +492,13 @@
 
                         <div class="col-4">
                             <div class="text-start small">
-                                {{-- Cabecera con ícono --}}
+                                {{-- Cabecera con ├¡cono --}}
                                 <div class="d-flex align-items-center mb-3">
                                     <i class="fas fa-box fa-2x text-warning mr-3"></i>
                                     <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
                                 </div>
 
-                                {{-- Línea: Total --}}
+                                {{-- L├¡nea: Total --}}
                                 <div class="d-flex align-items-center mb-2">
                                     <div class="mr-2" style="width: 28px;">
                                         <i class="fas fa-list-alt text-muted"></i>
@@ -508,7 +508,7 @@
                                         style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
                                 </div>
 
-                                {{-- Línea: Pending --}}
+                                {{-- L├¡nea: Pending --}}
                                 <div class="d-flex align-items-center mb-2">
                                     <div class="mr-4" style="width: 28px;">
                                         <i class="fas fa-clock text-warning"></i>
@@ -518,7 +518,7 @@
                                         style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
                                 </div>
 
-                                {{-- Línea: Sent --}}
+                                {{-- L├¡nea: Sent --}}
                                 <div class="d-flex align-items-center mb-2">
                                     <div class="mr-4" style="width: 28px;">
                                         <i class="fas fa-paper-plane text-success"></i>
@@ -572,7 +572,7 @@
 
 
 
-        {{-- Card: Aquí puedes agregar una tercera tarjeta si la necesitas --}}
+        {{-- Card: Aqu├¡ puedes agregar una tercera tarjeta si la necesitas --}}
         <div class="col-md-4 col-sm-6 mb-3">
             <div class="card shadow-sm rounded-3 border-0 h-100">
                 {{-- Header --}}
@@ -581,7 +581,7 @@
                 </div>
 
                 @php
-                // Dinámica de colores e íconos según el cumplimiento global
+                // Din├ímica de colores e ├¡conos seg├║n el cumplimiento global
                 if ($percentageOnTime >= 90) {
                 $percentColor = 'text-success';
                 $circleColor = 'bg-success';
@@ -613,7 +613,7 @@
                     <p class="text-dark text-center mb-0 small">Of weeks had 100% of orders completed on time</p>
                 </div>
 
-                {{-- Tabla de órdenes por semana --}}
+                {{-- Tabla de ├│rdenes por semana --}}
                 <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
                     <table class="table table-sm table-bordered table-striped small mb-0">
                         <thead class="thead-light sticky-top">
@@ -621,8 +621,8 @@
                                 <th>Week</th>
                                 <th>Date Range</th>
                                 <th>Total</th>
-                                <th class="text-success">✔ Done</th>
-                                <th class="text-warning">⏱ Late</th>
+                                <th class="text-success">Done</th>
+                                <th class="text-warning">Late</th>
                                 <th>%</th>
                             </tr>
                         </thead>
@@ -979,7 +979,7 @@
 
         /**
          * =================================================================
-         * 🟣📊Gráfico: Orders Due- NExt 8 weeks (summaryNextWeeks)
+         * ≡ƒƒú≡ƒôèGr├ífico: Orders Due- NExt 8 weeks (summaryNextWeeks)
          */
         document.addEventListener('DOMContentLoaded', () => {
             const ctx = document.getElementById('nextWeeksChart')?.getContext('2d');
@@ -1049,7 +1049,7 @@
 
             /**
              * ===================================================================================
-             * 🟣📊Gráfico: entregas a tiempo vs tarde con filtros (Método summaryOnTimeFiltered)
+             * ≡ƒƒú≡ƒôèGr├ífico: entregas a tiempo vs tarde con filtros (M├⌐todo summaryOnTimeFiltered)
              */
             const onTimeCtx = document.getElementById('onTimeChart')?.getContext('2d');
             const monthFilter = document.getElementById('monthFilter');
@@ -1095,7 +1095,7 @@
                 if (customer) params.append('customer', customer);
 
                 if (params.toString()) url += `?${params.toString()}`;
-                //console.log('🔗 URL:', url);
+                //console.log('≡ƒöù URL:', url);
 
                 fetch(url)
                     .then(res => res.json())
@@ -1106,7 +1106,7 @@
                         selectedCustomer,
                         selectedYear
                     }) => {
-                        // 🔢 Asegurar NUMÉRICOS
+                        // ≡ƒöó Asegurar NUM├ëRICOS
                         const numericData = (data || []).map(v => Number(v) || 0);
 
                         if (onTimeChartRef.chart) {
@@ -1170,7 +1170,7 @@
                                         formatter: (value, context) => {
                                             const dataset = context.chart.data.datasets[0];
 
-                                            // 👇 AQUI el FIX: asegurar que value sea número
+                                            // ≡ƒæç AQUI el FIX: asegurar que value sea n├║mero
                                             const numericValue = Number(value) || 0;
 
                                             const sum = dataset.data.reduce(
@@ -1222,40 +1222,51 @@
             const weekFilter = document.getElementById('week-filter');
 
             if (weekFilter) {
-                // ✅ Detectar cambio de semana
+                // Γ£à Detectar cambio de semana
                 weekFilter.addEventListener("change", function() {
                     const week = this.value;
-                    // console.log("Semana seleccionada:", week);
+                    // Validar formato ISO YYYY-Www
+                    const weekRegex = /^\d{4}-W\d{2}$/;
+                    if (!week || !weekRegex.test(week)) {
+                        console.warn("Formato de semana inválido:", week);
+                        return;
+                    }
 
                     fetch(`/orders/by-week/ajax?week=${week}`, {
-                            headers: {
-                                "X-Requested-With": "XMLHttpRequest"
-                            },
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                    })
+                        .then(async (res) => {
+                            if (!res.ok) {
+                                const txt = await res.text();
+                                throw new Error(`HTTP ${res.status}: ${txt}`);
+                            }
+                            return res.json();
                         })
-                        .then((res) => res.json())
                         .then((data) => {
                             const tbody = document.getElementById("tableweek-body");
                             const count = document.getElementById("order-count");
 
                             if (!tbody || !count) {
-                                console.warn("No se encontró tbody o contador.");
+                                console.warn("No se encontr├│ tbody o contador.");
                                 return;
                             }
-                            // 💡 Destruir DataTable anterior si existe
+                            // ≡ƒÆí Destruir DataTable anterior si existe
                             const table = $("#tableweek");
                             if ($.fn.DataTable.isDataTable(table)) {
                                 table.DataTable().clear().destroy();
                             }
-                            // 💡 Actualizar tbody con nuevas filas
+                            // ≡ƒÆí Actualizar tbody con nuevas filas
                             tbody.innerHTML = data.html;
 
-                            // 💡 Actualizar contador
+                            // ≡ƒÆí Actualizar contador
                             count.textContent = data.count;
 
-                            // 💡 Reinicializar DataTable
+                            // ≡ƒÆí Reinicializar DataTable
                             initDataTable("#tableweek", "ORDERS THIS WEEK");
 
-                            // 💡 Actualizar texto visible de la semana
+                            // ≡ƒÆí Actualizar texto visible de la semana
                             const weekDisplay = document.getElementById("week-display");
                             if (weekDisplay && week) {
                                 const [year, weekNumber] = week.split('-W');
@@ -1271,7 +1282,7 @@
                                 weekDisplay.textContent = `Week starting: ${formatted}`;
                             }
 
-                            // 👉 Función para obtener lunes de la semana ISO
+                            // ≡ƒæë Funci├│n para obtener lunes de la semana ISO
                             function getFirstDateOfISOWeek(week, year) {
                                 const simple = new Date(year, 0, 1 + (week - 1) * 7);
                                 const dow = simple.getDay();
@@ -1284,31 +1295,32 @@
                             }
                         })
                         .catch((error) => {
-                            console.error("Error fetching data:", error);
-                            alert("Error loading data for the selected week.");
+                           // console.error("Error fetching data:", error);
+                            alert(`Error loading data for the selected week.\n\n${error}`);
                         });
 
                 });
 
-                // ✅ Al cargar la página, establecer semana actual si no hay valor
+                // Γ£à Al cargar la p├ígina, establecer semana actual si no hay valor
                 if (!weekFilter.value) {
                     const today = new Date();
-                    const year = today.getFullYear();
 
-                    const getISOWeek = date => {
-                        const tmp = new Date(date.getTime());
+                    const getISOInfo = date => {
+                        const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
                         tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
-                        const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+                        const isoYear = tmp.getUTCFullYear();
+                        const yearStart = new Date(Date.UTC(isoYear, 0, 1));
                         const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
-                        return weekNo;
+                        return { isoYear, weekNo };
                     };
 
-                    const week = getISOWeek(today).toString().padStart(2, '0');
-                    const value = `${year}-W${week}`;
+                    const { isoYear, weekNo } = getISOInfo(today);
+                    const week = weekNo.toString().padStart(2, '0');
+                    const value = `${isoYear}-W${week}`;
                     weekFilter.value = value;
 
                     // 💥 Disparar manualmente el evento change
-                    weekFilter.dispatchEvent(new Event("change"));
+                    weekFilter.dispatchEvent(new Event('change'));
                 }
             }
         });

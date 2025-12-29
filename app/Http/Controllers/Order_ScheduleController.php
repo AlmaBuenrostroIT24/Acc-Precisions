@@ -1848,25 +1848,23 @@ class Order_ScheduleController extends Controller
             $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
             $endDate     = $startOfWeek->copy()->addWeeks($weeks);
 
-            // Traer datos agrupados por año + semana ISO
-            $ordersByWeek = DB::table('orders_schedule')
+            // Traer datos y agruparlos por año ISO + semana ISO en PHP (evita errores en semanas que cruzan de año)
+            $rows = DB::table('orders_schedule')
                 ->whereBetween('due_date', [$startOfWeek, $endDate])
                 ->whereNotNull('due_date')
                 ->where('status_order', 'active')
                 ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
-                ->selectRaw('
-                YEAR(due_date)            as y,
-                WEEK(due_date, 1)         as w,
-                COUNT(*)                  as total,
-                SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as sent_count
-            ')
-                ->groupByRaw('YEAR(due_date), WEEK(due_date, 1)')
-                ->orderBy('y')
-                ->orderBy('w')
-                ->get()
-                ->keyBy(function ($row) {
-                    return $row->y . '-' . str_pad($row->w, 2, '0', STR_PAD_LEFT);
-                });
+                ->get(['due_date', 'status']);
+
+            $ordersByWeek = $rows->groupBy(function ($row) {
+                $d = Carbon::parse($row->due_date);
+                return sprintf('%04d-%02d', $d->isoWeekYear, $d->isoWeek);
+            })->map(function ($group) {
+                $total = $group->count();
+                $sent  = $group->where('status', 'sent')->count();
+                // clave y valores ya agregados
+                return (object) ['total' => $total, 'sent_count' => $sent];
+            });
 
             $labels    = [];
             $totalData = [];
