@@ -444,9 +444,9 @@
 <style>
     /* Compactar info-box para KPIs */
     .info-box {
-        min-height: 50px;
-        padding: .32rem .5rem;
-        border-radius: 9px;
+        min-height: 38px;
+        padding: .18rem .36rem;
+        border-radius: 7px;
         border: 1px solid rgba(15, 23, 42, 0.04);
         background: transparent;
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04);
@@ -508,10 +508,10 @@
     }
 
     .info-box .info-box-icon {
-        width: 46px;
-        height: 46px;
-        font-size: 34px;
-        line-height: 46px;
+        width: 34px;
+        height: 34px;
+        font-size: 24px;
+        line-height: 34px;
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.7);
         color: #0d6efd;
@@ -519,8 +519,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 0.4rem;
-        margin-left: 0.3rem;
+        margin-right: 0.28rem;
+        margin-left: 0.24rem;
     }
 
     /* Color de íconos por variante */
@@ -531,22 +531,22 @@
     .info-box.bg-info .info-box-icon      { color: #0d6efd !important; }
 
     .info-box .info-box-content {
-        margin-left: .10rem;
-        line-height: 1.15;
+        margin-left: .06rem;
+        line-height: 1.08;
         flex: 1 1 auto;
     }
 
     .info-box .info-box-text {
-        font-size: .74rem;
+        font-size: .64rem;
         font-weight: 700;
         letter-spacing: .02em;
         white-space: nowrap;
     }
 
     .info-box .info-box-number {
-        font-size: 0.92rem;
+        font-size: 0.82rem;
         font-weight: 800;
-        line-height: 1.1;
+        line-height: 1.05;
     }
 
     /* Color destacado para la barra de progreso en los KPIs */
@@ -695,12 +695,13 @@
         min-width: 70px;
     }
 
+    /* Encabezado gris estilo ERP (como modal/parts) */
     #faiTable thead th {
         font-weight: 800;
         letter-spacing: 0.05em;
-        color: #0f172a;
-        background: linear-gradient(180deg, rgba(13, 110, 253, 0.2) 0%, rgba(13, 110, 253, 0.08) 100%);
-        border-bottom: 1px solid rgba(13, 110, 253, 0.22);
+        color: #1f2937;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.14);
         padding: 0.55rem 0.7rem;
         vertical-align: middle;
         font-size: 0.9rem;
@@ -787,9 +788,9 @@
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button {
-        border: 1px solid rgba(13, 110, 253, 0.20) !important;
-        background: rgba(13, 110, 253, 0.04) !important;
-        color: #0b5ed7 !important;
+        border: 1px solid rgba(15, 23, 42, 0.18) !important;
+        background: rgba(241, 245, 249, 0.95) !important;
+        color: #0f172a !important;
         margin: 0 0.16rem !important;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
         transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
@@ -807,14 +808,14 @@
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: rgba(13, 110, 253, 0.10) !important;
+        background: rgba(226, 232, 240, 1) !important;
         transform: translateY(-1px);
         box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #0d6efd !important;
-        border-color: #0d6efd !important;
+        background: #94a3b8 !important;
+        border-color: #94a3b8 !important;
         color: #fff !important;
         font-weight: 700;
     }
@@ -860,6 +861,13 @@
     }
     .dataTables_wrapper .row:last-child > div:last-child {
         justify-content: flex-end;
+    }
+
+    /* Texto de encabezados en negro (consistente) */
+    #faiTable thead th,
+    .fai-erp-table thead th,
+    .table thead th {
+        color: #0b0b0b !important;
     }
 
     /* === Filtros ERP === */

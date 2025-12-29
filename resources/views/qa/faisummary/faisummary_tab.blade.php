@@ -6,11 +6,8 @@
 @endphp
 
 {{-- 2025-12-17: wrapper para evitar “corte” blanco/gris entre header y cards --}}
-<div class="fai-tabs-header d-flex align-items-center mb-1 pb-1">
 
-</div>
-
-<div class="row mt-2 mb-3 fai-tabs-row">
+<div class="row mt-1 mb-0 fai-tabs-row">
     @can('qa/partsrevision')
         <div class="col-12 col-sm-6 mb-2 fai-tab-col">
             <a href="{{ route('faisummary.partsrevision') }}"
@@ -121,6 +118,8 @@
     /* 2025-12-17: header de la sección (separador suave) */
     .fai-tabs-header {
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        margin-bottom: 0;
+        padding-bottom: 0;
     }
 
     /* 2025-12-17: mejorar legibilidad del título + subtítulo en las cards */
@@ -353,6 +352,14 @@
         padding-right: 0.65rem !important;
     }
 
+    /* Separación sutil sin banda blanca */
+    .fai-tabs-row {
+        margin-top: 0 !important;
+        padding-top: 0.35rem;
+        background: #f5f7fa; /* color provisto */
+        border-radius: 12px;
+    }
+
     /* 2025-12-17: 5 tarjetas por fila en desktop (>=992px) */
     @media (min-width: 992px) {
         .fai-tabs-row {
@@ -363,5 +370,33 @@
             flex: 0 0 20%;
             max-width: 20%;
         }
+    }
+
+    /* Overrides: compact cards */
+    .fai-tab-card .card-body {
+        padding-top: 0.28rem !important;
+        padding-bottom: 0.28rem !important;
+        padding-left: 0.48rem !important;
+        padding-right: 0.48rem !important;
+    }
+
+    .fai-tab-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+    }
+
+    .fai-tab-icon i {
+        font-size: 1.05rem;
+    }
+
+    .fai-tab-title {
+        font-size: 1rem;
+        line-height: 1.08;
+    }
+
+    .fai-tab-desc {
+        font-size: 0.82rem;
+        line-height: 1.08;
     }
 </style>

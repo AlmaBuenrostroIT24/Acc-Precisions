@@ -596,12 +596,13 @@
         word-break: break-word;
     }
 
+    /* Encabezado gris estilo ERP (como modal/parts) */
     #faicompleteTable thead th {
         font-weight: 800;
         letter-spacing: 0.05em;
-        color: #0f172a;
-        background: linear-gradient(180deg, rgba(25, 135, 84, 0.2) 0%, rgba(25, 135, 84, 0.08) 100%);
-        border-bottom: 1px solid rgba(25, 135, 84, 0.22);
+        color: #1f2937;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.14);
         padding: 0.32rem 0.4rem;
         vertical-align: middle;
         font-size: 0.8rem;
@@ -664,9 +665,9 @@
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button {
-        border: 1px solid rgba(13, 110, 253, 0.20) !important;
-        background: rgba(13, 110, 253, 0.04) !important;
-        color: #0b5ed7 !important;
+        border: 1px solid rgba(15, 23, 42, 0.18) !important;
+        background: rgba(241, 245, 249, 0.95) !important;
+        color: #0f172a !important;
         margin: 0 0.16rem !important;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
         transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
@@ -684,14 +685,14 @@
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: rgba(13, 110, 253, 0.10) !important;
+        background: rgba(226, 232, 240, 1) !important;
         transform: translateY(-1px);
         box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #0d6efd !important;
-        border-color: #0d6efd !important;
+        background: #94a3b8 !important;
+        border-color: #94a3b8 !important;
         color: #fff !important;
         font-weight: 700;
     }
@@ -741,6 +742,13 @@
 
     .dataTables_wrapper .row:last-child>div:last-child {
         justify-content: flex-end;
+    }
+
+    /* Texto de encabezados en negro (consistente) */
+    #faicompleteTable thead th,
+    .fai-erp-table thead th,
+    .table thead th {
+        color: #0b0b0b !important;
     }
 </style>
 
@@ -797,7 +805,7 @@
         const dt = $tbl.DataTable({
             searching: true,
             ordering: false,
-            pageLength: 12,
+            pageLength: 13,
             scrollX: false,
             autoWidth: false,
             dom: 'rtip',

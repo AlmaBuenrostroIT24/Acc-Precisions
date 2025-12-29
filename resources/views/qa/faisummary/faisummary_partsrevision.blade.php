@@ -10,10 +10,10 @@
 {{-- Tabs --}}
 @include('qa.faisummary.faisummary_tab')
 
-<div class="row row-cols-1 row-cols-md-2 g-3">
+<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0">
   <!-- Pending -->
   <div class="col">
-    <div class="card h-100 shadow-sm rounded-3 border-left-warning">
+    <div class="card  shadow-sm rounded-3 border-left-warning">
       <div class="card-body fai-compact-body">
         <div class="card-title-mini fai-card-title">
           <div class="d-flex align-items-center">
@@ -49,7 +49,7 @@
 
   <!-- In Process -->
   <div class="col">
-    <div class="card h-100 shadow-sm rounded-3 border-left-success">
+    <div class="card shadow-sm rounded-3 border-left-success">
       <div class="card-body fai-compact-body">
         <div class="card-title-mini fai-card-title">
           <div class="d-flex align-items-center">
@@ -84,25 +84,19 @@
   </div>
 </div>
 
-
-
-
 @include('qa.faisummary.faisummary_modal')
 
 <!--  {{-- Tab: By End Schedule --}}-->
-
 @endsection
 
 
 @section('css')
 <!-- CSS complementario (puedes ponerlo en tu .css) -->
 <style>
-  .card.border-left-success {
-    border-left: 6px solid #28a745;
-  }
-
+  /* Bordes laterales neutrales (sin franjas de color) */
+  .card.border-left-success,
   .card.border-left-warning {
-    border-left: 6px solid #ffc107;
+    border-left: 2px solid rgba(0, 0, 0, 0.08);
   }
 
   .table thead th {
@@ -112,20 +106,20 @@
   .card-title-mini {
     font-size: .95rem;
     font-weight: 700;
-    margin-bottom: .75rem;
+    margin-bottom: .45rem;
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: .4rem;
     flex-wrap: wrap;
-    padding-bottom: .5rem;
+    padding-bottom: .28rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   /* 2025-12-17: encabezado moderno para Pending/In Process */
   .fai-card-title {
     justify-content: space-between;
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.45rem;
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.22rem;
   }
 
   .fai-title-icon {
@@ -159,7 +153,7 @@
 
   /* 2025-12-17: hacer el card-body más compacto en Pending/Process */
   .fai-compact-body {
-    padding: 0.6rem 0.6rem 0.4rem;
+    padding: 0.6rem 0.6rem 0.2rem;
   }
 
   .fai-compact-body .card-title-mini {
@@ -228,7 +222,8 @@
     /* 2025-12-17: quitar efecto "cuadro" alrededor de la tabla */
     border: 0;
     border-radius: 0;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden; /* evita scroll vertical interno (doble barra) */
     background: transparent;
     box-shadow: none;
   }
@@ -305,31 +300,28 @@
 
   /* Encabezados por tipo (Pending / In Process) */
   #ordersTableEmpty thead th {
-    background: linear-gradient(180deg, rgba(255, 193, 7, 0.14) 0%, rgba(255, 193, 7, 0.08) 100%);
-    border-bottom-color: rgba(255, 193, 7, 0.25);
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
   }
 
   #ordersTableProcess thead th {
-    background: linear-gradient(180deg, rgba(40, 167, 69, 0.14) 0%, rgba(40, 167, 69, 0.08) 100%);
-    border-bottom-color: rgba(40, 167, 69, 0.22);
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
   }
 
   /* 2025-12-17: encabezado estilo ERP (más contraste y sombra inferior) */
   .fai-dt-table thead th {
     font-weight: 800;
     letter-spacing: 0.02em;
-    color: #0f172a;
-    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.08);
-    font-size: 0.9rem;
-    padding: 0.52rem 0.7rem;
-  }
-
-  #ordersTableEmpty thead th {
-    box-shadow: inset 0 -2px 0 rgba(245, 158, 11, 0.35);
-  }
-
-  #ordersTableProcess thead th {
-    box-shadow: inset 0 -2px 0 rgba(40, 167, 69, 0.30);
+    color: #1f2937;
+    font-size: 0.86rem;
+    padding: 0.48rem 0.68rem;
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
+    text-transform: uppercase;
   }
 
   /* Ancho mínimo para la columna de progreso en In Process */
@@ -356,25 +348,13 @@
     background: rgba(13, 110, 253, 0.04);
   }
 
-  /* 2025-12-17: filas estilo ERP con acento lateral (sin desajustar ancho) */
+  /* Hover sin acento lateral de color */
   .fai-dt-table tbody tr {
-    position: relative;
-    box-shadow: inset 0 0 0 0 rgba(13, 110, 253, 0.75);
-    transition: box-shadow .12s ease, background-color .12s ease;
-  }
-
-  #ordersTableEmpty tbody tr {
-    box-shadow: inset 0 0 0 0 rgba(245, 158, 11, 0.85);
+    transition: background-color .12s ease;
   }
 
   .fai-dt-table tbody tr:hover {
     background: rgba(13, 110, 253, 0.05);
-    box-shadow: inset 4px 0 0 0 rgba(13, 110, 253, 0.85);
-  }
-
-  #ordersTableEmpty tbody tr:hover {
-    box-shadow: inset 4px 0 0 0 rgba(245, 158, 11, 0.9);
-    background: rgba(245, 158, 11, 0.06);
   }
 
   .fai-dt-table tbody td {
@@ -400,6 +380,22 @@
   .table {
     width: 100% !important;
     min-width: 0;
+  }
+
+  /* Compactar el footer de DataTables para evitar huecos */
+  .dataTables_wrapper .row:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .dataTables_wrapper .dataTables_info {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+  }
+  .dataTables_wrapper .dataTables_paginate {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 
   /* 2025-12-17: botones en ACTIONS */
@@ -446,13 +442,19 @@
     font-size: 0.95rem;
   }
 
-  /* Controles DataTables */
-  .dataTables_wrapper .dataTables_length,
-  .dataTables_wrapper .dataTables_filter,
-  .dataTables_wrapper .dataTables_info,
-  .dataTables_wrapper .dataTables_paginate {
-    font-size: 0.85rem;
-  }
+/* Controles DataTables */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  font-size: 0.85rem;
+}
+
+/* Fondo gris suave en toda la vista */
+body .content-wrapper,
+body .content {
+  background: #f5f7fa !important;
+}
 
   .dataTables_wrapper .dataTables_filter input,
   .dataTables_wrapper .dataTables_length select {
@@ -464,7 +466,7 @@
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button {
-    border-radius: 0.5rem !important;
+    border-radius: 0.55rem !important;
   }
 
   /* 2025-12-17: paginado más llamativo / moderno */
@@ -472,7 +474,7 @@
     /* 2025-12-17: footer (info + paginate) más compacto */
     margin-top: 0.1rem !important;
     padding-top: 0.1rem !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 0;
   }
 
   /* 2025-12-17: compactar el contenedor UL de paginación (Bootstrap) */
@@ -482,9 +484,9 @@
 
   /* Nota: con integración Bootstrap4, el padding real vive en .page-link */
   .dataTables_wrapper .dataTables_paginate .paginate_button {
-    border: 1px solid rgba(13, 110, 253, 0.20) !important;
-    background: rgba(13, 110, 253, 0.04) !important;
-    color: #0b5ed7 !important;
+    border: 1px solid rgba(15, 23, 42, 0.18) !important;
+    background: rgba(241, 245, 249, 0.95) !important;
+    color: #0f172a !important;
     margin: 0 0.12rem !important;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
     transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
@@ -492,9 +494,9 @@
 
   .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
     /* 2025-12-17: botones de paginación un poco más grandes */
-    padding: 0.14rem 0.50rem !important;
-    font-size: 0.88rem !important;
-    line-height: 1.1 !important;
+    padding: 0.18rem 0.60rem !important;
+    font-size: 0.94rem !important;
+    line-height: 1.12 !important;
     border: none !important;
     background: transparent !important;
     color: inherit !important;
@@ -502,14 +504,14 @@
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: rgba(13, 110, 253, 0.10) !important;
+    background: rgba(226, 232, 240, 1) !important;
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: #0d6efd !important;
-    border-color: #0d6efd !important;
+    background: #94a3b8 !important;
+    border-color: #94a3b8 !important;
     color: #fff !important;
     font-weight: 700;
   }
@@ -523,18 +525,43 @@
     padding: 0 !important;
     margin: 0 !important;
     /* 2025-12-17: footer más pequeño (texto info) */
-    font-size: 0.66rem !important;
-    line-height: 1 !important;
-    color: rgba(15, 23, 42, 0.65);
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+    color: rgba(15, 23, 42, 0.80);
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
-    opacity: 0.5;
-    transform: none;
-    box-shadow: none;
-    cursor: default !important;
-  }
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  opacity: 0.5;
+  transform: none;
+  box-shadow: none;
+  cursor: default !important;
+}
+
+/* Reducir padding inferior de la página para evitar franjas grises */
+.content-wrapper,
+.content {
+  padding-bottom: 0 !important;
+  background: #f5f7fa !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible;
+}
+
+/* (se removieron overrides de content-wrapper para evitar saltos de fondo) */
+
+.fai-compact-body {
+  /* ya se redujo padding; evitar agregar espacio extra abajo */
+  margin-bottom: 0;
+}
+
+/* Ajuste: encabezados con texto negro definido */
+#ordersTableEmpty thead th,
+#ordersTableProcess thead th,
+.fai-dt-table thead th,
+.table thead th {
+  color: #0b0b0b !important;
+}
 
 </style>
 @endsection
@@ -692,7 +719,7 @@
       return $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process')).DataTable({
         responsive: true,
         deferRender: true,
-        pageLength: 15,
+        pageLength: 17,
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
         lengthChange: false,
         // 2025-12-17: search sin label y placeholder elegante
