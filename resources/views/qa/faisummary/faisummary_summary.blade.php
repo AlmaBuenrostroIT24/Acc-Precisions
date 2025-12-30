@@ -42,25 +42,23 @@
                 {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
                 @php
                 $hasAlerts = isset($failedOrders) && $failedOrders->count() > 0;
-                $progressHeight = $hasAlerts ? '20px' : '22px';
+                // Barra de KPI más delgada
+                $progressHeight = $hasAlerts ? '6px' : '7px';
                 // Si hay alertas => KPIs col-lg-2, si no => col-lg-3
                 $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
                 @endphp
 
                 <div class="row mb-1">
-                    {{-- Total Inspections --}}
+                                        {{-- Total Inspections --}}
                     <div class="{{ $kpiColClass }}">
                         <div class="info-box bg-secondary">
                             <span class="info-box-icon">
                                 <i class="fas fa-clipboard-list"></i>
                             </span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Inspections</span>
-                                <h3 id="kpi-total" class="mb-1 font-weight-bold">{{ number_format($monthStats['total']) }}</h3>
-                                <div class="d-flex justify-content-between">
-                                    <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
-                                    <small>{{ $monthStats['year'] }}</small>
-                                </div>
+                            <div class="info-box-content info-box-inline">
+                                <span class="info-box-text mb-0">Inspections</span>
+                                <h3 id="kpi-total" class="mb-0 font-weight-bold">{{ number_format($monthStats['total']) }}</h3>
+                                <small class="text-muted text-uppercase ml-auto">{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
@@ -71,13 +69,10 @@
                             <span class="info-box-icon">
                                 <i class="fas fa-check-circle"></i>
                             </span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Pass</span>
-                                <h3 id="kpi-pass" class="mb-1 font-weight-bold">{{ number_format($monthStats['pass']) }}</h3>
-                                <div class="d-flex justify-content-between">
-                                    <small>Approved</small>
-                                    <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
-                                </div>
+                            <div class="info-box-content info-box-inline">
+                                <span class="info-box-text mb-0">Pass</span>
+                                <h3 id="kpi-pass" class="mb-0 font-weight-bold">{{ number_format($monthStats['pass']) }}</h3>
+                                <small class="text-muted text-uppercase ml-auto">Approved  {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
@@ -88,13 +83,10 @@
                             <span class="info-box-icon">
                                 <i class="fas fa-times-circle"></i>
                             </span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">No Pass</span>
-                                <h3 id="kpi-fail" class="mb-1 font-weight-bold">{{ number_format($monthStats['fail']) }}</h3>
-                                <div class="d-flex justify-content-between">
-                                    <small>Rejected</small>
-                                    <small>{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }}</small>
-                                </div>
+                            <div class="info-box-content info-box-inline">
+                                <span class="info-box-text mb-0">No Pass</span>
+                                <h3 id="kpi-fail" class="mb-0 font-weight-bold">{{ number_format($monthStats['fail']) }}</h3>
+                                <small class="text-muted text-uppercase ml-auto">Rejected  {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
@@ -106,12 +98,20 @@
                                 <i class="fas fa-percentage"></i>
                             </span>
                             <div class="info-box-content">
+                                @php
+                                    $totalVal = $monthStats['total'] ?? 0;
+                                    $passVal  = $monthStats['pass'] ?? 0;
+                                    // Evitar redondeo hacia arriba: truncar a 2 decimales
+                                    $rateVal  = $totalVal > 0
+                                        ? number_format(floor((($passVal * 100) / $totalVal) * 100) / 100, 2, '.', '')
+                                        : '0.00';
+                                @endphp
                                 <div class="d-flex justify-content-between align-items-baseline">
-                                    <h3 id="kpi-rate" class="mb-0 font-weight-bold">{{ $monthStats['rate'] }}%</h3>
+                                    <h3 id="kpi-rate" class="mb-0 font-weight-bold">{{ $rateVal }}%</h3>
                                     <small class="text-primary">Meta ≥ 95%</small>
                                 </div>
-                                <div class="progress mt-2" style="height: {{ $progressHeight }};">
-                                    <div id="kpi-rate-bar" class="progress-bar bg-light" style="width: {{ $monthStats['rate'] }}%"></div>
+                                <div class="progress mt-2 kpi-rate-progress" style="height: {{ $progressHeight }};">
+                                    <div id="kpi-rate-bar" class="progress-bar kpi-rate-bar" style="width: {{ $rateVal }}%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -168,7 +168,166 @@
                 </div>
 
 
-                <div class="table-responsive fai-erp-wrap">
+                {{-- Filtros bajo KPIs (formulario completo) --}}
+                @if(false)
+                <div class="card mb-2 fai-filters-erp">
+                    <div class="card-body">
+                        <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
+                            {{-- Global Search (lado filtros) --}}
+                            <div class="form-group mb-2">
+                                <label for="globalSearch">Search</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="globalSearch" class="form-control" placeholder="Search in table…" autocomplete="off">
+                                    <div class="input-group-append">
+                                        <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Operator --}}
+                            <div class="form-group mb-2">
+                                <label for="operatorFilter">Operator</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-user-tag text-primary"></i></span>
+                                    </div>
+                                    <select id="operatorFilter" class="form-control dt-filter" name="operator">
+                                        <option value="">— All —</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- Inspector --}}
+                            <div class="form-group mb-2">
+                                <label for "inspectorFilter">Inspector</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-user-check text-success"></i></span>
+                                    </div>
+                                    <select id="inspectorFilter" class="form-control dt-filter" name="inspector">
+                                        <option value="">— All —</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- Location --}}
+                            <div class="form-group mb-2">
+                                <label for="locationFilter">Location</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-danger"></i></span>
+                                    </div>
+                                    <select id="locationFilter" class="form-control dt-filter" name="location">
+                                        <option value="">— All —</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- YEAR --}}
+                            <div class="form-group mb-2">
+                                <label for="year">Date</label>
+                                <div class="input-group input-group date" id="yearPickerWrapper"
+                                    data-target-input="nearest"
+                                    data-initial-year="{{ request('year') ?? '' }}"
+                                    style="min-width:160px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-alt text-success"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="year" name="year" class="form-control datetimepicker-input"
+                                        data-toggle="datetimepicker" data-target="#yearPickerWrapper"
+                                        value="{{ request('year') }}" placeholder="Year" autocomplete="off">
+                                </div>
+                            </div>
+
+                            {{-- MONTH (display + hidden) --}}
+                            <div class="form-group mb-2">
+                                <label for="monthDisplay" class="mb-1 sr-only">Month</label>
+                                <div class="input-group input-group date" id="monthPickerWrapper"
+                                    data-target-input="nearest" style="min-width:160px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-alt text-danger"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="monthDisplay" class="form-control datetimepicker-input"
+                                        data-toggle="datetimepicker" data-target="#monthPickerWrapper"
+                                        placeholder="Month" autocomplete="off">
+                                </div>
+                                <input type="hidden" id="month" name="month" value="{{ request('month') }}">
+                            </div>
+
+                            {{-- DAY --}}
+                            <div class="form-group mb-2">
+                                <label for="day" class="mb-1 sr-only">Day</label>
+                                <div class="input-group input-group date" id="dayPickerWrapper"
+                                    data-target-input="nearest" style="min-width:180px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-day text-warning"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="day" name="day" class="form-control datetimepicker-input"
+                                        data-toggle="datetimepicker" data-target="#dayPickerWrapper"
+                                        value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
+                                        placeholder="Day" autocomplete="off">
+                                </div>
+                            </div>
+
+                            {{-- Clean + Total en la misma fila --}}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm btn-erp-gray">
+                                    <i class="fas fa-eraser mr-1"></i> Clean
+                                </a>
+
+                                <span class="badge badge-info py-2 px-3" style="font-size: 1rem;">
+                                    <i class="fas a-list-ol mr-1"></i>
+                                    Total: <span id="badgeFinished">{{ isset($inspections) ? $inspections->count() : 0 }}</span>
+                                </span>
+                            </div>
+
+                            {{-- Quick actions --}}
+                            <div class="btn-group btn-group-sm d-flex mb-2">
+                                <a class="btn btn-outline-secondary flex-fill"
+                                    href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                    <i class="fas fa-bolt mr-1"></i> Today
+                                </a>
+                                <a class="btn btn-outline-secondary flex-fill"
+                                    href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                    <i class="far fa-calendar-alt mr-1"></i> Month
+                                </a>
+                                <a class="btn btn-outline-secondary flex-fill"
+                                    href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                    <i class="far fa-calendar mr-1"></i> Year
+                                </a>
+                            </div>
+
+                            {{-- Botones de exportación --}}
+                            <div class="d-flex justify-content-end mb-2">
+                                <a href="{{ route('faisummary.export.excel', request()->query()) }}"
+                                    class="btn btn-secondary btn-sm btn-erp-gray mr-2 px-3">
+                                    <i class="far fa-file-excel mr-1 text-success"></i>Excel
+                                </a>
+
+                                <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
+                                    class="btn btn-secondary btn-sm btn-erp-gray px-3"
+                                    target="_blank">
+                                    <i class="far fa-file-pdf mr-1 text-danger"></i>PDF
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                @endif
+                <div class="mt-n1 table-responsive fai-erp-wrap">
                     <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
                         <colgroup>
                             <col style="width:140px">
@@ -378,7 +537,7 @@
 
                     {{-- Clean + Total en la misma fila --}}
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm btn-clean">
+                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm btn-erp-gray">
                             <i class="fas fa-eraser mr-1"></i> Clean
                         </a>
 
@@ -407,14 +566,14 @@
                     {{-- Botones de exportación --}}
                     <div class="d-flex justify-content-end mb-2">
                         <a href="{{ route('faisummary.export.excel', request()->query()) }}"
-                            class="btn btn-success btn-sm mr-2">
-                            <i class="far fa-file-excel mr-1"></i>Excel
+                            class="btn btn-secondary btn-sm btn-erp-gray mr-2 px-3">
+                            <i class="far fa-file-excel mr-1 text-success"></i>Excel
                         </a>
 
                         <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
-                            class="btn btn-danger btn-sm"
+                            class="btn btn-secondary btn-sm btn-erp-gray px-3"
                             target="_blank">
-                            <i class="far fa-file-pdf mr-1"></i>PDF
+                            <i class="far fa-file-pdf mr-1 text-danger"></i>PDF
                         </a>
                     </div>
                 </form>
@@ -442,86 +601,72 @@
 
 @section('css')
 <style>
-    /* Compactar info-box para KPIs */
+    /* Tarjeta KPI estilo ERP (similar a referencia) */
     .info-box {
-        min-height: 38px;
-        padding: .18rem .36rem;
-        border-radius: 7px;
-        border: 1px solid rgba(15, 23, 42, 0.04);
-        background: transparent;
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04);
+        min-height: 36px;
+        padding: .2rem .35rem;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        margin-bottom: 0.35rem;
+        gap: .25rem;
+        margin-bottom: 0.15rem;
     }
 
     /* Estado activo al filtrar */
-    .info-box.fai-filter-active {
-        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25), 0 6px 18px rgba(15, 23, 42, 0.12);
-        border-color: rgba(13, 110, 253, 0.35);
-    }
-
-    /* Acento lateral ERP */
-    .info-box::before {
+    /* Acento inferior */
+    .info-box::after {
         content: '';
         position: absolute;
         left: 0;
-        top: 0;
+        right: 0;
         bottom: 0;
-        width: 6px;
-        background: linear-gradient(180deg, #0d6efd, #2563eb);
-        opacity: .85;
+        height: 3px;
+        background: #d65a50;
+    }
+    /* Línea plana con el color que antes era el fondo de cada variante */
+    .info-box.bg-success::after {
+        background: rgba(25, 135, 84, 0.55);
+    }
+    .info-box.bg-danger::after {
+        background: rgba(220, 53, 69, 0.55);
+    }
+    .info-box.bg-info::after {
+        background: rgba(13, 110, 253, 0.55);
+    }
+    .info-box.bg-secondary::after {
+        background: rgba(108, 117, 125, 0.55);
     }
 
-    /* Ajuste de acento por color contextual */
-    .info-box.bg-secondary::before { background: linear-gradient(180deg, #6c757d, #495057); }
-    .info-box.bg-success::before   { background: linear-gradient(180deg, #198754, #0f5132); }
-    .info-box.bg-danger::before    { background: linear-gradient(180deg, #dc3545, #a71d2a); }
-    .info-box.bg-info::before      { background: linear-gradient(180deg, #159fbbff, #0d6efd); }
-
-    /* Neutralizar fondo sólido de clases bg-* para usar el estilo ERP */
-    .info-box.bg-secondary {
-        background: rgba(108, 117, 125, 0.16) !important;
-        border-color: rgba(108, 117, 125, 0.25) !important;
-        color: #1f2937 !important;
-    }
-    .info-box.bg-success {
-        background: rgba(25, 135, 84, 0.16) !important;
-        border-color: rgba(25, 135, 84, 0.25) !important;
-        color: #0f172a !important;
-        cursor: pointer;
-        user-select: none;
-    }
-    .info-box.bg-danger {
-        background: rgba(220, 53, 69, 0.16) !important;
-        border-color: rgba(220, 53, 69, 0.25) !important;
-        color: #0f172a !important;
-        cursor: pointer;
-        user-select: none;
-    }
+    /* Fondo blanco; color solo en la línea inferior */
+    .info-box.bg-secondary,
+    .info-box.bg-success,
+    .info-box.bg-danger,
     .info-box.bg-info {
-        background: rgba(13, 110, 253, 0.16) !important;
-        border-color: rgba(13, 110, 253, 0.25) !important;
-        color: #0f172a !important;
+        background: #fff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
     }
 
     .info-box .info-box-icon {
-        width: 34px;
-        height: 34px;
-        font-size: 24px;
-        line-height: 34px;
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+        line-height: 32px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.7);
-        color: #0d6efd;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        background: #f2f4f7;
+        color: #cbd5e1;
+        box-shadow: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 0.28rem;
-        margin-left: 0.24rem;
+        margin-left: .12rem;
     }
+    
 
     /* Color de íconos por variante */
     /* Iconos con color según el contexto */
@@ -531,27 +676,31 @@
     .info-box.bg-info .info-box-icon      { color: #0d6efd !important; }
 
     .info-box .info-box-content {
-        margin-left: .06rem;
-        line-height: 1.08;
         flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        gap: .12rem;
+        line-height: 1;
     }
 
     .info-box .info-box-text {
-        font-size: .64rem;
-        font-weight: 700;
+        font-size: .60rem;
+        font-weight: 800;
         letter-spacing: .02em;
         white-space: nowrap;
     }
 
     .info-box .info-box-number {
-        font-size: 0.82rem;
+        font-size: 0.68rem;
         font-weight: 800;
         line-height: 1.05;
+        margin: 0;
     }
 
     /* Color destacado para la barra de progreso en los KPIs */
     .info-box .progress-bar {
-        background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%);
+        background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%) !important;
+        height: 100%;
     }
 
     .info-box .progress {
@@ -561,6 +710,112 @@
     .info-box .progress,
     .info-box .progress * {
         color: #0f172a;
+    }
+
+/* KPI % progress bar */
+.kpi-rate-progress {
+    display: block !important;
+    visibility: visible !important;
+    height: 6px !important;
+    min-height: 4px !important;
+    background: #edf0f4 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    flex: 1 1 100%;
+    margin-top: 2px;
+    position: relative;
+    border: none;
+}
+.kpi-rate-progress .kpi-rate-bar,
+#kpi-rate-bar {
+    background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%) !important;
+    min-width: 12px !important;
+    height: 100% !important;
+    opacity: 1 !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block !important;
+    border-radius: 6px;
+}
+
+/* Alinear contenido del KPI % en columna para dar espacio a la barra */
+.info-box.bg-info .info-box-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+    width: 100%;
+}
+
+/* Alinear info y paginado en una sola línea */
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    float: none !important;
+    display: flex;
+    align-items: center;
+    padding-top: 0.35rem;
+    margin: 0;
+}
+.dataTables_wrapper .dataTables_info {
+    margin-right: auto;
+    font-size: 0.82rem;
+}
+.dataTables_wrapper .dataTables_paginate {
+    margin-left: 0.5rem;
+    justify-content: flex-end;
+}
+
+/* Tarjeta de filtros estilo ERP (fondo suave y borde ligero) */
+    .filters-card-fixed.fai-filters-erp {
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+    }
+    .filters-card-fixed.fai-filters-erp .card-body {
+        padding: 0.75rem;
+    }
+
+    /* Botones gris ERP para export */
+    .btn-erp-gray {
+        background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%) !important;
+        border: 1px solid #c5c9d2 !important;
+        color: #1f2937 !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+    .btn-erp-gray:hover {
+        background: linear-gradient(180deg, #e2e6ed 0%, #cfd4db 100%) !important;
+        color: #0f172a !important;
+    }
+    .btn-erp-gray:active,
+    .btn-erp-gray:focus {
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    }
+    /* Layout en linea para KPIs */
+    .info-box-inline {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.08rem;
+        flex-wrap: nowrap;
+    }
+    .info-box-inline .info-box-text {
+        margin-right: 0.14rem;
+    }
+    .info-box-inline h3 {
+        margin-bottom: 0;
+    }
+    .info-box-inline small {
+        white-space: nowrap;
+        margin-left: 0.18rem !important;
+        margin-right: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        align-self: center;
+        line-height: 1;
+        font-size: 0.52rem;
+        flex-shrink: 0;
     }
 
     /* ===== Caja grande de alertas FAI ===== */
@@ -765,6 +1020,150 @@
         box-shadow: inset 4px 0 0 0 rgba(13, 110, 253, 0.85);
     }
 
+    /* === KPIs estilo tarjeta referencia (compacto, alineado a la izquierda) === */
+    .info-box {
+        min-height: 58px;
+        padding: 0.45rem 0.65rem;
+        border-radius: 12px;
+        border: 1px solid #d7e3f7;
+        background: #ffffff;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        position: relative;
+    }
+    /* Sin línea inferior, aspecto limpio */
+    .info-box::after,
+    .info-box.bg-secondary::after,
+    .info-box.bg-success::after,
+    .info-box.bg-danger::after,
+    .info-box.bg-info::after {
+        content: none !important;
+    }
+
+    .info-box .info-box-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #f0f2f5;
+        color: #3aa76d;
+        border: 1px solid #e4eaf6;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .info-box.bg-secondary .info-box-icon { background: #f0f2f5 !important; color: #9ca3af !important; }
+    .info-box.bg-success   .info-box-icon { background: #f0f2f5 !important; color: #3aa76d !important; }
+    .info-box.bg-danger    .info-box-icon { background: #f0f2f5 !important; color: #ef4444 !important; }
+    .info-box.bg-info      .info-box-icon { background: #f0f2f5 !important; color: #3b82f6 !important; }
+
+    .info-box .info-box-content,
+    .info-box-inline {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.08rem;
+        line-height: 1.2;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-box .info-box-text {
+        font-size: 0.90rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        color: #111827;
+        margin: 0;
+    }
+
+    .info-box .info-box-number,
+    .info-box h3 {
+        font-size: 1.18rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+        color: #111827;
+    }
+
+    .info-box-inline small,
+    .info-box small {
+        white-space: nowrap;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1.1;
+        font-size: 0.82rem;
+        color: #64748b;
+    }
+
+    /* Línea inferior de color (inset shadow) */
+    .info-box {
+        overflow: visible !important;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(13, 110, 253, 0.18);
+    }
+    .info-box::after { content: none !important; }
+    .info-box.bg-secondary { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(108, 117, 125, 0.25); }
+    .info-box.bg-success   { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(40, 167, 69, 0.25); }
+    .info-box.bg-danger    { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(220, 53, 69, 0.25); }
+    .info-box.bg-info      { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(13, 110, 253, 0.25); }
+
+    /* Estado seleccionado al filtrar (Pass / No Pass) */
+    .info-box.fai-filter-active {
+        box-shadow: 0 3px 12px rgba(13, 110, 253, 0.18), inset 0 -3px rgba(13, 110, 253, 0.28) !important;
+        background: #f4f7ff !important;
+    }
+    .info-box.fai-filter-active.bg-success {
+        box-shadow: 0 3px 12px rgba(40, 167, 69, 0.18), inset 0 -3px rgba(40, 167, 69, 0.28) !important;
+        background: #f2fbf6 !important;
+    }
+    .info-box.fai-filter-active.bg-danger {
+        box-shadow: 0 3px 12px rgba(220, 53, 69, 0.18), inset 0 -3px rgba(220, 53, 69, 0.28) !important;
+        background: #fff5f5 !important;
+    }
+
+    /* Igualar altura/espacio de los 4 KPI boxes */
+    .info-box {
+        min-height: 50px;
+        align-items: center;
+    }
+
+    /* Ajuste final de alineación para KPIs (todo a la izquierda y en columna) */
+    .info-box-inline {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: baseline !important;
+        justify-content: flex-start !important;
+        gap: 0.25rem;
+        width: 100%;
+    }
+    .info-box-inline .info-box-text {
+        flex: 0 0 100%;
+        margin: 0;
+        line-height: 1.1;
+        text-align: left;
+    }
+    .info-box-inline h3,
+    .info-box-inline small {
+        margin: 0;
+        line-height: 1.1;
+        text-align: left;
+        flex: 0 0 auto;
+    }
+    .info-box-inline h3 {
+        margin-right: 0.35rem;
+    }
+    .info-box-inline small {
+        margin-left: auto;
+        text-align: right;
+    }
+
     /* Clickable result column */
     #faiTable tbody td:nth-child(7) {
         cursor: pointer;
@@ -921,16 +1320,6 @@
         background: #0f172a;
         border-color: #0f172a;
     }
-    .fai-filters-erp .btn-clean {
-        background: #6c757d;
-        border-color: #6c757d;
-        color: #fff;
-    }
-    .fai-filters-erp .btn-clean:hover {
-        background: #5b636b;
-        border-color: #5b636b;
-        color: #fff;
-    }
     .fai-filters-erp .btn-group .btn {
         padding: 0.35rem 0.5rem;
     }
@@ -948,6 +1337,8 @@
         box-shadow: none;
         padding: 0.25rem;
     }
+
+
 </style>
 
 @endsection
@@ -961,11 +1352,12 @@
         // =========================
         //  DataTable
         // =========================
+        const savedPageLen = 15;
         if (!$.fn.DataTable.isDataTable('#faiTable')) {
             window.faiDT = $('#faiTable').DataTable({
                 scrollX: false,
                 autoWidth: false,
-                pageLength: 15,
+                pageLength: savedPageLen,
                 dom: 'rtip', // <- sin buscador global nativo, con info
                 order: [
                     [0, 'desc']
@@ -1018,18 +1410,26 @@
                 t = setTimeout(() => fn.apply(this, args), ms);
             };
         }
-        $('#globalSearch').on('input', debounce(function() {
-            const val = this.value || '';
-            faiDT.search(val).draw();
-        }, 200));
-        $('#clearGlobalSearch').on('click', function() {
-            $('#globalSearch').val('');
-            faiDT.search('').draw();
-        });
-        // Evita submit del form al presionar Enter
-        $('#globalSearch').on('keydown', function(e) {
-            if (e.key === 'Enter') e.preventDefault();
-        });
+        function bindSearch(inputId, clearId) {
+            const $input = $(inputId);
+            if (!$input.length) return;
+            const handler = debounce(function() {
+                const val = this.value || '';
+                faiDT.search(val).draw();
+            }, 200);
+            $input.on('input', handler);
+            $input.on('keydown', function(e) {
+                if (e.key === 'Enter') e.preventDefault();
+            });
+            if (clearId) {
+                $(clearId).on('click', function() {
+                    $input.val('');
+                    faiDT.search('').draw();
+                    $input.trigger('focus');
+                });
+            }
+        }
+        bindSearch('#globalSearch', '#clearGlobalSearch');
 
 
         // =========================
@@ -1171,12 +1571,13 @@
                 if (res === 'pass') pass++;
                 else if (res === 'no pass' || res === 'nopass' || res === 'no  pass') fail++;
             });
-            const rate = total > 0 ? Math.round((pass / total) * 100) : 0;
+            const rate = total > 0 ? Math.floor((pass / total) * 10000) / 100 : 0;
             $('#kpi-total').text(total.toLocaleString());
             $('#kpi-pass').text(pass.toLocaleString());
             $('#kpi-fail').text(fail.toLocaleString());
-            $('#kpi-rate').text(rate + '%');
-            $('#kpi-rate-bar').css('width', rate + '%');
+            const rateStr = rate.toFixed(2);
+            $('#kpi-rate').text(rateStr + '%');
+            $('#kpi-rate-bar').css('width', rateStr + '%');
         }
         function refreshUIFromDT() {
             refreshBadge();
@@ -1326,6 +1727,18 @@
                 $(this).addClass('fai-filter-active');
             }
         });
+
+        // =========================
+        //  Click en KPI "Inspections": cargar todo el año actual (limpia filtros de fecha)
+        // =========================
+        const $kpiTotal = $('.info-box.bg-secondary');
+        const initialFilters = {
+            year: $('#year').val() || '',
+            month: $('#month').val() || '',
+            monthDisplay: $('#monthDisplay').val() || '',
+            day: $('#day').val() || ''
+        };
+        // (sin toggle especial en Inspections)
 
     });
 </script>

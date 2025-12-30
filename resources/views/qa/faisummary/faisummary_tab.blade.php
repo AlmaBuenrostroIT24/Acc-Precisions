@@ -136,12 +136,12 @@
     /* 2025-12-17: fondo suave detrás de las cards para que no se vea una partición blanco/gris */
     /* 2025-12-17: estilo de tarjetas para tabs */
     .fai-tab-card {
-        /* defaults (slate/indigo) */
-        --fai-hover-border: rgba(37, 99, 235, 0.25);
-        --fai-active-border: rgba(37, 99, 235, 0.45);
-        --fai-active-shadow: rgba(30, 58, 138, 0.18);
-        --fai-active-from: rgba(30, 58, 138, 0.95);
-        --fai-active-to: rgba(37, 99, 235, 0.82);
+        /* defaults (verde suave) */
+        --fai-hover-border: rgba(40, 167, 69, 0.25);
+        --fai-active-border: rgba(40, 167, 69, 0.45);
+        --fai-active-shadow: rgba(40, 167, 69, 0.18);
+        --fai-active-from: rgba(40, 167, 69, 0.95);
+        --fai-active-to: rgba(40, 167, 69, 0.82);
 
         /* 2025-12-17: permitir indicador activo y foco accesible */
         position: relative;
@@ -395,8 +395,24 @@
         line-height: 1.08;
     }
 
-    .fai-tab-desc {
-        font-size: 0.82rem;
-        line-height: 1.08;
-    }
-</style>
+      .fai-tab-desc {
+          font-size: 0.82rem;
+          line-height: 1.08;
+      }
+
+      /* Línea inferior con color de estado para las cards */
+      .fai-tab-card .card-body {
+          border: 1px solid #e5e7eb;
+          border-bottom: 3px solid transparent;
+      }
+
+      .fai-tab-card:hover .card-body {
+          border-color: var(--fai-hover-border);
+          border-bottom-color: var(--fai-hover-border);
+      }
+
+      .fai-tab-active .card-body {
+          border-color: var(--fai-active-border) !important;
+          border-bottom-color: var(--fai-active-border) !important;
+      }
+  </style>

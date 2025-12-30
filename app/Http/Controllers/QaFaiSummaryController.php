@@ -596,7 +596,7 @@ class QaFaiSummaryController extends Controller
         $monthTotal = (clone $statsQuery)->count();
         $monthPass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
         $monthFail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
-        $passRate   = $monthTotal ? round($monthPass * 100 / $monthTotal, 1) : 0;
+        $passRate   = $monthTotal ? number_format(($monthPass * 100) / $monthTotal, 2, '.', '') : '0.00';
 
         $monthStats = [
             'year'  => $year,
@@ -717,7 +717,7 @@ class QaFaiSummaryController extends Controller
         $pass  = (clone $monthQuery)->where('results', 'pass')->count();
         $fail  = (clone $monthQuery)->where('results', 'no pass')->count();
 
-        $rate = $total > 0 ? round($pass * 100 / $total, 1) : 0;
+        $rate = $total > 0 ? number_format(($pass * 100) / $total, 2, '.', '') : '0.00';
 
         $monthStats = [
             'total' => $total,
@@ -771,7 +771,7 @@ class QaFaiSummaryController extends Controller
             return strcasecmp(trim((string)$row->results), 'no pass') === 0;
         })->count();
 
-        $rate = $total > 0 ? round($pass * 100 / $total, 1) : 0;
+        $rate = $total > 0 ? number_format(($pass * 100) / $total, 2, '.', '') : '0.00';
 
         $pdfStats = [
             'total' => $total,
