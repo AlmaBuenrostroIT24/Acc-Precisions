@@ -1352,7 +1352,7 @@
         // =========================
         //  DataTable
         // =========================
-        const savedPageLen = 15;
+        const savedPageLen = 14;
         if (!$.fn.DataTable.isDataTable('#faiTable')) {
             window.faiDT = $('#faiTable').DataTable({
                 scrollX: false,

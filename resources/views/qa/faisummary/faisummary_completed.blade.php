@@ -37,41 +37,15 @@
 
 
     {{-- Columna derecha: Tabla --}}
-    <div class="col-lg-9">
+    <div class="col-lg-10">
         <div class="card mb-4">
-            {{-- Header de la tabla --}}
-            <div class="card-header py-2 d-flex align-items-center">
-                {{-- Título a la izquierda --}}
-                <div class="d-flex align-items-center mr-auto">
-                    <i class="fas fa-list-alt mr-2"></i>
-                    <strong class="mb-0">FAI/IPI Completed</strong>
-                </div>
-                {{-- Botones de exportación --}}
-                <div class="btn-group" role="group" aria-label="Export Buttons">
-                    <button id="btnExportExcel" type="button" class="btn btn-sm btn-success">
-                        <i class="fas fa-file-excel mr-1"></i> Excel
-                    </button>
-                    <button id="btnExportPdf" type="button" class="btn btn-sm btn-danger">
-                        <i class="fas fa-file-pdf mr-1"></i> PDF
-                    </button>
-                </div>
-
-                {{-- Formularios ocultos para enviar ids[] por POST --}}
-                <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}" method="POST"
-                    target="_blank" class="d-none">
-                    @csrf
-                </form>
-                <form id="exportPdfForm" action="{{ route('faisummary.completed.export.pdf') }}" method="POST"
-                    target="_blank" class="d-none">
-                    @csrf
-                </form>
-            </div>
 
             <div class="card-body p-2">
                 <div class="table-responsive fai-erp-wrap">
-                    <table id="faicompleteTable" class="table table-bordered table-sm table-striped table-sticky align-middle fai-erp-table"
+                    <table id="faicompleteTable"
+                        class="table table-sm align-middle mb-0 fai-erp-table"
                         style="table-layout: fixed; width: 100%;">
-                        <thead class="thead-light sticky-thead">
+                        <thead class="sticky-thead">
                             <tr>
                                 <th style="width: 100px;">DATE</th>
                                 <th style="width: 70px;">LOC.</th>
@@ -184,7 +158,7 @@
         </div>
     </div>
     {{-- Columna izquierda: KPI / otro contenido --}}
-    <div class="col-lg-3">
+    <div class="col-lg-2">
         <div class="row">
             {{-- Columna A: Filtros --}}
             <div class="col-md-12">
@@ -196,28 +170,9 @@
                         {{-- ======= TU FORMULARIO ======= --}}
                         <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm">
                             {{-- Global Search --}}
-                            <div class="form-group mb-2">
-                                <label for="tableSearch" class="mb-1">Search</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-search"></i>
-                                        </span>
-                                    </div>
-                                    <input type="text" id="tableSearch" class="form-control"
-                                        placeholder="Type to filter the table…" autocomplete="off">
-                                    <div class="input-group-append">
-                                        <button type="button" id="clearTableSearch" class="btn btn-outline-secondary"
-                                            title="Clear">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
 
                             {{-- Location --}}
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-2" id="filterLocationGroup">
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text bg-light"><i
@@ -230,7 +185,7 @@
                             </div>
 
                             {{-- YEAR --}}
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-2" id="filterYearGroup">
                                 <label for="year">Date</label>
                                 <div class="input-group input-group date" id="yearPickerWrapper"
                                     data-target-input="nearest" data-initial-year="{{ request('year') ?? '' }}"
@@ -247,7 +202,7 @@
                             </div>
 
                             {{-- MONTH --}}
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-2" id="filterMonthGroup">
                                 <label for="monthDisplay" class="mb-1 sr-only">Month</label>
                                 <div class="input-group input-group date" id="monthPickerWrapper"
                                     data-target-input="nearest" style="min-width:160px">
@@ -264,7 +219,7 @@
                             </div>
 
                             {{-- DAY --}}
-                            <div class="form-group mb-2">
+                            <div class="form-group mb-2" id="filterDayGroup">
                                 <label for="day" class="mb-1 sr-only">Day</label>
                                 <div class="input-group input-group date" id="dayPickerWrapper"
                                     data-target-input="nearest" style="min-width:180px">
@@ -308,6 +263,26 @@
                                     <i class="far fa-calendar mr-1"></i> Year
                                 </a>
                             </div>
+
+                            {{-- Export botones debajo de los quick filters --}}
+                            <div class="btn-group btn-group-sm d-flex mb-2">
+                                <button id="btnExportExcel" type="button" class="btn btn-success flex-fill">
+                                    <i class="fas fa-file-excel mr-1"></i> Excel
+                                </button>
+                                <button id="btnExportPdf" type="button" class="btn btn-danger flex-fill">
+                                    <i class="fas fa-file-pdf mr-1"></i> PDF
+                                </button>
+                            </div>
+                        </form>
+
+                        {{-- Formularios ocultos para enviar ids[] por POST --}}
+                        <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}"
+                            method="POST" target="_blank" class="d-none">
+                            @csrf
+                        </form>
+                        <form id="exportPdfForm" action="{{ route('faisummary.completed.export.pdf') }}" method="POST"
+                            target="_blank" class="d-none">
+                            @csrf
                         </form>
                     </div>
                 </div>
@@ -316,59 +291,58 @@
             {{-- Columna B: KPI/Resumen --}}
             <div class="col-md-12">
                 <div class="card mb-3 sticky-top fai-summary-card" style="top: 10px;">
-                    <div class="card-header py-2">
-                        <strong><i class="fas fa-chart-bar mr-2"></i>Summary</strong>
-                    </div>
+
 
                     <div class="card-body p-2">
                         {{-- KPI principal --}}
-                        <div class="info-box info-box-sm bg-info mb-2">
+                        <div class="info-box info-box-sm bg-info mb-2" id="kpiBoxTotal">
                             <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
                             <div class="info-box-content">
                                 <span class="info-box-text">Closed inspections</span>
                                 <h5 class="mb-0" id="kpiTotal">0</h5>
                             </div>
                         </div>
-
-                        {{-- Fila con 2 KPIs en paralelo --}}
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="info-box info-box-sm bg-success mb-2">
-                                    <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Completed</span>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0" id="kpiPass">0</h5>
-                                            <small class="text-black-50">100%</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="info-box info-box-sm bg-danger mb-2">
-                                    <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Incomplete</span>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0" id="kpiFail">0</h5>
-                                            <small class="text-black-50">&lt; 100%</small>
-                                        </div>
-                                    </div>
+                        <div class="info-box info-box-sm bg-success mb-2">
+                            <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Completed</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0" id="kpiPass">0</h5>
+                                    <small class="text-black-50">100%</small>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="info-box info-box-sm bg-danger mb-2">
+                            <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Incomplete</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0" id="kpiFail">0</h5>
+                                    <small class="text-black-50">&lt; 100%</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box info-box-sm bg-secondary mb-2" id="kpiBoxNoInspection">
+                            <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">No Inspection</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0" id="kpiNoInspection">0</h5>
+                                    <small class="text-black-50">ops/samp 0</small>
+                                </div>
+                            </div>
+                        </div>
+
+
                         {{-- Fin fila --}}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-
-
 </div>
-
 
 
 <!--  {{-- Tab: By End Schedule --}}-->
@@ -400,31 +374,32 @@
 <style>
     /* Summary KPI compact */
     .info-box-sm {
-        min-height: 64px;
-        padding: .4rem .6rem;
-        border-radius: 10px;
+        min-height: 48px;
+        padding: .3rem .45rem;
+        border-radius: 8px;
         display: flex;
         align-items: center;
     }
 
     .info-box-sm .info-box-icon {
-        width: 44px;
-        height: 44px;
-        font-size: 30px;
-        line-height: 44px;
-        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        font-size: 22px;
+        line-height: 36px;
+        border-radius: 7px;
         background: rgba(255, 255, 255, 0.7);
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
 
     .info-box-sm .info-box-text {
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: .01em;
     }
 
     .info-box-sm h5 {
         font-weight: 800;
+        font-size: 1.05rem;
     }
 
     /* Color de íconos por variante */
@@ -474,9 +449,57 @@
         color: #0f172a !important;
     }
 
+    /* Overrides: info-box-sm sin fondo de color, solo línea inferior; se colorea al activar */
+    .info-box-sm {
+        background: #fff !important;
+        border: 1px solid #e5e7eb !important;
+        position: relative;
+        overflow: hidden;
+    }
+    /* Mantener fondo blanco aunque tengan bg-* por defecto */
+    .info-box-sm.bg-success,
+    .info-box-sm.bg-danger,
+    .info-box-sm.bg-secondary,
+    .info-box-sm.bg-info {
+        background: #fff !important;
+        border-color: #e5e7eb !important;
+        color: #0f172a !important;
+    }
+    .info-box-sm::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 3px;
+        background: transparent;
+    }
+    .info-box-sm.bg-secondary::after { background: rgba(108, 117, 125, 0.7); }
+    .info-box-sm.bg-success::after   { background: rgba(25, 135, 84, 0.7); }
+    .info-box-sm.bg-danger::after    { background: rgba(220, 53, 69, 0.7); }
+    .info-box-sm.bg-info::after      { background: rgba(13, 110, 253, 0.7); }
+
+    /* Activo: pinta el fondo suave al aplicar filtro */
+    .info-box-sm.fai-filter-active.bg-success {
+        background: rgba(25, 135, 84, 0.12) !important;
+        border-color: rgba(25, 135, 84, 0.45) !important;
+    }
+    .info-box-sm.fai-filter-active.bg-danger {
+        background: rgba(220, 53, 69, 0.12) !important;
+        border-color: rgba(220, 53, 69, 0.45) !important;
+    }
+    .info-box-sm.fai-filter-active.bg-secondary {
+        background: rgba(108, 117, 125, 0.12) !important;
+        border-color: rgba(108, 117, 125, 0.45) !important;
+    }
+    .info-box-sm.fai-filter-active.bg-info {
+        background: rgba(13, 110, 253, 0.12) !important;
+        border-color: rgba(13, 110, 253, 0.45) !important;
+    }
+
     /* Filtros ERP */
     .fai-filters-erp {
-        background: linear-gradient(180deg, #f1f5f9 0%, #e7ecf5 100%);
+        background: #fff;
         border: 1px solid rgba(15, 23, 42, 0.08);
         border-radius: 12px;
     }
@@ -538,30 +561,36 @@
         z-index: auto !important;
         overflow: visible;
     }
+
     .fai-summary-card,
     .fai-filters-erp,
     .fai-summary-card .card,
     .fai-filters-erp .card {
         overflow: visible;
     }
+
     .content-wrapper,
     .content {
         overflow: visible !important;
     }
+
     /* Evitar recorte en cards */
     .card,
     .card-body {
         overflow: visible;
     }
+
     /* Elevar el popup del datetimepicker (forzar sobre todo) */
     .bootstrap-datetimepicker-widget {
         z-index: 30000 !important;
     }
+
     .bootstrap-datetimepicker-widget.dropdown-menu {
         z-index: 30000 !important;
     }
+
     /* Forzar el widget fuera de contenedores para que no se recorte */
-    body > .bootstrap-datetimepicker-widget {
+    body>.bootstrap-datetimepicker-widget {
         position: absolute !important;
     }
 
@@ -596,16 +625,16 @@
         word-break: break-word;
     }
 
-    /* Encabezado gris estilo ERP (como modal/parts) */
+    /* Encabezado gris estilo ERP (como summary) */
     #faicompleteTable thead th {
         font-weight: 800;
         letter-spacing: 0.05em;
         color: #1f2937;
         background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
         border-bottom: 1px solid rgba(15, 23, 42, 0.14);
-        padding: 0.32rem 0.4rem;
+        padding: 0.55rem 0.7rem;
         vertical-align: middle;
-        font-size: 0.8rem;
+        font-size: 0.9rem;
         text-transform: uppercase;
     }
 
@@ -618,9 +647,9 @@
     }
 
     #faicompleteTable tbody td {
-        padding: 0.22rem 0.4rem;
+        padding: 0.45rem 0.7rem;
         vertical-align: middle;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
@@ -744,6 +773,64 @@
         justify-content: flex-end;
     }
 
+    /* Alinear fila superior (Show entries + Search) */
+    .dataTables_wrapper .row:first-child {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        margin-bottom: 0.35rem;
+        width: 100%;
+    }
+    .dataTables_wrapper .row:first-child > div {
+        flex: 0 0 auto;
+        width: auto !important;
+    }
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        float: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+    }
+    .dataTables_wrapper .dataTables_length label {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin: 0;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+    }
+    .dataTables_wrapper .dataTables_filter {
+        margin-left: auto !important;
+        text-align: right !important;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    .dataTables_wrapper .dataTables_filter label {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin: 0;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+        height: 32px;
+        padding: .25rem .5rem;
+        border-radius: 8px;
+    }
+    .dataTables_wrapper .dataTables_length select {
+        height: 32px;
+        padding: .25rem .4rem;
+        border-radius: 8px;
+        min-width: 50px;
+        width: auto;
+    }
+
     /* Texto de encabezados en negro (consistente) */
     #faicompleteTable thead th,
     .fai-erp-table thead th,
@@ -805,10 +892,14 @@
         const dt = $tbl.DataTable({
             searching: true,
             ordering: false,
-            pageLength: 13,
+            pageLength: 11,
+            lengthMenu: [
+                [11, 25, 50, -1],
+                [11, 25, 50, 'All']
+            ],
             scrollX: false,
             autoWidth: false,
-            dom: 'rtip',
+            dom: '<"row mb-2 align-items-center"<"col-sm-6"l><"col-sm-6 text-right"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
             columnDefs: [{
                     // PROGRESS
                     targets: COLS.prog,
@@ -850,6 +941,75 @@
                 }
             ]
         });
+
+        // Ajustes de texto en filtros (placeholders/labels)
+        $('#tableSearch').attr('placeholder', 'Type to filter the table...');
+        $('#locationFilter option[value=\"\"]').text('- All -');
+        $('label[for=\"year\"]').text('Date');
+
+        // Toolbar: agrupa Show entries + search + export junto a la tabla (sin quitar filtros laterales)
+        const $wrapper = $tbl.closest('.dataTables_wrapper');
+        const $length = $wrapper.find('.dataTables_length');
+
+        // Buscador inline para la tabla
+        const $toolbarSearch = $(`
+            <div class="input-group input-group-sm mb-0">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                </div>
+                <input type="text" class="form-control" id="dtToolbarSearch" placeholder="Search table..." autocomplete="off">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="dtToolbarClear"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        `);
+        $toolbarSearch.on('input', '#dtToolbarSearch', function() {
+            dt.search(this.value || '').page('first').draw('page');
+        });
+        $toolbarSearch.on('click', '#dtToolbarClear', function() {
+            $('#dtToolbarSearch').val('');
+            dt.search('').page('first').draw('page');
+            $('#dtToolbarSearch').trigger('focus');
+        });
+
+        if (false) {
+        // Botones de export en la misma barra (reutilizan handlers existentes)
+        const $exportGroup = $(`
+            <div class="btn-group btn-group-sm mb-0">
+                <button id="toolbarExportExcel" type="button" class="btn btn-success">
+                    <i class="fas fa-file-excel mr-1"></i> Excel
+                </button>
+                <button id="toolbarExportPdf" type="button" class="btn btn-danger">
+                    <i class="fas fa-file-pdf mr-1"></i> PDF
+                </button>
+            </div>
+        `);
+        $exportGroup.on('click', '#toolbarExportExcel', () => submitExport('exportExcelForm'));
+        $exportGroup.on('click', '#toolbarExportPdf', () => submitExport('exportPdfForm'));
+
+        // Fila de filtros (location + fechas)
+        const $filtersRow = $('<div class="dt-toolbar dt-filters-row d-flex align-items-center flex-wrap gap-2 mb-2"></div>');
+        const $loc = $('#filterLocationGroup').detach().addClass('mb-0');
+        const $year = $('#filterYearGroup').detach().addClass('mb-0');
+        const $month = $('#filterMonthGroup').detach().addClass('mb-0');
+        const $day = $('#filterDayGroup').detach().addClass('mb-0');
+        $filtersRow.append($loc, $year, $month, $day);
+        $filtersRow.find('.input-group').addClass('input-group-sm');
+
+        // Fila superior: búsqueda + export
+        const $toolbarTop = $('<div class="dt-toolbar d-flex align-items-center flex-wrap justify-content-between"></div>');
+        const $topRight = $('<div class="d-flex align-items-center flex-wrap gap-2"></div>');
+        $topRight.append($toolbarSearch);
+        $topRight.append($exportGroup);
+        $toolbarTop.append($topRight);
+
+        // Fila inferior: selector de longitud (Show entries)
+        const $toolbarBottom = $('<div class="dt-toolbar d-flex align-items-center flex-wrap justify-content-start"></div>');
+        if ($length.length) $toolbarBottom.append($length);
+
+        const $toolbarContainer = $('#dtToolbarContainer');
+        $toolbarContainer.empty().append($filtersRow).append($toolbarTop).append($toolbarBottom);
+        }
 
         window.faiDT = dt; // útil en consola
 
@@ -973,11 +1133,21 @@
         const $kpiTotal = $('#kpiTotal'); // visibles
         const $kpiPass = $('#kpiPass'); // 100%
         const $kpiFail = $('#kpiFail'); // <100%
+        const $kpiNoInspection = $('#kpiNoInspection'); // sin inspección
 
         function getProgressFromCell(cellVal) {
             const txt = (typeof cellVal === 'string' ? cellVal : ($(cellVal).text?.() || '')).toString();
             const m = txt.match(/(\d{1,3})\s*%/);
             return m ? Number(m[1]) : NaN;
+        }
+
+        function isNoInspection(rowData) {
+            // Detecta filas sin inspección (ops y sampling en cero)
+            const sampText = rowData?.[COLS.sampling] ?? '';
+            const opsText = rowData?.[COLS.ops] ?? '';
+            const sampling = parseInt(String(sampText).replace(/\D/g, ''), 10) || 0;
+            const ops = parseInt(String(opsText).replace(/\D/g, ''), 10) || 0;
+            return sampling === 0 && ops === 0;
         }
 
         function isCompleted100(tr) {
@@ -1014,15 +1184,21 @@
             const nodes = rows.nodes().toArray();
 
             let done100 = 0;
+            let noInspection = 0;
             for (const tr of nodes)
-                if (isCompleted100(tr)) done100++;
+                if (isNoInspection(dt.row(tr).data())) {
+                    noInspection++;
+                } else if (isCompleted100(tr)) {
+                    done100++;
+                }
 
             const total = rows.count();
-            const not100 = Math.max(0, total - done100);
+            const not100 = Math.max(0, total - done100 - noInspection);
 
             $kpiTotal.text(total);
             $kpiPass.text(done100);
             $kpiFail.text(not100);
+            $kpiNoInspection.text(noInspection);
         }
 
         updateKpisCompletion();
@@ -1032,6 +1208,98 @@
         $(document).on('change', '.filtro-kpi, #year, #month, #day, #location, #operator, #inspector', function() {
             dt.draw(false);
         });
+
+        // Toggles KPI filters: Completed 100%, Incomplete, and No Inspection
+        let filterOnlyCompleted = false;
+        let filterOnlyIncomplete = false;
+        let filterOnlyNoInspection = false;
+        const $kpiBoxTotal = $('#kpiBoxTotal');
+        const $kpiBoxCompleted = $('.info-box-sm.bg-success');
+        const $kpiBoxIncomplete = $('.info-box-sm.bg-danger');
+        const $kpiBoxNoInspection = $('#kpiBoxNoInspection');
+
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            if (settings.nTable !== $tbl[0]) return true;
+            const row = dt.row(dataIndex);
+            const tr = row.node();
+            const rowData = row.data();
+
+            if (filterOnlyCompleted) {
+                if (isNoInspection(rowData) || !isCompleted100(tr)) return false;
+            }
+            if (filterOnlyIncomplete) {
+                if (isNoInspection(rowData) || isCompleted100(tr)) return false;
+            }
+            if (filterOnlyNoInspection) {
+                if (!isNoInspection(rowData)) return false;
+            }
+            return true;
+        });
+
+        function toggleCompleted() {
+            filterOnlyCompleted = !filterOnlyCompleted;
+            if (filterOnlyCompleted) {
+                filterOnlyNoInspection = false;
+                filterOnlyIncomplete = false;
+                $kpiBoxNoInspection.removeClass('fai-filter-active');
+                $kpiBoxIncomplete.removeClass('fai-filter-active');
+                $kpiBoxTotal.removeClass('fai-filter-active');
+            }
+            $kpiBoxCompleted.toggleClass('fai-filter-active', filterOnlyCompleted);
+            dt.draw();
+        }
+
+        function toggleIncomplete() {
+            filterOnlyIncomplete = !filterOnlyIncomplete;
+            if (filterOnlyIncomplete) {
+                filterOnlyCompleted = false;
+                filterOnlyNoInspection = false;
+                $kpiBoxCompleted.removeClass('fai-filter-active');
+                $kpiBoxNoInspection.removeClass('fai-filter-active');
+                $kpiBoxTotal.removeClass('fai-filter-active');
+            }
+            $kpiBoxIncomplete.toggleClass('fai-filter-active', filterOnlyIncomplete);
+            dt.draw();
+        }
+
+        function toggleNoInspection() {
+            filterOnlyNoInspection = !filterOnlyNoInspection;
+            if (filterOnlyNoInspection) {
+                filterOnlyCompleted = false;
+                filterOnlyIncomplete = false;
+                $kpiBoxCompleted.removeClass('fai-filter-active');
+                $kpiBoxIncomplete.removeClass('fai-filter-active');
+                $kpiBoxTotal.removeClass('fai-filter-active');
+            }
+            $kpiBoxNoInspection.toggleClass('fai-filter-active', filterOnlyNoInspection);
+            dt.draw();
+        }
+
+        function showAllFromTotal() {
+            filterOnlyCompleted = false;
+            filterOnlyIncomplete = false;
+            filterOnlyNoInspection = false;
+            $kpiBoxCompleted.removeClass('fai-filter-active');
+            $kpiBoxIncomplete.removeClass('fai-filter-active');
+            $kpiBoxNoInspection.removeClass('fai-filter-active');
+            $kpiBoxTotal.addClass('fai-filter-active');
+            dt.draw();
+        }
+
+        if ($kpiBoxCompleted.length) {
+            $kpiBoxCompleted.css('cursor', 'pointer').on('click', toggleCompleted);
+        }
+        if ($kpiBoxIncomplete.length) {
+            $kpiBoxIncomplete.css('cursor', 'pointer').on('click', toggleIncomplete);
+        }
+        if ($kpiBoxNoInspection.length) {
+            $kpiBoxNoInspection.css('cursor', 'pointer').on('click', toggleNoInspection);
+        }
+        if ($kpiBoxTotal.length) {
+            $kpiBoxTotal.css('cursor', 'pointer').on('click', showAllFromTotal);
+            // Estado inicial: mostrar todos y resaltar "Closed inspections"
+            showAllFromTotal();
+        }
 
         /* ---------------------------
          * Export (Excel / PDF) con filtros aplicados
