@@ -311,16 +311,16 @@
                             </div>
 
                             {{-- Botones de exportación --}}
-                            <div class="d-flex justify-content-end mb-2">
+                            <div class="btn-group btn-group-sm d-flex mb-2">
                                 <a href="{{ route('faisummary.export.excel', request()->query()) }}"
-                                    class="btn btn-secondary btn-sm btn-erp-gray mr-2 px-3">
-                                    <i class="far fa-file-excel mr-1 text-success"></i>Excel
+                                    class="btn btn-erp-gray flex-fill">
+                                    <i class="far fa-file-excel mr-1 text-success"></i> Excel
                                 </a>
 
                                 <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
-                                    class="btn btn-secondary btn-sm btn-erp-gray px-3"
+                                    class="btn btn-erp-gray flex-fill"
                                     target="_blank">
-                                    <i class="far fa-file-pdf mr-1 text-danger"></i>PDF
+                                    <i class="far fa-file-pdf mr-1 text-danger"></i> PDF
                                 </a>
                             </div>
                         </form>
@@ -564,16 +564,16 @@
                     </div>
 
                     {{-- Botones de exportación --}}
-                    <div class="d-flex justify-content-end mb-2">
+                    <div class="btn-group btn-group-sm d-flex mb-2">
                         <a href="{{ route('faisummary.export.excel', request()->query()) }}"
-                            class="btn btn-secondary btn-sm btn-erp-gray mr-2 px-3">
-                            <i class="far fa-file-excel mr-1 text-success"></i>Excel
+                            class="btn btn-erp-gray flex-fill">
+                            <i class="far fa-file-excel mr-1 text-success"></i> Excel
                         </a>
 
                         <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
-                            class="btn btn-secondary btn-sm btn-erp-gray px-3"
+                            class="btn btn-erp-gray flex-fill"
                             target="_blank">
-                            <i class="far fa-file-pdf mr-1 text-danger"></i>PDF
+                            <i class="far fa-file-pdf mr-1 text-danger"></i> PDF
                         </a>
                     </div>
                 </form>
@@ -1745,3 +1745,4 @@
 
 
 @endpush
+

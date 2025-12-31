@@ -1365,6 +1365,32 @@ class QaFaiSummaryController extends Controller
             ];
         });
 
+        // Totales por tipo de inspección (FAI / IPI)
+        $typesRaw = DB::table('qa_faisummary')
+            ->whereYear('created_at', $year)
+            ->selectRaw("
+                UPPER(TRIM(COALESCE(insp_type, 'N/A'))) as insp_type,
+                COUNT(*) as total,
+                SUM(CASE WHEN LOWER(TRIM(results)) IN ('pass','ok') THEN 1 ELSE 0 END) as pass_cnt,
+                SUM(CASE WHEN LOWER(TRIM(results)) IN ('no pass','fail','np','no') THEN 1 ELSE 0 END) as fail_cnt
+            ")
+            ->groupBy('insp_type')
+            ->get();
+
+        $types = $typesRaw->map(function ($r) {
+            $total = (int) ($r->total ?? 0);
+            $pass  = (int) ($r->pass_cnt ?? 0);
+            $fail  = (int) ($r->fail_cnt ?? 0);
+            return [
+                'type'     => $r->insp_type ?: 'N/A',
+                'total'    => $total,
+                'pass'     => $pass,
+                'fail'     => $fail,
+                'pass_pct' => $total ? round($pass * 100 / $total, 2) : 0,
+                'fail_pct' => $total ? round($fail * 100 / $total, 2) : 0,
+            ];
+        });
+
         $global = [
             'year'  => $year,
             'total' => $quarters->sum('total'),
@@ -1377,6 +1403,7 @@ class QaFaiSummaryController extends Controller
         return response()->json([
             'quarters' => $quarters,
             'global'   => $global,
+            'types'    => $types,
         ]);
     }
 

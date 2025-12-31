@@ -17,10 +17,10 @@
         <nav aria-label="breadcrumb" class="mb-0 ml-auto">
             <ol class="breadcrumb mb-0 bg-transparent p-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">FAI Summary Statistics</li>
-            </ol>
-        </nav>
-    </div>
+<li class="breadcrumb-item active" aria-current="page">FAI Summary Statistics</li>
+</ol>
+</nav>
+</div>
 </div>
 @endsection
 --}}
@@ -91,7 +91,7 @@
 
     {{-- FILA 1: Global (gráfica + tabla en una sola card) --}}
     <div class="row">
-        <div class="col-lg-12">
+        <div class="col-lg-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header py-2 d-flex align-items-center">
                     <strong class="mr-auto">
@@ -102,10 +102,10 @@
                         Year: <span id="lblYear">{{ request('year') ?? now()->year }}</span>
                     </small>
                     <div class="btn-group btn-group-sm ml-auto" role="group" aria-label="quarters actions">
-                        <button id="btnExportQuartersCsv" type="button" class="btn btn-primary">
+                        <button id="btnExportQuartersCsv" type="button" class="btn btn-erp-gray">
                             <i class="fas fa-file-csv mr-1"></i>CSV
                         </button>
-                        <button id="btnExportQuartersPdf" type="button" class="btn btn-danger">
+                        <button id="btnExportQuartersPdf" type="button" class="btn btn-erp-gray">
                             <i class="fas fa-file-pdf mr-1"></i>PDF
                         </button>
                     </div>
@@ -114,7 +114,7 @@
                 <div class="card-body">
                     <div class="row align-items-stretch">
                         <!-- Gráfica -->
-                        <div class="col-md-7 d-flex mb-3 mb-md-0" style="border-right: 1px solid #ddd;">
+                        <div class="col-md-5 d-flex mb-3 mb-md-0" style="border-right: 1px solid #ddd;">
                             <div class="w-100">
                                 <div class="chart-wrapper" style="height: 420px;">
                                     <canvas id="quartersChart"
@@ -124,7 +124,7 @@
                         </div>
 
                         <!-- Tabla -->
-                        <div class="col-md-5 d-flex">
+                        <div class="col-md-7 d-flex">
                             <div class="w-100">
                                 <div class="table-responsive" style="max-height: 360px; overflow: auto; padding: .5rem;">
                                     <table class="table table-sm table-striped table-hover mb-0" id="quartersTable" aria-live="polite">
@@ -172,97 +172,139 @@
                 </div> {{-- /.card-body --}}
             </div>
         </div>
+        {{-- FILA 3: Por Inspector (tabla + gráfica lado a lado) --}}
+       
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header py-2 d-flex align-items-center">
+                        <strong class="mr-auto">
+                            <i class="fas fa-user-check mr-1 text-primary"></i>By Inspector
+                        </strong>
+                        <div class="btn-group btn-group-sm ml-auto" role="group" aria-label="inspector actions">
+                            <button id="btnExportInspectorCsv" type="button" class="btn btn-erp-gray">
+                                <i class="fas fa-file-csv mr-1"></i>CSV
+                            </button>
+                            <button id="btnPrintInspector" type="button" class="btn btn-erp-gray">
+                                <i class="fas fa-file-pdf mr-1"></i>PDF
+                            </button>
+                        </div>
+                    </div>
+                    {{-- Filtros SOLO para Inspector --}}
+                    <div class="px-3 pt-3">
+                        <div class="form-row align-items-end">
+                            <div class="form-group col-6 col-md-3">
+                                <label class="mb-1" for="insp_gran">Period</label>
+                                <select id="insp_gran" class="form-control">
+                                    <option value="year" selected>Year</option>
+                                    <option value="quarter">Quarter</option>
+                                    <option value="month">Month</option>
+                                    <option value="week">Week</option>
+                                    <option value="day">Day</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group col-6 col-md-2">
+                                <label class="mb-1" for="insp_year">Year</label>
+                                <select id="insp_year" class="form-control">
+                                    @php $yNow = (int) now()->format('Y'); @endphp
+                                    @for($y=$yNow; $y>=$yNow-5; $y--)
+                                    <option value="{{ $y }}" @selected($y==$yNow)>{{ $y }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <div class="form-group col-6 col-md-2 d-none" data-insp-filter="quarter">
+                                <label class="mb-1" for="insp_quarter">Quarter</label>
+                                <select id="insp_quarter" class="form-control">
+                                    <option value="1">Qtr1</option>
+                                    <option value="2">Qtr2</option>
+                                    <option value="3">Qtr3</option>
+                                    <option value="4">Qtr4</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group col-6 col-md-2 d-none" data-insp-filter="month">
+                                <label class="mb-1" for="insp_month">Month</label>
+                                <select id="insp_month" class="form-control">
+                                    @for($m=1;$m<=12;$m++)
+                                        <option value="{{ $m }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
+                                        @endfor
+                                </select>
+                            </div>
+
+                            <div class="form-group col-6 col-md-3 d-none" data-insp-filter="week">
+                                <label class="mb-1" for="insp_week">Week</label>
+                                <input id="insp_week" type="week" class="form-control">
+                            </div>
+
+                            <div class="form-group col-6 col-md-3 d-none" data-insp-filter="day">
+                                <label class="mb-1" for="insp_day">Day</label>
+                                <input id="insp_day" type="date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row align-items-stretch">
+                            <div class="col-md-7 mb-3 mb-md-0" style="border-right: 1px solid #ddd;">
+                                <div class="table-responsive" style="max-height: 360px; overflow:auto;">
+                                    <table class="table table-sm table-striped table-hover mb-0" id="tblInspector">
+                                        <colgroup>
+                                            <col style="width:30%">
+                                            <col style="width:14%">
+                                            <col style="width:14%">
+                                            <col style="width:14%">
+                                            <col style="width:14%">
+                                            <col style="width:14%">
+                                        </colgroup>
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Inspector</th>
+                                                <th class="text-center">Total</th>
+                                                <th class="text-center">Pass</th>
+                                                <th class="text-center">No Pass</th>
+                                                <th class="text-center">% Pass</th>
+                                                <th class="text-center">% No Pass</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="col-md-5 d-flex">
+                                <div class="w-100">
+                                    <div class="chart-wrapper" style="height: 360px;">
+                                        <canvas id="inspectorChart" aria-label="Gráfica por inspector" role="img"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> {{-- /.row --}}
+                    </div> {{-- /.card-body --}}
+                </div>
+            </div>
+        </div>
     </div>
 
 
-    {{-- FILA 3: Por Inspector (tabla + gráfica lado a lado) --}}
-    <div class="row mt-3">
+
+    {{-- Resumen por tipo (FAI / IPI) --}}
+    <div class="row mb-3">
         <div class="col-lg-12">
             <div class="card shadow-sm h-100">
                 <div class="card-header py-2 d-flex align-items-center">
                     <strong class="mr-auto">
-                        <i class="fas fa-user-check mr-1 text-primary"></i>By Inspector
+                        <i class="fas fa-layer-group mr-1 text-primary"></i>FAI / IPI Overview
                     </strong>
-                    <div class="btn-group btn-group-sm ml-auto" role="group" aria-label="inspector actions">
-                        <button id="btnExportInspectorCsv" type="button" class="btn btn-primary">
-                            <i class="fas fa-file-csv mr-1"></i>CSV
-                        </button>
-                        <button id="btnPrintInspector" type="button" class="btn btn-danger">
-                            <i class="fas fa-file-pdf mr-1"></i>PDF
-                        </button>
-                    </div>
                 </div>
-                {{-- Filtros SOLO para Inspector --}}
-                <div class="px-3 pt-3">
-                    <div class="form-row align-items-end">
-                        <div class="form-group col-6 col-md-3">
-                            <label class="mb-1" for="insp_gran">Period</label>
-                            <select id="insp_gran" class="form-control">
-                                <option value="year" selected>Year</option>
-                                <option value="quarter">Quarter</option>
-                                <option value="month">Month</option>
-                                <option value="week">Week</option>
-                                <option value="day">Day</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group col-6 col-md-2">
-                            <label class="mb-1" for="insp_year">Year</label>
-                            <select id="insp_year" class="form-control">
-                                @php $yNow = (int) now()->format('Y'); @endphp
-                                @for($y=$yNow; $y>=$yNow-5; $y--)
-                                <option value="{{ $y }}" @selected($y==$yNow)>{{ $y }}</option>
-                                @endfor
-                            </select>
-                        </div>
-
-                        <div class="form-group col-6 col-md-2 d-none" data-insp-filter="quarter">
-                            <label class="mb-1" for="insp_quarter">Quarter</label>
-                            <select id="insp_quarter" class="form-control">
-                                <option value="1">Qtr1</option>
-                                <option value="2">Qtr2</option>
-                                <option value="3">Qtr3</option>
-                                <option value="4">Qtr4</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group col-6 col-md-2 d-none" data-insp-filter="month">
-                            <label class="mb-1" for="insp_month">Month</label>
-                            <select id="insp_month" class="form-control">
-                                @for($m=1;$m<=12;$m++)
-                                    <option value="{{ $m }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
-                                    @endfor
-                            </select>
-                        </div>
-
-                        <div class="form-group col-6 col-md-3 d-none" data-insp-filter="week">
-                            <label class="mb-1" for="insp_week">Week</label>
-                            <input id="insp_week" type="week" class="form-control">
-                        </div>
-
-                        <div class="form-group col-6 col-md-3 d-none" data-insp-filter="day">
-                            <label class="mb-1" for="insp_day">Day</label>
-                            <input id="insp_day" type="date" class="form-control">
-                        </div>
-                    </div>
-                </div>
-
                 <div class="card-body">
                     <div class="row align-items-stretch">
                         <div class="col-md-5 mb-3 mb-md-0" style="border-right: 1px solid #ddd;">
-                            <div class="table-responsive" style="max-height: 360px; overflow:auto;">
-                                <table class="table table-sm table-striped table-hover mb-0" id="tblInspector">
-                                    <colgroup>
-                                        <col style="width:30%">
-                                        <col style="width:14%">
-                                        <col style="width:14%">
-                                        <col style="width:14%">
-                                        <col style="width:14%">
-                                        <col style="width:14%">
-                                    </colgroup>
+                            <div class="table-responsive" style="max-height: 260px;">
+                                <table class="table table-sm table-striped table-hover mb-0" id="tblTypes">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th>Inspector</th>
+                                            <th>Type</th>
                                             <th class="text-center">Total</th>
                                             <th class="text-center">Pass</th>
                                             <th class="text-center">No Pass</th>
@@ -274,19 +316,20 @@
                                 </table>
                             </div>
                         </div>
-
                         <div class="col-md-7 d-flex">
                             <div class="w-100">
-                                <div class="chart-wrapper" style="height: 360px;">
-                                    <canvas id="inspectorChart" aria-label="Gráfica por inspector" role="img"></canvas>
+                                <div class="chart-wrapper" style="height: 260px;">
+                                    <canvas id="typeChart" aria-label="Chart FAI vs IPI" role="img"></canvas>
                                 </div>
                             </div>
                         </div>
-                    </div> {{-- /.row --}}
-                </div> {{-- /.card-body --}}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+
 
     {{-- FILA 2: Por Operador (tabla + gráfica lado a lado) --}}
     <div class="row mt-3">
@@ -297,10 +340,10 @@
                         <i class="fas fa-user-cog mr-1 text-success"></i>By Operator
                     </strong>
                     <div class="btn-group btn-group-sm ml-auto" role="group" aria-label="operator actions">
-                        <button id="btnExportOperatorCsv" type="button" class="btn btn-primary">
+                        <button id="btnExportOperatorCsv" type="button" class="btn btn-erp-gray">
                             <i class="fas fa-file-csv mr-1"></i>CSV
                         </button>
-                        <button id="btnPrintOperator" type="button" class="btn btn-danger">
+                        <button id="btnPrintOperator" type="button" class="btn btn-erp-gray">
                             <i class="fas fa-file-pdf mr-1"></i>PDF
                         </button>
                     </div>
@@ -410,10 +453,10 @@
                         <i class="fas fa-calendar-alt mr-1 text-warning"></i>By Operator and Quarter
                     </strong>
                     <div class="btn-group btn-group-sm ml-auto" role="group" aria-label="operator-quarter actions">
-                        <button id="btnExportOpQuarterCsv" type="button" class="btn btn-primary">
+                        <button id="btnExportOpQuarterCsv" type="button" class="btn btn-erp-gray">
                             <i class="fas fa-file-csv mr-1"></i>CSV
                         </button>
-                        <button id="btnExportOpQuarterPdf" type="button" class="btn btn-danger">
+                        <button id="btnExportOpQuarterPdf" type="button" class="btn btn-erp-gray">
                             <i class="fas fa-file-pdf mr-1"></i>PDF
                         </button>
                     </div>
@@ -510,9 +553,92 @@
 
 @section('css')
 <style>
+    :root {
+        --erp-primary: #4f6fad;
+        --erp-amber: #cb8c40;
+        --erp-surface: #f5f7fb;
+        --erp-border: #d2d6e0;
+        --erp-text: #0f172a;
+    }
+
+    body {
+        background: #f3f4f6;
+    }
+
+    .card {
+        border: 1px solid var(--erp-border);
+        border-radius: .55rem;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    .card-header {
+        background: linear-gradient(180deg, #f8fafc 0%, #e4e8ef 100%);
+        border-bottom: 1px solid var(--erp-border);
+        color: var(--erp-text);
+        letter-spacing: .2px;
+    }
+
+    .card-header strong {
+        font-weight: 700;
+    }
+
+    .chart-wrapper {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: .5rem;
+        padding: .75rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .table thead {
+        background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
+        color: var(--erp-text);
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f8fafc;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #eef2f7;
+    }
+
+    .input-group-text {
+        background: #f8fafc;
+        border-color: var(--erp-border);
+    }
+
+    select.form-control,
+    input.form-control {
+        border-color: var(--erp-border);
+        color: var(--erp-text);
+    }
+
+    /* Botones estilo ERP */
+    .btn-erp-gray {
+        background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%) !important;
+        border: 1px solid #c5c9d2 !important;
+        color: #1f2937 !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+
+    .btn-erp-gray:hover {
+        background: linear-gradient(180deg, #e2e6ed 0%, #cfd4db 100%) !important;
+        color: #0f172a !important;
+    }
+
+    .btn-erp-gray:active,
+    .btn-erp-gray:focus {
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    }
+
     .kpi-box {
         min-height: 110px;
         border-radius: .5rem;
+        color: #0f172a;
+        background: linear-gradient(180deg, #f8fafc 0%, #e5e7eb 100%);
+        border: 1px solid #d1d5db;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
     }
 
     .kpi-box .inner h3 {
@@ -524,6 +650,27 @@
         right: 10px;
         top: 5px;
         opacity: .25;
+    }
+    .kpi-box p {
+        color: #4b5563;
+        font-weight: 600;
+        letter-spacing: .2px;
+    }
+
+    /* Colores ERP para KPIs */
+    .small-box.bg-info {
+        background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%) !important;
+        color: #0f172a;
+    }
+
+    .small-box.bg-success {
+        background: linear-gradient(180deg, #e6f4ec 0%, #d5e7dc 100%) !important;
+        color: #0f172a;
+    }
+
+    .small-box.bg-danger {
+        background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%) !important;
+        color: #0f172a;
     }
 
     /* Sticky header dentro de contenedores con overflow */
@@ -615,21 +762,51 @@
     (() => {
         // ====== ESTADOS GLOBALES ======
         let chart; // quarters
-        let operatorChart, inspectorChart;
+        let operatorChart, inspectorChart, typeChart;
 
         // Estados para exportar
         let lastQuarters = [];
         let lastInspectors = [];
         let lastOperators = [];
         let lastOpQuarter = [];
+        let lastTypes = [];
 
         // ====== SELECTORES GLOBALES ======
         const $year = document.getElementById('yearSelect');
         const $lblYear = document.getElementById('lblYear');
         const $tbodyQ = document.querySelector('#quartersTable tbody');
+        const $typeTbody = document.querySelector('#tblTypes tbody');
+        const $typeCanvas = document.getElementById('typeChart');
 
         // ====== HELPERS ======
         const fmtPct = v => (Math.round((v ?? 0) * 100) / 100).toFixed(2) + '%';
+        const fmtNum = v => Number(v ?? 0).toLocaleString('en-US');
+
+        // Plugin: mostrar valores sobre las barras
+        const valueOnBarPlugin = {
+            id: 'valueOnBar',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx } = chart;
+                const opts = pluginOptions || {};
+                const formatter = opts.formatter || ((v) => v);
+                ctx.save();
+                ctx.fillStyle = opts.color || '#0f172a';
+                ctx.font = opts.font || '600 11px "Segoe UI", Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                chart.data.datasets.forEach((dataset, di) => {
+                    const meta = chart.getDatasetMeta(di);
+                    meta.data.forEach((bar, i) => {
+                        const val = dataset.data[i];
+                        if (val === null || typeof val === 'undefined') return;
+                        const text = formatter(val, dataset, i);
+                        ctx.fillText(text, bar.x, bar.y - 4);
+                    });
+                });
+                ctx.restore();
+            }
+        };
+        if (typeof Chart !== 'undefined') Chart.register(valueOnBarPlugin);
 
         function debounce(fn, ms = 200) {
             let t;
@@ -676,9 +853,9 @@
             $tbodyQ.innerHTML = rows.map(q => `
       <tr>
         <td>${q.quarter}</td>
-        <td class="text-center">${q.total}</td>
-        <td class="text-center">${q.pass}</td>
-        <td class="text-center">${q.fail}</td>
+        <td class="text-center">${fmtNum(q.total)}</td>
+        <td class="text-center">${fmtNum(q.pass)}</td>
+        <td class="text-center">${fmtNum(q.fail)}</td>
         <td class="text-center">${fmtPct(q.pass_pct)}</td>
         <td class="text-center">${fmtPct(q.fail_pct)}</td>
       </tr>
@@ -711,6 +888,64 @@
             set('q_sum_fail_pct', failPct.toFixed(2) + '%');
         }
 
+        function renderTypeTable(rows) {
+            if (!$typeTbody) return;
+            if (!rows?.length) {
+                $typeTbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">No data</td></tr>`;
+                return;
+            }
+            $typeTbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.type}</td>
+        <td class="text-center">${fmtNum(r.total)}</td>
+        <td class="text-center">${fmtNum(r.pass)}</td>
+        <td class="text-center">${fmtNum(r.fail)}</td>
+        <td class="text-center">${fmtPct(r.pass_pct)}</td>
+        <td class="text-center">${fmtPct(r.fail_pct)}</td>
+      </tr>
+    `).join('');
+        }
+
+        function renderTypeChart(rows) {
+            if (!$typeCanvas) return;
+            const ctx = $typeCanvas.getContext('2d');
+            if (typeChart) typeChart.destroy();
+            const labels = rows.map(r => r.type);
+            const pass = rows.map(r => r.pass);
+            const fail = rows.map(r => r.fail);
+            typeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Pass',
+                        data: pass,
+                        backgroundColor: 'rgba(79,111,173,0.75)'
+                    }, {
+                        label: 'No Pass',
+                        data: fail,
+                        backgroundColor: 'rgba(203,140,64,0.75)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        valueOnBar: {
+                            formatter: (v) => fmtNum(v)
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { beginAtZero: true, stacked: true }
+                    }
+                }
+            });
+        }
+
         // Export Quarters
         function exportQuartersCSV(rows) {
             const data = rows?.length ? rows : lastQuarters;
@@ -740,6 +975,9 @@
 
             lastQuarters = data.quarters || [];
             renderQuartersTable(lastQuarters);
+            lastTypes = data.types || [];
+            renderTypeTable(lastTypes);
+            renderTypeChart(lastTypes);
 
             const $canvas = document.getElementById('quartersChart');
             if ($canvas) {
@@ -750,15 +988,15 @@
                     data: {
                         labels: lastQuarters.map(q => q.quarter),
                         datasets: [{
-                                label: '% Pass',
-                                data: lastQuarters.map(q => q.pass_pct),
-                                backgroundColor: 'rgba(40,167,69,0.6)'
-                            },
-                            {
-                                label: '% No Pass',
-                                data: lastQuarters.map(q => q.fail_pct),
-                                backgroundColor: 'rgba(220,53,69,0.6)'
-                            }
+                            label: '% Pass',
+                            data: lastQuarters.map(q => q.pass_pct),
+                            backgroundColor: 'rgba(79,111,173,0.7)'
+                        },
+                        {
+                            label: '% No Pass',
+                            data: lastQuarters.map(q => q.fail_pct),
+                            backgroundColor: 'rgba(203,140,64,0.7)'
+                        }
                         ]
                     },
                     options: {
@@ -781,6 +1019,9 @@
                                 callbacks: {
                                     label: (ctx) => `${ctx.dataset.label}: ${fmtPct(ctx.parsed.y)}`
                                 }
+                            },
+                            valueOnBar: {
+                                formatter: (v) => `${Number(v ?? 0).toFixed(1)}%`
                             }
                         }
                     }
@@ -816,16 +1057,15 @@
                 data: {
                     labels,
                     datasets: [{
-                            label: '% Pass',
-                            data: passPct,
-                            backgroundColor: 'rgba(17, 165, 74, 0.6)'
-                        },
-                        {
-                            label: '% No Pass',
-                            data: failPct,
-                            backgroundColor: 'rgba(220,53,69,0.6)'
-                        }
-                    ]
+                        label: '% Pass',
+                        data: passPct,
+                        backgroundColor: 'rgba(79,111,173,0.7)'
+                    },
+                    {
+                        label: '% No Pass',
+                        data: failPct,
+                        backgroundColor: 'rgba(203,140,64,0.7)'
+                    }]
                 },
                 options: {
                     responsive: true,
@@ -847,6 +1087,9 @@
                             callbacks: {
                                 label: (ctx) => `${ctx.dataset.label}: ${fmtPct(ctx.parsed.y)}`
                             }
+                        },
+                        valueOnBar: {
+                            formatter: (v) => `${Number(v ?? 0).toFixed(1)}%`
                         }
                     }
                 }
@@ -1031,14 +1274,14 @@
 
             // render
             $opTbody.innerHTML = rows.length ? rows.map(r => `
-      <tr>
-        <td>${r.name ?? '(N/A)'}</td>
-        <td class="text-center">${r.total ?? 0}</td>
-        <td class="text-center">${r.pass ?? 0}</td>
-        <td class="text-center">${r.fail ?? 0}</td>
-        <td class="text-center">${Number(r.pass_pct ?? 0).toFixed(2)}%</td>
-        <td class="text-center">${Number(r.fail_pct ?? 0).toFixed(2)}%</td>
-      </tr>
+        <tr>
+          <td>${r.name ?? '(N/A)'}</td>
+          <td class="text-center">${fmtNum(r.total)}</td>
+          <td class="text-center">${fmtNum(r.pass)}</td>
+          <td class="text-center">${fmtNum(r.fail)}</td>
+          <td class="text-center">${Number(r.pass_pct ?? 0).toFixed(2)}%</td>
+          <td class="text-center">${Number(r.fail_pct ?? 0).toFixed(2)}%</td>
+        </tr>
     `).join('') : `<tr><td colspan="6" class="text-center text-muted py-3">No data</td></tr>`;
 
             if ($opCanvas) {
@@ -1153,14 +1396,14 @@
 
             // render
             $inspTbody.innerHTML = rows.length ? rows.map(r => `
-      <tr>
-        <td>${r.name ?? '(N/A)'}</td>
-        <td class="text-center">${r.total ?? 0}</td>
-        <td class="text-center">${r.pass ?? 0}</td>
-        <td class="text-center">${r.fail ?? 0}</td>
-        <td class="text-center">${Number(r.pass_pct ?? 0).toFixed(2)}%</td>
-        <td class="text-center">${Number(r.fail_pct ?? 0).toFixed(2)}%</td>
-      </tr>
+        <tr>
+          <td>${r.name ?? '(N/A)'}</td>
+          <td class="text-center">${fmtNum(r.total)}</td>
+          <td class="text-center">${fmtNum(r.pass)}</td>
+          <td class="text-center">${fmtNum(r.fail)}</td>
+          <td class="text-center">${Number(r.pass_pct ?? 0).toFixed(2)}%</td>
+          <td class="text-center">${Number(r.fail_pct ?? 0).toFixed(2)}%</td>
+        </tr>
     `).join('') : `<tr><td colspan="6" class="text-center text-muted py-3">No data</td></tr>`;
 
             if ($inspCanvas) {
@@ -1395,9 +1638,9 @@ thead { background: #f7f7f7; }
                 }
                 const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
                 const palette = [
-                    'rgba(25,118,210,0.7)', 'rgba(46,125,50,0.7)', 'rgba(198,40,40,0.7)', 'rgba(123,31,162,0.7)',
-                    'rgba(255,143,0,0.7)', 'rgba(0,151,167,0.7)', 'rgba(197,195,190,0.7)', 'rgba(238,204,119,0.7)',
-                    'rgba(144,243,153,0.7)', 'rgba(101,200,230,0.7)'
+                    'rgba(79,111,173,0.75)', 'rgba(125,135,150,0.75)', 'rgba(203,140,64,0.75)', 'rgba(98,156,129,0.75)',
+                    'rgba(157,119,190,0.75)', 'rgba(118,131,148,0.75)', 'rgba(206,183,132,0.75)', 'rgba(91,122,149,0.75)',
+                    'rgba(140,160,180,0.75)', 'rgba(122,167,141,0.75)'
                 ];
                 const datasets = Object.entries(rows).map(([op, q], i) => ({
                     label: op,

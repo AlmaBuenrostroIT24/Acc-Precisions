@@ -266,11 +266,11 @@
 
                             {{-- Export botones debajo de los quick filters --}}
                             <div class="btn-group btn-group-sm d-flex mb-2">
-                                <button id="btnExportExcel" type="button" class="btn btn-success flex-fill">
-                                    <i class="fas fa-file-excel mr-1"></i> Excel
+                                <button id="btnExportExcel" type="button" class="btn btn-erp-gray flex-fill">
+                                    <i class="fas fa-file-excel mr-1 text-success"></i> Excel
                                 </button>
-                                <button id="btnExportPdf" type="button" class="btn btn-danger flex-fill">
-                                    <i class="fas fa-file-pdf mr-1"></i> PDF
+                                <button id="btnExportPdf" type="button" class="btn btn-erp-gray flex-fill">
+                                    <i class="fas fa-file-pdf mr-1 text-danger"></i> PDF
                                 </button>
                             </div>
                         </form>
@@ -827,8 +827,24 @@
         height: 32px;
         padding: .25rem .4rem;
         border-radius: 8px;
-        min-width: 50px;
+        min-width: 90px;
         width: auto;
+    }
+
+    /* Botones gris ERP para export */
+    .btn-erp-gray {
+        background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%) !important;
+        border: 1px solid #c5c9d2 !important;
+        color: #1f2937 !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+    .btn-erp-gray:hover {
+        background: linear-gradient(180deg, #e2e6ed 0%, #cfd4db 100%) !important;
+        color: #0f172a !important;
+    }
+    .btn-erp-gray:active,
+    .btn-erp-gray:focus {
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
     }
 
     /* Texto de encabezados en negro (consistente) */
