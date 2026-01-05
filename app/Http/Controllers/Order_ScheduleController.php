@@ -2001,6 +2001,9 @@ class Order_ScheduleController extends Controller
             }
         });
 
+        // Total sin paginar para mostrar resumen
+        $totalAll = (clone $query)->count();
+
         $rows = $query
             ->select([
                 'work_id',
@@ -2009,8 +2012,8 @@ class Order_ScheduleController extends Controller
                 'costumer',
                 'qty',
                 'status',
-                DB::raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"),
-                DB::raw("DATE_FORMAT(sent_at, '%Y-%m-%d') as sent_at"),
+                DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(due_date, '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(due_date, '%b-%d-%Y'),2)) as due_date"),
+                DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(sent_at, '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(sent_at, '%b-%d-%Y'),2)) as sent_at"),
                 // Early positivo, Late negativo, On time = 0
                 DB::raw("
                     CASE 
@@ -2029,8 +2032,11 @@ class Order_ScheduleController extends Controller
             return '<div class="text-center text-muted py-4">No orders found</div>';
         }
 
-        $html = '<table class="table table-sm table-striped table-hover mb-0"><thead class="thead-light"><tr>'
-            . '<th>W.ID</th><th>PN</th><th>Description</th><th>Customer</th><th>Qty</th><th>Status</th><th>Due</th><th>Sent</th><th>Δ Days</th><th>Notes</th>'
+        // Encabezado solo con filtros (customer / month)
+        $html = '';
+
+        $html .= '<table id="onTimeDetailTable" class="table table-sm table-striped table-hover mb-0"><thead class="thead-light"><tr>'
+            . '<th>W.ID</th><th>PN</th><th style="min-width:240px;">Description</th><th>Customer</th><th class="text-center">Qty</th><th class="text-center">Status</th><th class="text-center">Due</th><th class="text-center">Sent</th><th class="text-center">Δ Days</th><th>Notes</th>'
             . '</tr></thead><tbody>';
         foreach ($rows as $r) {
             // Color por estado
@@ -2039,16 +2045,19 @@ class Order_ScheduleController extends Controller
             elseif ($status === 'on time' || $status === 'on_time') $sentClass = 'text-success font-weight-bold';
             elseif ($status === 'late') $sentClass = 'text-danger font-weight-bold';
 
-            $html .= '<tr>'
+            $rowClass = 'status-row-' . str_replace(' ', '-', strtolower($status));
+            $deltaClass = $r->day_diff > 0 ? 'delta-early' : ($r->day_diff < 0 ? 'delta-late' : 'delta-on-time');
+
+            $html .= '<tr class="' . $rowClass . '">'
                 . '<td>' . e($r->work_id) . '</td>'
                 . '<td>' . e($r->PN) . '</td>'
-                . '<td style="max-width:200px; white-space:normal;">' . e($r->Part_description) . '</td>'
+                . '<td style="max-width:320px; white-space:normal;">' . e($r->Part_description) . '</td>'
                 . '<td>' . e(ucfirst($r->costumer)) . '</td>'
-                . '<td class="text-right">' . e($r->qty) . '</td>'
-                . '<td>' . e($r->status) . '</td>'
-                . '<td>' . e($r->due_date) . '</td>'
-                . '<td class="' . $sentClass . '">' . e($r->sent_at) . '</td>'
-                . '<td class="text-right">' . e($r->day_diff) . '</td>'
+                . '<td class="text-center">' . e($r->qty) . '</td>'
+                . '<td class="text-center">' . e($r->status) . '</td>'
+                . '<td class="text-center">' . e($r->due_date) . '</td>'
+                . '<td class="text-center ' . $sentClass . '">' . e($r->sent_at) . '</td>'
+                . '<td class="text-center ' . $deltaClass . '">' . e($r->day_diff) . '</td>'
                 . '<td style="max-width:200px; white-space:normal;">' . e($r->notes) . '</td>'
                 . '</tr>';
         }

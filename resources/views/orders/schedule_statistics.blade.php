@@ -675,18 +675,30 @@
 
     {{-- Modal para detalle de entregas --}}
 <div class="modal fade" id="onTimeModal" tabindex="-1" role="dialog" aria-labelledby="onTimeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="onTimeModalLabel">Orders detail</h5>
+            <div class="modal-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="modal-title mb-0" id="onTimeModalLabel">Orders detail</h5>
+                </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
-                    </button>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <input type="month" id="onTimeModalMonth" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                    <select id="onTimeModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                        <option value="">-- All Customers --</option>
+                        @foreach ($customers as $customer)
+                            <option value="{{ $customer }}">{{ $customer }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="modal-body">
-                    <div id="onTimeModalContent" class="table-responsive small">
-                        <div class="text-center text-muted py-4">Loading...</div>
-                    </div>
+                <div id="onTimeModalSummary" class="mb-2"></div>
+                <div id="onTimeModalContent" class="table-responsive small">
+                    <div class="text-center text-muted py-4">Loading...</div>
+                </div>
                 </div>
             </div>
         </div>
@@ -739,6 +751,116 @@
 
     #onTimeModal table tbody tr:hover {
         background: #eef2f7;
+    }
+
+    /* Tabla estilo ERP en modal */
+    #onTimeModal .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #c5c9d2;
+        border-radius: 6px;
+        padding: 4px 8px;
+        background: #f8fafc;
+    }
+
+    #onTimeModal .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #c5c9d2;
+        border-radius: 6px;
+        padding: 4px 6px;
+        background: #f8fafc;
+        font-size: 14px;
+    }
+
+    #onTimeModal .dataTables_wrapper .dataTables_filter input {
+        font-size: 14px;
+    }
+
+    /* Controles ERP para filtros del modal */
+    #onTimeModal .erp-filter-control {
+        border: 1px solid #c5c9d2;
+        border-radius: 8px;
+        padding: 6px 10px;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    #onTimeModal .erp-filter-control:focus {
+        border-color: #94a3b8;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+    }
+
+    #onTimeDetailTable {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    #onTimeDetailTable thead th {
+        background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
+        color: #0f172a;
+        border-bottom: 1px solid #c5c9d2;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    #onTimeDetailTable td,
+    #onTimeDetailTable th {
+        padding: 8px 10px;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+
+    #onTimeDetailTable tbody tr:nth-child(odd) {
+        background: #f8fafc;
+    }
+
+    #onTimeDetailTable tbody tr:hover {
+        background: #eef2f7;
+    }
+
+    #onTimeModal .dataTables_wrapper .dataTables_info,
+    #onTimeModal .dataTables_wrapper .dataTables_length label,
+    #onTimeModal .dataTables_wrapper .dataTables_filter label {
+        font-size: 14px;
+        color: #1f2937;
+    }
+
+    /* Colores por fila/estado */
+    #onTimeModal .status-row-early td {
+        background: inherit;
+    }
+
+    #onTimeModal .status-row-on-time td {
+        background: inherit;
+    }
+
+    #onTimeModal .status-row-late td {
+        background: inherit;
+    }
+
+    /* Δ Days colores */
+    #onTimeModal .delta-early {
+        color: #2b6cb0;
+        font-weight: 700;
+    }
+
+    #onTimeModal .delta-on-time {
+        color: #065f46;
+        font-weight: 700;
+    }
+
+    #onTimeModal .delta-late {
+        color: #b91c1c;
+        font-weight: 700;
+    }
+
+    /* Neutralizar colores de texto aplicados por clases de estado */
+    #onTimeModal td.text-primary,
+    #onTimeModal td.text-success,
+    #onTimeModal td.text-danger {
+        color: inherit !important;
+        font-weight: 400 !important;
     }
 
     /* Variantes por estado */
@@ -1125,6 +1247,9 @@
             const modalEl = document.getElementById('onTimeModal');
             const modalContentEl = document.getElementById('onTimeModalContent');
             const modalTitleEl = document.getElementById('onTimeModalLabel');
+            const modalMonthEl = document.getElementById('onTimeModalMonth');
+            const modalCustomerEl = document.getElementById('onTimeModalCustomer');
+            const modalState = { status: null, baseFilters: {} };
 
             const onTimeChartRef = {
                 chart: null
@@ -1135,6 +1260,39 @@
                 Chart.register(ChartDataLabels);
             }
 
+            function fetchModalData(status, filters) {
+                if (!modalEl || !modalContentEl) return;
+                modalContentEl.innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
+                const params = new URLSearchParams(filters || {});
+                params.append('status', status);
+                fetch(`/orders/summary/on-time-filtered-detail?${params.toString()}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        modalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
+                        // Inicializar DataTable para buscar/paginar
+                        const $table = $('#onTimeDetailTable');
+                        if ($.fn.DataTable.isDataTable($table)) {
+                            $table.DataTable().destroy();
+                        }
+                        if ($table.length) {
+                            $table.DataTable({
+                                pageLength: 15,
+                                lengthMenu: [15, 25, 50, 100],
+                                searching: true,
+                                ordering: true,
+                                info: true,
+                                order: [[6, 'desc']] // Sent column (index 6)
+                            });
+                        }
+                        populateModalCustomers(filters?.customer || '');
+                        $('#onTimeModal').modal('show');
+                    })
+                    .catch(() => {
+                        modalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
+                        $('#onTimeModal').modal('show');
+                    });
+            }
+
             function openOnTimeModal(status, filters) {
                 if (!modalEl || !modalContentEl) return;
                 // limpiar clases de estado previas
@@ -1143,20 +1301,18 @@
                 if (key === 'early') modalEl.classList.add('status-early');
                 if (key === 'on-time') modalEl.classList.add('status-on-time');
                 if (key === 'late') modalEl.classList.add('status-late');
-                modalContentEl.innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
                 if (modalTitleEl) modalTitleEl.textContent = `Orders - ${status}`;
-                const params = new URLSearchParams(filters);
-                params.append('status', status);
-                fetch(`/orders/summary/on-time-filtered-detail?${params.toString()}`)
-                    .then(res => res.text())
-                    .then(html => {
-                        modalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
-                        $('#onTimeModal').modal('show');
-                    })
-                    .catch(() => {
-                        modalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
-                        $('#onTimeModal').modal('show');
-                    });
+                modalState.status = status;
+                modalState.baseFilters = { ...(filters || {}) };
+
+                // Prefijar selects
+                if (modalMonthEl) modalMonthEl.value = filters?.month || '';
+                if (modalCustomerEl) modalCustomerEl.value = filters?.customer || '';
+
+                const effectiveFilters = { ...(filters || {}) };
+                if (modalMonthEl && modalMonthEl.value) effectiveFilters.month = modalMonthEl.value;
+                if (modalCustomerEl && modalCustomerEl.value) effectiveFilters.customer = modalCustomerEl.value;
+                fetchModalData(status, effectiveFilters);
             }
 
             function loadOnTimeChart() {
@@ -1319,6 +1475,49 @@
             monthFilter?.addEventListener('change', loadOnTimeChart);
             yearFilter?.addEventListener('change', loadOnTimeChart);
             customerFilterOnTime?.addEventListener('change', loadOnTimeChart);
+
+            // Filtros dentro del modal (cambian el detalle sin cerrar)
+            const handleModalFilterChange = () => {
+                if (!modalState.status) return;
+                const effective = { ...(modalState.baseFilters || {}) };
+                if (modalMonthEl && modalMonthEl.value) effective.month = modalMonthEl.value;
+                else delete effective.month;
+                if (modalCustomerEl && modalCustomerEl.value) effective.customer = modalCustomerEl.value;
+                else delete effective.customer;
+                fetchModalData(modalState.status, effective);
+            };
+            modalMonthEl?.addEventListener('change', handleModalFilterChange);
+            modalCustomerEl?.addEventListener('change', handleModalFilterChange);
+
+            // Rellena el select de customers con los que aparecen en la tabla del modal
+            function populateModalCustomers(selected) {
+                if (!modalCustomerEl) return;
+                const tableBody = document.querySelector('#onTimeDetailTable tbody');
+                if (!tableBody) return;
+                const customers = new Set();
+                tableBody.querySelectorAll('tr').forEach(tr => {
+                    const td = tr.children[3];
+                    if (td) {
+                        const name = (td.textContent || '').trim();
+                        if (name) customers.add(name);
+                    }
+                });
+                const prev = modalCustomerEl.value;
+                modalCustomerEl.innerHTML = '<option value="">-- All Customers --</option>';
+                customers.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    modalCustomerEl.appendChild(opt);
+                });
+                if (selected && customers.has(selected)) {
+                    modalCustomerEl.value = selected;
+                } else if (customers.has(prev)) {
+                    modalCustomerEl.value = prev;
+                } else {
+                    modalCustomerEl.value = '';
+                }
+            }
         });;
 
 
