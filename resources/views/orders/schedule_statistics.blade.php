@@ -686,7 +686,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                     <input type="month" id="onTimeModalMonth" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                     <select id="onTimeModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
                         <option value="">-- All Customers --</option>
@@ -694,6 +694,7 @@
                             <option value="{{ $customer }}">{{ $customer }}</option>
                         @endforeach
                     </select>
+                    <div id="onTimeModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                 </div>
                 <div id="onTimeModalSummary" class="mb-2"></div>
                 <div id="onTimeModalContent" class="table-responsive small">
@@ -773,6 +774,15 @@
         font-size: 14px;
     }
 
+    /* Compactar espacio vertical de controles */
+    #onTimeModal .dataTables_wrapper .row:first-child {
+        margin-bottom: 0 !important;
+    }
+    #onTimeModal .dataTables_wrapper .dataTables_filter,
+    #onTimeModal .dataTables_wrapper .dataTables_length {
+        margin-bottom: 0 !important;
+    }
+
     /* Controles ERP para filtros del modal */
     #onTimeModal .erp-filter-control {
         border: 1px solid #c5c9d2;
@@ -789,11 +799,37 @@
         box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
     }
 
+    /* Botones estilo ERP en gris con ícono de color */
+    #onTimeModal .btn-erp-success,
+    #onTimeModal .btn-erp-danger {
+        background: #f8fafc;
+        border: 1px solid #d5d8dd;
+        color: #1f2937;
+        border-radius: 8px;
+        font-weight: 700;
+        box-shadow: none;
+    }
+
+    #onTimeModal .btn-erp-success i {
+        color: #0f5132;
+    }
+
+    #onTimeModal .btn-erp-danger i {
+        color: #b91c1c;
+    }
+
+    #onTimeModal .btn-erp-success:hover,
+    #onTimeModal .btn-erp-danger:hover {
+        filter: brightness(0.97);
+        color: #111827;
+    }
+
     #onTimeDetailTable {
         border: 1px solid #d1d5db;
         border-radius: 10px;
         overflow: hidden;
         background: #fff;
+        table-layout: auto;
     }
 
     #onTimeDetailTable thead th {
@@ -809,6 +845,45 @@
         padding: 8px 10px;
         vertical-align: middle;
         font-size: 14px;
+        word-break: break-word;
+    }
+
+    /* Anchos para fechas (Due y Sent) */
+    #onTimeDetailTable th:nth-child(7),
+    #onTimeDetailTable td:nth-child(7),
+    #onTimeDetailTable th:nth-child(8),
+    #onTimeDetailTable td:nth-child(8) {
+        min-width: 115px;
+    }
+
+    /* Anchos sugeridos para columnas compactas */
+    #onTimeDetailTable th:nth-child(1),
+    #onTimeDetailTable td:nth-child(1) { min-width: 70px; width: 8%; }
+    #onTimeDetailTable th:nth-child(2),
+    #onTimeDetailTable td:nth-child(2) { min-width: 90px; width: 10%; }
+    #onTimeDetailTable th:nth-child(4),
+    #onTimeDetailTable td:nth-child(4) { min-width: 110px; width: 12%; }
+    #onTimeDetailTable th:nth-child(5),
+    #onTimeDetailTable td:nth-child(5) { min-width: 55px; width: 5%; }
+    #onTimeDetailTable th:nth-child(6),
+    #onTimeDetailTable td:nth-child(6) { min-width: 70px; width: 7%; }
+    #onTimeDetailTable th:nth-child(7),
+    #onTimeDetailTable td:nth-child(7),
+    #onTimeDetailTable th:nth-child(8),
+    #onTimeDetailTable td:nth-child(8) {
+        min-width: 85px;
+        width: 8%;
+    }
+    #onTimeDetailTable th:nth-child(9),
+    #onTimeDetailTable td:nth-child(9) { min-width: 60px; width: 6%; }
+    #onTimeDetailTable th:nth-child(10),
+    #onTimeDetailTable td:nth-child(10) { min-width: 160px; width: 12%; }
+
+    /* Descripcion ocupa el resto */
+    #onTimeDetailTable th:nth-child(3),
+    #onTimeDetailTable td:nth-child(3) {
+        min-width: 340px;
+        width: auto;
     }
 
     #onTimeDetailTable tbody tr:nth-child(odd) {
@@ -1275,14 +1350,37 @@
                             $table.DataTable().destroy();
                         }
                         if ($table.length) {
-                            $table.DataTable({
-                                pageLength: 15,
-                                lengthMenu: [15, 25, 50, 100],
+                            const dt = $table.DataTable({
+                                dom: "<'row mb-0'<'col-sm-6 d-flex align-items-center'l><'col-sm-6 d-flex justify-content-end align-items-center'f>>" +
+                                    "<'row'<'col-12'tr>>" +
+                                    "<'row mt-2'<'col-sm-5'i><'col-sm-7'p>>",
+                                pageLength: 12,
+                                lengthMenu: [12, 25, 50, 100],
                                 searching: true,
                                 ordering: true,
                                 info: true,
-                                order: [[6, 'desc']] // Sent column (index 6)
+                                order: [[6, 'desc']], // Sent column (index 6)
+                                buttons: [
+                                    {
+                                        extend: 'excelHtml5',
+                                        text: '<i class="fas fa-file-excel"></i> Excel',
+                                        className: 'btn btn-erp-success btn-sm mx-1'
+                                    },
+                                    {
+                                        extend: 'pdfHtml5',
+                                        text: '<i class="fas fa-file-pdf"></i> PDF',
+                                        className: 'btn btn-erp-danger btn-sm mx-1',
+                                        orientation: 'landscape',
+                                        pageSize: 'A4'
+                                    }
+                                ]
                             });
+                            // Mover botones junto a los filtros del modal
+                            if (dt.buttons().container().length) {
+                                const $btnHost = $('#onTimeModalButtons');
+                                $btnHost.empty(); // evita duplicados en recargas
+                                dt.buttons().container().appendTo($btnHost);
+                            }
                         }
                         populateModalCustomers(filters?.customer || '');
                         $('#onTimeModal').modal('show');

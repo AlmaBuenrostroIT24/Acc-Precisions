@@ -2051,7 +2051,7 @@ class Order_ScheduleController extends Controller
             $html .= '<tr class="' . $rowClass . '">'
                 . '<td>' . e($r->work_id) . '</td>'
                 . '<td>' . e($r->PN) . '</td>'
-                . '<td style="max-width:320px; white-space:normal;">' . e($r->Part_description) . '</td>'
+                . '<td style="white-space:normal;">' . e($r->Part_description) . '</td>'
                 . '<td>' . e(ucfirst($r->costumer)) . '</td>'
                 . '<td class="text-center">' . e($r->qty) . '</td>'
                 . '<td class="text-center">' . e($r->status) . '</td>'
