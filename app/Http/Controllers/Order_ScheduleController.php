@@ -1964,6 +1964,99 @@ class Order_ScheduleController extends Controller
         ]);
     }
 
+    /**
+     * Detalle de órdenes para Early / On Time / Late con mismos filtros
+     */
+    public function summaryOnTimeFilteredDetail(Request $request)
+    {
+        $status = strtolower($request->input('status', ''));
+        $valid = ['early', 'on time', 'late', 'early', 'on_time'];
+        if (!in_array($status, $valid, true)) {
+            return response('<div class="text-danger">Invalid status</div>', 400);
+        }
+
+        $query = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereNotNull('sent_at')
+            ->whereRaw("LOWER(status_order) = 'active'");
+
+        if ($request->filled('month')) {
+            $query->whereRaw("DATE_FORMAT(due_date, '%Y-%m') = ?", [$request->month]);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('due_date', $request->year);
+        }
+        if ($request->filled('customer')) {
+            $query->where('costumer', $request->customer);
+        }
+
+        // Filtro por estado
+        $query->where(function ($q) use ($status) {
+            if ($status === 'early') {
+                $q->whereRaw("DATE(sent_at) < DATE(due_date)");
+            } elseif ($status === 'on time' || $status === 'on_time') {
+                $q->whereRaw("DATE(sent_at) = DATE(due_date)");
+            } else { // late
+                $q->whereRaw("DATE(sent_at) > DATE(due_date)");
+            }
+        });
+
+        $rows = $query
+            ->select([
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'qty',
+                'status',
+                DB::raw("DATE_FORMAT(due_date, '%Y-%m-%d') as due_date"),
+                DB::raw("DATE_FORMAT(sent_at, '%Y-%m-%d') as sent_at"),
+                // Early positivo, Late negativo, On time = 0
+                DB::raw("
+                    CASE 
+                        WHEN DATE(sent_at) < DATE(due_date) THEN DATEDIFF(DATE(due_date), DATE(sent_at))
+                        WHEN DATE(sent_at) > DATE(due_date) THEN -DATEDIFF(DATE(sent_at), DATE(due_date))
+                        ELSE 0
+                    END as day_diff
+                "),
+                'notes'
+            ])
+            ->orderBy('due_date')
+            ->limit(200)
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return '<div class="text-center text-muted py-4">No orders found</div>';
+        }
+
+        $html = '<table class="table table-sm table-striped table-hover mb-0"><thead class="thead-light"><tr>'
+            . '<th>W.ID</th><th>PN</th><th>Description</th><th>Customer</th><th>Qty</th><th>Status</th><th>Due</th><th>Sent</th><th>Δ Days</th><th>Notes</th>'
+            . '</tr></thead><tbody>';
+        foreach ($rows as $r) {
+            // Color por estado
+            $sentClass = 'text-muted';
+            if ($status === 'early') $sentClass = 'text-primary font-weight-bold';
+            elseif ($status === 'on time' || $status === 'on_time') $sentClass = 'text-success font-weight-bold';
+            elseif ($status === 'late') $sentClass = 'text-danger font-weight-bold';
+
+            $html .= '<tr>'
+                . '<td>' . e($r->work_id) . '</td>'
+                . '<td>' . e($r->PN) . '</td>'
+                . '<td style="max-width:200px; white-space:normal;">' . e($r->Part_description) . '</td>'
+                . '<td>' . e(ucfirst($r->costumer)) . '</td>'
+                . '<td class="text-right">' . e($r->qty) . '</td>'
+                . '<td>' . e($r->status) . '</td>'
+                . '<td>' . e($r->due_date) . '</td>'
+                . '<td class="' . $sentClass . '">' . e($r->sent_at) . '</td>'
+                . '<td class="text-right">' . e($r->day_diff) . '</td>'
+                . '<td style="max-width:200px; white-space:normal;">' . e($r->notes) . '</td>'
+                . '</tr>';
+        }
+        $html .= '</tbody></table>';
+
+        return response($html);
+    }
+
 
     ///-----------------------------------------------------
 

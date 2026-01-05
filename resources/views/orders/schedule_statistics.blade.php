@@ -400,7 +400,7 @@
                             <select id="yearFilter" class="form-control form-control-sm" title="Filter by Year">
                                 <option value="">-- Year --</option>
                                 @for ($y = now()->year; $y >= 2025; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
+                                <option value="{{ $y }}" @selected($y == now()->year)>{{ $y }}</option>
                                 @endfor
                             </select>
                         </div>
@@ -673,25 +673,92 @@
     </div>
 
 
-    @endsection
+    {{-- Modal para detalle de entregas --}}
+<div class="modal fade" id="onTimeModal" tabindex="-1" role="dialog" aria-labelledby="onTimeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="onTimeModalLabel">Orders detail</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="onTimeModalContent" class="table-responsive small">
+                        <div class="text-center text-muted py-4">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    @section('css')
-    <style>
-        .dataTables_wrapper {
-            margin-top: 20px !important;
-            margin-left: 15px !important;
-            margin-right: 15px !important;
-        }
+@endsection
+
+@section('css')
+<style>
+    .dataTables_wrapper {
+        margin-top: 20px !important;
+        margin-left: 15px !important;
+        margin-right: 15px !important;
+    }
 
         #tableweek tbody td {
             height: 50px;
         }
 
-        #tablelate tbody td {
-            height: 50px;
-        }
-    </style>
-    @endsection
+    #tablelate tbody td {
+        height: 50px;
+    }
+
+    /* Estilo ERP para el modal On Time/Late */
+    #onTimeModal .modal-content {
+        border: 1px solid #c5c9d2;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+    }
+
+    #onTimeModal .modal-header {
+        background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%);
+        border-bottom: 1px solid #c5c9d2;
+        color: #0f172a;
+        letter-spacing: .2px;
+    }
+
+    #onTimeModal .modal-title {
+        font-weight: 700;
+    }
+
+    #onTimeModal .modal-body {
+        background: #f7f9fc;
+    }
+
+    #onTimeModal table thead {
+        background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
+        color: #0f172a;
+    }
+
+    #onTimeModal table tbody tr:hover {
+        background: #eef2f7;
+    }
+
+    /* Variantes por estado */
+    /* Early azul, On Time verde */
+    #onTimeModal.status-early .modal-header {
+        background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
+        border-color: #c5cedd;
+    }
+
+    #onTimeModal.status-on-time .modal-header {
+        background: linear-gradient(180deg, #e6f4ec 0%, #d5e7dc 100%);
+        border-color: #c3e0cf;
+    }
+
+    #onTimeModal.status-late .modal-header {
+        background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
+        border-color: #e0c4bc;
+    }
+</style>
+@endsection
 
     @push('js')
 
@@ -1055,6 +1122,9 @@
             const monthFilter = document.getElementById('monthFilter');
             const yearFilter = document.getElementById('yearFilter');
             const customerFilterOnTime = document.getElementById('customerFilterOnTime');
+            const modalEl = document.getElementById('onTimeModal');
+            const modalContentEl = document.getElementById('onTimeModalContent');
+            const modalTitleEl = document.getElementById('onTimeModalLabel');
 
             const onTimeChartRef = {
                 chart: null
@@ -1063,6 +1133,30 @@
             // Registrar plugin de datalabels (una sola vez)
             if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
                 Chart.register(ChartDataLabels);
+            }
+
+            function openOnTimeModal(status, filters) {
+                if (!modalEl || !modalContentEl) return;
+                // limpiar clases de estado previas
+                modalEl.classList.remove('status-early', 'status-on-time', 'status-late');
+                const key = (status || '').toLowerCase().replace(/\s+/g, '-');
+                if (key === 'early') modalEl.classList.add('status-early');
+                if (key === 'on-time') modalEl.classList.add('status-on-time');
+                if (key === 'late') modalEl.classList.add('status-late');
+                modalContentEl.innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
+                if (modalTitleEl) modalTitleEl.textContent = `Orders - ${status}`;
+                const params = new URLSearchParams(filters);
+                params.append('status', status);
+                fetch(`/orders/summary/on-time-filtered-detail?${params.toString()}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        modalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
+                        $('#onTimeModal').modal('show');
+                    })
+                    .catch(() => {
+                        modalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
+                        $('#onTimeModal').modal('show');
+                    });
             }
 
             function loadOnTimeChart() {
@@ -1138,6 +1232,12 @@
 
                         const colors = labels.map(label => colorMap[label] || '#999');
 
+                        const filters = {
+                            month: month || '',
+                            year: year || '',
+                            customer: customer || ''
+                        };
+
                         onTimeChartRef.chart = new Chart(onTimeCtx, {
                             type: 'doughnut',
                             data: {
@@ -1197,6 +1297,15 @@
                             },
                             plugins: [ChartDataLabels]
                         });
+
+                        // click handler para abrir modal de detalle
+                        onTimeChartRef.chart.canvas.onclick = function(evt) {
+                            const points = onTimeChartRef.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+                            if (!points.length) return;
+                            const idx = points[0].index;
+                            const status = labels[idx];
+                            openOnTimeModal(status, filters);
+                        };
                     })
                     .catch(err => {
                         console.error('Error cargando On Time chart:', err);

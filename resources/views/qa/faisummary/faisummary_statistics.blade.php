@@ -296,6 +296,14 @@
                     <strong class="mr-auto">
                         <i class="fas fa-layer-group mr-1 text-primary"></i>FAI / IPI Overview
                     </strong>
+                    <div class="btn-group btn-group-sm ml-auto" role="group" aria-label="types actions">
+                        <button id="btnExportTypesCsv" type="button" class="btn btn-erp-gray">
+                            <i class="fas fa-file-csv mr-1"></i>CSV
+                        </button>
+                        <button id="btnExportTypesPdf" type="button" class="btn btn-erp-gray">
+                            <i class="fas fa-file-pdf mr-1"></i>PDF
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-stretch">
@@ -939,8 +947,8 @@
                         }
                     },
                     scales: {
-                        x: { stacked: true },
-                        y: { beginAtZero: true, stacked: true }
+                        x: { stacked: false },
+                        y: { beginAtZero: true, stacked: false }
                     }
                 }
             });
@@ -954,6 +962,15 @@
                 q.quarter, q.total, q.pass, q.fail, fmtPct(q.pass_pct), fmtPct(q.fail_pct)
             ]);
             exportToCSV(table, headers, `quarters_${$year?.value || 'year'}`);
+        }
+
+        function exportTypesCSV(rows) {
+            const data = rows?.length ? rows : lastTypes;
+            const headers = ['Type', 'Total', 'Pass', 'No Pass', '% Pass', '% No Pass'];
+            const table = (data || []).map(t => [
+                t.type, t.total, t.pass, t.fail, fmtPct(t.pass_pct), fmtPct(t.fail_pct)
+            ]);
+            exportToCSV(table, headers, `types_${$year?.value || 'year'}`);
         }
 
         // ====== CARGA GLOBAL ======
@@ -1775,10 +1792,26 @@ thead { background: #f7f7f7; }
             if ($btnExportQuartersPdf) {
                 $btnExportQuartersPdf.addEventListener('click', () => {
                     printSection({
-                        who: '% Pass vs % No Pass — by Quarter (Q1–Q4)',
+                        who: '% Pass vs % No Pass - by Quarter (Q1-Q4)',
                         rangeGetter: currentYearRange,
                         canvasId: 'quartersChart',
                         tableSelector: '#quartersTable'
+                    });
+                });
+            }
+
+            const $btnExportTypesCsv = document.getElementById('btnExportTypesCsv');
+            if ($btnExportTypesCsv) {
+                $btnExportTypesCsv.addEventListener('click', () => exportTypesCSV());
+            }
+            const $btnExportTypesPdf = document.getElementById('btnExportTypesPdf');
+            if ($btnExportTypesPdf) {
+                $btnExportTypesPdf.addEventListener('click', () => {
+                    printSection({
+                        who: 'FAI / IPI Overview',
+                        rangeGetter: currentYearRange,
+                        canvasId: 'typeChart',
+                        tableSelector: '#tblTypes'
                     });
                 });
             }
