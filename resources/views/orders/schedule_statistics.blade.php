@@ -957,6 +957,61 @@
                 </div>
             </div>
 
+            {{-- Modal: Completed Orders (Year) detail --}}
+            <div class="modal fade" id="completedOrdersModal" tabindex="-1" role="dialog" aria-labelledby="completedOrdersModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="modal-title mb-0" id="completedOrdersModalLabel">Completed Orders ({{ now()->year }})</h5>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <select id="completedOrdersModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                </select>
+                                <select id="completedOrdersModalMonth" class="form-control form-control-sm erp-filter-control" style="max-width: 170px;">
+                                    <option value="">-- All Months --</option>
+                                </select>
+                                <select id="completedOrdersModalDay" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Days --</option>
+                                </select>
+                                <span id="completedOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <div id="completedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="completedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
+                            <div class="table-responsive small">
+                                <table id="completedOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                                    <thead>
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th>W.ID</th>
+                                            <th>PN</th>
+                                            <th>DESCRIPTION</th>
+                                            <th>CUSTOMER</th>
+                                            <th class="text-center">QTY</th>
+                                            <th class="text-center">STATUS</th>
+                                            <th class="text-center">UPLOADED</th>
+                                            <th class="text-center">DUE DATE</th>
+                                            <th class="text-center">SENT AT</th>
+                                            <th class="text-center">SENT</th>
+                                            <th class="text-center">DAYS</th>
+                                            <th>NOTES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @include('orders.schedule_tablecompleted_year', ['orders' => $completedOrdersListYear])
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal fade" id="ordersDetailModal" tabindex="-1" role="dialog" aria-labelledby="ordersDetailModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
                     <div class="modal-content">
@@ -1163,6 +1218,10 @@
                 }
 
                 #uploadedOrdersModal.is-loading #uploadedOrdersModalTable {
+                    visibility: hidden;
+                }
+
+                #completedOrdersModal.is-loading #completedOrdersModalTable {
                     visibility: hidden;
                 }
 
@@ -1398,6 +1457,7 @@
                 #weekOrdersModal .modal-content,
                 #newOrdersWeekModal .modal-content,
                 #uploadedOrdersModal .modal-content,
+                #completedOrdersModal .modal-content,
                 #lateOrdersModal .modal-content,
                 #ordersDetailModal .modal-content {
                     border: 1px solid #c5c9d2;
@@ -1409,6 +1469,7 @@
                 #weekOrdersModal .modal-header,
                 #newOrdersWeekModal .modal-header,
                 #uploadedOrdersModal .modal-header,
+                #completedOrdersModal .modal-header,
                 #lateOrdersModal .modal-header,
                 #ordersDetailModal .modal-header {
                     background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%);
@@ -1423,7 +1484,8 @@
                 #lateOrdersModal.fai-theme-danger .modal-header,
                 #weekOrdersModal.fai-theme-primary .modal-header,
                 #newOrdersWeekModal.fai-theme-info .modal-header,
-                #uploadedOrdersModal.fai-theme-secondary .modal-header {
+                #uploadedOrdersModal.fai-theme-secondary .modal-header,
+                #completedOrdersModal.fai-theme-success .modal-header {
                     background: linear-gradient(180deg, var(--fai-hover-border) 0%, var(--fai-active-shadow) 100%);
                     border-bottom: 0 !important;
                     color: #0f172a;
@@ -1439,6 +1501,7 @@
                 #weekOrdersModal .modal-title,
                 #newOrdersWeekModal .modal-title,
                 #uploadedOrdersModal .modal-title,
+                #completedOrdersModal .modal-title,
                 #lateOrdersModal .modal-title,
                 #ordersDetailModal .modal-title {
                     font-weight: 700;
@@ -1448,6 +1511,7 @@
                 #weekOrdersModal .modal-body,
                 #newOrdersWeekModal .modal-body,
                 #uploadedOrdersModal .modal-body,
+                #completedOrdersModal .modal-body,
                 #lateOrdersModal .modal-body,
                 #ordersDetailModal .modal-body {
                     background: #f7f9fc;
@@ -1457,6 +1521,7 @@
                 #weekOrdersModal table thead,
                 #newOrdersWeekModal table thead,
                 #uploadedOrdersModal table thead,
+                #completedOrdersModal table thead,
                 #lateOrdersModal table thead,
                 #ordersDetailModal table thead {
                     background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
@@ -1466,7 +1531,8 @@
                 #lateOrdersModal.fai-theme-danger table thead,
                 #weekOrdersModal.fai-theme-primary table thead,
                 #newOrdersWeekModal.fai-theme-info table thead,
-                #uploadedOrdersModal.fai-theme-secondary table thead {
+                #uploadedOrdersModal.fai-theme-secondary table thead,
+                #completedOrdersModal.fai-theme-success table thead {
                     background: linear-gradient(180deg, var(--fai-hover-border) 0%, var(--fai-active-shadow) 100%);
                     color: #0f172a;
                 }
@@ -1475,6 +1541,7 @@
                 #weekOrdersModal table tbody tr:hover,
                 #newOrdersWeekModal table tbody tr:hover,
                 #uploadedOrdersModal table tbody tr:hover,
+                #completedOrdersModal table tbody tr:hover,
                 #lateOrdersModal table tbody tr:hover,
                 #ordersDetailModal table tbody tr:hover {
                     background: #eef2f7;
@@ -1546,6 +1613,7 @@
                 #lateOrdersModal .erp-filter-control,
                 #newOrdersWeekModal .erp-filter-control,
                 #uploadedOrdersModal .erp-filter-control,
+                #completedOrdersModal .erp-filter-control,
                 #ordersDetailModal .erp-filter-control {
                     border: 1px solid #c5c9d2;
                     border-radius: 8px;
@@ -1563,6 +1631,7 @@
                 #lateOrdersModal .erp-filter-control:focus,
                 #newOrdersWeekModal .erp-filter-control:focus,
                 #uploadedOrdersModal .erp-filter-control:focus,
+                #completedOrdersModal .erp-filter-control:focus,
                 #ordersDetailModal .erp-filter-control:focus {
                     border-color: #94a3b8;
                     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
@@ -1584,6 +1653,9 @@
                 #uploadedOrdersModal .btn-erp-success,
                 #uploadedOrdersModal .btn-erp-danger,
                 #uploadedOrdersModal .btn-erp-primary,
+                #completedOrdersModal .btn-erp-success,
+                #completedOrdersModal .btn-erp-danger,
+                #completedOrdersModal .btn-erp-primary,
                 #ordersDetailModal .btn-erp-success,
                 #ordersDetailModal .btn-erp-danger,
                 #ordersDetailModal .btn-erp-primary {
@@ -1600,6 +1672,7 @@
                 #lateOrdersModal .btn-erp-success i,
                 #newOrdersWeekModal .btn-erp-success i,
                 #uploadedOrdersModal .btn-erp-success i,
+                #completedOrdersModal .btn-erp-success i,
                 #ordersDetailModal .btn-erp-success i {
                     color: #0f5132;
                 }
@@ -1609,6 +1682,7 @@
                 #lateOrdersModal .btn-erp-danger i,
                 #newOrdersWeekModal .btn-erp-danger i,
                 #uploadedOrdersModal .btn-erp-danger i,
+                #completedOrdersModal .btn-erp-danger i,
                 #ordersDetailModal .btn-erp-danger i {
                     color: #b91c1c;
                 }
@@ -1618,6 +1692,7 @@
                 #lateOrdersModal .btn-erp-primary i,
                 #newOrdersWeekModal .btn-erp-primary i,
                 #uploadedOrdersModal .btn-erp-primary i,
+                #completedOrdersModal .btn-erp-primary i,
                 #ordersDetailModal .btn-erp-primary i {
                     color: #0b5ed7;
                 }
@@ -1631,6 +1706,9 @@
                 #uploadedOrdersModal .btn-erp-success:hover,
                 #uploadedOrdersModal .btn-erp-danger:hover,
                 #uploadedOrdersModal .btn-erp-primary:hover,
+                #completedOrdersModal .btn-erp-success:hover,
+                #completedOrdersModal .btn-erp-danger:hover,
+                #completedOrdersModal .btn-erp-primary:hover,
                 #ordersDetailModal .btn-erp-success:hover,
                 #ordersDetailModal .btn-erp-danger:hover,
                 #ordersDetailModal .btn-erp-primary:hover {
@@ -1654,6 +1732,7 @@
                 #weekOrdersModalTable,
                 #newOrdersWeekModalTable,
                 #uploadedOrdersModalTable,
+                #completedOrdersModalTable,
                 #ordersDetailTable {
                     border: 1px solid #d1d5db;
                     border-radius: 10px;
@@ -1675,11 +1754,16 @@
                     min-width: 1200px;
                 }
 
+                #completedOrdersModalTable {
+                    min-width: 1200px;
+                }
+
                 #onTimeDetailTable thead th,
                 #lateOrdersModalTable thead th,
                 #weekOrdersModalTable thead th,
                 #newOrdersWeekModalTable thead th,
                 #uploadedOrdersModalTable thead th,
+                #completedOrdersModalTable thead th,
                 #ordersDetailTable thead th {
                     background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
                     color: #0f172a;
@@ -1698,6 +1782,8 @@
                 #newOrdersWeekModalTable th,
                 #uploadedOrdersModalTable td,
                 #uploadedOrdersModalTable th,
+                #completedOrdersModalTable td,
+                #completedOrdersModalTable th,
                 #ordersDetailTable td,
                 #ordersDetailTable th {
                     padding: 8px 10px;
@@ -3500,6 +3586,7 @@
 
                         const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
                         const uniqStatuses = Array.from(new Set(statusValues)).sort((a, b) => a.localeCompare(b));
+
                         const uniqUploaded = Array.from(new Set(uploadedValues)).sort((a, b) => a.localeCompare(b));
 
                         const prevCustomer = $newOrdersWeekCustomer.val();
@@ -3870,6 +3957,251 @@
                     setTimeout(() => {
                         try { ensureUploadedOrdersDtInitialized(); } catch (e) {}
                     }, 260);
+
+                    // Completed Orders KPI -> modal detail (Completed Orders - current year)
+                    const $completedOrdersModal = $('#completedOrdersModal');
+                    const $completedOrdersLoading = $('#completedOrdersModalLoading');
+                    const $completedOrdersCustomer = $('#completedOrdersModalCustomer');
+                    const $completedOrdersMonth = $('#completedOrdersModalMonth');
+                    const $completedOrdersDay = $('#completedOrdersModalDay');
+                    const $completedOrdersButtons = $('#completedOrdersModalButtons');
+                    const $completedOrdersCount = $('#completedOrdersModalCount');
+                    let completedOrdersDt = null;
+                    let completedOrdersDidAdjust = false;
+
+                    const $completedOrdersTrigger = $('.kpi-erp .info-box').filter(function() {
+                        const label = ($(this).find('.info-box-text').text() || '').trim();
+                        return label.indexOf('Completed Orders') === 0;
+                    }).first();
+
+                    if ($completedOrdersTrigger.length) {
+                        $completedOrdersTrigger
+                            .addClass('js-open-completed-orders')
+                            .attr('role', 'button')
+                            .attr('tabindex', '0')
+                            .attr('aria-label', 'Open Completed Orders detail');
+                    }
+
+                    function parseMonthKeyFromDateText(dateText) {
+                        const text = (dateText || '').trim();
+                        const parts = text.split('/');
+                        if (parts.length !== 3) return null;
+                        const monthAbbr = (parts[0] || '').trim();
+                        const year = (parts[2] || '').trim();
+                        if (!monthAbbr || !year) return null;
+                        const monthIndex = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(monthAbbr.toLowerCase());
+                        if (monthIndex < 0) return null;
+                        const monthNum = String(monthIndex + 1).padStart(2, '0');
+                        return `${year}-${monthNum}`;
+                    }
+
+                    function monthLabelFromKey(key) {
+                        const m = /^(\d{4})-(\d{2})$/.exec(key || '');
+                        if (!m) return key;
+                        const year = m[1];
+                        const monthNum = parseInt(m[2], 10);
+                        const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const monthAbbr = names[Math.max(1, Math.min(12, monthNum)) - 1];
+                        return `${monthAbbr} ${year}`;
+                    }
+
+                    function monthRegexFromKey(key) {
+                        const m = /^(\d{4})-(\d{2})$/.exec(key || '');
+                        if (!m) return '';
+                        const year = m[1];
+                        const monthNum = parseInt(m[2], 10);
+                        const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const monthAbbr = names[Math.max(1, Math.min(12, monthNum)) - 1];
+                        return `^${escapeRegex(monthAbbr)}\\/\\d{1,2}\\/${escapeRegex(year)}$`;
+                    }
+
+                    function populateCompletedOrdersFilters(dt) {
+                        if (!dt) return;
+                        const customerValues = dt.column(3).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+
+                        const effectiveDateValues = dt.rows().nodes().toArray().map(tr => {
+                            const $tds = $(tr).find('td');
+                            const sentAt = ($tds.eq(8).text() || '').trim();
+                            const dueDate = ($tds.eq(7).text() || '').trim();
+                            const effective = (sentAt && sentAt !== '-') ? sentAt : dueDate;
+                            return (effective && effective !== '-') ? effective : '';
+                        }).filter(Boolean);
+
+                        const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
+
+                        const monthToDays = new Map();
+                        effectiveDateValues.forEach(text => {
+                            const key = parseMonthKeyFromDateText(text);
+                            if (!key) return;
+                            if (!monthToDays.has(key)) monthToDays.set(key, new Set());
+                            monthToDays.get(key).add(text);
+                        });
+                        const uniqMonths = Array.from(monthToDays.keys()).sort((a, b) => a.localeCompare(b));
+
+                        const prevCustomer = $completedOrdersCustomer.val();
+                        const prevMonth = $completedOrdersMonth.val();
+                        const prevDay = $completedOrdersDay.val();
+
+                        $completedOrdersCustomer.empty().append('<option value=\"\">-- All Customers --</option>');
+                        uniqCustomers.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            $completedOrdersCustomer.append(opt);
+                        });
+
+                        $completedOrdersMonth.empty().append('<option value=\"\">-- All Months --</option>');
+                        uniqMonths.forEach(key => {
+                            const opt = document.createElement('option');
+                            opt.value = key;
+                            opt.textContent = monthLabelFromKey(key);
+                            $completedOrdersMonth.append(opt);
+                        });
+
+                        if (prevCustomer && uniqCustomers.includes(prevCustomer)) $completedOrdersCustomer.val(prevCustomer);
+                        const monthSelected = (prevMonth && uniqMonths.includes(prevMonth)) ? prevMonth : ($completedOrdersMonth.val() || '');
+                        if (monthSelected && uniqMonths.includes(monthSelected)) $completedOrdersMonth.val(monthSelected);
+
+                        const days = monthSelected && monthToDays.has(monthSelected)
+                            ? Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b))
+                            : [];
+
+                        $completedOrdersDay.empty().append('<option value=\"\">-- All Days --</option>');
+                        days.forEach(value => {
+                            const opt = document.createElement('option');
+                            opt.value = value;
+                            opt.textContent = value;
+                            $completedOrdersDay.append(opt);
+                        });
+
+                        if (prevDay && days.includes(prevDay)) $completedOrdersDay.val(prevDay);
+                    }
+
+                    function applyCompletedOrdersFilters() {
+                        const tableSelector = '#completedOrdersModalTable';
+                        if (!$.fn.DataTable.isDataTable(tableSelector)) return;
+                        const dt = $(tableSelector).DataTable();
+
+                        const customer = ($completedOrdersCustomer.val() || '').trim();
+                        const monthKey = ($completedOrdersMonth.val() || '').trim();
+                        const day = ($completedOrdersDay.val() || '').trim();
+
+                        dt.column(3).search(customer ? `^${escapeRegex(customer)}$` : '', true, false);
+                        dt.draw();
+                    }
+
+                    $completedOrdersCustomer.on('change', applyCompletedOrdersFilters);
+                    $completedOrdersMonth.on('change', function() {
+                        if (completedOrdersDt) populateCompletedOrdersFilters(completedOrdersDt);
+                        $completedOrdersDay.val('');
+                        applyCompletedOrdersFilters();
+                    });
+                    $completedOrdersDay.on('change', applyCompletedOrdersFilters);
+
+                    function ensureCompletedOrdersDtInitialized() {
+                        if (completedOrdersDt) return completedOrdersDt;
+                        const tableSelector = '#completedOrdersModalTable';
+                        completedOrdersDt = initDataTable(tableSelector, `COMPLETED ORDERS (${new Date().getFullYear()})`, {
+                            buttonsHost: '#completedOrdersModalButtons',
+                            buttonStyle: 'erp',
+                            order: [[8, 'asc']],
+                            columnDefs: [{
+                                targets: [5, 6, 7, 8],
+                                render: function(data, type) {
+                                    if (type === 'filter' || type === 'sort') {
+                                        return $('<div>').html(data).text().trim();
+                                    }
+                                    return data;
+                                }
+                            }, {
+                                targets: [4, 5, 6, 7, 8, 9, 10],
+                                className: 'text-center'
+                            }, {
+                                targets: [0, 1, 6, 7, 8],
+                                className: 'text-nowrap'
+                            }]
+                        });
+
+                        if (!completedOrdersDt.__monthDayFilterAdded) {
+                            completedOrdersDt.__monthDayFilterAdded = true;
+                            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                                if (!settings || !settings.nTable || settings.nTable.id !== 'completedOrdersModalTable') return true;
+
+                                const monthKey = ($completedOrdersMonth.val() || '').trim();
+                                const day = ($completedOrdersDay.val() || '').trim();
+                                if (!monthKey && !day) return true;
+
+                                const rowSentAt = (data[8] || '').toString().trim();
+                                const rowDueDate = (data[7] || '').toString().trim();
+                                const effective = (rowSentAt && rowSentAt !== '-') ? rowSentAt : rowDueDate;
+                                if (!effective || effective === '-') return false;
+
+                                if (day) return effective === day;
+
+                                const pattern = monthRegexFromKey(monthKey);
+                                if (!pattern) return true;
+                                try {
+                                    return new RegExp(pattern).test(effective);
+                                } catch (e) {
+                                    return true;
+                                }
+                            });
+                        }
+
+                        populateCompletedOrdersFilters(completedOrdersDt);
+                        return completedOrdersDt;
+                    }
+
+                    function openCompletedOrdersModal() {
+                        applyModalTheme($completedOrdersModal, $completedOrdersTrigger);
+                        if (!completedOrdersDt) {
+                            $completedOrdersModal.addClass('is-loading');
+                            $completedOrdersLoading.removeClass('d-none');
+                        } else {
+                            $completedOrdersModal.removeClass('is-loading');
+                            $completedOrdersLoading.addClass('d-none');
+                        }
+                        $completedOrdersModal.modal('show');
+                    }
+
+                    $(document).on('click', '.js-open-completed-orders', openCompletedOrdersModal);
+                    $(document).on('keydown', '.js-open-completed-orders', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openCompletedOrdersModal();
+                        }
+                    });
+
+                    $completedOrdersModal.on('shown.bs.modal', function() {
+                        const dt = ensureCompletedOrdersDtInitialized();
+                        if (!completedOrdersDidAdjust) {
+                            completedOrdersDidAdjust = true;
+                            setTimeout(() => {
+                                try { dt.columns.adjust(); } catch (e) {}
+                            }, 0);
+                        }
+                        if (!dt.__countBound) {
+                            dt.__countBound = true;
+                            dt.on('draw', function() { updateFilteredCount(dt, $completedOrdersCount); });
+                        }
+                        populateCompletedOrdersFilters(dt);
+                        updateFilteredCount(dt, $completedOrdersCount);
+                        $completedOrdersModal.removeClass('is-loading');
+                        $completedOrdersLoading.addClass('d-none');
+                    });
+
+                    $completedOrdersModal.on('hidden.bs.modal', function() {
+                        $completedOrdersCustomer.val('');
+                        $completedOrdersMonth.val('');
+                        $completedOrdersDay.val('');
+                        applyCompletedOrdersFilters();
+                        $completedOrdersCount.text('');
+                        $completedOrdersTrigger.removeClass('is-active');
+                    });
+
+                    setTimeout(() => {
+                        try { ensureCompletedOrdersDtInitialized(); } catch (e) {}
+                    }, 280);
 
                     const weekFilter = document.getElementById('week-filter');
 

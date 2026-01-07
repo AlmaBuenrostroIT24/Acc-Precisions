@@ -1492,6 +1492,18 @@ class Order_ScheduleController extends Controller
             })
             ->count();
 
+        $completedOrdersListYear = OrderSchedule::where('status', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->where(function ($query) use ($currentYear) {
+                $query->whereYear('sent_at', $currentYear)
+                    ->orWhere(function ($innerQuery) use ($currentYear) {
+                        $innerQuery->whereNull('sent_at')
+                            ->whereYear('due_date', $currentYear);
+                    });
+            })
+            ->orderByRaw('COALESCE(sent_at, due_date) asc')
+            ->get();
+
         $uploadedOrdersYear = OrderSchedule::where('status_order', '!=', 'inactive')
             ->whereYear('created_at', $currentYear)
             ->count();
@@ -1616,6 +1628,7 @@ class Order_ScheduleController extends Controller
             'cantidadStandby',
             'totalOrdenes',
             'completedOrdersYear',
+            'completedOrdersListYear',
             'uploadedOrdersYear',
             'uploadedOrdersListYear',
             'ordenesPorCliente',
