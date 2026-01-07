@@ -9,6 +9,7 @@
     <td>{{ ucfirst($order->costumer) }}</td>
     <td>{{ $order->qty }}</td>
     <td><span class="badge bg-info text-dark">{{ $order->status }}</span></td>
+    @php $statusText = strtolower(trim($order->status ?? '')); @endphp
     <td>
         @if($order->due_date)
         <span class="text-primary fw-semibold">
@@ -18,9 +19,49 @@
         <span class="text-muted">-</span>
         @endif
     </td>
+    <td>
+        @if(!empty($order->sent_at))
+        <span class="text-muted fw-semibold">
+            {{ \Carbon\Carbon::parse($order->sent_at)->format('M/d/Y') }}
+        </span>
+        @else
+        <span class="text-muted">-</span>
+        @endif
+    </td>
+    <td class="text-center">
+        @if($statusText === 'sent')
+        <i class="fas fa-check text-success" title="Sent"></i>
+        @else
+        <span class="text-muted">-</span>
+        @endif
+    </td>
+    <td>
+        @if($order->due_date)
+        @php
+        $due = \Carbon\Carbon::parse($order->due_date)->startOfDay();
+        $isSent = ($statusText === 'sent');
+        $baseDate = \Carbon\Carbon::now()->startOfDay();
+        if ($isSent && !empty($order->sent_at)) {
+            $baseDate = \Carbon\Carbon::parse($order->sent_at)->startOfDay();
+        }
+        $daysDiff = $baseDate->diffInDays($due, false);
+        @endphp
+        @if($isSent)
+        <span class="badge {{ $daysDiff >= 0 ? 'bg-success' : 'bg-danger' }}">
+            {{ abs($daysDiff) }}
+        </span>
+        @else
+        <span class="badge {{ $daysDiff >= 0 ? 'bg-warning text-dark' : 'bg-danger' }}">
+            {{ abs($daysDiff) }}
+        </span>
+        @endif
+        @else
+        <span class="text-muted">-</span>
+        @endif
+    </td>
 </tr>
 @empty
 <tr>
-    <td colspan="7" class="text-center text-muted py-3">No orders found.</td>
+    <td colspan="10" class="text-center text-muted py-3">No orders found.</td>
 </tr>
 @endforelse

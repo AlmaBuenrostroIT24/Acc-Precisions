@@ -300,9 +300,12 @@
                                         <col style="width:8%"> {{-- QTY --}}
                                         <col style="width:10%"> {{-- STATUS --}}
                                         <col style="width:10%"> {{-- DUE DATE --}}
+                                        <col style="width:10%"> {{-- SENT AT --}}
+                                        <col style="width:6%"> {{-- SENT? --}}
+                                        <col style="width:8%"> {{-- DAYS +/- --}}
                                     </colgroup>
 
-                                    <thead class="bg-success text-white">
+                                    <thead>
                                         <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
                                             <th>W.ID</th>
                                             <th>PN</th>
@@ -311,6 +314,9 @@
                                             <th>QTY</th>
                                             <th>STATUS</th>
                                             <th>DUE DATE</th>
+                                            <th>SENT AT</th>
+                                            <th>SENT</th>
+                                            <th>DAYS +/-</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tableweek-body">
@@ -787,6 +793,55 @@
                 </div>
             </div>
 
+            {{-- Modal: Orders This Week detail --}}
+            <div class="modal fade" id="weekOrdersModal" tabindex="-1" role="dialog" aria-labelledby="weekOrdersModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="modal-title mb-0" id="weekOrdersModalLabel">Orders This Week</h5>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <select id="weekOrdersModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                </select>
+                                <select id="weekOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Status --</option>
+                                </select>
+                                <div id="weekOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="weekOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
+                            <div class="table-responsive small">
+                                <table id="weekOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                                    <thead>
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th>W.ID</th>
+                                            <th>PN</th>
+                                            <th>DESCRIPTION</th>
+                                            <th>CUSTOMER</th>
+                                            <th class="text-center">QTY</th>
+                                            <th class="text-center">STATUS</th>
+                                            <th class="text-center">DUE DATE</th>
+                                            <th class="text-center">SENT AT</th>
+                                            <th class="text-center">SENT</th>
+                                            <th class="text-center">DAYS +/-</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{-- Se llena por JS clonando el contenido actual de #tableweek --}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal fade" id="ordersDetailModal" tabindex="-1" role="dialog" aria-labelledby="ordersDetailModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
                     <div class="modal-content">
@@ -856,6 +911,10 @@
                 }
 
                 #lateOrdersModal.is-loading #lateOrdersModalTable {
+                    visibility: hidden;
+                }
+
+                #weekOrdersModal.is-loading #weekOrdersModalTable {
                     visibility: hidden;
                 }
 
@@ -1081,6 +1140,7 @@
 
                 /* Estilo ERP para el modal On Time/Late */
                 #onTimeModal .modal-content,
+                #weekOrdersModal .modal-content,
                 #lateOrdersModal .modal-content,
                 #ordersDetailModal .modal-content {
                     border: 1px solid #c5c9d2;
@@ -1089,6 +1149,7 @@
                 }
 
                 #onTimeModal .modal-header,
+                #weekOrdersModal .modal-header,
                 #lateOrdersModal .modal-header,
                 #ordersDetailModal .modal-header {
                     background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%);
@@ -1112,18 +1173,21 @@
                 } 
 
                 #onTimeModal .modal-title,
+                #weekOrdersModal .modal-title,
                 #lateOrdersModal .modal-title,
                 #ordersDetailModal .modal-title {
                     font-weight: 700;
                 }
 
                 #onTimeModal .modal-body,
+                #weekOrdersModal .modal-body,
                 #lateOrdersModal .modal-body,
                 #ordersDetailModal .modal-body {
                     background: #f7f9fc;
                 }
 
                 #onTimeModal table thead,
+                #weekOrdersModal table thead,
                 #lateOrdersModal table thead,
                 #ordersDetailModal table thead {
                     background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
@@ -1135,13 +1199,26 @@
                     color: #0f172a;
                 }
 
+                /* Week Orders: header azulito (como el snippet) */
+                #weekOrdersModal .modal-header {
+                    background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
+                    border-bottom-color: #c5cedd;
+                }
+
+                #weekOrdersModal table thead {
+                    background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
+                    color: #0f172a;
+                }
+
                 #onTimeModal table tbody tr:hover,
+                #weekOrdersModal table tbody tr:hover,
                 #lateOrdersModal table tbody tr:hover,
                 #ordersDetailModal table tbody tr:hover {
                     background: #eef2f7;
                 }
 
                 /* Tabla estilo ERP en modal */
+                #weekOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #onTimeModal .dataTables_wrapper .dataTables_filter input,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
@@ -1151,6 +1228,7 @@
                     background: #f8fafc;
                 }
 
+                #weekOrdersModal .dataTables_wrapper .dataTables_length select,
                 #onTimeModal .dataTables_wrapper .dataTables_length select,
                 #lateOrdersModal .dataTables_wrapper .dataTables_length select,
                 #ordersDetailModal .dataTables_wrapper .dataTables_length select {
@@ -1161,6 +1239,7 @@
                     font-size: 14px;
                 }
 
+                #weekOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #onTimeModal .dataTables_wrapper .dataTables_filter input,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
@@ -1168,12 +1247,15 @@
                 }
 
                 /* Compactar espacio vertical de controles */
+                #weekOrdersModal .dataTables_wrapper .row:first-child,
                 #onTimeModal .dataTables_wrapper .row:first-child,
                 #lateOrdersModal .dataTables_wrapper .row:first-child,
                 #ordersDetailModal .dataTables_wrapper .row:first-child {
                     margin-bottom: 0 !important;
                 }
 
+                #weekOrdersModal .dataTables_wrapper .dataTables_filter,
+                #weekOrdersModal .dataTables_wrapper .dataTables_length,
                 #onTimeModal .dataTables_wrapper .dataTables_filter,
                 #onTimeModal .dataTables_wrapper .dataTables_length,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter,
@@ -1184,6 +1266,7 @@
                 }
 
                 /* Controles ERP para filtros del modal */
+                #weekOrdersModal .erp-filter-control,
                 #onTimeModal .erp-filter-control,
                 #lateOrdersModal .erp-filter-control,
                 #ordersDetailModal .erp-filter-control {
@@ -1198,6 +1281,7 @@
                     line-height: 1.2;
                 }
 
+                #weekOrdersModal .erp-filter-control:focus,
                 #onTimeModal .erp-filter-control:focus,
                 #lateOrdersModal .erp-filter-control:focus,
                 #ordersDetailModal .erp-filter-control:focus {
@@ -1206,6 +1290,9 @@
                 }
 
                 /* Botones estilo ERP en gris con ícono de color */
+                #weekOrdersModal .btn-erp-success,
+                #weekOrdersModal .btn-erp-danger,
+                #weekOrdersModal .btn-erp-primary,
                 #onTimeModal .btn-erp-success,
                 #onTimeModal .btn-erp-danger,
                 #onTimeModal .btn-erp-primary,
@@ -1223,18 +1310,21 @@
                     box-shadow: none;
                 }
 
+                #weekOrdersModal .btn-erp-success i,
                 #onTimeModal .btn-erp-success i,
                 #lateOrdersModal .btn-erp-success i,
                 #ordersDetailModal .btn-erp-success i {
                     color: #0f5132;
                 }
 
+                #weekOrdersModal .btn-erp-danger i,
                 #onTimeModal .btn-erp-danger i,
                 #lateOrdersModal .btn-erp-danger i,
                 #ordersDetailModal .btn-erp-danger i {
                     color: #b91c1c;
                 }
 
+                #weekOrdersModal .btn-erp-primary i,
                 #onTimeModal .btn-erp-primary i,
                 #lateOrdersModal .btn-erp-primary i,
                 #ordersDetailModal .btn-erp-primary i {
@@ -1267,6 +1357,7 @@
 
                 #onTimeDetailTable,
                 #lateOrdersModalTable,
+                #weekOrdersModalTable,
                 #ordersDetailTable {
                     border: 1px solid #d1d5db;
                     border-radius: 10px;
@@ -1275,8 +1366,14 @@
                     table-layout: auto;
                 }
 
+                /* Forzar scroll horizontal en pantallas chicas (como otros modales) */
+                #weekOrdersModalTable {
+                    min-width: 1050px;
+                }
+
                 #onTimeDetailTable thead th,
                 #lateOrdersModalTable thead th,
+                #weekOrdersModalTable thead th,
                 #ordersDetailTable thead th {
                     background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
                     color: #0f172a;
@@ -1289,6 +1386,8 @@
                 #onTimeDetailTable th,
                 #lateOrdersModalTable td,
                 #lateOrdersModalTable th,
+                #weekOrdersModalTable td,
+                #weekOrdersModalTable th,
                 #ordersDetailTable td,
                 #ordersDetailTable th {
                     padding: 8px 10px;
@@ -1396,6 +1495,14 @@
                 }
 
                 #lateOrdersModalTable tbody tr:hover {
+                    background: #eef2f7;
+                }
+
+                #weekOrdersModalTable tbody tr:nth-child(odd) {
+                    background: #f8fafc;
+                }
+
+                #weekOrdersModalTable tbody tr:hover {
                     background: #eef2f7;
                 }
 
@@ -1874,6 +1981,8 @@
                     const useErpButtons = opts.buttonStyle === 'erp';
                     const showLength = opts.showLength !== false;
                     const dtConfig = {
+                        deferRender: true,
+                        autoWidth: false,
                         pageLength: 14,
                         lengthMenu: [[14, 25, 50, 100], [14, 25, 50, 100]],
                         order: [
@@ -2670,10 +2779,36 @@
 
 
                 $(document).ready(function() {
-                    initDataTable('#tableweek', 'ORDERS THIS WEEK');
+                    let weekTableDt = initDataTable('#tableweek', 'ORDERS THIS WEEK');
                     initDataTable('#tablelate', 'LATE ORDERS');
                     loadChartElements();
                     loadCustomerChartElements();
+
+                    // Cache de datos para abrir el modal "Orders This Week" más rápido
+                    let weekOrdersCachedRows = null;
+                    function refreshWeekOrdersCache() {
+                        if ($.fn.DataTable.isDataTable('#tableweek')) {
+                            const srcDt = $('#tableweek').DataTable();
+                            weekOrdersCachedRows = srcDt.rows({ search: 'applied', order: 'applied' }).data().toArray();
+                        } else {
+                            weekOrdersCachedRows = $('#tableweek tbody tr').toArray().map(tr => {
+                                const tds = $(tr).find('td').toArray();
+                                return tds.map(td => $(td).html());
+                            });
+                        }
+                    }
+                    refreshWeekOrdersCache();
+                    try {
+                        weekTableDt.on('draw', refreshWeekOrdersCache);
+                    } catch (e) {}
+
+                    // Pre-inicializa el DataTable del modal en segundo plano (abre casi instantáneo)
+                    setTimeout(() => {
+                        try {
+                            ensureWeekOrdersDtInitialized();
+                            syncWeekOrdersDtFromCache();
+                        } catch (e) {}
+                    }, 150);
 
                     // Late Orders KPI -> modal detail (similar UX to OnTimeModal)
                     const $lateOrdersModal = $('#lateOrdersModal');
@@ -2681,6 +2816,8 @@
                     const $lateOrdersLoading = $('#lateOrdersModalLoading');
                     const $lateOrdersCustomer = $('#lateOrdersModalCustomer');
                     const $lateOrdersStatus = $('#lateOrdersModalStatus');
+                    let lateOrdersDt = null;
+                    let lateOrdersDidAdjust = false;
 
                     function escapeRegex(value) {
                         return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -2717,9 +2854,34 @@
                         if (prevStatus && uniqStatuses.includes(prevStatus)) $lateOrdersStatus.val(prevStatus);
                     }
 
+                    function ensureLateOrdersDtInitialized() {
+                        if (lateOrdersDt) return lateOrdersDt;
+                        const tableSelector = '#lateOrdersModalTable';
+                        lateOrdersDt = initDataTable(tableSelector, 'LATE ORDERS', {
+                            buttonsHost: '#lateOrdersModalButtons',
+                            buttonStyle: 'erp',
+                            // Status column has a badge (HTML); use plain text for filtering/sorting
+                            columnDefs: [{
+                                targets: [5],
+                                render: function(data, type) {
+                                    if (type === 'filter' || type === 'sort') {
+                                        return $('<div>').html(data).text().trim();
+                                    }
+                                    return data;
+                                }
+                            }]
+                        });
+                        return lateOrdersDt;
+                    }
+
                     function openLateOrdersModal() {
-                        $lateOrdersModal.addClass('is-loading');
-                        $lateOrdersLoading.removeClass('d-none');
+                        if (!lateOrdersDt) {
+                            $lateOrdersModal.addClass('is-loading');
+                            $lateOrdersLoading.removeClass('d-none');
+                        } else {
+                            $lateOrdersModal.removeClass('is-loading');
+                            $lateOrdersLoading.addClass('d-none');
+                        }
                         $lateOrdersModal.modal('show');
                     }
 
@@ -2732,29 +2894,13 @@
                     });
 
                     $lateOrdersModal.on('shown.bs.modal', function() {
-                        const tableSelector = '#lateOrdersModalTable';
-                        let dt;
-                        if (!$.fn.DataTable.isDataTable(tableSelector)) {
-                            dt = initDataTable(tableSelector, 'LATE ORDERS', {
-                                buttonsHost: '#lateOrdersModalButtons',
-                                buttonStyle: 'erp',
-                                // Status column has a badge (HTML); use plain text for filtering/sorting
-                                columnDefs: [{
-                                    targets: [5],
-                                    render: function(data, type) {
-                                        if (type === 'filter' || type === 'sort') {
-                                            return $('<div>').html(data).text().trim();
-                                        }
-                                        return data;
-                                    }
-                                }]
-                            });
-                        } else {
-                            dt = $(tableSelector).DataTable();
+                        const dt = ensureLateOrdersDtInitialized();
+                        if (!lateOrdersDidAdjust) {
+                            lateOrdersDidAdjust = true;
+                            setTimeout(() => {
+                                try { dt.columns.adjust(); } catch (e) {}
+                            }, 0);
                         }
-                        try {
-                            dt.columns.adjust();
-                        } catch (e) {}
                         populateLateOrdersFilters(dt);
                         $lateOrdersModal.removeClass('is-loading');
                         $lateOrdersLoading.addClass('d-none');
@@ -2780,6 +2926,183 @@
                         $lateOrdersCustomer.val('');
                         $lateOrdersStatus.val('');
                         applyLateOrdersFilters();
+                    });
+
+                    // Pre-inicializa el DataTable en segundo plano (abre casi instantáneo)
+                    setTimeout(() => {
+                        try { ensureLateOrdersDtInitialized(); } catch (e) {}
+                    }, 120);
+
+                    // Orders This Week KPI -> modal detail (clona el contenido actual de #tableweek)
+                    const $weekOrdersModal = $('#weekOrdersModal');
+                    const $weekOrdersLoading = $('#weekOrdersModalLoading');
+                    const $weekOrdersButtons = $('#weekOrdersModalButtons');
+                    const $weekOrdersCustomer = $('#weekOrdersModalCustomer');
+                    const $weekOrdersStatus = $('#weekOrdersModalStatus');
+                    let weekOrdersDt = null;
+                    let weekOrdersDidAdjust = false;
+                    let weekOrdersLastSignature = null;
+
+                    function getWeekOrdersSignature(rowsArr) {
+                        if (!rowsArr || !rowsArr.length) return '0|';
+                        const first = rowsArr[0];
+                        const last = rowsArr[rowsArr.length - 1];
+                        const firstId = Array.isArray(first) ? (first[0] ?? '') : '';
+                        const lastId = Array.isArray(last) ? (last[0] ?? '') : '';
+                        const firstText = $('<div>').html(firstId).text().trim();
+                        const lastText = $('<div>').html(lastId).text().trim();
+                        return `${rowsArr.length}|${firstText}|${lastText}`;
+                    }
+
+                    function ensureWeekOrdersDtInitialized() {
+                        if (weekOrdersDt) return weekOrdersDt;
+                        const tableSelector = '#weekOrdersModalTable';
+                        $(`${tableSelector} tbody`).empty();
+                        weekOrdersDt = initDataTable(tableSelector, 'ORDERS THIS WEEK', {
+                            buttonsHost: '#weekOrdersModalButtons',
+                            buttonStyle: 'erp',
+                            order: [[6, 'asc']],
+                            // Status column has badge HTML; use plain text for filtering/sorting
+                            columnDefs: [{
+                                targets: [5],
+                                className: 'text-center',
+                                render: function(data, type) {
+                                    if (type === 'filter' || type === 'sort') {
+                                        return $('<div>').html(data).text().trim();
+                                    }
+                                    return data;
+                                }
+                            }, {
+                                targets: [4, 6, 7, 8, 9],
+                                className: 'text-center'
+                            }, {
+                                targets: [0, 1, 6, 7],
+                                className: 'text-nowrap'
+                            }]
+                        });
+                        return weekOrdersDt;
+                    }
+
+                    function syncWeekOrdersDtFromCache() {
+                        if (!weekOrdersDt) return;
+                        const rows = (weekOrdersCachedRows && weekOrdersCachedRows.length) ? weekOrdersCachedRows : [];
+                        const sig = getWeekOrdersSignature(rows);
+                        if (sig === weekOrdersLastSignature) return;
+
+                        weekOrdersLastSignature = sig;
+                        weekOrdersDt.clear();
+                        if (rows.length) {
+                            weekOrdersDt.rows.add(rows);
+                        }
+                        weekOrdersDt.draw(false);
+                        populateWeekOrdersFilters(weekOrdersDt);
+                    }
+
+                    const $weekOrdersTrigger = $('.kpi-erp .info-box').filter(function() {
+                        return ($(this).find('.info-box-text').text() || '').trim() === 'Orders This Week';
+                    }).first();
+
+                    if ($weekOrdersTrigger.length) {
+                        $weekOrdersTrigger
+                            .addClass('js-open-week-orders')
+                            .attr('role', 'button')
+                            .attr('tabindex', '0')
+                            .attr('aria-label', 'Open Orders This Week detail');
+                    }
+
+                    function openWeekOrdersModal() {
+                        const rows = (weekOrdersCachedRows && weekOrdersCachedRows.length) ? weekOrdersCachedRows : [];
+                        const isReady = weekOrdersDt && (getWeekOrdersSignature(rows) === weekOrdersLastSignature);
+                        if (!isReady) {
+                            $weekOrdersModal.addClass('is-loading');
+                            $weekOrdersLoading.removeClass('d-none');
+                        } else {
+                            $weekOrdersModal.removeClass('is-loading');
+                            $weekOrdersLoading.addClass('d-none');
+                        }
+                        $weekOrdersModal.modal('show');
+                    }
+
+                    $(document).on('click', '.js-open-week-orders', openWeekOrdersModal);
+                    $(document).on('keydown', '.js-open-week-orders', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openWeekOrdersModal();
+                        }
+                    });
+
+                    function populateWeekOrdersFilters(dt) {
+                        if (!dt) return;
+                        const customerValues = dt.column(3).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const statusValues = dt.column(5).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+
+                        const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
+                        const uniqStatuses = Array.from(new Set(statusValues)).sort((a, b) => a.localeCompare(b));
+
+                        const prevCustomer = $weekOrdersCustomer.val();
+                        const prevStatus = $weekOrdersStatus.val();
+
+                        $weekOrdersCustomer.empty().append('<option value="">-- All Customers --</option>');
+                        uniqCustomers.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            $weekOrdersCustomer.append(opt);
+                        });
+
+                        $weekOrdersStatus.empty().append('<option value="">-- All Status --</option>');
+                        uniqStatuses.forEach(status => {
+                            const opt = document.createElement('option');
+                            opt.value = status;
+                            opt.textContent = status;
+                            $weekOrdersStatus.append(opt);
+                        });
+
+                        if (prevCustomer && uniqCustomers.includes(prevCustomer)) $weekOrdersCustomer.val(prevCustomer);
+                        if (prevStatus && uniqStatuses.includes(prevStatus)) $weekOrdersStatus.val(prevStatus);
+                    }
+
+                    function applyWeekOrdersFilters() {
+                        const tableSelector = '#weekOrdersModalTable';
+                        if (!$.fn.DataTable.isDataTable(tableSelector)) return;
+                        const dt = $(tableSelector).DataTable();
+
+                        const customer = ($weekOrdersCustomer.val() || '').trim();
+                        const status = ($weekOrdersStatus.val() || '').trim();
+
+                        dt.column(3).search(customer ? `^${escapeRegex(customer)}$` : '', true, false);
+                        dt.column(5).search(status ? `^${escapeRegex(status)}$` : '', true, false);
+                        dt.draw();
+                    }
+
+                    $weekOrdersCustomer.on('change', applyWeekOrdersFilters);
+                    $weekOrdersStatus.on('change', applyWeekOrdersFilters);
+
+                    $weekOrdersModal.on('shown.bs.modal', function() {
+                        ensureWeekOrdersDtInitialized();
+                        syncWeekOrdersDtFromCache();
+
+                        // Ajustar columnas ya visible
+                        if (!weekOrdersDidAdjust) {
+                            weekOrdersDidAdjust = true;
+                            setTimeout(() => {
+                                try { weekOrdersDt.columns.adjust(); } catch (e) {}
+                            }, 0);
+                        }
+
+                        $weekOrdersButtons.toggleClass('d-none', false);
+                        $weekOrdersModal.removeClass('is-loading');
+                        $weekOrdersLoading.addClass('d-none');
+                    });
+
+                    $weekOrdersModal.on('hidden.bs.modal', function() {
+                        $weekOrdersCustomer.val('');
+                        $weekOrdersStatus.val('');
+                        if (weekOrdersDt) {
+                            weekOrdersDt.column(3).search('', true, false);
+                            weekOrdersDt.column(5).search('', true, false);
+                            weekOrdersDt.draw(false);
+                        }
                     });
 
                     const weekFilter = document.getElementById('week-filter');
@@ -2827,7 +3150,10 @@
                                     count.textContent = data.count;
 
                                     // ≡ƒÆí Reinicializar DataTable
-                                    initDataTable("#tableweek", "ORDERS THIS WEEK");
+                                    weekTableDt = initDataTable("#tableweek", "ORDERS THIS WEEK");
+                                    try { weekTableDt.on('draw', refreshWeekOrdersCache); } catch (e) {}
+                                    // Recache para el modal de semana
+                                    refreshWeekOrdersCache();
 
                                     // ≡ƒÆí Actualizar texto visible de la semana
                                     const weekDisplay = document.getElementById("week-display");
