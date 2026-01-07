@@ -1480,6 +1480,22 @@ class Order_ScheduleController extends Controller
             ->count();
 
         /** 🟢 VERIFIED: Box text-> total Hearst */
+        $currentYear = Carbon::now()->year;
+        $completedOrdersYear = OrderSchedule::where('status', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->where(function ($query) use ($currentYear) {
+                $query->whereYear('sent_at', $currentYear)
+                    ->orWhere(function ($innerQuery) use ($currentYear) {
+                        $innerQuery->whereNull('sent_at')
+                            ->whereYear('due_date', $currentYear);
+                    });
+            })
+            ->count();
+
+        $uploadedOrdersYear = OrderSchedule::where('status_order', '!=', 'inactive')
+            ->whereYear('created_at', $currentYear)
+            ->count();
+
         $cantidadHearst = OrderSchedule::where('location', 'hearst')
             ->where('status', '!=', 'sent')
             ->where('status_order', '!=', 'inactive')
@@ -1594,6 +1610,8 @@ class Order_ScheduleController extends Controller
             'cantidadFloor',
             'cantidadStandby',
             'totalOrdenes',
+            'completedOrdersYear',
+            'uploadedOrdersYear',
             'ordenesPorCliente',
             'ordenesAgregadasSemana',
             'totalAgregadasSemana',
@@ -2059,6 +2077,103 @@ class Order_ScheduleController extends Controller
                 . '<td class="text-center ' . $sentClass . '">' . e($r->sent_at) . '</td>'
                 . '<td class="text-center ' . $deltaClass . '">' . e($r->day_diff) . '</td>'
                 . '<td style="max-width:200px; white-space:normal;">' . e($r->notes) . '</td>'
+                . '</tr>';
+        }
+        $html .= '</tbody></table>';
+
+        return response($html);
+    }
+
+    /**
+     * Detalle de órdenes para el gráfico "Total Orders" (Year/Month/Week)
+     */
+    public function summaryOrdersDetail(Request $request)
+    {
+        $type = $request->get('type');
+        $customer = $request->get('customer');
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $day = $request->get('day');
+        $week = $request->get('week');
+        $weekday = $request->get('weekday');
+
+        if (!in_array($type, ['year', 'month', 'week'], true)) {
+            return response('<div class="text-danger p-3">Invalid type</div>', 400);
+        }
+
+        $q = OrderSchedule::query()->where('status_order', 'active');
+        if ($customer) {
+            $q->where('costumer', $customer);
+        }
+
+        if ($type === 'year') {
+            if (!$year || !$month) {
+                return response('<div class="text-danger p-3">Missing year/month</div>', 400);
+            }
+            $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } elseif ($type === 'month') {
+            if (!$year || !$month || !$day) {
+                return response('<div class="text-danger p-3">Missing year/month/day</div>', 400);
+            }
+            $q->whereYear('created_at', $year)->whereMonth('created_at', $month)->whereDay('created_at', $day);
+        } else { // week
+            if (!$year || !$week) {
+                return response('<div class="text-danger p-3">Missing year/week</div>', 400);
+            }
+            $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT);
+            $q->whereRaw("YEARWEEK(created_at, 1) = ?", [$weekString]);
+            if ($weekday) {
+                $q->whereRaw("DAYOFWEEK(created_at) = ?", [$weekday]);
+            }
+        }
+
+        $rows = $q->select([
+            'work_id',
+            'PN',
+            'Part_description',
+            'costumer',
+            'qty',
+            'status',
+            'due_date',
+            'created_at',
+            DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(created_at, '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(created_at, '%b-%d-%Y'),2)) as created_fmt"),
+            DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(DATE(due_date), '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(DATE(due_date), '%b-%d-%Y'),2)) as due_fmt"),
+            'notes'
+        ])
+            ->orderBy('created_at')
+            ->orderBy('due_date')
+            ->limit(300)
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return '<div class="text-center text-muted py-4">No orders found for this selection</div>';
+        }
+
+        $html = '<table id="ordersDetailTable" class="table table-sm table-striped table-hover mb-0"><thead class="thead-light"><tr>'
+            . '<th>W.ID</th><th>PN</th><th>Description</th><th>Customer</th><th class="text-center">Qty</th><th class="text-center">Status</th><th class="text-center">Uploaded</th><th class="text-center">Due</th><th class="text-center">Days</th><th>Notes</th>'
+            . '</tr></thead><tbody>';
+
+        foreach ($rows as $r) {
+            $created = \Carbon\Carbon::parse($r->created_at);
+            $due = \Carbon\Carbon::parse($r->due_date);
+            $businessDays = $created->diffInWeekdays($due);
+            if ($created->gt($due)) {
+                $businessDays *= -1;
+            }
+            $dueOrder = $due->format('Y-m-d');
+            $createdOrder = $created->format('Y-m-d');
+
+            $html .= '<tr>'
+                . '<td>' . e($r->work_id) . '</td>'
+                . '<td>' . e($r->PN) . '</td>'
+                . '<td style="white-space:normal;">' . e($r->Part_description) . '</td>'
+                . '<td>' . e(ucfirst($r->costumer)) . '</td>'
+                . '<td class="text-center">' . e($r->qty) . '</td>'
+                . '<td class="text-center">' . e($r->status) . '</td>'
+                . '<td class="text-center" data-order="' . e($createdOrder) . '">' . e($r->created_fmt) . '</td>'
+                . '<td class="text-center" data-order="' . e($dueOrder) . '">' . e($r->due_fmt) . '</td>'
+                . '<td class="text-center">' . e($businessDays) . '</td>'
+                . '<td style="white-space:normal;">' . e($r->notes) . '</td>'
                 . '</tr>';
         }
         $html .= '</tbody></table>';

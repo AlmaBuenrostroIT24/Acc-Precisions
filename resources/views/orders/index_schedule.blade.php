@@ -2,6 +2,7 @@
 @extends('adminlte::page')
 
 @section('title', 'General Schedule')
+{{--
 @section('content_header')
 <div class="card shadow-sm mb-2 border-0 bg-light">
     <div class="card-body d-flex align-items-center py-2 px-3">
@@ -19,26 +20,14 @@
     </div>
 </div>
 @endsection
-
-@section('content_header')
-<div class="card bg-light d-flex justify-content-center align-items-center" style="height: 50px; padding: 0 15px;">
-    <h2 class="text-dark" style="font-size: 24px; margin: 0;">
-        <i class="fas fa-box"></i> Schedule Orders
-    </h2>
-</div>
-@endsection
-
+--}}
 
 @section('content')
-
-
 
 {{-- Tabs --}}
 @include('orders.schedule_tab')
 
 {{-- Tab: By Active Schedules --}}
-
-
 <div class="row">
     <div class="col-md-12">
         <div class="card mb-4">
@@ -57,7 +46,6 @@
                                     <i class="fas fa-file-upload text-primary mr-2"></i>
                                     <span class="font-weight-semibold"><strong>Import orders (CSV)</strong></span>
                                 </div>
-
                                 <form id="upload-form" action="{{ route('schedule.orders.import') }}" method="POST" enctype="multipart/form-data" class="position-relative">
                                     @csrf
 
@@ -83,7 +71,6 @@
                                         </div>
                                     </div>
                                 </form>
-
                             </div>
                             <!-- Columna derecha: segundo filtro + botón + gráfica -->
                             <div class="col-md-8" style="padding-left: 20px;">
@@ -111,7 +98,6 @@
                                             </select>
                                         </div>
                                     </div>
-
                                     {{-- Status --}}
                                     <div class="form-group col-12 col-md-3">
                                         <label for="statusFilter" class="mb-1">Status</label>
@@ -129,7 +115,6 @@
                                             </select>
                                         </div>
                                     </div>
-
                                     {{-- Customer --}}
                                     <div class="form-group col-12 col-md-3">
                                         <label for="customerFilter" class="mb-1">Customer</label>

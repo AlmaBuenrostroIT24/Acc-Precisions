@@ -2,27 +2,10 @@
 @extends('adminlte::page')
 
 @section('title', 'Orders Statistics')
-@section('meta') {{-- Γ£à Asegura que el token se inyecta en el <head> --}}
+@section('meta') {{-- Asegura que el token se inyecta en el <head> --}}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
-@section('content_header')
-<div class="card shadow-sm mb-2 border-0 bg-light">
-    <div class="card-body d-flex align-items-center py-2 px-3">
-        <h4 class="mb-0 text-dark">
-            <i class="fas fa-calendar-alt me-2" aria-hidden="true"></i>
-            General Schedule
-        </h4>
-
-        <nav aria-label="breadcrumb" class="mb-0 ml-auto">
-            <ol class="breadcrumb mb-0 bg-transparent p-0">
-                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Orders Statistics</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-@endsection
 
 @section('content')
 
@@ -30,1005 +13,1963 @@
 @include('orders.schedule_tab')
 
 {{-- M├ëTRICAS PRINCIPALES COMPACTAS & ATRACTIVAS --}}
-<div class="container-fluid py-4">
+<div class="container-fluid pt-0 pb-4">
 
     {{-- Cards resumen principal --}}
 
-    <div class="row">
-        <div class="col-12 col-sm-6 col-md-3">
+    <div class="row kpi-erp">
+        <div class="col-12 col-sm-6 col-md-3 col-lg-2">
             <div class="info-box">
                 <span class="info-box-icon bg-success shadow-sm">
                     <i class="fas fa-cogs"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
-                    <div class="row">
-                        <!-- Primera columna -->
-                        <div class="col-5">
-                            <span class="info-box-text">Order Summary</span>
-                            <h4 class="mb-0 fw-bold">{{ $totalOrdenes }}</h4>
+                    <div class="kpi-split">
+                        <div class="kpi-main">
+                            <span class="info-box-text">Active</span>
+                            <span class="info-box-number">{{ $totalOrdenes }}</span>
                         </div>
-                        <!-- Segunda columna -->
-                        <div class="col-7 text-end">
-                            <span class="badge badge-soft-info" style="font-size: 0.9rem;">
-                                Hearst: {{ $cantidadHearst ?? 0 }}
-                            </span>
-                            <span class="badge badge-soft-info" style="font-size: 0.9rem;">
-                                Yarnell: {{ $cantidadYarnell ?? 0 }}
-                            </span>
-                            <span class="badge bg-secondary bg-opacity-25">
-                                Floor: {{ $cantidadFloor ?? 0}}
-                            </span>
-                            <span class="badge bg-danger bg-opacity-25">
-                                Standby: {{ $cantidadStandby ?? 0 }}
-                            </span>
+                        <div class="kpi-badges">
+                            <div class="kpi-badges-row">
+                                <span class="kpi-pill kpi-pill--info">Hearst: {{ $cantidadHearst ?? 0 }}</span>
+                                <span class="kpi-pill kpi-pill--info">Yarnell: {{ $cantidadYarnell ?? 0 }}</span>
+                            </div>
+                            <div class="kpi-badges-row">
+                                <span class="kpi-pill kpi-pill--muted">Floor: {{ $cantidadFloor ?? 0}}</span>
+                                <span class="kpi-pill kpi-pill--danger">Standby: {{ $cantidadStandby ?? 0 }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <!-- /.col -->
-        <div class="col-12 col-sm-6 col-md-3">
-            <div class="info-box">
+        <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+            <div class="info-box js-open-late-orders" role="button" tabindex="0" aria-label="Open Late Orders detail">
                 <span class="info-box-icon bg-danger shadow-sm">
                     <i class="fas fa-exclamation-triangle"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
                     <span class="info-box-text">Late Orders</span>
-                    <h4 class="mb-0 fw-bold">{{ $cantidadAtrasadas }}</h4>
+                    <span class="info-box-number">{{ $cantidadAtrasadas }}</span>
                 </div>
             </div>
         </div>
         <!-- /.col -->
-        <div class="col-12 col-sm-6 col-md-3">
+        <div class="col-12 col-sm-6 col-md-3 col-lg-2">
             <div class="info-box">
                 <span class="info-box-icon bg-primary shadow-sm">
                     <i class="fas fa-calendar-week"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Order this week</span>
-                    <h4 class="mb-0 fw-bold">{{ $ordenesSemana->count() }}</h4>
+                    <span class="info-box-text">Orders This Week</span>
+                    <span class="info-box-number">{{ $ordenesSemana->count() }}</span>
                 </div>
             </div>
         </div>
         <!-- /.col -->
-        <div class="col-12 col-sm-6 col-md-3">
+        <div class="col-12 col-sm-6 col-md-3 col-lg-2">
             <div class="info-box">
                 <span class="info-box-icon bg-warning shadow-sm">
                     <i class="fas fa-tasks"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
-                    <span class="info-box-text">New Orders this week</span>
-                    <h4 class="mb-0 fw-bold">{{ $totalAgregadasSemana }}</h4>
+                    <span class="info-box-text">New Orders This Week</span>
+                    <span class="info-box-number">{{ $totalAgregadasSemana }}</span>
+                </div>
+            </div>
+        </div>
+        <!-- /.col -->
+        <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+            <div class="info-box">
+                <span class="info-box-icon bg-secondary shadow-sm">
+                    <i class="fas fa-upload"></i>
+                </span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Orders Uploaded ({{ now()->year }})</span>
+                    <span class="info-box-number">{{ $uploadedOrdersYear }}</span>
+                </div>
+            </div>
+        </div>
+        <!-- /.col -->
+        <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+            <div class="info-box">
+                <span class="info-box-icon bg-info shadow-sm">
+                    <i class="fas fa-check-double"></i>
+                </span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Completed Orders ({{ now()->year }})</span>
+                    <span class="info-box-number">{{ $completedOrdersYear }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Card: Clientes con ├│rdenes --}}
-    <div class="col-md-12"> {{-- Ocupa toda la fila --}}
-        <div class="card shadow-sm rounded-3 border-0 h-100">
-            <div class="card-body px-3 py-2" style="max-height: 320px; overflow-y: auto;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                </div>
-                @if ($ordenesPorCliente->isNotEmpty())
-                    <div class="row g-3 text-center">
+    <div class="row">
+        <div class="col-md-4 col-sm-12 mb-3">
+            {{-- Card: Clientes con ordenes --}}
+            <div class="card shadow-sm rounded-3 border-0 h-100">
+                <div class="card-body px-2 py-2" style="max-height: 480px; overflow-y: auto;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    </div>
+                    @if ($ordenesPorCliente->isNotEmpty())
+                    <div class="row g-2 text-center">
                         @foreach ($ordenesPorCliente->sortByDesc('total') as $grupo)
-                            @php
-                                if ($grupo->total > 10) {
-                                    $circleClass = 'bg-success text-white';
-                                } elseif ($grupo->total >= 5 && $grupo->total <= 10) {
-                                    $circleClass = 'bg-warning text-dark';
-                                } else {
-                                    $circleClass = 'bg-secondary text-white';
-                                }
+                        @php
+                        if ($grupo->total > 10) {
+                        $circleClass = 'bg-success text-white';
+                        } elseif ($grupo->total >= 5 && $grupo->total <= 10) {
+                            $circleClass='bg-warning text-dark' ;
+                            } else {
+                            $circleClass='bg-secondary text-white' ;
+                            }
                             @endphp
-                            <div class="col-auto" style="min-width: 175px; max-width: 140px;">
-                                <div class="p-2 rounded-3 border bg-light h-100 d-flex flex-column align-items-center shadow-sm"
-                                     style="min-height: 90px;">
-                                    <div class="d-flex align-items-center justify-content-center gap-5" style="min-height: 50px;">
-                                        <div class="rounded-circle d-flex justify-content-center align-items-center mx-auto {{ $circleClass }}"
-                                            style="width: 52px; height: 52px; font-weight: 700; font-size: 1.5rem; user-select:none;">
-                                            {{ $grupo->total }}
-                                        </div>
-                                        @if(($grupo->onhold_total ?? 0) > 0)
-                                            <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">
-                                                Onhold: {{ $grupo->onhold_total }}
-                                            </span>
-                                        @endif
+                            <div class="col-6 col-md-3">
+                            <div class="p-1 rounded-3 border bg-light h-100 d-flex flex-column align-items-center shadow-sm"
+                                style="min-height: 80px;">
+                                <div class="d-flex align-items-center justify-content-center gap-3" style="min-height: 46px;">
+                                    <div class="rounded-circle d-flex justify-content-center align-items-center mx-auto {{ $circleClass }}"
+                                        style="width: 46px; height: 46px; font-weight: 700; font-size: 1.3rem; user-select:none;">
+                                        {{ $grupo->total }}
                                     </div>
-                                    <small class="fw-semibold text-truncate mt-2" title="{{ ucfirst($grupo->costumer) }}">
-                                        {{ ucfirst($grupo->costumer) }}
-                                    </small>
+                                    @if(($grupo->onhold_total ?? 0) > 0)
+                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">
+                                        Onhold: {{ $grupo->onhold_total }}
+                                    </span>
+                                    @endif
                                 </div>
+                                <small class="fw-semibold text-truncate mt-1" title="{{ ucfirst($grupo->costumer) }}">
+                                    {{ ucfirst($grupo->costumer) }}
+                                </small>
                             </div>
-                        @endforeach
                     </div>
+                    @endforeach
+                </div>
                 @else
-                    <div class="text-center text-muted small py-5">
-                        <i class="bi bi-info-circle fs-2 mb-2"></i>
-                        No orders registered
-                    </div>
+                <div class="text-center text-muted small py-5">
+                    <i class="bi bi-info-circle fs-2 mb-2"></i>
+                    No orders registered
+                </div>
                 @endif
             </div>
         </div>
     </div>
-</div>
 
-<div class="container-fluid py-4">
-    {{-- Cards con tablas --}}
-    <div class="row g-4 mb-4">
-        {{-- Ordenes esta semana --}}
-        <div class="col-lg-6">
+    {{-- Card: ordenes agregadas esta semana --}}
+    <div class="col-md-4 col-sm-12 mb-3">
+        <div class="card shadow rounded-4 border-0 h-100">
+            @if ($resumen['all_shipping'])
+            <div class="card-header bg-success text-white text-center rounded-top-4 py-2">
+                <h4 class="mb-0 fs-6 lh-1">
+                    <i class="fas fa-check-circle me-2"></i> PENDING ORDERS THIS WEEK
+                </h4>
+            </div>
+            <div class="card-body text-center py-4">
+                <i class="fas fa-box-open fa-3x text-success mb-3"></i>
+                <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
+                    <strong>{{ $resumen['total'] }}</strong>
+                </p>
+                <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">Γ£à ┬íEverything shipped this
+                    week!</p>
+            </div>
+            @else
+            <div class="card-header bg-warning text-dark text-center rounded-top-4 py-2">
+                <h5 class="mb-0 fs-6 lh-1">
+                    <i class="fas fa-exclamation-circle me-2"></i> PENDING ORDERS THIS WEEK
+                </h5>
+            </div>
+            <div class="card-body py-3">
+                <div class="row">
+                    {{-- Columna izquierda: resumen --}}
 
-            <div class="card shadow-sm border-0 rounded-3 h-100">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
-                    {{-- T├¡tulo a la izquierda --}}
-                    <div class="d-flex align-items-center mb-2 mb-md-0">
-                        <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
-                        <h6 class="mb-0 text-success">Orders This Week</h6>
-                    </div>
-                    {{-- Selector de semana a la derecha --}}
-                    <div class="d-flex align-items-center ml-auto">
-                        <span id="week-display" class="text-dark font-weight-bold small align-middle mr-2"
-                            style="white-space: nowrap;">
-                        </span>
-                        <div class="input-group input-group-sm" style="width: 180px;">
-                            <input type="week" name="week" id="week-filter"
-                                class="form-control border-secondary text-dark font-weight-bold" style="height: 32px;">
+                    <div class="col-4">
+                        <div class="text-start small">
+                            {{-- Cabecera con ├¡cono --}}
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-box fa-2x text-warning mr-3"></i>
+                                <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
+                            </div>
+
+                            {{-- L├¡nea: Total --}}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="mr-2" style="width: 28px;">
+                                    <i class="fas fa-list-alt text-muted"></i>
+                                </div>
+                                <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
+                                <span class="font-weight-bold text-dark"
+                                    style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
+                            </div>
+
+                            {{-- L├¡nea: Pending --}}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="mr-4" style="width: 28px;">
+                                    <i class="fas fa-clock text-warning"></i>
+                                </div>
+                                <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
+                                <span class="font-weight-bold text-warning"
+                                    style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
+                            </div>
+
+                            {{-- L├¡nea: Sent --}}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="mr-4" style="width: 28px;">
+                                    <i class="fas fa-paper-plane text-success"></i>
+                                </div>
+                                <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
+                                <span class="font-weight-bold text-success"
+                                    style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
+                            </div>
+
+                            {{-- Mensaje final (solo si hay pendientes) --}}
+                            @if(!$resumen['all_shipping'])
+                            <div class="alert alert-warning py-2 px-3 mt-3 mb-0 d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <span class="font-weight-bold medium">There are still orders to be sent.</span>
+                            </div>
+                            @endif
                         </div>
                     </div>
-                </div>
 
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table id="tableweek"
-                            class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
-                            {{-- Anchos consistentes sin inline-styles --}}
-                            <colgroup>
-                                <col style="width:10%">
-                                <col style="width:12%">
-                                <col style="width:36%"> {{-- DESCRIPTION --}}
-                                <col style="width:14%">
-                                <col style="width:8%"> {{-- QTY --}}
-                                <col style="width:10%"> {{-- STATUS --}}
-                                <col style="width:10%"> {{-- DUE DATE --}}
-                            </colgroup>
-
-                            <thead class="bg-success text-white">
-                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    <th>W.ID</th>
-                                    <th>PN</th>
-                                    <th>DESCRIPTION</th>
-                                    <th>CUSTOMER</th>
-                                    <th>QTY</th>
-                                    <th>STATUS</th>
-                                    <th>DUE DATE</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableweek-body">
-                                @include('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenesSemana])
-                            </tbody>
-                        </table>
-
+                    {{-- Columna derecha: tabla scroll --}}
+                    <div class="col-8">
+                        <div class="table-responsive" style="max-height: 389px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered table-striped small mb-0">
+                                <thead class="thead-light sticky-top">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>ORDER</th>
+                                        <th>PN</th>
+                                        <th>DUE DATE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($weeklyOrders->where('status', '!=', 'sent') as $order)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $order->work_id ?? 'N/A' }}</td>
+                                        <td>{{ $order->PN ?? 'N/A' }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div class="card-footer bg-light text-center py-2">
-                    <small class="text-muted">Total orders: <strong
-                            id="order-count">{{ $ordenesSemana->count() }}</strong></small>
-                </div>
-
+                </div> {{-- end row --}}
             </div>
-        </div>
-
-        {{-- Ordenes atrasadas --}}
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 rounded-3 h-100">
-                <div class="card-header bg-light d-flex align-items-center gap-2">
-                    <i class="fas fa-exclamation-triangle fs-5 text-danger mr-2"></i>
-                    <h6 class="mb-0 text-danger">Late Orders</h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table id="tablelate" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export"
-                            style="table-layout: fixed; width: 100%;">
-                            <thead class="bg-danger text-white">
-                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    <th style="width: 40px;">W.ID</th>
-                                    <th style="width: 50px;">PN</th>
-                                    <th style="width: 150px;">DESCRIPTION</th>
-                                    <th style="width: 70px;">CUSTOMER</th>
-                                    <th style="width: 30px;">QTY</th>
-                                    <th style="width: 50px;">STATUS</th>
-                                    <th style="width: 70px;">DUE DATE</th>
-                                    <th style="width: 80px;">NOTES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($ordenesAtrasadas as $order)
-                                <tr>
-                                    <td>{{ $order->work_id }}</td>
-                                    <td>{{ $order->PN }}</td>
-                                    <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                        {{ $order->Part_description }}
-                                    </td>
-                                    <td>{{ ucfirst($order->costumer) }}</td>
-                                    <td>{{ $order->qty }}</td>
-                                    <td>
-                                        <span class="badge bg-warning text-dark text-truncate d-inline-block" style="max-width: 70px;"
-                                            title="{{ $order->status }}">
-                                            {{ $order->status }}
-                                        </span>
-                                    </td>
-                                    <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
-                                    <td style="white-space: normal !important; font-size: 12px !important; word-break: break-word;" title="{{ $order->notes }}">
-                                        {{ $order->notes}}
-                                    </td>
-                                </tr>
-                                @empty
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer bg-light text-center py-2">
-                    <small class="text-muted">Total orders this week: <strong>{{ $cantidadAtrasadas }}</strong></small>
-                </div>
-            </div>
+            @endif
         </div>
     </div>
 
+    <div class="col-md-12"> {{-- Ocupa toda la fila --}}
+        <div class="container-fluid py-4">
+            {{-- Cards con tablas --}}
+            <div class="row g-4 mb-4">
+                {{-- Ordenes esta semana --}}
+                <div class="col-lg-6">
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Filters and Order Charts</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <!-- Columna izquierda: primer filtro + bot├│n + gr├ífica -->
-                <div class="col-md-6" style="border-right: 1px solid #ddd; padding-right: 20px;">
-                    <!-- Primer bloque de filtros -->
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="filterType">Year / Month / Week:</label>
-                            <select id="filterType" class="form-control">
-                                <option value="year">Year</option>
-                                <option value="month">Month</option>
-                                <option value="week">Week</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="yearInput">Date:</label>
-                            <input type="month" id="monthInput" class="form-control d-none">
-                            <input type="week" id="weekInput" class="form-control d-none">
-                            <select id="yearInput" class="form-control">
-                                @for ($y = date('Y'); $y >= 2020; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="customerFilter">Customer:</label>
-                            <select id="customerFilter" class="form-control">
-                                <option value="">All Customers</option>
-                                @foreach ($customers as $customer)
-                                <option value="{{ $customer }}">{{ $customer }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <button onclick="printChart('ordersChart', 'TOTAL ORDERS')" class="btn btn-secondary mb-2 w-75">
-                            Print Order Totals
-                        </button>
-                    </div>
-                    <div class="d-flex flex-column align-items-center mb-3">
-                        <canvas id="ordersChart"></canvas>
-                    </div>
-                </div>
-                <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
-                <div class="col-md-6" style="padding-left: 20px;">
-                    <!-- Segundo bloque de filtros -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="filterTypeCustomer">Year / Month / Week:</label>
-                            <select id="filterTypeCustomer" class="form-control">
-                                <option value="year" selected>Year</option>
-                                <option value="month">Month</option>
-                                <option value="week">Week</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="yearInputCustomer">Date:</label>
-                            <select id="yearInputCustomer" class="form-control">
-                                @for ($y = date('Y'); $y >= 2025; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
-                                @endfor
-                            </select>
-                            <input type="month" id="monthInputCustomer" class="form-control d-none">
-                            <input type="week" id="weekInputCustomer" class="form-control d-none">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')"
-                            class="btn btn-secondary mb-2 w-75">
-                            Print Order Customer
-                        </button>
-                    </div>
-                    <div class="d-flex flex-column align-items-center">
-                        <canvas id="byCustomerChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Next Orders and Deliveries</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
-                <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
-                    <div class="mb-3">
-                        <h5 class="text-center font-weight-bold">
-                            Orders Due - Next 8 Weeks
-                        </h5>
-                    </div>
-                    <div class="col-md-4">
-                        <button onclick="printChart('nextWeeksChart', 'ORDERS NEXT 8 WEEKS')"
-                            class="btn btn-secondary mb-2 w-100">
-                            Print Chart
-                        </button>
-                    </div>
-                    <div class="d-flex flex-column align-items-center">
-                        <canvas id="nextWeeksChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-                <!-- Columna derecha: gr├ífica de entregas a tiempo vs tarde -->
-                <div class="col-md-4" style="padding-left: 20px;">
-                    <div class="mb-2">
-                        <h5 class="text-center font-weight-bold">On Time vs Late Deliveries</h5>
-                    </div>
-                    <!-- Filtros -->
-                    <div class="row mb-2">
-                        <div class="col-4">
-                            <input type="month" id="monthFilter" class="form-control form-control-sm" title="Filter by Month">
-                        </div>
-                        <div class="col-4">
-                            <select id="yearFilter" class="form-control form-control-sm" title="Filter by Year">
-                                <option value="">-- Year --</option>
-                                @for ($y = now()->year; $y >= 2025; $y--)
-                                <option value="{{ $y }}" @selected($y == now()->year)>{{ $y }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div class="col-4">
-                            <select id="customerFilterOnTime" class="form-control form-control-sm" title="Filter by Customer">
-                                <option value="">-- All --</option>
-                                @foreach ($customers as $customer)
-                                <option value="{{ $customer }}">{{ $customer }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <button onclick="printChart('onTimeChart', 'ON TIME VS LATE')"
-                            class="btn btn-secondary btn-sm mb-2 w-100">
-                            Print Chart
-                        </button>
-                    </div>
-                    <div class="d-flex flex-column align-items-center">
-                        <canvas id="onTimeChart" style="width: 250%; height: 500px;"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-2">
-        {{-- Card: Clientes con ├│rdenes --}}
-        <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
-            <div class="card shadow-sm rounded-3 border-0 h-100">
-                <div
-                    class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
-                        <i class="bi bi-people-fill"></i>
-                        Customers with Orders
-                    </div>
-                    <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
-                    {{-- <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>--}}
-                </div>
-                <div class="card-body px-3 py-2" style="max-height: 410px; overflow-y: auto;">
-                    @if ($ordenesPorCliente->isNotEmpty())
-                    <ul class="list-group list-group-flush small">
-                        @foreach ($ordenesPorCliente as $grupo)
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
-                            <span class="text-truncate" style="max-width: 65%;">
-                                <i class="bi bi-person-circle me-2 text-muted fs-5"></i>
-                                {{ ucfirst($grupo->costumer) }}
-                            </span>
-                            <span class="badge bg-success rounded-pill fs-6">{{ $grupo->total }}</span>
-                        </li>
-                        @endforeach
-                    </ul>
-                    @else
-                    <div class="text-center text-muted small py-5">
-                        <i class="bi bi-info-circle fs-2 mb-2"></i>
-                        No orders registered
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Card: ├ôrdenes agregadas esta semana --}}
-        <div class="col-md-4 col-sm-6 mb-3">
-            <div class="card shadow rounded-4 border-0 h-100">
-                @if ($resumen['all_shipping'])
-                <div class="card-header bg-success text-white text-center rounded-top-4">
-                    <h5 class="mb-0">
-                        <i class="fas fa-check-circle me-2"></i> PENDING ORDERS THIS WEEK
-                    </h5>
-                </div>
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-box-open fa-3x text-success mb-3"></i>
-                    <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
-                        <strong>{{ $resumen['total'] }}</strong>
-                    </p>
-                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">Γ£à ┬íEverything shipped this
-                        week!</p>
-                </div>
-                @else
-                <div class="card-header bg-warning text-dark text-center rounded-top-4">
-                    <h5 class="mb-0">
-                        <i class="fas fa-exclamation-circle me-2"></i> PENDING ORDERS THIS WEEK
-                    </h5>
-                </div>
-                <div class="card-body py-3">
-                    <div class="row">
-                        {{-- Columna izquierda: resumen --}}
-
-                        <div class="col-4">
-                            <div class="text-start small">
-                                {{-- Cabecera con ├¡cono --}}
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="fas fa-box fa-2x text-warning mr-3"></i>
-                                    <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
+                    <div class="card shadow-sm border-0 rounded-3 h-100">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
+                            {{-- T├¡tulo a la izquierda --}}
+                            <div class="d-flex align-items-center mb-2 mb-md-0">
+                                <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
+                                <h6 class="mb-0 text-success">Orders This Week</h6>
+                            </div>
+                            {{-- Selector de semana a la derecha --}}
+                            <div class="d-flex align-items-center ml-auto">
+                                <span id="week-display" class="text-dark font-weight-bold small align-middle mr-2"
+                                    style="white-space: nowrap;">
+                                </span>
+                                <div class="input-group input-group-sm" style="width: 180px;">
+                                    <input type="week" name="week" id="week-filter"
+                                        class="form-control border-secondary text-dark font-weight-bold" style="height: 32px;">
                                 </div>
-
-                                {{-- L├¡nea: Total --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="mr-2" style="width: 28px;">
-                                        <i class="fas fa-list-alt text-muted"></i>
-                                    </div>
-                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
-                                    <span class="font-weight-bold text-dark"
-                                        style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
-                                </div>
-
-                                {{-- L├¡nea: Pending --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="mr-4" style="width: 28px;">
-                                        <i class="fas fa-clock text-warning"></i>
-                                    </div>
-                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
-                                    <span class="font-weight-bold text-warning"
-                                        style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
-                                </div>
-
-                                {{-- L├¡nea: Sent --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="mr-4" style="width: 28px;">
-                                        <i class="fas fa-paper-plane text-success"></i>
-                                    </div>
-                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
-                                    <span class="font-weight-bold text-success"
-                                        style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
-                                </div>
-
-                                {{-- Mensaje final (solo si hay pendientes) --}}
-                                @if(!$resumen['all_shipping'])
-                                <div class="alert alert-warning py-2 px-3 mt-3 mb-0 d-flex align-items-center">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                                    <span class="font-weight-bold medium">There are still orders to be sent.</span>
-                                </div>
-                                @endif
                             </div>
                         </div>
 
-                        {{-- Columna derecha: tabla scroll --}}
-                        <div class="col-8">
-                            <div class="table-responsive" style="max-height: 389px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered table-striped small mb-0">
-                                    <thead class="thead-light sticky-top">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>ORDER</th>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="tableweek"
+                                    class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                                    {{-- Anchos consistentes sin inline-styles --}}
+                                    <colgroup>
+                                        <col style="width:10%">
+                                        <col style="width:12%">
+                                        <col style="width:36%"> {{-- DESCRIPTION --}}
+                                        <col style="width:14%">
+                                        <col style="width:8%"> {{-- QTY --}}
+                                        <col style="width:10%"> {{-- STATUS --}}
+                                        <col style="width:10%"> {{-- DUE DATE --}}
+                                    </colgroup>
+
+                                    <thead class="bg-success text-white">
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th>W.ID</th>
                                             <th>PN</th>
+                                            <th>DESCRIPTION</th>
+                                            <th>CUSTOMER</th>
+                                            <th>QTY</th>
+                                            <th>STATUS</th>
                                             <th>DUE DATE</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        @foreach ($weeklyOrders->where('status', '!=', 'sent') as $order)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $order->work_id ?? 'N/A' }}</td>
-                                            <td>{{ $order->PN ?? 'N/A' }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
+                                    <tbody id="tableweek-body">
+                                        @include('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenesSemana])
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light text-center py-2">
+                            <small class="text-muted">Total orders: <strong
+                                    id="order-count">{{ $ordenesSemana->count() }}</strong></small>
+                        </div>
+
+                    </div>
+                </div>
+
+                {{-- Ordenes atrasadas --}}
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-3 h-100">
+                        <div class="card-header bg-light d-flex align-items-center gap-2">
+                            <i class="fas fa-exclamation-triangle fs-5 text-danger mr-2"></i>
+                            <h6 class="mb-0 text-danger">Late Orders</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="tablelate" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export"
+                                    style="table-layout: fixed; width: 100%;">
+                                    <thead class="bg-danger text-white">
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th style="width: 40px;">W.ID</th>
+                                            <th style="width: 50px;">PN</th>
+                                            <th style="width: 150px;">DESCRIPTION</th>
+                                            <th style="width: 70px;">CUSTOMER</th>
+                                            <th style="width: 30px;">QTY</th>
+                                            <th style="width: 50px;">STATUS</th>
+                                            <th style="width: 70px;">DUE DATE</th>
+                                            <th style="width: 60px;">DAYS LATE</th>
+                                            <th style="width: 80px;">NOTES</th>
                                         </tr>
-                                        @endforeach
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($ordenesAtrasadas as $order)
+                                        <tr>
+                                            <td>{{ $order->work_id }}</td>
+                                            <td>{{ $order->PN }}</td>
+                                            <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                                {{ $order->Part_description }}
+                                            </td>
+                                            <td>{{ ucfirst($order->costumer) }}</td>
+                                            <td>{{ $order->qty }}</td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark text-truncate d-inline-block" style="max-width: 70px;"
+                                                    title="{{ $order->status }}">
+                                                    {{ $order->status }}
+                                                </span>
+                                            </td>
+                                            <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
+                                            <td>
+                                                <span class="badge bg-danger">
+                                                    {{ $order->due_date->diffInDays(now()) }}
+                                                </span>
+                                            </td>
+                                            <td style="white-space: normal !important; font-size: 12px !important; word-break: break-word;" title="{{ $order->notes }}">
+                                                {{ $order->notes}}
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                    </div> {{-- end row --}}
-                </div>
-                @endif
-            </div>
-        </div>
-
-
-
-
-        {{-- Card: Aqu├¡ puedes agregar una tercera tarjeta si la necesitas --}}
-        <div class="col-md-4 col-sm-6 mb-3">
-            <div class="card shadow-sm rounded-3 border-0 h-100">
-                {{-- Header --}}
-                <div class="card-header bg-secondary text-white d-flex align-items-center font-weight-semibold">
-                    <i class="fas fa-calendar-week mr-2"></i> Weekly Orders
-                </div>
-
-                @php
-                // Din├ímica de colores e ├¡conos seg├║n el cumplimiento global
-                if ($percentageOnTime >= 90) {
-                $percentColor = 'text-success';
-                $circleColor = 'bg-success';
-                $icon = 'fa-check';
-                } elseif ($percentageOnTime >= 70) {
-                $percentColor = 'text-warning';
-                $circleColor = 'bg-warning';
-                $icon = 'fa-exclamation';
-                } else {
-                $percentColor = 'text-danger';
-                $circleColor = 'bg-danger';
-                $icon = 'fa-times';
-                }
-                @endphp
-
-                {{-- Porcentaje general de cumplimiento --}}
-                <div class="px-3 py-2 border-bottom" style="background-color: #f8f9fa;">
-                    <div class="d-flex justify-content-center align-items-center mb-1">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center {{ $circleColor }} mr-2"
-                            style="width: 20px; height: 20px;">
-                            <i class="fas {{ $icon }} text-white" style="font-size: 0.75rem;"></i>
+                        <div class="card-footer bg-light text-center py-2">
+                            <small class="text-muted">Total orders this week: <strong>{{ $cantidadAtrasadas }}</strong></small>
                         </div>
-                        <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Based on {{ $orders->count() }} weeks">
-                            <h7 class="font-weight-bold mb-0 {{ $percentColor }}" style="font-size: 1.25rem;">
-                                {{ $percentageOnTime }}%
-                            </h7>
-                        </span>
                     </div>
-                    <p class="text-dark text-center mb-0 small">Of weeks had 100% of orders completed on time</p>
                 </div>
+            </div>
 
-                {{-- Tabla de ├│rdenes por semana --}}
-                <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
-                    <table class="table table-sm table-bordered table-striped small mb-0">
-                        <thead class="thead-light sticky-top">
-                            <tr class="text-center">
-                                <th>Week</th>
-                                <th>Date Range</th>
-                                <th>Total</th>
-                                <th class="text-success">Done</th>
-                                <th class="text-warning">Late</th>
-                                <th>%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($orders as $item)
-                            @php
-                            $year = substr($item->week, 0, 4);
-                            $week = substr($item->week, 4);
-                            $startOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
-                            $endOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->endOfWeek();
 
-                            $completed = $item->completed ?? 0;
-                            $late = $item->late ?? 0;
-                            $total = $item->total ?: 1;
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Filters and Order Charts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Columna izquierda: primer filtro + bot├│n + gr├ífica -->
+                        <div class="col-md-6" style="border-right: 1px solid #ddd; padding-right: 20px;">
+                            <!-- Primer bloque de filtros -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="filterType">Year / Month / Week:</label>
+                                    <select id="filterType" class="form-control">
+                                        <option value="year">Year</option>
+                                        <option value="month">Month</option>
+                                        <option value="week">Week</option>
+                                    </select>
+                                </div>
 
-                            $completedPercent = round(($completed / $total) * 100);
-                            $latePercent = round(($late / $total) * 100);
-                            @endphp
+                                <div class="col-md-4">
+                                    <label for="yearInput">Date:</label>
+                                    <input type="month" id="monthInput" class="form-control d-none">
+                                    <input type="week" id="weekInput" class="form-control d-none">
+                                    <select id="yearInput" class="form-control">
+                                        @for ($y = date('Y'); $y >= 2025; $y--)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="customerFilter">Customer:</label>
+                                    <select id="customerFilter" class="form-control">
+                                        <option value="">All Customers</option>
+                                        @foreach ($customers as $customer)
+                                        <option value="{{ $customer }}">{{ $customer }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button onclick="printChart('ordersChart', 'TOTAL ORDERS')" class="btn btn-secondary mb-2 w-75">
+                                    Print Order Totals
+                                </button>
+                            </div>
+                            <div class="d-flex flex-column align-items-center mb-3">
+                                <canvas id="ordersChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
+                        <div class="col-md-6" style="padding-left: 20px;">
+                            <!-- Segundo bloque de filtros -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="filterTypeCustomer">Year / Month / Week:</label>
+                                    <select id="filterTypeCustomer" class="form-control">
+                                        <option value="year" selected>Year</option>
+                                        <option value="month">Month</option>
+                                        <option value="week">Week</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="yearInputCustomer">Date:</label>
+                                    <select id="yearInputCustomer" class="form-control">
+                                        @for ($y = date('Y'); $y >= 2025; $y--)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                    <input type="month" id="monthInputCustomer" class="form-control d-none">
+                                    <input type="week" id="weekInputCustomer" class="form-control d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')"
+                                    class="btn btn-secondary mb-2 w-75">
+                                    Print Order Customer
+                                </button>
+                            </div>
+                            <div class="d-flex flex-column align-items-center">
+                                <canvas id="byCustomerChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <tr class="text-center">
-                                <td>{{ $year }} W{{ $week }}</td>
-                                <td>{{ $startOfWeek->format('M d') }} - {{ $endOfWeek->format('M d') }}</td>
-                                <td>{{ $item->total }}</td>
-                                <td class="text-success font-weight-bold">{{ $completed }}</td>
-                                <td class="text-danger font-weight-bold">{{ $late }}</td>
-                                <td>
-                                    <span class="badge badge-pill 
-                                    {{ $completedPercent >= 90 ? 'badge-success' : ($completedPercent >= 70 ? 'badge-warning' : 'badge-danger') }}">
-                                        {{ $completedPercent }}%
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Next Orders and Deliveries</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
+                        <div class="col-md-8" style="border-right: 1px solid #ddd; padding-right: 20px;">
+                            <div class="mb-3">
+                                <h5 class="text-center font-weight-bold">
+                                    Orders Due - Next 8 Weeks
+                                </h5>
+                            </div>
+                            <div class="col-md-4">
+                                <button onclick="printChart('nextWeeksChart', 'ORDERS NEXT 8 WEEKS')"
+                                    class="btn btn-secondary mb-2 w-100">
+                                    Print Chart
+                                </button>
+                            </div>
+                            <div class="d-flex flex-column align-items-center">
+                                <canvas id="nextWeeksChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        <!-- Columna derecha: gr├ífica de entregas a tiempo vs tarde -->
+                        <div class="col-md-4" style="padding-left: 20px;">
+                            <div class="mb-2">
+                                <h5 class="text-center font-weight-bold">On Time vs Late Deliveries</h5>
+                            </div>
+                            <!-- Filtros -->
+                            <div class="row mb-2">
+                                <div class="col-4">
+                                    <input type="month" id="monthFilter" class="form-control form-control-sm" title="Filter by Month">
+                                </div>
+                                <div class="col-4">
+                                    <select id="yearFilter" class="form-control form-control-sm" title="Filter by Year">
+                                        <option value="">-- Year --</option>
+                                        @for ($y = now()->year; $y >= 2025; $y--)
+                                        <option value="{{ $y }}" @selected($y==now()->year)>{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <select id="customerFilterOnTime" class="form-control form-control-sm" title="Filter by Customer">
+                                        <option value="">-- All --</option>
+                                        @foreach ($customers as $customer)
+                                        <option value="{{ $customer }}">{{ $customer }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button onclick="printChart('onTimeChart', 'ON TIME VS LATE')"
+                                    class="btn btn-secondary btn-sm mb-2 w-100">
+                                    Print Chart
+                                </button>
+                            </div>
+                            <div class="d-flex flex-column align-items-center">
+                                <canvas id="onTimeChart" style="width: 250%; height: 500px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                {{-- Card: Clientes con ├│rdenes --}}
+                <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
+                    <div class="card shadow-sm rounded-3 border-0 h-100">
+                        <div
+                            class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
+                                <i class="bi bi-people-fill"></i>
+                                Customers with Orders
+                            </div>
+                            <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
+                            {{-- <button onclick="printCard()" class="btn btn-primary mb-3">Print</button>--}}
+                        </div>
+                        <div class="card-body px-3 py-2" style="max-height: 410px; overflow-y: auto;">
+                            @if ($ordenesPorCliente->isNotEmpty())
+                            <ul class="list-group list-group-flush small">
+                                @foreach ($ordenesPorCliente as $grupo)
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                                    <span class="text-truncate" style="max-width: 65%;">
+                                        <i class="bi bi-person-circle me-2 text-muted fs-5"></i>
+                                        {{ ucfirst($grupo->costumer) }}
                                     </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="6" class="p-1">
-                                    <div class="progress" style="height: 8px;">
-                                        <div class="progress-bar bg-success" style="width: {{ $completedPercent }}%;"></div>
-                                        <div class="progress-bar bg-warning" style="width: {{ $latePercent }}%;"></div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            @endforelse
-                        </tbody>
-                    </table>
+                                    <span class="badge bg-success rounded-pill fs-6">{{ $grupo->total }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            @else
+                            <div class="text-center text-muted small py-5">
+                                <i class="bi bi-info-circle fs-2 mb-2"></i>
+                                No orders registered
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+                {{-- Card: Aqu├¡ puedes agregar una tercera tarjeta si la necesitas --}}
+                <div class="col-md-4 col-sm-6 mb-3">
+                    <div class="card shadow-sm rounded-3 border-0 h-100">
+                        {{-- Header --}}
+                        <div class="card-header bg-secondary text-white d-flex align-items-center font-weight-semibold">
+                            <i class="fas fa-calendar-week mr-2"></i> Weekly Orders
+                        </div>
+
+                        @php
+                        // Din├ímica de colores e ├¡conos seg├║n el cumplimiento global
+                        if ($percentageOnTime >= 90) {
+                        $percentColor = 'text-success';
+                        $circleColor = 'bg-success';
+                        $icon = 'fa-check';
+                        } elseif ($percentageOnTime >= 70) {
+                        $percentColor = 'text-warning';
+                        $circleColor = 'bg-warning';
+                        $icon = 'fa-exclamation';
+                        } else {
+                        $percentColor = 'text-danger';
+                        $circleColor = 'bg-danger';
+                        $icon = 'fa-times';
+                        }
+                        @endphp
+
+                        {{-- Porcentaje general de cumplimiento --}}
+                        <div class="px-3 py-2 border-bottom" style="background-color: #f8f9fa;">
+                            <div class="d-flex justify-content-center align-items-center mb-1">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center {{ $circleColor }} mr-2"
+                                    style="width: 20px; height: 20px;">
+                                    <i class="fas {{ $icon }} text-white" style="font-size: 0.75rem;"></i>
+                                </div>
+                                <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Based on {{ $orders->count() }} weeks">
+                                    <h7 class="font-weight-bold mb-0 {{ $percentColor }}" style="font-size: 1.25rem;">
+                                        {{ $percentageOnTime }}%
+                                    </h7>
+                                </span>
+                            </div>
+                            <p class="text-dark text-center mb-0 small">Of weeks had 100% of orders completed on time</p>
+                        </div>
+
+                        {{-- Tabla de ├│rdenes por semana --}}
+                        <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered table-striped small mb-0">
+                                <thead class="thead-light sticky-top">
+                                    <tr class="text-center">
+                                        <th>Week</th>
+                                        <th>Date Range</th>
+                                        <th>Total</th>
+                                        <th class="text-success">Done</th>
+                                        <th class="text-warning">Late</th>
+                                        <th>%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($orders as $item)
+                                    @php
+                                    $year = substr($item->week, 0, 4);
+                                    $week = substr($item->week, 4);
+                                    $startOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
+                                    $endOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->endOfWeek();
+
+                                    $completed = $item->completed ?? 0;
+                                    $late = $item->late ?? 0;
+                                    $total = $item->total ?: 1;
+
+                                    $completedPercent = round(($completed / $total) * 100);
+                                    $latePercent = round(($late / $total) * 100);
+                                    @endphp
+
+                                    <tr class="text-center">
+                                        <td>{{ $year }} W{{ $week }}</td>
+                                        <td>{{ $startOfWeek->format('M d') }} - {{ $endOfWeek->format('M d') }}</td>
+                                        <td>{{ $item->total }}</td>
+                                        <td class="text-success font-weight-bold">{{ $completed }}</td>
+                                        <td class="text-danger font-weight-bold">{{ $late }}</td>
+                                        <td>
+                                            <span class="badge badge-pill 
+                                    {{ $completedPercent >= 90 ? 'badge-success' : ($completedPercent >= 70 ? 'badge-warning' : 'badge-danger') }}">
+                                                {{ $completedPercent }}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="6" class="p-1">
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-success" style="width: {{ $completedPercent }}%;"></div>
+                                                <div class="progress-bar bg-warning" style="width: {{ $latePercent }}%;"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
 
-    {{-- Modal para detalle de entregas --}}
-<div class="modal fade" id="onTimeModal" tabindex="-1" role="dialog" aria-labelledby="onTimeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
-        <div class="modal-content">
-            <div class="modal-header d-flex align-items-center justify-content-between">
-                <div>
-                    <h5 class="modal-title mb-0" id="onTimeModalLabel">Orders detail</h5>
+            {{-- Modal para detalle de entregas --}}
+            <div class="modal fade" id="onTimeModal" tabindex="-1" role="dialog" aria-labelledby="onTimeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="modal-title mb-0" id="onTimeModalLabel">Orders detail</h5>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <input type="month" id="onTimeModalMonth" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                <select id="onTimeModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                    @foreach ($customers as $customer)
+                                    <option value="{{ $customer }}">{{ $customer }}</option>
+                                    @endforeach
+                                </select>
+                                <div id="onTimeModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="onTimeModalSummary" class="mb-2"></div>
+                            <div id="onTimeModalContent" class="table-responsive small">
+                                <div class="text-center text-muted py-4">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
-            <div class="modal-body">
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                    <input type="month" id="onTimeModalMonth" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
-                    <select id="onTimeModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
-                        <option value="">-- All Customers --</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ $customer }}">{{ $customer }}</option>
-                        @endforeach
-                    </select>
-                    <div id="onTimeModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
-                </div>
-                <div id="onTimeModalSummary" class="mb-2"></div>
-                <div id="onTimeModalContent" class="table-responsive small">
-                    <div class="text-center text-muted py-4">Loading...</div>
-                </div>
+
+            {{-- Modal: Late Orders detail --}}
+            <div class="modal fade" id="lateOrdersModal" tabindex="-1" role="dialog" aria-labelledby="lateOrdersModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="modal-title mb-0" id="lateOrdersModalLabel">Late Orders detail</h5>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <select id="lateOrdersModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                </select>
+                                <select id="lateOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Status --</option>
+                                </select>
+                                <div id="lateOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="lateOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
+                            <div class="table-responsive small">
+                                <table id="lateOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                                    <thead class="bg-danger text-white">
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th style="width: 40px;">W.ID</th>
+                                            <th style="width: 50px;">PN</th>
+                                            <th style="width: 150px;">DESCRIPTION</th>
+                                            <th style="width: 70px;">CUSTOMER</th>
+                                            <th style="width: 30px;">QTY</th>
+                                            <th style="width: 50px;">STATUS</th>
+                                            <th style="width: 70px;">DUE DATE</th>
+                                            <th style="width: 60px;">DAYS LATE</th>
+                                            <th style="width: 80px;">NOTES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($ordenesAtrasadas as $order)
+                                        <tr>
+                                            <td>{{ $order->work_id }}</td>
+                                            <td>{{ $order->PN }}</td>
+                                            <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                                {{ $order->Part_description }}
+                                            </td>
+                                            <td>{{ ucfirst($order->costumer) }}</td>
+                                            <td>{{ $order->qty }}</td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark text-truncate d-inline-block" style="max-width: 70px;" title="{{ $order->status }}">
+                                                    {{ $order->status }}
+                                                </span>
+                                            </td>
+                                            <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
+                                            <td>
+                                                <span class="badge bg-danger">
+                                                    {{ $order->due_date->diffInDays(now()) }}
+                                                </span>
+                                            </td>
+                                            <td style="white-space: normal !important; font-size: 12px !important; word-break: break-word;" title="{{ $order->notes }}">
+                                                {{ $order->notes}}
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-@endsection
+            <div class="modal fade" id="ordersDetailModal" tabindex="-1" role="dialog" aria-labelledby="ordersDetailModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex flex-wrap align-items-center">
+                                <h5 class="modal-title mb-0" id="ordersDetailModalLabel">Orders detail</h5>
+                                <span id="ordersDetailModalFilters" class="text-muted small ml-2"></span>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <select id="ordersDetailCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                    @foreach ($customers as $customer)
+                                    <option value="{{ $customer }}">{{ $customer }}</option>
+                                    @endforeach
+                                </select>
+                                <div id="ordersDetailButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="ordersDetailModalContent" class="table-responsive small">
+                                <div class="text-center text-muted py-4">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-@section('css')
-<style>
-    .dataTables_wrapper {
-        margin-top: 20px !important;
-        margin-left: 15px !important;
-        margin-right: 15px !important;
-    }
+            @endsection
 
-        #tableweek tbody td {
-            height: 50px;
-        }
+            @section('css')
+            <style>
+                /* KPIs estilo ERP (solo para la fila superior) */
+                .kpi-erp {
+                    margin-top: -10px;
+                }
 
-    #tablelate tbody td {
-        height: 50px;
-    }
+                .kpi-erp .info-box {
+                    height: 80px;
+                    padding: .25rem .5rem;
+                    border-radius: 10px;
+                    border: 1px solid #e5e7eb;
+                    background: #fff;
+                    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+                    margin-bottom: 0.25rem;
+                    transition: box-shadow .15s ease, transform .15s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: .55rem;
+                }
 
-    /* Estilo ERP para el modal On Time/Late */
-    #onTimeModal .modal-content {
-        border: 1px solid #c5c9d2;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
-    }
-
-    #onTimeModal .modal-header {
-        background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%);
-        border-bottom: 1px solid #c5c9d2;
-        color: #0f172a;
-        letter-spacing: .2px;
-    }
-
-    #onTimeModal .modal-title {
-        font-weight: 700;
-    }
-
-    #onTimeModal .modal-body {
-        background: #f7f9fc;
-    }
-
-    #onTimeModal table thead {
-        background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
-        color: #0f172a;
-    }
-
-    #onTimeModal table tbody tr:hover {
-        background: #eef2f7;
-    }
-
-    /* Tabla estilo ERP en modal */
-    #onTimeModal .dataTables_wrapper .dataTables_filter input {
-        border: 1px solid #c5c9d2;
-        border-radius: 6px;
-        padding: 4px 8px;
-        background: #f8fafc;
-    }
-
-    #onTimeModal .dataTables_wrapper .dataTables_length select {
-        border: 1px solid #c5c9d2;
-        border-radius: 6px;
-        padding: 4px 6px;
-        background: #f8fafc;
-        font-size: 14px;
-    }
-
-    #onTimeModal .dataTables_wrapper .dataTables_filter input {
-        font-size: 14px;
-    }
-
-    /* Compactar espacio vertical de controles */
-    #onTimeModal .dataTables_wrapper .row:first-child {
-        margin-bottom: 0 !important;
-    }
-    #onTimeModal .dataTables_wrapper .dataTables_filter,
-    #onTimeModal .dataTables_wrapper .dataTables_length {
-        margin-bottom: 0 !important;
-    }
-
-    /* Controles ERP para filtros del modal */
-    #onTimeModal .erp-filter-control {
-        border: 1px solid #c5c9d2;
-        border-radius: 8px;
-        padding: 6px 10px;
-        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
-        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
-        color: #0f172a;
-        font-weight: 600;
-    }
-
-    #onTimeModal .erp-filter-control:focus {
-        border-color: #94a3b8;
-        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
-    }
-
-    /* Botones estilo ERP en gris con ícono de color */
-    #onTimeModal .btn-erp-success,
-    #onTimeModal .btn-erp-danger {
-        background: #f8fafc;
-        border: 1px solid #d5d8dd;
-        color: #1f2937;
-        border-radius: 8px;
-        font-weight: 700;
-        box-shadow: none;
-    }
-
-    #onTimeModal .btn-erp-success i {
-        color: #0f5132;
-    }
-
-    #onTimeModal .btn-erp-danger i {
-        color: #b91c1c;
-    }
-
-    #onTimeModal .btn-erp-success:hover,
-    #onTimeModal .btn-erp-danger:hover {
-        filter: brightness(0.97);
-        color: #111827;
-    }
-
-    #onTimeDetailTable {
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        overflow: hidden;
-        background: #fff;
-        table-layout: auto;
-    }
-
-    #onTimeDetailTable thead th {
-        background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
-        color: #0f172a;
-        border-bottom: 1px solid #c5c9d2;
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    #onTimeDetailTable td,
-    #onTimeDetailTable th {
-        padding: 8px 10px;
-        vertical-align: middle;
-        font-size: 14px;
-        word-break: break-word;
-    }
-
-    /* Anchos para fechas (Due y Sent) */
-    #onTimeDetailTable th:nth-child(7),
-    #onTimeDetailTable td:nth-child(7),
-    #onTimeDetailTable th:nth-child(8),
-    #onTimeDetailTable td:nth-child(8) {
-        min-width: 115px;
-    }
-
-    /* Anchos sugeridos para columnas compactas */
-    #onTimeDetailTable th:nth-child(1),
-    #onTimeDetailTable td:nth-child(1) { min-width: 70px; width: 8%; }
-    #onTimeDetailTable th:nth-child(2),
-    #onTimeDetailTable td:nth-child(2) { min-width: 90px; width: 10%; }
-    #onTimeDetailTable th:nth-child(4),
-    #onTimeDetailTable td:nth-child(4) { min-width: 110px; width: 12%; }
-    #onTimeDetailTable th:nth-child(5),
-    #onTimeDetailTable td:nth-child(5) { min-width: 55px; width: 5%; }
-    #onTimeDetailTable th:nth-child(6),
-    #onTimeDetailTable td:nth-child(6) { min-width: 70px; width: 7%; }
-    #onTimeDetailTable th:nth-child(7),
-    #onTimeDetailTable td:nth-child(7),
-    #onTimeDetailTable th:nth-child(8),
-    #onTimeDetailTable td:nth-child(8) {
-        min-width: 85px;
-        width: 8%;
-    }
-    #onTimeDetailTable th:nth-child(9),
-    #onTimeDetailTable td:nth-child(9) { min-width: 60px; width: 6%; }
-    #onTimeDetailTable th:nth-child(10),
-    #onTimeDetailTable td:nth-child(10) { min-width: 160px; width: 12%; }
-
-    /* Descripcion ocupa el resto */
-    #onTimeDetailTable th:nth-child(3),
-    #onTimeDetailTable td:nth-child(3) {
-        min-width: 340px;
-        width: auto;
-    }
-
-    #onTimeDetailTable tbody tr:nth-child(odd) {
-        background: #f8fafc;
-    }
-
-    #onTimeDetailTable tbody tr:hover {
-        background: #eef2f7;
-    }
-
-    #onTimeModal .dataTables_wrapper .dataTables_info,
-    #onTimeModal .dataTables_wrapper .dataTables_length label,
-    #onTimeModal .dataTables_wrapper .dataTables_filter label {
-        font-size: 14px;
-        color: #1f2937;
-    }
-
-    /* Colores por fila/estado */
-    #onTimeModal .status-row-early td {
-        background: inherit;
-    }
-
-    #onTimeModal .status-row-on-time td {
-        background: inherit;
-    }
-
-    #onTimeModal .status-row-late td {
-        background: inherit;
-    }
-
-    /* Δ Days colores */
-    #onTimeModal .delta-early {
-        color: #2b6cb0;
-        font-weight: 700;
-    }
-
-    #onTimeModal .delta-on-time {
-        color: #065f46;
-        font-weight: 700;
-    }
-
-    #onTimeModal .delta-late {
-        color: #b91c1c;
-        font-weight: 700;
-    }
-
-    /* Neutralizar colores de texto aplicados por clases de estado */
-    #onTimeModal td.text-primary,
-    #onTimeModal td.text-success,
-    #onTimeModal td.text-danger {
-        color: inherit !important;
-        font-weight: 400 !important;
-    }
-
-    /* Variantes por estado */
-    /* Early azul, On Time verde */
-    #onTimeModal.status-early .modal-header {
-        background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
-        border-color: #c5cedd;
-    }
-
-    #onTimeModal.status-on-time .modal-header {
-        background: linear-gradient(180deg, #e6f4ec 0%, #d5e7dc 100%);
-        border-color: #c3e0cf;
-    }
-
-    #onTimeModal.status-late .modal-header {
-        background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
-        border-color: #e0c4bc;
-    }
-</style>
-@endsection
-
-    @push('js')
-
-    <script>
-        // orders_dashboard.js
-
-        Chart.register(ChartDataLabels);
-
-        function getFechaHoraActual() {
-            const now = new Date();
-            const fecha = now.toLocaleDateString('en-US');
-            const hora = now.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            return `${fecha} ${hora}`;
-        }
-
-        function initDataTable(selector, tableTitle) {
-            const fechaHora = getFechaHoraActual();
-            $(selector).DataTable({
-                pageLength: 10,
-                order: [
-                    [6, 'asc']
-                ],
-                dom: "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
-                    "<'row'<'col-12'tr>>" +
-                    "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
-                buttons: [{
-                        extend: 'excelHtml5',
-                        title: `${tableTitle} - ${fechaHora}`,
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-success btn-sm mx-0',
-                        filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
-                    },
-                    {
-                        extend: 'pdfHtml5',
-                        title: `${tableTitle} - ${fechaHora}`,
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-danger btn-sm mx-1',
-                        orientation: 'landscape',
-                        pageSize: 'A4',
-                        filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
-                    },
-                    {
-                        extend: 'print',
-                        title: `${tableTitle} - ${fechaHora}`,
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-primary btn-sm'
+                @media (max-width: 575.98px) {
+                    .kpi-erp .info-box {
+                        height: auto;
                     }
-                ],
-                searching: true,
-            });
-        }
+                }
 
-        function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
-            if (!yearInp || !monthInp || !weekInp) return;
-            yearInp.classList.add('d-none');
-            monthInp.classList.add('d-none');
-            weekInp.classList.add('d-none');
+                .kpi-erp .info-box:hover {
+                    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+                    transform: translateY(-1px);
+                }
 
-            if (typeSelect.value === 'year') yearInp.classList.remove('d-none');
-            if (typeSelect.value === 'month') monthInp.classList.remove('d-none');
-            if (typeSelect.value === 'week') weekInp.classList.remove('d-none');
-        }
+                .kpi-erp .info-box[role="button"] {
+                    cursor: pointer;
+                }
 
-        function printChart(canvasId, chartTitle, filterText = '') {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
+                #lateOrdersModal.is-loading #lateOrdersModalTable {
+                    visibility: hidden;
+                }
 
-            const dataUrl = canvas.toDataURL();
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+                .dt-print-area {
+                    display: none;
+                }
+
+                @media print {
+                    @page {
+                        size: A4 landscape;
+                        margin: 12mm;
+                    }
+
+                    body.dt-printing > :not(.dt-print-area) {
+                        display: none !important;
+                    }
+
+                    body.dt-printing .dt-print-area {
+                        display: block !important;
+                        visibility: visible !important;
+                        position: static !important;
+                        margin: 0 !important;
+                        width: 100%;
+                        background: #fff;
+                        padding: 16px;
+                    }
+
+                    body.dt-printing .dt-print-title {
+                        font-size: 13px;
+                        font-weight: 800;
+                        margin-bottom: 10px;
+                        text-align: center;
+                    }
+
+                    body.dt-printing .dt-print-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 11px;
+                        table-layout: fixed;
+                        page-break-inside: auto;
+                    }
+
+                    body.dt-printing .dt-print-table thead {
+                        display: table-header-group;
+                    }
+
+                    body.dt-printing .dt-print-table tbody {
+                        display: table-row-group;
+                    }
+
+                    body.dt-printing .dt-print-table tr {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
+
+                    body.dt-printing .dt-print-table th,
+                    body.dt-printing .dt-print-table td {
+                        border: 1px solid #e5e7eb;
+                        padding: 6px 8px;
+                        vertical-align: top;
+                        word-break: break-word;
+                    }
+
+                    body.dt-printing .dt-print-table th {
+                        background: #111827;
+                        color: #ffffff;
+                        font-weight: 800;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+
+                    body.dt-printing .dt-print-table tbody tr:nth-child(odd) td {
+                        background: #f8fafc;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+
+                    body.dt-printing .dt-print-table td,
+                    body.dt-printing .dt-print-table th {
+                        line-height: 1.2;
+                    }
+                }
+
+                .kpi-erp .info-box .info-box-icon {
+                    width: 62px;
+                    height: 54px;
+                    font-size: 22px;
+                    line-height: 54px;
+                    border-radius: 8px;
+                    background: #f2f4f7 !important;
+                    box-shadow: none !important;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .kpi-erp .info-box-icon.bg-success { color: #198754 !important; }
+                .kpi-erp .info-box-icon.bg-danger { color: #dc3545 !important; }
+                .kpi-erp .info-box-icon.bg-primary { color: #0d6efd !important; }
+                .kpi-erp .info-box-icon.bg-warning { color: #f59e0b !important; }
+                .kpi-erp .info-box-icon.bg-info { color: #0d6efd !important; }
+                .kpi-erp .info-box-icon.bg-secondary { color: #6b7280 !important; }
+
+                .kpi-erp .info-box .info-box-text {
+                    font-size: .70rem;
+                    font-weight: 800;
+                    letter-spacing: .02em;
+                    text-transform: uppercase;
+                    color: #64748b;
+                }
+
+                .kpi-erp .info-box .badge {
+                    border-radius: 999px;
+                }
+
+                .kpi-erp .info-box .info-box-content {
+                    flex: 1 1 auto;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: flex-start;
+                    width: 100%;
+                    min-width: 0;
+                    gap: 2px;
+                }
+
+                .kpi-erp .kpi-split {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) auto;
+                    align-items: center;
+                    width: 100%;
+                    column-gap: .5rem;
+                }
+
+                .kpi-erp .kpi-main {
+                    min-width: 0;
+                }
+
+                .kpi-erp .kpi-badges {
+                    display: grid;
+                    row-gap: 2px;
+                    justify-items: end;
+                    max-width: 220px;
+                }
+
+                .kpi-erp .kpi-badges-row {
+                    display: flex;
+                    gap: 4px;
+                    flex-wrap: nowrap;
+                    justify-content: flex-end;
+                }
+
+                @media (max-width: 575.98px) {
+                    .kpi-erp .kpi-split {
+                        grid-template-columns: 1fr;
+                        row-gap: 4px;
+                    }
+
+                    .kpi-erp .kpi-badges {
+                        justify-items: start;
+                        max-width: none;
+                    }
+
+                    .kpi-erp .kpi-badges-row {
+                        justify-content: flex-start;
+                        flex-wrap: wrap;
+                    }
+                }
+
+                .kpi-erp .info-box-number {
+                    display: block;
+                    font-size: 1.4rem;
+                    font-weight: 800;
+                    line-height: 1.05;
+                    color: #0f172a;
+                    margin-top: 0;
+                }
+
+
+                .kpi-erp .kpi-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    border-radius: 999px;
+                    padding: .16rem .5rem;
+                    font-size: .66rem;
+                    line-height: 1;
+                    font-weight: 700;
+                    border: 1px solid transparent;
+                    white-space: nowrap;
+                }
+
+                .kpi-erp .kpi-pill--info {
+                    background: #e7f1ff;
+                    border-color: #cfe2ff;
+                    color: #084298;
+                }
+
+                .kpi-erp .kpi-pill--muted {
+                    background: #f3f4f6;
+                    border-color: #e5e7eb;
+                    color: #374151;
+                }
+
+                .kpi-erp .kpi-pill--danger {
+                    background: #fee2e2;
+                    border-color: #fecaca;
+                    color: #991b1b;
+                }
+
+                .dataTables_wrapper {
+                    margin-top: 20px !important;
+                    margin-left: 15px !important;
+                    margin-right: 15px !important;
+                }
+
+                #tableweek tbody td {
+                    height: 50px;
+                }
+
+                #tablelate tbody td {
+                    height: 50px;
+                }
+
+                /* Estilo ERP para el modal On Time/Late */
+                #onTimeModal .modal-content,
+                #lateOrdersModal .modal-content,
+                #ordersDetailModal .modal-content {
+                    border: 1px solid #c5c9d2;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+                }
+
+                #onTimeModal .modal-header,
+                #lateOrdersModal .modal-header,
+                #ordersDetailModal .modal-header {
+                    background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%);
+                    border-bottom: 1px solid #c5c9d2;
+                    color: #0f172a;
+                    letter-spacing: .2px;
+                }
+
+                /* Late Orders: header rojito */ 
+                #lateOrdersModal .modal-header { 
+                    /* igual al estilo de #onTimeModal.status-late */
+                    background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
+                    border-bottom-color: #e0c4bc;
+                    color: #0f172a; 
+                } 
+ 
+                #lateOrdersModal .modal-header .close { 
+                    color: #0f172a; 
+                    opacity: 1; 
+                    text-shadow: none; 
+                } 
+
+                #onTimeModal .modal-title,
+                #lateOrdersModal .modal-title,
+                #ordersDetailModal .modal-title {
+                    font-weight: 700;
+                }
+
+                #onTimeModal .modal-body,
+                #lateOrdersModal .modal-body,
+                #ordersDetailModal .modal-body {
+                    background: #f7f9fc;
+                }
+
+                #onTimeModal table thead,
+                #lateOrdersModal table thead,
+                #ordersDetailModal table thead {
+                    background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
+                    color: #0f172a;
+                }
+
+                #lateOrdersModal table thead {
+                    background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
+                    color: #0f172a;
+                }
+
+                #onTimeModal table tbody tr:hover,
+                #lateOrdersModal table tbody tr:hover,
+                #ordersDetailModal table tbody tr:hover {
+                    background: #eef2f7;
+                }
+
+                /* Tabla estilo ERP en modal */
+                #onTimeModal .dataTables_wrapper .dataTables_filter input,
+                #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
+                #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
+                    border: 1px solid #c5c9d2;
+                    border-radius: 6px;
+                    padding: 4px 8px;
+                    background: #f8fafc;
+                }
+
+                #onTimeModal .dataTables_wrapper .dataTables_length select,
+                #lateOrdersModal .dataTables_wrapper .dataTables_length select,
+                #ordersDetailModal .dataTables_wrapper .dataTables_length select {
+                    border: 1px solid #c5c9d2;
+                    border-radius: 6px;
+                    padding: 4px 6px;
+                    background: #f8fafc;
+                    font-size: 14px;
+                }
+
+                #onTimeModal .dataTables_wrapper .dataTables_filter input,
+                #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
+                #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
+                    font-size: 14px;
+                }
+
+                /* Compactar espacio vertical de controles */
+                #onTimeModal .dataTables_wrapper .row:first-child,
+                #lateOrdersModal .dataTables_wrapper .row:first-child,
+                #ordersDetailModal .dataTables_wrapper .row:first-child {
+                    margin-bottom: 0 !important;
+                }
+
+                #onTimeModal .dataTables_wrapper .dataTables_filter,
+                #onTimeModal .dataTables_wrapper .dataTables_length,
+                #lateOrdersModal .dataTables_wrapper .dataTables_filter,
+                #lateOrdersModal .dataTables_wrapper .dataTables_length,
+                #ordersDetailModal .dataTables_wrapper .dataTables_filter,
+                #ordersDetailModal .dataTables_wrapper .dataTables_length {
+                    margin-bottom: 0 !important;
+                }
+
+                /* Controles ERP para filtros del modal */
+                #onTimeModal .erp-filter-control,
+                #lateOrdersModal .erp-filter-control,
+                #ordersDetailModal .erp-filter-control {
+                    border: 1px solid #c5c9d2;
+                    border-radius: 8px;
+                    padding: 6px 10px;
+                    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+                    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+                    color: #0f172a;
+                    font-weight: 600;
+                    height: 34px;
+                    line-height: 1.2;
+                }
+
+                #onTimeModal .erp-filter-control:focus,
+                #lateOrdersModal .erp-filter-control:focus,
+                #ordersDetailModal .erp-filter-control:focus {
+                    border-color: #94a3b8;
+                    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+                }
+
+                /* Botones estilo ERP en gris con ícono de color */
+                #onTimeModal .btn-erp-success,
+                #onTimeModal .btn-erp-danger,
+                #onTimeModal .btn-erp-primary,
+                #lateOrdersModal .btn-erp-success,
+                #lateOrdersModal .btn-erp-danger,
+                #lateOrdersModal .btn-erp-primary,
+                #ordersDetailModal .btn-erp-success,
+                #ordersDetailModal .btn-erp-danger,
+                #ordersDetailModal .btn-erp-primary {
+                    background: #f8fafc;
+                    border: 1px solid #d5d8dd;
+                    color: #1f2937;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    box-shadow: none;
+                }
+
+                #onTimeModal .btn-erp-success i,
+                #lateOrdersModal .btn-erp-success i,
+                #ordersDetailModal .btn-erp-success i {
+                    color: #0f5132;
+                }
+
+                #onTimeModal .btn-erp-danger i,
+                #lateOrdersModal .btn-erp-danger i,
+                #ordersDetailModal .btn-erp-danger i {
+                    color: #b91c1c;
+                }
+
+                #onTimeModal .btn-erp-primary i,
+                #lateOrdersModal .btn-erp-primary i,
+                #ordersDetailModal .btn-erp-primary i {
+                    color: #0b5ed7;
+                }
+
+                #onTimeModal .btn-erp-success:hover,
+                #onTimeModal .btn-erp-danger:hover,
+                #onTimeModal .btn-erp-primary:hover,
+                #lateOrdersModal .btn-erp-success:hover,
+                #lateOrdersModal .btn-erp-danger:hover,
+                #lateOrdersModal .btn-erp-primary:hover,
+                #ordersDetailModal .btn-erp-success:hover,
+                #ordersDetailModal .btn-erp-danger:hover,
+                #ordersDetailModal .btn-erp-primary:hover {
+                    filter: brightness(0.97);
+                    color: #111827;
+                }
+
+                #ordersDetailModalFilters {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 2px 8px;
+                    background: #eef1f5;
+                    border: 1px solid #d5d8dd;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    color: #4b5563;
+                }
+
+                #onTimeDetailTable,
+                #lateOrdersModalTable,
+                #ordersDetailTable {
+                    border: 1px solid #d1d5db;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    background: #fff;
+                    table-layout: auto;
+                }
+
+                #onTimeDetailTable thead th,
+                #lateOrdersModalTable thead th,
+                #ordersDetailTable thead th {
+                    background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
+                    color: #0f172a;
+                    border-bottom: 1px solid #c5c9d2;
+                    font-size: 14px;
+                    font-weight: 700;
+                }
+
+                #onTimeDetailTable td,
+                #onTimeDetailTable th,
+                #lateOrdersModalTable td,
+                #lateOrdersModalTable th,
+                #ordersDetailTable td,
+                #ordersDetailTable th {
+                    padding: 8px 10px;
+                    vertical-align: middle;
+                    font-size: 14px;
+                    word-break: break-word;
+                }
+
+                /* Anchos para fechas (Due y Sent) */
+                #onTimeDetailTable th:nth-child(7),
+                #onTimeDetailTable td:nth-child(7),
+                #onTimeDetailTable th:nth-child(8),
+                #onTimeDetailTable td:nth-child(8) {
+                    min-width: 115px;
+                }
+
+                /* Anchos sugeridos para columnas compactas */
+                #onTimeDetailTable th:nth-child(1),
+                #ordersDetailTable th:nth-child(1),
+                #onTimeDetailTable td:nth-child(1),
+                #ordersDetailTable td:nth-child(1) {
+                    min-width: 70px;
+                    width: 8%;
+                }
+
+                #onTimeDetailTable th:nth-child(2),
+                #ordersDetailTable th:nth-child(2),
+                #onTimeDetailTable td:nth-child(2),
+                #ordersDetailTable td:nth-child(2) {
+                    min-width: 90px;
+                    width: 10%;
+                }
+
+                #onTimeDetailTable th:nth-child(4),
+                #ordersDetailTable th:nth-child(4),
+                #onTimeDetailTable td:nth-child(4),
+                #ordersDetailTable td:nth-child(4) {
+                    min-width: 90px;
+                    width: 9%;
+                }
+
+                #onTimeDetailTable th:nth-child(5),
+                #ordersDetailTable th:nth-child(5),
+                #onTimeDetailTable td:nth-child(5),
+                #ordersDetailTable td:nth-child(5) {
+                    min-width: 55px;
+                    width: 5%;
+                }
+
+                #onTimeDetailTable th:nth-child(6),
+                #ordersDetailTable th:nth-child(6),
+                #onTimeDetailTable td:nth-child(6),
+                #ordersDetailTable td:nth-child(6) {
+                    min-width: 70px;
+                    width: 7%;
+                }
+
+                #onTimeDetailTable th:nth-child(7),
+                #ordersDetailTable th:nth-child(7),
+                #onTimeDetailTable td:nth-child(7),
+                #ordersDetailTable td:nth-child(7),
+                #onTimeDetailTable th:nth-child(8),
+                #ordersDetailTable th:nth-child(8),
+                #onTimeDetailTable td:nth-child(8),
+                #ordersDetailTable td:nth-child(8) {
+                    min-width: 80px;
+                    width: 7%;
+                }
+
+                #onTimeDetailTable th:nth-child(9),
+                #ordersDetailTable th:nth-child(9),
+                #onTimeDetailTable td:nth-child(9),
+                #ordersDetailTable td:nth-child(9) {
+                    min-width: 50px;
+                    width: 5%;
+                }
+
+                #onTimeDetailTable th:nth-child(10),
+                #ordersDetailTable th:nth-child(10),
+                #onTimeDetailTable td:nth-child(10),
+                #ordersDetailTable td:nth-child(10) {
+                    min-width: 160px;
+                    width: 12%;
+                }
+
+                /* Descripcion ocupa el resto */
+                #onTimeDetailTable th:nth-child(3),
+                #ordersDetailTable th:nth-child(3),
+                #onTimeDetailTable td:nth-child(3),
+                #ordersDetailTable td:nth-child(3) {
+                    min-width: 340px;
+                    width: auto;
+                }
+
+                #onTimeDetailTable tbody tr:nth-child(odd) {
+                    background: #f8fafc;
+                }
+
+                #onTimeDetailTable tbody tr:hover {
+                    background: #eef2f7;
+                }
+
+                #lateOrdersModalTable tbody tr:nth-child(odd) {
+                    background: #f8fafc;
+                }
+
+                #lateOrdersModalTable tbody tr:hover {
+                    background: #eef2f7;
+                }
+
+                #onTimeModal .dataTables_wrapper .dataTables_info,
+                #onTimeModal .dataTables_wrapper .dataTables_length label,
+                #onTimeModal .dataTables_wrapper .dataTables_filter label {
+                    font-size: 14px;
+                    color: #1f2937;
+                }
+
+                /* Colores por fila/estado */
+                #onTimeModal .status-row-early td {
+                    background: inherit;
+                }
+
+                #onTimeModal .status-row-on-time td {
+                    background: inherit;
+                }
+
+                #onTimeModal .status-row-late td {
+                    background: inherit;
+                }
+
+                /* Δ Days colores */
+                #onTimeModal .delta-early {
+                    color: #2b6cb0;
+                    font-weight: 700;
+                }
+
+                #onTimeModal .delta-on-time {
+                    color: #065f46;
+                    font-weight: 700;
+                }
+
+                #onTimeModal .delta-late {
+                    color: #b91c1c;
+                    font-weight: 700;
+                }
+
+                /* Neutralizar colores de texto aplicados por clases de estado */
+                #onTimeModal td.text-primary,
+                #onTimeModal td.text-success,
+                #onTimeModal td.text-danger {
+                    color: inherit !important;
+                    font-weight: 400 !important;
+                }
+
+                /* Variantes por estado */
+                /* Early azul, On Time verde */
+                #onTimeModal.status-early .modal-header {
+                    background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
+                    border-color: #c5cedd;
+                }
+
+                #onTimeModal.status-on-time .modal-header {
+                    background: linear-gradient(180deg, #e6f4ec 0%, #d5e7dc 100%);
+                    border-color: #c3e0cf;
+                }
+
+                #onTimeModal.status-late .modal-header {
+                    background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
+                    border-color: #e0c4bc;
+                }
+            </style>
+            @endsection
+
+            @push('js')
+
+            <script>
+                // orders_dashboard.js
+
+                Chart.register(ChartDataLabels);
+
+                // Modal de detalle para gráfico "Total Orders"
+                const ordersModalEl = document.getElementById('ordersDetailModal');
+                const ordersModalContentEl = document.getElementById('ordersDetailModalContent');
+                const ordersModalTitleEl = document.getElementById('ordersDetailModalLabel');
+                const ordersModalFiltersEl = document.getElementById('ordersDetailModalFilters');
+                const ordersModalCustomerEl = document.getElementById('ordersDetailCustomer');
+                const ordersModalButtonsEl = document.getElementById('ordersDetailButtons');
+                const ordersDetailState = {
+                    params: {}
+                };
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                const getFullMonth = (val) => {
+                    const n = parseInt(val, 10);
+                    return isNaN(n) ? '' : (monthNames[n - 1] || '');
+                };
+
+                function openOrdersDetailModal(params, labelText) {
+                    ordersDetailState.params = {
+                        ...(params || {})
+                    };
+                    if (ordersModalCustomerEl) {
+                        ordersModalCustomerEl.value = params.customer || '';
+                    }
+                    if (!ordersModalEl || !ordersModalContentEl) return;
+                    ordersModalContentEl.innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
+                    if (ordersModalTitleEl) ordersModalTitleEl.textContent = labelText || 'Orders detail';
+                    if (ordersModalFiltersEl) {
+                        const txt = [];
+                        if (params.year) txt.push(`Year: ${params.year}`);
+                        if (params.month) {
+                            const fullMonth = getFullMonth(params.month) || new Date(`${params.year || new Date().getFullYear()}-${params.month}-01`).toLocaleString('en-US', {
+                                month: 'long'
+                            });
+                            txt.push(`Month: ${params.month} (${fullMonth})`);
+                        }
+                        if (params.day) txt.push(`Day: ${params.day}`);
+                        if (params.week) txt.push(`Week: ${params.week}`);
+                        if (params.customer) txt.push(`Customer: ${params.customer}`);
+                        ordersModalFiltersEl.textContent = txt.length ? txt.join(' | ') : '';
+                    }
+                    const searchParams = new URLSearchParams(params);
+                    fetch(`/orders/summary/detail?${searchParams.toString()}`)
+                        .then(res => res.text())
+                        .then(html => {
+                            ordersModalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
+                            const $table = $('#ordersDetailTable');
+                            if ($.fn.DataTable.isDataTable($table)) {
+                                $table.DataTable().destroy();
+                            }
+                            if ($table.length) {
+                                let filtersText = (ordersModalFiltersEl?.textContent || '').trim();
+                                if (!filtersText) {
+                                    const p = ordersDetailState.params || {};
+                                    const parts = [];
+                                    if (p.year) parts.push(`Year: ${p.year}`);
+                                    if (p.month) {
+                                        const fullMonth = getFullMonth(p.month) || new Date(`${p.year || new Date().getFullYear()}-${p.month}-01`).toLocaleString('en-US', {
+                                            month: 'long'
+                                        });
+                                        parts.push(`Month: ${p.month} (${fullMonth})`);
+                                    }
+                                    if (p.day) parts.push(`Day: ${p.day}`);
+                                    if (p.week) parts.push(`Week: ${p.week}`);
+                                    if (p.customer) parts.push(`Customer: ${p.customer}`);
+                                    filtersText = parts.join(' | ');
+                                }
+                                const exportTitle = `Schedule Statistics - ${ordersModalTitleEl?.textContent || 'Orders detail'}`;
+                                const exportFilename = `${exportTitle}${filtersText ? '_' + filtersText : ''}`.replace(/[\\/:*?"<>| ]+/g, '_');
+
+                                    const dt = $table.DataTable({
+                                        dom: "<'row mb-0'<'col-sm-6 d-flex align-items-center'l><'col-sm-6 d-flex justify-content-end align-items-center'f>>" +
+                                            "<'row'<'col-12'tr>>" +
+                                            "<'row mt-2'<'col-sm-5'i><'col-sm-7'p>>",
+                                    pageLength: 14,
+                                    lengthMenu: [14, 25, 50, 100],
+                                        searching: true,
+                                        ordering: true,
+                                        info: true,
+                                        order: [
+                                            [6, 'asc'],
+                                            [7, 'asc']
+                                        ], // Uploaded then Due
+                                        buttons: [{
+                                                extend: 'excelHtml5',
+                                                text: '<i class="fas fa-file-excel"></i> Excel',
+                                                className: 'btn btn-erp-success btn-sm mx-1',
+                                                title: exportTitle,
+                                                filename: exportFilename,
+                                                messageTop: filtersText || null
+                                            },
+                                            {
+                                                extend: 'pdfHtml5',
+                                                text: '<i class="fas fa-file-pdf"></i> PDF',
+                                                className: 'btn btn-erp-danger btn-sm mx-1',
+                                                orientation: 'landscape',
+                                                pageSize: 'A4',
+                                                title: exportTitle,
+                                                filename: exportFilename,
+                                                messageTop: filtersText || null,
+                                                customize: function(doc) {
+                                                    addPdfRowNumbers(doc, '#');
+                                                }
+                                            },
+                                            {
+                                                extend: 'print',
+                                                text: '<i class="fas fa-print"></i> Print',
+                                                className: 'btn btn-erp-primary btn-sm mx-1',
+                                                action: function(e, dt) {
+                                                    e.preventDefault();
+                                                    const printed = printDataTableAsPdf(dt, exportTitle, getFechaHoraActual(), {
+                                                        title: exportTitle,
+                                                        messageTop: filtersText || null,
+                                                        orientation: 'landscape',
+                                                        pageSize: 'A4'
+                                                    });
+                                                    if (!printed) {
+                                                        printDataTableInPlace(dt, exportTitle, getFechaHoraActual());
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    });
+                                const $host = $(ordersModalButtonsEl);
+                                if ($host.length) {
+                                    $host.empty();
+                                    $host.append(dt.buttons().container());
+                                }
+                                populateOrdersModalCustomers(params.customer || '');
+                            }
+                            $('#ordersDetailModal').modal('show');
+                        })
+                        .catch(() => {
+                            ordersModalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
+                            $('#ordersDetailModal').modal('show');
+                        });
+                }
+
+                // Filtro de customer dentro del modal de Orders
+                function refreshOrdersDetailByCustomer() {
+                    const base = {
+                        ...(ordersDetailState.params || {})
+                    };
+                    if (ordersModalCustomerEl && ordersModalCustomerEl.value) {
+                        base.customer = ordersModalCustomerEl.value;
+                    } else {
+                        delete base.customer;
+                    }
+                    openOrdersDetailModal(base, ordersModalTitleEl?.textContent || 'Orders detail');
+                }
+
+                function populateOrdersModalCustomers(selected) {
+                    if (!ordersModalCustomerEl) return;
+                    const tableBody = document.querySelector('#ordersDetailTable tbody');
+                    if (!tableBody) return;
+                    const customers = new Set();
+                    tableBody.querySelectorAll('tr').forEach(tr => {
+                        const td = tr.children[3];
+                        if (td) {
+                            const name = (td.textContent || '').trim();
+                            if (name) customers.add(name);
+                        }
+                    });
+                    const prev = ordersModalCustomerEl.value;
+                    ordersModalCustomerEl.innerHTML = '<option value="">-- All Customers --</option>';
+                    customers.forEach(name => {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = name;
+                        ordersModalCustomerEl.appendChild(opt);
+                    });
+                    if (selected && customers.has(selected)) {
+                        ordersModalCustomerEl.value = selected;
+                    } else if (customers.has(prev)) {
+                        ordersModalCustomerEl.value = prev;
+                    } else {
+                        ordersModalCustomerEl.value = '';
+                    }
+                }
+
+                function getFechaHoraActual() {
+                    const now = new Date();
+                    const fecha = now.toLocaleDateString('en-US');
+                    const hora = now.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    return `${fecha} ${hora}`;
+                }
+
+                function stripHtml(value) {
+                    return $('<div>').html(value ?? '').text().trim();
+                }
+
+                function printDataTableInPlace(dt, tableTitle, fechaHora) {
+                    if (!dt) return;
+                    let $area = $('#dtPrintArea');
+                    if (!$area.length) {
+                        $area = $('<div id="dtPrintArea" class="dt-print-area" aria-hidden="true"></div>').appendTo('body');
+                    }
+                    const headers = dt.columns().header().toArray().map(th => $(th).text().trim());
+                    const rows = dt.rows({
+                        search: 'applied',
+                        order: 'applied'
+                    }).data().toArray();
+
+                    const thead = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
+                    const tbody = `<tbody>${rows.map(row => {
+                        const cells = (Array.isArray(row) ? row : Object.values(row));
+                        return `<tr>${cells.map(cell => `<td>${stripHtml(cell)}</td>`).join('')}</tr>`;
+                    }).join('')}</tbody>`;
+
+                    const title = `${tableTitle} - ${fechaHora}`;
+                    $area.html(`
+                        <div class="dt-print-header">
+                            <div class="dt-print-title">${title}</div>
+                        </div>
+                        <table class="dt-print-table">${thead}${tbody}</table>
+                    `);
+
+                    document.body.classList.add('dt-printing');
+                    setTimeout(() => window.print(), 0);
+
+                    const cleanup = () => {
+                        document.body.classList.remove('dt-printing');
+                        $area.empty();
+                        window.removeEventListener('afterprint', cleanup);
+                    };
+                    window.addEventListener('afterprint', cleanup, {
+                        once: true
+                    });
+                }
+
+                function buildPdfDocFromDataTable(dt, config) {
+                    const exportOptions = (config && config.exportOptions) ? config.exportOptions : {};
+                    const exportData = dt.buttons.exportData(exportOptions);
+                    const exportInfo = dt.buttons.exportInfo(config || {});
+                    const body = [];
+
+                    if ((config && config.header) !== false) {
+                        body.push(exportData.header.map(h => ({
+                            text: typeof h === 'string' ? h : (h ?? '') + '',
+                            style: 'tableHeader'
+                        })));
+                    }
+
+                    for (let rowIndex = 0; rowIndex < exportData.body.length; rowIndex++) {
+                        body.push(exportData.body[rowIndex].map(cell => ({
+                            text: typeof (cell = (cell ?? '')) === 'string' ? cell : cell + '',
+                            style: (rowIndex % 2) ? 'tableBodyEven' : 'tableBodyOdd'
+                        })));
+                    }
+
+                    if ((config && config.footer) !== false && exportData.footer) {
+                        body.push(exportData.footer.map(f => ({
+                            text: typeof f === 'string' ? f : (f ?? '') + '',
+                            style: 'tableFooter'
+                        })));
+                    }
+
+                    const doc = {
+                        pageSize: (config && config.pageSize) ? config.pageSize : 'A4',
+                        pageOrientation: (config && config.orientation) ? config.orientation : 'portrait',
+                        content: [{
+                            table: {
+                                headerRows: 1,
+                                body
+                            },
+                            layout: 'noBorders'
+                        }],
+                        styles: {
+                            tableHeader: { bold: true, fontSize: 11, color: 'white', fillColor: '#2d4154', alignment: 'center' },
+                            tableBodyEven: {},
+                            tableBodyOdd: { fillColor: '#f3f3f3' },
+                            tableFooter: { bold: true, fontSize: 11, color: 'white', fillColor: '#2d4154' },
+                            title: { alignment: 'center', fontSize: 15 },
+                            message: {}
+                        },
+                        defaultStyle: { fontSize: 10 }
+                    };
+
+                    if (exportInfo.messageTop) {
+                        doc.content.unshift({ text: exportInfo.messageTop, style: 'message', margin: [0, 0, 0, 12] });
+                    }
+                    if (exportInfo.messageBottom) {
+                        doc.content.push({ text: exportInfo.messageBottom, style: 'message', margin: [0, 0, 0, 12] });
+                    }
+                    if (exportInfo.title) {
+                        doc.content.unshift({ text: exportInfo.title, style: 'title', margin: [0, 0, 0, 12] });
+                    }
+
+                    if (config && typeof config.customize === 'function') {
+                        config.customize(doc, config, dt);
+                    }
+
+                    return { doc, exportInfo };
+                }
+
+                function printPdfDocInHiddenFrame(doc) {
+                    const pdfMake = (window.pdfMake)
+                        ? window.pdfMake
+                        : ($.fn.dataTable && $.fn.dataTable.Buttons && $.fn.dataTable.Buttons.pdfMake ? $.fn.dataTable.Buttons.pdfMake() : null);
+
+                    if (!pdfMake || !pdfMake.createPdf) return false;
+
+                    pdfMake.createPdf(doc).getBlob(function(blob) {
+                        const url = URL.createObjectURL(blob);
+
+                        let iframe = document.getElementById('dtPdfPrintFrame');
+                        if (!iframe) {
+                            iframe = document.createElement('iframe');
+                            iframe.id = 'dtPdfPrintFrame';
+                            iframe.style.position = 'fixed';
+                            iframe.style.right = '0';
+                            iframe.style.bottom = '0';
+                            iframe.style.width = '0';
+                            iframe.style.height = '0';
+                            iframe.style.border = '0';
+                            iframe.style.visibility = 'hidden';
+                            iframe.setAttribute('aria-hidden', 'true');
+                            document.body.appendChild(iframe);
+                        }
+
+                        const cleanup = () => {
+                            try { URL.revokeObjectURL(url); } catch (_) {}
+                            iframe.removeEventListener('load', onLoad);
+                            iframe.removeEventListener('error', onError);
+                        };
+
+                        const onError = () => cleanup();
+                        const onLoad = () => {
+                            try {
+                                iframe.contentWindow.focus();
+                                iframe.contentWindow.print();
+                            } finally {
+                                setTimeout(cleanup, 1000);
+                            }
+                        };
+
+                        iframe.addEventListener('load', onLoad);
+                        iframe.addEventListener('error', onError);
+                        iframe.src = url;
+                    });
+
+                    return true;
+                }
+
+                function addPdfRowNumbers(doc, label = '#') {
+                    if (!doc || !Array.isArray(doc.content)) return;
+                    const tableNode = doc.content.find(node => node && node.table && Array.isArray(node.table.body));
+                    if (!tableNode) return;
+                    const body = tableNode.table.body;
+                    if (!Array.isArray(body) || body.length === 0) return;
+                    if (body[0] && body[0][0] && body[0][0].text === label) return;
+
+                    // Header row
+                    if (Array.isArray(body[0])) {
+                        body[0].unshift({ text: label, style: 'tableHeader' });
+                    }
+
+                    // Body rows (skip footer rows with tableFooter style)
+                    let counter = 1;
+                    for (let i = 1; i < body.length; i++) {
+                        const row = body[i];
+                        if (!Array.isArray(row)) continue;
+
+                        const firstCellStyle = row[0] && row[0].style ? row[0].style : '';
+                        const isFooterRow = firstCellStyle === 'tableFooter';
+
+                        if (isFooterRow) {
+                            row.unshift({ text: '', style: 'tableFooter' });
+                            continue;
+                        }
+
+                        const zebraStyle = ((counter - 1) % 2) ? 'tableBodyEven' : 'tableBodyOdd';
+                        row.unshift({ text: String(counter), style: zebraStyle });
+                        counter++;
+                    }
+                }
+
+                function printDataTableAsPdf(dt, tableTitle, fechaHora, extraConfig) {
+                    try {
+                        const cfg = {
+                            title: `${tableTitle} - ${fechaHora}`,
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            header: true,
+                            footer: false
+                        };
+                        if (extraConfig && typeof extraConfig === 'object') {
+                            Object.assign(cfg, extraConfig);
+                        }
+                        const { doc } = buildPdfDocFromDataTable(dt, cfg);
+                        addPdfRowNumbers(doc, '#');
+                        return printPdfDocInHiddenFrame(doc);
+                    } catch (e) {
+                        return false;
+                    }
+                }
+
+                function initDataTable(selector, tableTitle, options) {
+                    const fechaHora = getFechaHoraActual();
+                    const opts = options || {};
+                    const useErpButtons = opts.buttonStyle === 'erp';
+                    const showLength = opts.showLength !== false;
+                    const dtConfig = {
+                        pageLength: 14,
+                        lengthMenu: [[14, 25, 50, 100], [14, 25, 50, 100]],
+                        order: [
+                            [6, 'asc']
+                        ],
+                        dom: showLength
+                            ? "<'row mb-3'<'col-md-6 d-flex align-items-center'lB><'col-md-6 d-flex justify-content-end'f>>" +
+                              "<'row'<'col-12'tr>>" +
+                              "<'row mt-2'<'col-md-6'i><'col-md-6'p>>"
+                            : "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
+                            "<'row'<'col-12'tr>>" +
+                            "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
+                        buttons: [{
+                                extend: 'excelHtml5',
+                                title: `${tableTitle} - ${fechaHora}`,
+                                text: '<i class="fas fa-file-excel"></i> Excel',
+                                className: useErpButtons ? 'btn btn-erp-success btn-sm mx-1' : 'btn btn-success btn-sm mx-0',
+                                filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                title: `${tableTitle} - ${fechaHora}`,
+                                text: '<i class="fas fa-file-pdf"></i> PDF',
+                                className: useErpButtons ? 'btn btn-erp-danger btn-sm mx-1' : 'btn btn-danger btn-sm mx-1',
+                                orientation: 'landscape',
+                                pageSize: 'A4',
+                                filename: `${tableTitle.replace(/\s+/g, '_')}_${fechaHora.replace(/[/: ]/g, '_')}`,
+                                customize: function(doc) {
+                                    addPdfRowNumbers(doc, '#');
+                                }
+                            },
+                            {
+                                extend: 'print',
+                                title: `${tableTitle} - ${fechaHora}`,
+                                text: '<i class="fas fa-print"></i> Print',
+                                className: useErpButtons ? 'btn btn-erp-primary btn-sm mx-1' : 'btn btn-primary btn-sm mx-1',
+                                action: function(e, dt) {
+                                    e.preventDefault();
+                                    const printed = printDataTableAsPdf(dt, tableTitle, fechaHora);
+                                    if (!printed) {
+                                        printDataTableInPlace(dt, tableTitle, fechaHora);
+                                    }
+                                }
+                            }
+                        ],
+                        searching: true,
+                        lengthChange: showLength,
+                    };
+
+                    if (typeof opts.pageLength === 'number') {
+                        dtConfig.pageLength = opts.pageLength;
+                    }
+
+                    if (opts.lengthMenu) {
+                        dtConfig.lengthMenu = opts.lengthMenu;
+                    }
+
+                    if (opts.columnDefs) {
+                        dtConfig.columnDefs = opts.columnDefs;
+                    }
+
+                    if (opts.order) {
+                        dtConfig.order = opts.order;
+                    }
+
+                    const dt = $(selector).DataTable(dtConfig);
+
+                    if (opts.buttonsHost && dt.buttons && dt.buttons().container) {
+                        const $host = $(opts.buttonsHost);
+                        if ($host.length) {
+                            $host.empty();
+                            dt.buttons().container().appendTo($host);
+                        }
+                    }
+
+                    return dt;
+                }
+
+                function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
+                    if (!yearInp || !monthInp || !weekInp) return;
+                    yearInp.classList.add('d-none');
+                    monthInp.classList.add('d-none');
+                    weekInp.classList.add('d-none');
+
+                    if (typeSelect.value === 'year') yearInp.classList.remove('d-none');
+                    if (typeSelect.value === 'month') monthInp.classList.remove('d-none');
+                    if (typeSelect.value === 'week') weekInp.classList.remove('d-none');
+                }
+
+                function printChart(canvasId, chartTitle, filterText = '') {
+                    const canvas = document.getElementById(canvasId);
+                    if (!canvas) return;
+
+                    const dataUrl = canvas.toDataURL();
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
 <html>
 <head>
     <title>${chartTitle}</title>
@@ -1047,689 +1988,911 @@
 </body>
 </html>
     `);
-            printWindow.document.close();
-        }
-
-        function loadChartElements() {
-            const filterType = document.getElementById('filterType');
-            const yearInput = document.getElementById('yearInput');
-            const monthInput = document.getElementById('monthInput');
-            const weekInput = document.getElementById('weekInput');
-            const customerFilter = document.getElementById('customerFilter');
-            const ctx = document.getElementById('ordersChart')?.getContext('2d');
-            const chartRef = {
-                chart: null
-            };
-
-            function updateChart() {
-                let url = '/orders/summary';
-                let currentFilterText = '';
-
-                if (filterType.value === 'year') {
-                    if (!yearInput?.value) return;
-                    url += `/year/${yearInput.value}`;
-                    currentFilterText = `Year: ${yearInput.value}`;
-                } else if (filterType.value === 'month') {
-                    if (!monthInput?.value) return;
-                    const [year, month] = monthInput.value.split('-');
-                    url += `/month/${year}/${month}`;
-                    currentFilterText = `Month: ${monthInput.value}`;
-                } else if (filterType.value === 'week') {
-                    if (!weekInput?.value) return;
-                    const [year, week] = weekInput.value.split('-W');
-                    url += `/week/${year}/${week}`;
-                    currentFilterText = `Week: ${weekInput.value}`;
+                    printWindow.document.close();
                 }
 
-                if (customerFilter?.value) {
-                    const separator = url.includes('?') ? '&' : '?';
-                    url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
-                    currentFilterText += `<br>Customer: ${customerFilter.value}`;
-                }
+                function loadChartElements() {
+                    const filterType = document.getElementById('filterType');
+                    const yearInput = document.getElementById('yearInput');
+                    const monthInput = document.getElementById('monthInput');
+                    const weekInput = document.getElementById('weekInput');
+                    const customerFilter = document.getElementById('customerFilter');
+                    const ctx = document.getElementById('ordersChart')?.getContext('2d');
+                    const chartRef = {
+                        chart: null
+                    };
 
-                fetch(url)
-                    .then(res => res.json())
-                    .then(({
-                        labels,
-                        data
-                    }) => {
-                        if (chartRef.chart) chartRef.chart.destroy();
+                    function updateChart() {
+                        let url = '/orders/summary';
+                        let currentFilterText = '';
 
-                        const totalOrders = data.reduce((acc, val) => acc + val, 0);
-
-                        chartRef.chart = new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels,
-                                datasets: [{
-                                    label: `ORDERS (Total: ${totalOrders})`,
-                                    data,
-                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                                    borderColor: 'rgba(75, 192, 192, 1)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                plugins: {
-                                    datalabels: {
-                                        anchor: 'end',
-                                        align: 'start',
-                                        color: '#000',
-                                        font: {
-                                            weight: 'bold',
-                                            size: 12
-                                        },
-                                        formatter: value => value
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: {
-                                            stepSize: 1
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: [ChartDataLabels]
-                        });
-                    });
-            }
-
-            if (filterType && yearInput && monthInput && weekInput) {
-                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                filterType.addEventListener('change', () => {
-                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                    updateChart();
-                });
-            }
-
-            [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
-                if (el) el.addEventListener('change', updateChart);
-            });
-
-            updateChart();
-        }
-
-        function loadCustomerChartElements() {
-            const filterType = document.getElementById('filterTypeCustomer');
-            const yearInput = document.getElementById('yearInputCustomer');
-            const monthInput = document.getElementById('monthInputCustomer');
-            const weekInput = document.getElementById('weekInputCustomer');
-            const ctx = document.getElementById('byCustomerChart')?.getContext('2d');
-            const chartRef = {
-                chart: null
-            };
-
-            function updateChart() {
-                let url = '/orders/summary/by-customer';
-
-                if (filterType.value === 'year') {
-                    if (!yearInput?.value) return;
-                    url += `/year/${yearInput.value}`;
-                } else if (filterType.value === 'month') {
-                    if (!monthInput?.value) return;
-                    const [year, month] = monthInput.value.split('-');
-                    url += `/month/${year}/${month}`;
-                } else if (filterType.value === 'week') {
-                    if (!weekInput?.value) return;
-                    const [year, week] = weekInput.value.split('-W');
-                    url += `/week/${year}/${week}`;
-                }
-
-                fetch(url)
-                    .then(res => res.json())
-                    .then(({
-                        labels,
-                        totals,
-                        totalAll
-                    }) => {
-                        if (chartRef.chart) chartRef.chart.destroy();
-
-                        chartRef.chart = new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels,
-                                datasets: [{
-                                    label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
-                                    data: totals,
-                                    backgroundColor: 'rgba(153, 102, 255, 0.7)',
-                                    borderColor: 'rgba(153, 102, 255, 1)',
-                                    borderWidth: 1,
-                                    yAxisID: 'y',
-                                }]
-                            },
-                            options: {
-                                plugins: {
-                                    datalabels: {
-                                        anchor: 'end',
-                                        align: 'start',
-                                        color: '#000',
-                                        font: {
-                                            weight: 'bold',
-                                            size: 12
-                                        },
-                                        formatter: value => value
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: {
-                                            stepSize: 1
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: [ChartDataLabels]
-                        });
-                    });
-            }
-
-            if (filterType && yearInput && monthInput && weekInput) {
-                updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                filterType.addEventListener('change', () => {
-                    updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
-                    updateChart();
-                });
-            }
-
-            [yearInput, monthInput, weekInput].forEach(el => {
-                if (el) el.addEventListener('change', updateChart);
-            });
-
-            updateChart();
-        }
-
-        /**
-         * =================================================================
-         * ≡ƒƒú≡ƒôèGr├ífico: Orders Due- NExt 8 weeks (summaryNextWeeks)
-         */
-        document.addEventListener('DOMContentLoaded', () => {
-            const ctx = document.getElementById('nextWeeksChart')?.getContext('2d');
-            const chartRef = {
-                chart: null
-            };
-
-            if (!ctx) return;
-
-            fetch('/orders/summary/next-weeks/8')
-                .then(res => res.json())
-                .then(({
-                    labels,
-                    total,
-                    sent
-                }) => {
-                    const totalOrders = total.reduce((acc, val) => acc + val, 0);
-
-                    if (chartRef.chart) chartRef.chart.destroy();
-
-                    chartRef.chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels,
-                            datasets: [{
-                                    label: `Total Orders`,
-                                    data: total,
-                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                                    borderColor: 'rgba(54, 162, 235, 1)',
-                                    borderWidth: 1
-                                },
-                                {
-                                    label: 'Sent Orders',
-                                    data: sent,
-                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                                    borderColor: 'rgba(75, 192, 192, 1)',
-                                    borderWidth: 1
-                                }
-                            ]
-                        },
-                        options: {
-                            plugins: {
-                                datalabels: {
-                                    anchor: 'end',
-                                    align: 'start',
-                                    color: '#000',
-                                    font: {
-                                        weight: 'bold',
-                                        size: 14
-                                    },
-                                    formatter: value => value
-                                }
-                            },
-                            responsive: true,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1
-                                    }
-                                }
-                            }
-                        },
-                        plugins: [ChartDataLabels]
-                    });
-                })
-
-            /**
-             * ===================================================================================
-             * ≡ƒƒú≡ƒôèGr├ífico: entregas a tiempo vs tarde con filtros (M├⌐todo summaryOnTimeFiltered)
-             */
-            const onTimeCtx = document.getElementById('onTimeChart')?.getContext('2d');
-            const monthFilter = document.getElementById('monthFilter');
-            const yearFilter = document.getElementById('yearFilter');
-            const customerFilterOnTime = document.getElementById('customerFilterOnTime');
-            const modalEl = document.getElementById('onTimeModal');
-            const modalContentEl = document.getElementById('onTimeModalContent');
-            const modalTitleEl = document.getElementById('onTimeModalLabel');
-            const modalMonthEl = document.getElementById('onTimeModalMonth');
-            const modalCustomerEl = document.getElementById('onTimeModalCustomer');
-            const modalState = { status: null, baseFilters: {} };
-
-            const onTimeChartRef = {
-                chart: null
-            };
-
-            // Registrar plugin de datalabels (una sola vez)
-            if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
-                Chart.register(ChartDataLabels);
-            }
-
-            function fetchModalData(status, filters) {
-                if (!modalEl || !modalContentEl) return;
-                modalContentEl.innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
-                const params = new URLSearchParams(filters || {});
-                params.append('status', status);
-                fetch(`/orders/summary/on-time-filtered-detail?${params.toString()}`)
-                    .then(res => res.text())
-                    .then(html => {
-                        modalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
-                        // Inicializar DataTable para buscar/paginar
-                        const $table = $('#onTimeDetailTable');
-                        if ($.fn.DataTable.isDataTable($table)) {
-                            $table.DataTable().destroy();
+                        if (filterType.value === 'year') {
+                            if (!yearInput?.value) return;
+                            url += `/year/${yearInput.value}`;
+                            currentFilterText = `Year: ${yearInput.value}`;
+                        } else if (filterType.value === 'month') {
+                            if (!monthInput?.value) return;
+                            const [year, month] = monthInput.value.split('-');
+                            url += `/month/${year}/${month}`;
+                            currentFilterText = `Month: ${monthInput.value}`;
+                        } else if (filterType.value === 'week') {
+                            if (!weekInput?.value) return;
+                            const [year, week] = weekInput.value.split('-W');
+                            url += `/week/${year}/${week}`;
+                            currentFilterText = `Week: ${weekInput.value}`;
                         }
-                        if ($table.length) {
-                            const dt = $table.DataTable({
-                                dom: "<'row mb-0'<'col-sm-6 d-flex align-items-center'l><'col-sm-6 d-flex justify-content-end align-items-center'f>>" +
-                                    "<'row'<'col-12'tr>>" +
-                                    "<'row mt-2'<'col-sm-5'i><'col-sm-7'p>>",
-                                pageLength: 12,
-                                lengthMenu: [12, 25, 50, 100],
-                                searching: true,
-                                ordering: true,
-                                info: true,
-                                order: [[6, 'desc']], // Sent column (index 6)
-                                buttons: [
-                                    {
-                                        extend: 'excelHtml5',
-                                        text: '<i class="fas fa-file-excel"></i> Excel',
-                                        className: 'btn btn-erp-success btn-sm mx-1'
+
+                        if (customerFilter?.value) {
+                            const separator = url.includes('?') ? '&' : '?';
+                            url += `${separator}customer=${encodeURIComponent(customerFilter.value)}`;
+                            currentFilterText += `<br>Customer: ${customerFilter.value}`;
+                        }
+
+                        fetch(url)
+                            .then(res => res.json())
+                            .then(({
+                                labels,
+                                data
+                            }) => {
+                                if (chartRef.chart) chartRef.chart.destroy();
+
+                                const totalOrders = data.reduce((acc, val) => acc + val, 0);
+
+                                chartRef.chart = new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels,
+                                        datasets: [{
+                                            label: `ORDERS (Total: ${totalOrders})`,
+                                            data,
+                                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                            borderColor: 'rgba(75, 192, 192, 1)',
+                                            borderWidth: 1
+                                        }]
                                     },
-                                    {
-                                        extend: 'pdfHtml5',
-                                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                                        className: 'btn btn-erp-danger btn-sm mx-1',
-                                        orientation: 'landscape',
-                                        pageSize: 'A4'
+                                    options: {
+                                        plugins: {
+                                            datalabels: {
+                                                anchor: 'end',
+                                                align: 'start',
+                                                color: '#000',
+                                                font: {
+                                                    weight: 'bold',
+                                                    size: 12
+                                                },
+                                                formatter: value => value
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    stepSize: 1
+                                                }
+                                            }
+                                        }
+                                    },
+                                    plugins: [ChartDataLabels]
+                                });
+
+                                // Click para ver detalle en modal
+                                chartRef.chart.canvas.onclick = function(evt) {
+                                    const points = chartRef.chart.getElementsAtEventForMode(evt, 'nearest', {
+                                        intersect: true
+                                    }, false);
+                                    if (!points.length) return;
+                                    const idx = points[0].index;
+                                    const params = {
+                                        type: filterType.value,
+                                        customer: customerFilter?.value || ''
+                                    };
+                                    let labelText = labels[idx] ?? 'Orders';
+
+                                    if (filterType.value === 'year') {
+                                        const label = labels[idx] ?? '';
+                                        let monthNum = idx + 1;
+                                        const parsed = Date.parse(`${label} 1, 2000`);
+                                        if (!isNaN(parsed)) {
+                                            monthNum = new Date(parsed).getMonth() + 1;
+                                        }
+                                        params.year = yearInput.value;
+                                        params.month = monthNum.toString().padStart(2, '0');
+                                        labelText = label || `Month ${monthNum}`;
+                                    } else if (filterType.value === 'month') {
+                                        const [y, m] = (monthInput.value || '').split('-');
+                                        params.year = y;
+                                        params.month = m;
+                                        const dayNum = parseInt((labels[idx] || '').split(' ')[0], 10);
+                                        if (!isNaN(dayNum)) params.day = dayNum;
+                                        // Etiqueta con mes completo
+                                        if (monthInput.value) {
+                                            const [yy, mm] = monthInput.value.split('-');
+                                            const fullMonth = new Date(`${yy}-${mm}-01`).toLocaleString('en-US', {
+                                                month: 'long'
+                                            });
+                                            if (!isNaN(dayNum)) {
+                                                labelText = `${dayNum} ${fullMonth}`;
+                                            } else {
+                                                labelText = fullMonth;
+                                            }
+                                        }
+                                    } else if (filterType.value === 'week') {
+                                        const [y, w] = (weekInput.value || '').split('-W');
+                                        params.year = y;
+                                        params.week = w;
+                                        params.weekday = idx + 1; // 1-7
                                     }
-                                ]
+
+                                    openOrdersDetailModal(params, `Orders - ${labelText}`);
+                                };
                             });
-                            // Mover botones junto a los filtros del modal
-                            if (dt.buttons().container().length) {
-                                const $btnHost = $('#onTimeModalButtons');
-                                $btnHost.empty(); // evita duplicados en recargas
-                                dt.buttons().container().appendTo($btnHost);
-                            }
-                        }
-                        populateModalCustomers(filters?.customer || '');
-                        $('#onTimeModal').modal('show');
-                    })
-                    .catch(() => {
-                        modalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
-                        $('#onTimeModal').modal('show');
-                    });
-            }
-
-            function openOnTimeModal(status, filters) {
-                if (!modalEl || !modalContentEl) return;
-                // limpiar clases de estado previas
-                modalEl.classList.remove('status-early', 'status-on-time', 'status-late');
-                const key = (status || '').toLowerCase().replace(/\s+/g, '-');
-                if (key === 'early') modalEl.classList.add('status-early');
-                if (key === 'on-time') modalEl.classList.add('status-on-time');
-                if (key === 'late') modalEl.classList.add('status-late');
-                if (modalTitleEl) modalTitleEl.textContent = `Orders - ${status}`;
-                modalState.status = status;
-                modalState.baseFilters = { ...(filters || {}) };
-
-                // Prefijar selects
-                if (modalMonthEl) modalMonthEl.value = filters?.month || '';
-                if (modalCustomerEl) modalCustomerEl.value = filters?.customer || '';
-
-                const effectiveFilters = { ...(filters || {}) };
-                if (modalMonthEl && modalMonthEl.value) effectiveFilters.month = modalMonthEl.value;
-                if (modalCustomerEl && modalCustomerEl.value) effectiveFilters.customer = modalCustomerEl.value;
-                fetchModalData(status, effectiveFilters);
-            }
-
-            function loadOnTimeChart() {
-                if (!onTimeCtx) return;
-
-                const month = monthFilter?.value;
-                const year = yearFilter?.value;
-                const customer = customerFilterOnTime?.value;
-
-                let displayMonth = '';
-
-                if (month) {
-                    const [yearStr, monthNum] = month.split('-'); // "2025-07"
-                    const monthNames = [
-                        'January', 'February', 'March', 'April', 'May', 'June',
-                        'July', 'August', 'September', 'October', 'November', 'December'
-                    ];
-                    const index = parseInt(monthNum, 10) - 1;
-
-                    if (index >= 0 && index < 12) {
-                        displayMonth = monthNames[index];
                     }
+
+                    if (filterType && yearInput && monthInput && weekInput) {
+                        updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                        filterType.addEventListener('change', () => {
+                            updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                            updateChart();
+                        });
+                    }
+
+                    [yearInput, monthInput, weekInput, customerFilter].forEach(el => {
+                        if (el) el.addEventListener('change', updateChart);
+                    });
+
+                    updateChart();
+
+                    // Escuchar cambios de customer en modal de detalle
+                    ordersModalCustomerEl?.addEventListener('change', refreshOrdersDetailByCustomer);
                 }
 
-                let url = '/orders/summary/on-time-filtered';
-                const params = new URLSearchParams();
+                function loadCustomerChartElements() {
+                    const filterType = document.getElementById('filterTypeCustomer');
+                    const yearInput = document.getElementById('yearInputCustomer');
+                    const monthInput = document.getElementById('monthInputCustomer');
+                    const weekInput = document.getElementById('weekInputCustomer');
+                    const ctx = document.getElementById('byCustomerChart')?.getContext('2d');
+                    const chartRef = {
+                        chart: null
+                    };
 
-                if (month) params.append('month', month);
-                if (year) params.append('year', year);
-                if (customer) params.append('customer', customer);
+                    function updateChart() {
+                        let url = '/orders/summary/by-customer';
 
-                if (params.toString()) url += `?${params.toString()}`;
-                //console.log('≡ƒöù URL:', url);
-
-                fetch(url)
-                    .then(res => res.json())
-                    .then(({
-                        labels,
-                        data,
-                        total,
-                        selectedCustomer,
-                        selectedYear
-                    }) => {
-                        // ≡ƒöó Asegurar NUM├ëRICOS
-                        const numericData = (data || []).map(v => Number(v) || 0);
-
-                        if (onTimeChartRef.chart) {
-                            onTimeChartRef.chart.destroy();
+                        if (filterType.value === 'year') {
+                            if (!yearInput?.value) return;
+                            url += `/year/${yearInput.value}`;
+                        } else if (filterType.value === 'month') {
+                            if (!monthInput?.value) return;
+                            const [year, month] = monthInput.value.split('-');
+                            url += `/month/${year}/${month}`;
+                        } else if (filterType.value === 'week') {
+                            if (!weekInput?.value) return;
+                            const [year, week] = weekInput.value.split('-W');
+                            url += `/week/${year}/${week}`;
                         }
 
-                        const colorMap = {
-                            'Early': '#007bff',
-                            'On Time': '#28a745',
-                            'Late': '#dc3545'
-                        };
-
-                        const totalOrders =
-                            total !== undefined && total !== null ?
-                            Number(total) :
-                            numericData.reduce((a, b) => a + b, 0);
-
-                        const displayCustomer = selectedCustomer ?
-                            selectedCustomer.charAt(0).toUpperCase() +
-                            selectedCustomer.slice(1).toLowerCase() :
-                            'All';
-
-                        const displayYear = selectedYear || '';
-                        const titleParts = [`Total Orders: ${totalOrders}`];
-                        if (displayCustomer !== 'All') titleParts.push(`Customer: ${displayCustomer}`);
-                        if (displayYear) titleParts.push(`Year: ${displayYear}`);
-                        if (displayMonth) titleParts.push(`Month: ${displayMonth}`);
-                        const fullTitle = titleParts.join(' | ');
-
-                        const colors = labels.map(label => colorMap[label] || '#999');
-
-                        const filters = {
-                            month: month || '',
-                            year: year || '',
-                            customer: customer || ''
-                        };
-
-                        onTimeChartRef.chart = new Chart(onTimeCtx, {
-                            type: 'doughnut',
-                            data: {
+                        fetch(url)
+                            .then(res => res.json())
+                            .then(({
                                 labels,
-                                datasets: [{
-                                    data: numericData,
-                                    backgroundColor: colors,
-                                    borderColor: '#fff',
-                                    borderWidth: 2
-                                }]
-                            },
-                            options: {
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    title: {
-                                        display: true,
-                                        text: fullTitle,
-                                        font: {
-                                            size: 18,
-                                            weight: 'bold'
-                                        },
-                                        color: '#333'
+                                totals,
+                                totalAll
+                            }) => {
+                                if (chartRef.chart) chartRef.chart.destroy();
+
+                                chartRef.chart = new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels,
+                                        datasets: [{
+                                            label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
+                                            data: totals,
+                                            backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                                            borderColor: 'rgba(153, 102, 255, 1)',
+                                            borderWidth: 1,
+                                            yAxisID: 'y',
+                                        }]
                                     },
-                                    datalabels: {
-                                        color: '#000',
-                                        font: {
-                                            weight: 'bold',
-                                            size: 14
+                                    options: {
+                                        plugins: {
+                                            datalabels: {
+                                                anchor: 'end',
+                                                align: 'start',
+                                                color: '#000',
+                                                font: {
+                                                    weight: 'bold',
+                                                    size: 12
+                                                },
+                                                formatter: value => value
+                                            }
                                         },
-                                        formatter: (value, context) => {
-                                            const dataset = context.chart.data.datasets[0];
-
-                                            // ≡ƒæç AQUI el FIX: asegurar que value sea n├║mero
-                                            const numericValue = Number(value) || 0;
-
-                                            const sum = dataset.data.reduce(
-                                                (a, b) => a + Number(b || 0),
-                                                0
-                                            );
-
-                                            const percent = sum ?
-                                                Math.round((numericValue / sum) * 100) :
-                                                0;
-
-                                            return `${numericValue} (${percent}%)`;
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    stepSize: 1
+                                                }
+                                            }
                                         }
                                     },
-                                    legend: {
-                                        labels: {
+                                    plugins: [ChartDataLabels]
+                                });
+                            });
+                    }
+
+                    if (filterType && yearInput && monthInput && weekInput) {
+                        updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                        filterType.addEventListener('change', () => {
+                            updateVisibleInputs(filterType, yearInput, monthInput, weekInput);
+                            updateChart();
+                        });
+                    }
+
+                    [yearInput, monthInput, weekInput].forEach(el => {
+                        if (el) el.addEventListener('change', updateChart);
+                    });
+
+                    updateChart();
+                }
+
+                /**
+                 * =================================================================
+                 * ≡ƒƒú≡ƒôèGr├ífico: Orders Due- NExt 8 weeks (summaryNextWeeks)
+                 */
+                document.addEventListener('DOMContentLoaded', () => {
+                    const ctx = document.getElementById('nextWeeksChart')?.getContext('2d');
+                    const chartRef = {
+                        chart: null
+                    };
+
+                    if (!ctx) return;
+
+                    fetch('/orders/summary/next-weeks/8')
+                        .then(res => res.json())
+                        .then(({
+                            labels,
+                            total,
+                            sent
+                        }) => {
+                            const totalOrders = total.reduce((acc, val) => acc + val, 0);
+
+                            if (chartRef.chart) chartRef.chart.destroy();
+
+                            chartRef.chart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                            label: `Total Orders`,
+                                            data: total,
+                                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                            borderColor: 'rgba(54, 162, 235, 1)',
+                                            borderWidth: 1
+                                        },
+                                        {
+                                            label: 'Sent Orders',
+                                            data: sent,
+                                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                            borderColor: 'rgba(75, 192, 192, 1)',
+                                            borderWidth: 1
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    plugins: {
+                                        datalabels: {
+                                            anchor: 'end',
+                                            align: 'start',
                                             color: '#000',
                                             font: {
+                                                weight: 'bold',
                                                 size: 14
+                                            },
+                                            formatter: value => value
+                                        }
+                                    },
+                                    responsive: true,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                stepSize: 1
                                             }
                                         }
                                     }
-                                }
-                            },
-                            plugins: [ChartDataLabels]
-                        });
-
-                        // click handler para abrir modal de detalle
-                        onTimeChartRef.chart.canvas.onclick = function(evt) {
-                            const points = onTimeChartRef.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
-                            if (!points.length) return;
-                            const idx = points[0].index;
-                            const status = labels[idx];
-                            openOnTimeModal(status, filters);
-                        };
-                    })
-                    .catch(err => {
-                        console.error('Error cargando On Time chart:', err);
-                    });
-            }
-
-            // Cargar al iniciar
-            if (onTimeCtx) loadOnTimeChart();
-
-            // Escuchar cambios en filtros
-            monthFilter?.addEventListener('change', loadOnTimeChart);
-            yearFilter?.addEventListener('change', loadOnTimeChart);
-            customerFilterOnTime?.addEventListener('change', loadOnTimeChart);
-
-            // Filtros dentro del modal (cambian el detalle sin cerrar)
-            const handleModalFilterChange = () => {
-                if (!modalState.status) return;
-                const effective = { ...(modalState.baseFilters || {}) };
-                if (modalMonthEl && modalMonthEl.value) effective.month = modalMonthEl.value;
-                else delete effective.month;
-                if (modalCustomerEl && modalCustomerEl.value) effective.customer = modalCustomerEl.value;
-                else delete effective.customer;
-                fetchModalData(modalState.status, effective);
-            };
-            modalMonthEl?.addEventListener('change', handleModalFilterChange);
-            modalCustomerEl?.addEventListener('change', handleModalFilterChange);
-
-            // Rellena el select de customers con los que aparecen en la tabla del modal
-            function populateModalCustomers(selected) {
-                if (!modalCustomerEl) return;
-                const tableBody = document.querySelector('#onTimeDetailTable tbody');
-                if (!tableBody) return;
-                const customers = new Set();
-                tableBody.querySelectorAll('tr').forEach(tr => {
-                    const td = tr.children[3];
-                    if (td) {
-                        const name = (td.textContent || '').trim();
-                        if (name) customers.add(name);
-                    }
-                });
-                const prev = modalCustomerEl.value;
-                modalCustomerEl.innerHTML = '<option value="">-- All Customers --</option>';
-                customers.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    modalCustomerEl.appendChild(opt);
-                });
-                if (selected && customers.has(selected)) {
-                    modalCustomerEl.value = selected;
-                } else if (customers.has(prev)) {
-                    modalCustomerEl.value = prev;
-                } else {
-                    modalCustomerEl.value = '';
-                }
-            }
-        });;
-
-
-        $(document).ready(function() {
-            initDataTable('#tableweek', 'ORDERS THIS WEEK');
-            initDataTable('#tablelate', 'LATE ORDERS');
-            loadChartElements();
-            loadCustomerChartElements();
-
-            const weekFilter = document.getElementById('week-filter');
-
-            if (weekFilter) {
-                // Γ£à Detectar cambio de semana
-                weekFilter.addEventListener("change", function() {
-                    const week = this.value;
-                    // Validar formato ISO YYYY-Www
-                    const weekRegex = /^\d{4}-W\d{2}$/;
-                    if (!week || !weekRegex.test(week)) {
-                        console.warn("Formato de semana inválido:", week);
-                        return;
-                    }
-
-                    fetch(`/orders/by-week/ajax?week=${week}`, {
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest"
-                        },
-                    })
-                        .then(async (res) => {
-                            if (!res.ok) {
-                                const txt = await res.text();
-                                throw new Error(`HTTP ${res.status}: ${txt}`);
-                            }
-                            return res.json();
+                                },
+                                plugins: [ChartDataLabels]
+                            });
                         })
-                        .then((data) => {
-                            const tbody = document.getElementById("tableweek-body");
-                            const count = document.getElementById("order-count");
 
-                            if (!tbody || !count) {
-                                console.warn("No se encontr├│ tbody o contador.");
-                                return;
-                            }
-                            // ≡ƒÆí Destruir DataTable anterior si existe
-                            const table = $("#tableweek");
-                            if ($.fn.DataTable.isDataTable(table)) {
-                                table.DataTable().clear().destroy();
-                            }
-                            // ≡ƒÆí Actualizar tbody con nuevas filas
-                            tbody.innerHTML = data.html;
-
-                            // ≡ƒÆí Actualizar contador
-                            count.textContent = data.count;
-
-                            // ≡ƒÆí Reinicializar DataTable
-                            initDataTable("#tableweek", "ORDERS THIS WEEK");
-
-                            // ≡ƒÆí Actualizar texto visible de la semana
-                            const weekDisplay = document.getElementById("week-display");
-                            if (weekDisplay && week) {
-                                const [year, weekNumber] = week.split('-W');
-                                const simpleDate = getFirstDateOfISOWeek(parseInt(weekNumber), parseInt(
-                                    year));
-
-                                const options = {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                };
-                                const formatted = simpleDate.toLocaleDateString('en-US', options);
-                                weekDisplay.textContent = `Week starting: ${formatted}`;
-                            }
-
-                            // ≡ƒæë Funci├│n para obtener lunes de la semana ISO
-                            function getFirstDateOfISOWeek(week, year) {
-                                const simple = new Date(year, 0, 1 + (week - 1) * 7);
-                                const dow = simple.getDay();
-                                if (dow <= 4) {
-                                    simple.setDate(simple.getDate() - simple.getDay() + 1);
-                                } else {
-                                    simple.setDate(simple.getDate() + 8 - simple.getDay());
-                                }
-                                return simple;
-                            }
-                        })
-                        .catch((error) => {
-                           // console.error("Error fetching data:", error);
-                            alert(`Error loading data for the selected week.\n\n${error}`);
-                        });
-
-                });
-
-                // Γ£à Al cargar la p├ígina, establecer semana actual si no hay valor
-                if (!weekFilter.value) {
-                    const today = new Date();
-
-                    const getISOInfo = date => {
-                        const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-                        tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
-                        const isoYear = tmp.getUTCFullYear();
-                        const yearStart = new Date(Date.UTC(isoYear, 0, 1));
-                        const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
-                        return { isoYear, weekNo };
+                    /**
+                     * ===================================================================================
+                     * ≡ƒƒú≡ƒôèGr├ífico: entregas a tiempo vs tarde con filtros (M├⌐todo summaryOnTimeFiltered)
+                     */
+                    const onTimeCtx = document.getElementById('onTimeChart')?.getContext('2d');
+                    const monthFilter = document.getElementById('monthFilter');
+                    const yearFilter = document.getElementById('yearFilter');
+                    const customerFilterOnTime = document.getElementById('customerFilterOnTime');
+                    const modalEl = document.getElementById('onTimeModal');
+                    const modalContentEl = document.getElementById('onTimeModalContent');
+                    const modalTitleEl = document.getElementById('onTimeModalLabel');
+                    const modalMonthEl = document.getElementById('onTimeModalMonth');
+                    const modalCustomerEl = document.getElementById('onTimeModalCustomer');
+                    const modalState = {
+                        status: null,
+                        baseFilters: {}
                     };
 
-                    const { isoYear, weekNo } = getISOInfo(today);
-                    const week = weekNo.toString().padStart(2, '0');
-                    const value = `${isoYear}-W${week}`;
-                    weekFilter.value = value;
+                    const onTimeChartRef = {
+                        chart: null
+                    };
 
-                    // 💥 Disparar manualmente el evento change
-                    weekFilter.dispatchEvent(new Event('change'));
-                }
-            }
-        });
-    </script>
+                    // Registrar plugin de datalabels (una sola vez)
+                    if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+                        Chart.register(ChartDataLabels);
+                    }
 
-    @endpush
+                    function fetchModalData(status, filters) {
+                        if (!modalEl || !modalContentEl) return;
+                        modalContentEl.innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
+                        const params = new URLSearchParams(filters || {});
+                        params.append('status', status);
+                        fetch(`/orders/summary/on-time-filtered-detail?${params.toString()}`)
+                            .then(res => res.text())
+                            .then(html => {
+                                modalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
+                                // Inicializar DataTable para buscar/paginar
+                                const $table = $('#onTimeDetailTable');
+                                if ($.fn.DataTable.isDataTable($table)) {
+                                    $table.DataTable().destroy();
+                                }
+                                if ($table.length) {
+                                    // Construir texto de filtros para exportes (On Time modal)
+                                    let filtersText = '';
+                                    if (filters) {
+                                        const parts = [];
+                                        if (filters.year) parts.push(`Year: ${filters.year}`);
+                                        if (filters.month) {
+                                            const [yy, mm] = filters.month.split('-');
+                                            const fullMonth = new Date(`${yy || new Date().getFullYear()}-${mm}-01`).toLocaleString('en-US', {
+                                                month: 'long'
+                                            });
+                                            parts.push(`Month: ${filters.month} (${fullMonth})`);
+                                        }
+                                        if (filters.customer) parts.push(`Customer: ${filters.customer}`);
+                                        filtersText = parts.join(' | ');
+                                    }
+                                    const exportTitle = `Schedule Statistics - ${modalTitleEl?.textContent || 'Orders detail'}`;
+                                    const exportFilename = `${exportTitle}${filtersText ? '_' + filtersText : ''}`.replace(/[\\/:*?"<>| ]+/g, '_');
+                                    const dt = $table.DataTable({
+                                        dom: "<'row mb-0'<'col-sm-6 d-flex align-items-center'l><'col-sm-6 d-flex justify-content-end align-items-center'f>>" +
+                                            "<'row'<'col-12'tr>>" +
+                                            "<'row mt-2'<'col-sm-5'i><'col-sm-7'p>>",
+                                        pageLength: 14,
+                                        lengthMenu: [14, 25, 50, 100],
+                                        searching: true,
+                                        ordering: true,
+                                        info: true,
+                                        order: [
+                                            [6, 'desc']
+                                        ], // Sent column (index 6)
+                                        buttons: [{
+                                                extend: 'excelHtml5',
+                                                text: '<i class="fas fa-file-excel"></i> Excel',
+                                                className: 'btn btn-erp-success btn-sm mx-1',
+                                                title: exportTitle,
+                                                filename: exportFilename,
+                                                messageTop: filtersText || null
+                                            },
+                                            {
+                                                extend: 'pdfHtml5',
+                                                text: '<i class="fas fa-file-pdf"></i> PDF',
+                                                className: 'btn btn-erp-danger btn-sm mx-1',
+                                                orientation: 'landscape',
+                                                pageSize: 'A4',
+                                                title: exportTitle,
+                                                filename: exportFilename,
+                                                messageTop: filtersText || null,
+                                                customize: function(doc) {
+                                                    addPdfRowNumbers(doc, '#');
+                                                }
+                                            },
+                                            {
+                                                extend: 'print',
+                                                text: '<i class="fas fa-print"></i> Print',
+                                                className: 'btn btn-erp-primary btn-sm mx-1',
+                                                action: function(e, dt) {
+                                                    e.preventDefault();
+                                                    const printed = printDataTableAsPdf(dt, exportTitle, getFechaHoraActual(), {
+                                                        title: exportTitle,
+                                                        messageTop: filtersText || null,
+                                                        orientation: 'landscape',
+                                                        pageSize: 'A4'
+                                                    });
+                                                    if (!printed) {
+                                                        printDataTableInPlace(dt, exportTitle, getFechaHoraActual());
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    });
+                                    // Mover botones junto a los filtros del modal
+                                    if (dt.buttons().container().length) {
+                                        const $btnHost = $('#onTimeModalButtons');
+                                        $btnHost.empty(); // evita duplicados en recargas
+                                        dt.buttons().container().appendTo($btnHost);
+                                    }
+                                }
+                                populateModalCustomers(filters?.customer || '');
+                                $('#onTimeModal').modal('show');
+                            })
+                            .catch(() => {
+                                modalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
+                                $('#onTimeModal').modal('show');
+                            });
+                    }
+
+                    function openOnTimeModal(status, filters) {
+                        if (!modalEl || !modalContentEl) return;
+                        // limpiar clases de estado previas
+                        modalEl.classList.remove('status-early', 'status-on-time', 'status-late');
+                        const key = (status || '').toLowerCase().replace(/\s+/g, '-');
+                        if (key === 'early') modalEl.classList.add('status-early');
+                        if (key === 'on-time') modalEl.classList.add('status-on-time');
+                        if (key === 'late') modalEl.classList.add('status-late');
+                        if (modalTitleEl) modalTitleEl.textContent = `Orders - ${status}`;
+                        modalState.status = status;
+                        modalState.baseFilters = {
+                            ...(filters || {})
+                        };
+
+                        // Prefijar selects
+                        if (modalMonthEl) modalMonthEl.value = filters?.month || '';
+                        if (modalCustomerEl) modalCustomerEl.value = filters?.customer || '';
+
+                        const effectiveFilters = {
+                            ...(filters || {})
+                        };
+                        if (modalMonthEl && modalMonthEl.value) effectiveFilters.month = modalMonthEl.value;
+                        if (modalCustomerEl && modalCustomerEl.value) effectiveFilters.customer = modalCustomerEl.value;
+                        fetchModalData(status, effectiveFilters);
+                    }
+
+                    function loadOnTimeChart() {
+                        if (!onTimeCtx) return;
+
+                        const month = monthFilter?.value;
+                        const year = yearFilter?.value;
+                        const customer = customerFilterOnTime?.value;
+
+                        let displayMonth = '';
+
+                        if (month) {
+                            const [yearStr, monthNum] = month.split('-'); // "2025-07"
+                            const monthNames = [
+                                'January', 'February', 'March', 'April', 'May', 'June',
+                                'July', 'August', 'September', 'October', 'November', 'December'
+                            ];
+                            const index = parseInt(monthNum, 10) - 1;
+
+                            if (index >= 0 && index < 12) {
+                                displayMonth = monthNames[index];
+                            }
+                        }
+
+                        let url = '/orders/summary/on-time-filtered';
+                        const params = new URLSearchParams();
+
+                        if (month) params.append('month', month);
+                        if (year) params.append('year', year);
+                        if (customer) params.append('customer', customer);
+
+                        if (params.toString()) url += `?${params.toString()}`;
+                        //console.log('≡ƒöù URL:', url);
+
+                        fetch(url)
+                            .then(res => res.json())
+                            .then(({
+                                labels,
+                                data,
+                                total,
+                                selectedCustomer,
+                                selectedYear
+                            }) => {
+                                // ≡ƒöó Asegurar NUM├ëRICOS
+                                const numericData = (data || []).map(v => Number(v) || 0);
+
+                                if (onTimeChartRef.chart) {
+                                    onTimeChartRef.chart.destroy();
+                                }
+
+                                const colorMap = {
+                                    'Early': '#007bff',
+                                    'On Time': '#28a745',
+                                    'Late': '#dc3545'
+                                };
+
+                                const totalOrders =
+                                    total !== undefined && total !== null ?
+                                    Number(total) :
+                                    numericData.reduce((a, b) => a + b, 0);
+
+                                const displayCustomer = selectedCustomer ?
+                                    selectedCustomer.charAt(0).toUpperCase() +
+                                    selectedCustomer.slice(1).toLowerCase() :
+                                    'All';
+
+                                const displayYear = selectedYear || '';
+                                const titleParts = [`Total Orders: ${totalOrders}`];
+                                if (displayCustomer !== 'All') titleParts.push(`Customer: ${displayCustomer}`);
+                                if (displayYear) titleParts.push(`Year: ${displayYear}`);
+                                if (displayMonth) titleParts.push(`Month: ${displayMonth}`);
+                                const fullTitle = titleParts.join(' | ');
+
+                                const colors = labels.map(label => colorMap[label] || '#999');
+
+                                const filters = {
+                                    month: month || '',
+                                    year: year || '',
+                                    customer: customer || ''
+                                };
+
+                                onTimeChartRef.chart = new Chart(onTimeCtx, {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels,
+                                        datasets: [{
+                                            data: numericData,
+                                            backgroundColor: colors,
+                                            borderColor: '#fff',
+                                            borderWidth: 2
+                                        }]
+                                    },
+                                    options: {
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            title: {
+                                                display: true,
+                                                text: fullTitle,
+                                                font: {
+                                                    size: 18,
+                                                    weight: 'bold'
+                                                },
+                                                color: '#333'
+                                            },
+                                            datalabels: {
+                                                color: '#000',
+                                                font: {
+                                                    weight: 'bold',
+                                                    size: 14
+                                                },
+                                                formatter: (value, context) => {
+                                                    const dataset = context.chart.data.datasets[0];
+
+                                                    // ≡ƒæç AQUI el FIX: asegurar que value sea n├║mero
+                                                    const numericValue = Number(value) || 0;
+
+                                                    const sum = dataset.data.reduce(
+                                                        (a, b) => a + Number(b || 0),
+                                                        0
+                                                    );
+
+                                                    const percent = sum ?
+                                                        Math.round((numericValue / sum) * 100) :
+                                                        0;
+
+                                                    return `${numericValue} (${percent}%)`;
+                                                }
+                                            },
+                                            legend: {
+                                                labels: {
+                                                    color: '#000',
+                                                    font: {
+                                                        size: 14
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    plugins: [ChartDataLabels]
+                                });
+
+                                // click handler para abrir modal de detalle
+                                onTimeChartRef.chart.canvas.onclick = function(evt) {
+                                    const points = onTimeChartRef.chart.getElementsAtEventForMode(evt, 'nearest', {
+                                        intersect: true
+                                    }, false);
+                                    if (!points.length) return;
+                                    const idx = points[0].index;
+                                    const status = labels[idx];
+                                    openOnTimeModal(status, filters);
+                                };
+                            })
+                            .catch(err => {
+                                console.error('Error cargando On Time chart:', err);
+                            });
+                    }
+
+                    // Cargar al iniciar
+                    if (onTimeCtx) loadOnTimeChart();
+
+                    // Escuchar cambios en filtros
+                    monthFilter?.addEventListener('change', loadOnTimeChart);
+                    yearFilter?.addEventListener('change', loadOnTimeChart);
+                    customerFilterOnTime?.addEventListener('change', loadOnTimeChart);
+
+                    // Filtros dentro del modal (cambian el detalle sin cerrar)
+                    const handleModalFilterChange = () => {
+                        if (!modalState.status) return;
+                        const effective = {
+                            ...(modalState.baseFilters || {})
+                        };
+                        if (modalMonthEl && modalMonthEl.value) effective.month = modalMonthEl.value;
+                        else delete effective.month;
+                        if (modalCustomerEl && modalCustomerEl.value) effective.customer = modalCustomerEl.value;
+                        else delete effective.customer;
+                        fetchModalData(modalState.status, effective);
+                    };
+                    modalMonthEl?.addEventListener('change', handleModalFilterChange);
+                    modalCustomerEl?.addEventListener('change', handleModalFilterChange);
+
+                    // Rellena el select de customers con los que aparecen en la tabla del modal
+                    function populateModalCustomers(selected) {
+                        if (!modalCustomerEl) return;
+                        const tableBody = document.querySelector('#onTimeDetailTable tbody');
+                        if (!tableBody) return;
+                        const customers = new Set();
+                        tableBody.querySelectorAll('tr').forEach(tr => {
+                            const td = tr.children[3];
+                            if (td) {
+                                const name = (td.textContent || '').trim();
+                                if (name) customers.add(name);
+                            }
+                        });
+                        const prev = modalCustomerEl.value;
+                        modalCustomerEl.innerHTML = '<option value="">-- All Customers --</option>';
+                        customers.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            modalCustomerEl.appendChild(opt);
+                        });
+                        if (selected && customers.has(selected)) {
+                            modalCustomerEl.value = selected;
+                        } else if (customers.has(prev)) {
+                            modalCustomerEl.value = prev;
+                        } else {
+                            modalCustomerEl.value = '';
+                        }
+                    }
+                });;
+
+
+                $(document).ready(function() {
+                    initDataTable('#tableweek', 'ORDERS THIS WEEK');
+                    initDataTable('#tablelate', 'LATE ORDERS');
+                    loadChartElements();
+                    loadCustomerChartElements();
+
+                    // Late Orders KPI -> modal detail (similar UX to OnTimeModal)
+                    const $lateOrdersModal = $('#lateOrdersModal');
+                    const $lateOrdersTrigger = $('.js-open-late-orders');
+                    const $lateOrdersLoading = $('#lateOrdersModalLoading');
+                    const $lateOrdersCustomer = $('#lateOrdersModalCustomer');
+                    const $lateOrdersStatus = $('#lateOrdersModalStatus');
+
+                    function escapeRegex(value) {
+                        return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    }
+
+                    function populateLateOrdersFilters(dt) {
+                        if (!dt) return;
+                        const customerValues = dt.column(3).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const statusValues = dt.column(5).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+
+                        const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
+                        const uniqStatuses = Array.from(new Set(statusValues)).sort((a, b) => a.localeCompare(b));
+
+                        const prevCustomer = $lateOrdersCustomer.val();
+                        const prevStatus = $lateOrdersStatus.val();
+
+                        $lateOrdersCustomer.empty().append('<option value="">-- All Customers --</option>');
+                        uniqCustomers.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            $lateOrdersCustomer.append(opt);
+                        });
+
+                        $lateOrdersStatus.empty().append('<option value="">-- All Status --</option>');
+                        uniqStatuses.forEach(status => {
+                            const opt = document.createElement('option');
+                            opt.value = status;
+                            opt.textContent = status;
+                            $lateOrdersStatus.append(opt);
+                        });
+
+                        if (prevCustomer && uniqCustomers.includes(prevCustomer)) $lateOrdersCustomer.val(prevCustomer);
+                        if (prevStatus && uniqStatuses.includes(prevStatus)) $lateOrdersStatus.val(prevStatus);
+                    }
+
+                    function openLateOrdersModal() {
+                        $lateOrdersModal.addClass('is-loading');
+                        $lateOrdersLoading.removeClass('d-none');
+                        $lateOrdersModal.modal('show');
+                    }
+
+                    $lateOrdersTrigger.on('click', openLateOrdersModal);
+                    $lateOrdersTrigger.on('keydown', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openLateOrdersModal();
+                        }
+                    });
+
+                    $lateOrdersModal.on('shown.bs.modal', function() {
+                        const tableSelector = '#lateOrdersModalTable';
+                        let dt;
+                        if (!$.fn.DataTable.isDataTable(tableSelector)) {
+                            dt = initDataTable(tableSelector, 'LATE ORDERS', {
+                                buttonsHost: '#lateOrdersModalButtons',
+                                buttonStyle: 'erp',
+                                // Status column has a badge (HTML); use plain text for filtering/sorting
+                                columnDefs: [{
+                                    targets: [5],
+                                    render: function(data, type) {
+                                        if (type === 'filter' || type === 'sort') {
+                                            return $('<div>').html(data).text().trim();
+                                        }
+                                        return data;
+                                    }
+                                }]
+                            });
+                        } else {
+                            dt = $(tableSelector).DataTable();
+                        }
+                        try {
+                            dt.columns.adjust();
+                        } catch (e) {}
+                        populateLateOrdersFilters(dt);
+                        $lateOrdersModal.removeClass('is-loading');
+                        $lateOrdersLoading.addClass('d-none');
+                    });
+
+                    function applyLateOrdersFilters() {
+                        const tableSelector = '#lateOrdersModalTable';
+                        if (!$.fn.DataTable.isDataTable(tableSelector)) return;
+                        const dt = $(tableSelector).DataTable();
+
+                        const customer = ($lateOrdersCustomer.val() || '').trim();
+                        const status = ($lateOrdersStatus.val() || '').trim();
+
+                        dt.column(3).search(customer ? `^${escapeRegex(customer)}$` : '', true, false);
+                        dt.column(5).search(status ? `^${escapeRegex(status)}$` : '', true, false);
+                        dt.draw();
+                    }
+
+                    $lateOrdersCustomer.on('change', applyLateOrdersFilters);
+                    $lateOrdersStatus.on('change', applyLateOrdersFilters);
+
+                    $lateOrdersModal.on('hidden.bs.modal', function() {
+                        $lateOrdersCustomer.val('');
+                        $lateOrdersStatus.val('');
+                        applyLateOrdersFilters();
+                    });
+
+                    const weekFilter = document.getElementById('week-filter');
+
+                    if (weekFilter) {
+                        // Γ£à Detectar cambio de semana
+                        weekFilter.addEventListener("change", function() {
+                            const week = this.value;
+                            // Validar formato ISO YYYY-Www
+                            const weekRegex = /^\d{4}-W\d{2}$/;
+                            if (!week || !weekRegex.test(week)) {
+                                console.warn("Formato de semana inválido:", week);
+                                return;
+                            }
+
+                            fetch(`/orders/by-week/ajax?week=${week}`, {
+                                    headers: {
+                                        "X-Requested-With": "XMLHttpRequest"
+                                    },
+                                })
+                                .then(async (res) => {
+                                    if (!res.ok) {
+                                        const txt = await res.text();
+                                        throw new Error(`HTTP ${res.status}: ${txt}`);
+                                    }
+                                    return res.json();
+                                })
+                                .then((data) => {
+                                    const tbody = document.getElementById("tableweek-body");
+                                    const count = document.getElementById("order-count");
+
+                                    if (!tbody || !count) {
+                                        console.warn("No se encontr├│ tbody o contador.");
+                                        return;
+                                    }
+                                    // ≡ƒÆí Destruir DataTable anterior si existe
+                                    const table = $("#tableweek");
+                                    if ($.fn.DataTable.isDataTable(table)) {
+                                        table.DataTable().clear().destroy();
+                                    }
+                                    // ≡ƒÆí Actualizar tbody con nuevas filas
+                                    tbody.innerHTML = data.html;
+
+                                    // ≡ƒÆí Actualizar contador
+                                    count.textContent = data.count;
+
+                                    // ≡ƒÆí Reinicializar DataTable
+                                    initDataTable("#tableweek", "ORDERS THIS WEEK");
+
+                                    // ≡ƒÆí Actualizar texto visible de la semana
+                                    const weekDisplay = document.getElementById("week-display");
+                                    if (weekDisplay && week) {
+                                        const [year, weekNumber] = week.split('-W');
+                                        const simpleDate = getFirstDateOfISOWeek(parseInt(weekNumber), parseInt(
+                                            year));
+
+                                        const options = {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        };
+                                        const formatted = simpleDate.toLocaleDateString('en-US', options);
+                                        weekDisplay.textContent = `Week starting: ${formatted}`;
+                                    }
+
+                                    // ≡ƒæë Funci├│n para obtener lunes de la semana ISO
+                                    function getFirstDateOfISOWeek(week, year) {
+                                        const simple = new Date(year, 0, 1 + (week - 1) * 7);
+                                        const dow = simple.getDay();
+                                        if (dow <= 4) {
+                                            simple.setDate(simple.getDate() - simple.getDay() + 1);
+                                        } else {
+                                            simple.setDate(simple.getDate() + 8 - simple.getDay());
+                                        }
+                                        return simple;
+                                    }
+                                })
+                                .catch((error) => {
+                                    // console.error("Error fetching data:", error);
+                                    alert(`Error loading data for the selected week.\n\n${error}`);
+                                });
+
+                        });
+
+                        // Γ£à Al cargar la p├ígina, establecer semana actual si no hay valor
+                        if (!weekFilter.value) {
+                            const today = new Date();
+
+                            const getISOInfo = date => {
+                                const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                                tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
+                                const isoYear = tmp.getUTCFullYear();
+                                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                                const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+                                return {
+                                    isoYear,
+                                    weekNo
+                                };
+                            };
+
+                            const {
+                                isoYear,
+                                weekNo
+                            } = getISOInfo(today);
+                            const week = weekNo.toString().padStart(2, '0');
+                            const value = `${isoYear}-W${week}`;
+                            weekFilter.value = value;
+
+                            // 💥 Disparar manualmente el evento change
+                            weekFilter.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+            </script>
+
+            @endpush
