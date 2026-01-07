@@ -19,8 +19,8 @@
 
     <div class="row kpi-erp">
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <div class="info-box">
-                <span class="info-box-icon bg-success shadow-sm">
+            <div class="info-box fai-theme-warning" role="button" tabindex="0" aria-label="Open Active Orders detail">
+                <span class="info-box-icon bg-warning shadow-sm">
                     <i class="fas fa-cogs"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
@@ -45,7 +45,7 @@
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <div class="info-box js-open-late-orders" role="button" tabindex="0" aria-label="Open Late Orders detail">
+            <div class="info-box fai-theme-danger js-open-late-orders" role="button" tabindex="0" aria-label="Open Late Orders detail">
                 <span class="info-box-icon bg-danger shadow-sm">
                     <i class="fas fa-exclamation-triangle"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
@@ -57,7 +57,7 @@
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <div class="info-box">
+            <div class="info-box fai-theme-primary" role="button" tabindex="0" aria-label="Open Orders This Week detail">
                 <span class="info-box-icon bg-primary shadow-sm">
                     <i class="fas fa-calendar-week"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
@@ -69,8 +69,8 @@
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <div class="info-box">
-                <span class="info-box-icon bg-warning shadow-sm">
+            <div class="info-box fai-theme-info" role="button" tabindex="0" aria-label="Open New Orders This Week detail">
+                <span class="info-box-icon bg-info-teal shadow-sm">
                     <i class="fas fa-tasks"></i> <!-- ├ìcono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
@@ -81,7 +81,7 @@
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <div class="info-box">
+            <div class="info-box fai-theme-secondary" role="button" tabindex="0" aria-label="Open Orders Uploaded detail">
                 <span class="info-box-icon bg-secondary shadow-sm">
                     <i class="fas fa-upload"></i>
                 </span>
@@ -93,8 +93,8 @@
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <div class="info-box">
-                <span class="info-box-icon bg-info shadow-sm">
+            <div class="info-box fai-theme-success" role="button" tabindex="0" aria-label="Open Completed Orders detail">
+                <span class="info-box-icon bg-success shadow-sm">
                     <i class="fas fa-check-double"></i>
                 </span>
                 <div class="info-box-content">
@@ -740,6 +740,7 @@
                                 <select id="lateOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Status --</option>
                                 </select>
+                                <span id="lateOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
                                 <div id="lateOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="lateOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -813,6 +814,7 @@
                                 <select id="weekOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Status --</option>
                                 </select>
+                                <span id="weekOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
                                 <div id="weekOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="weekOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -834,6 +836,61 @@
                                     </thead>
                                     <tbody>
                                         {{-- Se llena por JS clonando el contenido actual de #tableweek --}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal: New Orders This Week detail --}}
+            <div class="modal fade" id="newOrdersWeekModal" tabindex="-1" role="dialog" aria-labelledby="newOrdersWeekModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="modal-title mb-0" id="newOrdersWeekModalLabel">New Orders This Week</h5>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                            <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <select id="newOrdersWeekModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                </select>
+                                <select id="newOrdersWeekModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Status --</option>
+                                </select>
+                                <select id="newOrdersWeekModalUploaded" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Uploaded --</option>
+                                </select>
+                                <span id="newOrdersWeekModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <div id="newOrdersWeekModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="newOrdersWeekModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
+                            <div class="table-responsive small">
+                                <table id="newOrdersWeekModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                                    <thead>
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th>W.ID</th>
+                                            <th>PN</th>
+                                            <th>DESCRIPTION</th>
+                                            <th>CUSTOMER</th>
+                                            <th class="text-center">QTY</th>
+                                            <th class="text-center">STATUS</th>
+                                            <th class="text-center">UPLOADED</th>
+                                            <th class="text-center">DUE DATE</th>
+                                            <th class="text-center">SENT AT</th>
+                                            <th class="text-center">SENT</th>
+                                            <th class="text-center">DAYS</th>
+                                            <th>NOTES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @include('orders.schedule_tableneworders_week', ['orders' => $ordenesAgregadasSemana])
                                     </tbody>
                                 </table>
                             </div>
@@ -879,6 +936,105 @@
                 /* KPIs estilo ERP (solo para la fila superior) */
                 .kpi-erp {
                     margin-top: -10px;
+                    --kpi-teal: #17a2b8;
+                }
+
+                /* Theme vars (igual a FAI tabs) */
+                .kpi-erp .fai-theme-info {
+                    --fai-hover-border: rgba(23, 162, 184, 0.25);
+                    --fai-active-border: rgba(23, 162, 184, 0.45);
+                    --fai-active-shadow: rgba(12, 135, 153, 0.18);
+                    --fai-active-from: rgba(23, 162, 184, 0.92);
+                    --fai-active-to: rgba(12, 135, 153, 0.82);
+                }
+
+                .kpi-erp .fai-theme-primary {
+                    --fai-hover-border: rgba(13, 110, 253, 0.25);
+                    --fai-active-border: rgba(13, 110, 253, 0.45);
+                    --fai-active-shadow: rgba(13, 110, 253, 0.18);
+                    --fai-active-from: rgba(13, 110, 253, 0.92);
+                    --fai-active-to: rgba(11, 94, 215, 0.82);
+                }
+
+                .kpi-erp .fai-theme-success {
+                    --fai-hover-border: rgba(40, 167, 69, 0.25);
+                    --fai-active-border: rgba(40, 167, 69, 0.45);
+                    --fai-active-shadow: rgba(40, 167, 69, 0.18);
+                    --fai-active-from: rgba(40, 167, 69, 0.92);
+                    --fai-active-to: rgba(25, 135, 84, 0.82);
+                }
+
+                .kpi-erp .fai-theme-danger {
+                    --fai-hover-border: rgba(220, 53, 69, 0.25);
+                    --fai-active-border: rgba(220, 53, 69, 0.45);
+                    --fai-active-shadow: rgba(220, 53, 69, 0.18);
+                    --fai-active-from: rgba(220, 53, 69, 0.92);
+                    --fai-active-to: rgba(176, 42, 55, 0.82);
+                }
+
+                .kpi-erp .fai-theme-warning {
+                    --fai-hover-border: rgba(255, 193, 7, 0.30);
+                    --fai-active-border: rgba(255, 193, 7, 0.55);
+                    --fai-active-shadow: rgba(255, 193, 7, 0.18);
+                    --fai-active-from: rgba(255, 193, 7, 0.92);
+                    --fai-active-to: rgba(245, 158, 11, 0.82);
+                }
+
+                .kpi-erp .fai-theme-secondary {
+                    --fai-hover-border: rgba(107, 114, 128, 0.25);
+                    --fai-active-border: rgba(107, 114, 128, 0.45);
+                    --fai-active-shadow: rgba(107, 114, 128, 0.18);
+                    --fai-active-from: rgba(107, 114, 128, 0.92);
+                    --fai-active-to: rgba(75, 85, 99, 0.82);
+                }
+
+                /* Permite reutilizar el mismo theme en modales (fuera de .kpi-erp) */
+                .fai-theme-info {
+                    --fai-hover-border: rgba(23, 162, 184, 0.25);
+                    --fai-active-border: rgba(23, 162, 184, 0.45);
+                    --fai-active-shadow: rgba(12, 135, 153, 0.18);
+                    --fai-active-from: rgba(23, 162, 184, 0.92);
+                    --fai-active-to: rgba(12, 135, 153, 0.82);
+                }
+
+                .fai-theme-primary {
+                    --fai-hover-border: rgba(13, 110, 253, 0.25);
+                    --fai-active-border: rgba(13, 110, 253, 0.45);
+                    --fai-active-shadow: rgba(13, 110, 253, 0.18);
+                    --fai-active-from: rgba(13, 110, 253, 0.92);
+                    --fai-active-to: rgba(11, 94, 215, 0.82);
+                }
+
+                .fai-theme-success {
+                    --fai-hover-border: rgba(40, 167, 69, 0.25);
+                    --fai-active-border: rgba(40, 167, 69, 0.45);
+                    --fai-active-shadow: rgba(40, 167, 69, 0.18);
+                    --fai-active-from: rgba(40, 167, 69, 0.92);
+                    --fai-active-to: rgba(25, 135, 84, 0.82);
+                }
+
+                .fai-theme-danger {
+                    --fai-hover-border: rgba(220, 53, 69, 0.25);
+                    --fai-active-border: rgba(220, 53, 69, 0.45);
+                    --fai-active-shadow: rgba(220, 53, 69, 0.18);
+                    --fai-active-from: rgba(220, 53, 69, 0.92);
+                    --fai-active-to: rgba(176, 42, 55, 0.82);
+                }
+
+                .fai-theme-warning {
+                    --fai-hover-border: rgba(255, 193, 7, 0.30);
+                    --fai-active-border: rgba(255, 193, 7, 0.55);
+                    --fai-active-shadow: rgba(255, 193, 7, 0.18);
+                    --fai-active-from: rgba(255, 193, 7, 0.92);
+                    --fai-active-to: rgba(245, 158, 11, 0.82);
+                }
+
+                .fai-theme-secondary {
+                    --fai-hover-border: rgba(107, 114, 128, 0.25);
+                    --fai-active-border: rgba(107, 114, 128, 0.45);
+                    --fai-active-shadow: rgba(107, 114, 128, 0.18);
+                    --fai-active-from: rgba(107, 114, 128, 0.92);
+                    --fai-active-to: rgba(75, 85, 99, 0.82);
                 }
 
                 .kpi-erp .info-box {
@@ -893,6 +1049,8 @@
                     display: flex;
                     align-items: center;
                     gap: .55rem;
+                    position: relative;
+                    overflow: hidden;
                 }
 
                 @media (max-width: 575.98px) {
@@ -904,10 +1062,34 @@
                 .kpi-erp .info-box:hover {
                     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
                     transform: translateY(-1px);
+                    border-color: var(--fai-hover-border, #e5e7eb);
                 }
 
                 .kpi-erp .info-box[role="button"] {
                     cursor: pointer;
+                }
+
+                .kpi-erp .info-box[role="button"]:focus {
+                    outline: none;
+                }
+
+                .kpi-erp .info-box[role="button"]:focus-visible {
+                    box-shadow: 0 0 0 3px var(--fai-hover-border, rgba(99, 102, 241, 0.25)), 0 8px 18px rgba(15, 23, 42, 0.12);
+                }
+
+                .kpi-erp .info-box.is-active {
+                    border-color: var(--fai-active-border, #cbd5e1);
+                    box-shadow: 0 10px 22px var(--fai-active-shadow, rgba(15, 23, 42, 0.14)), 0 2px 6px rgba(15, 23, 42, 0.08);
+                    transform: translateY(-1px);
+                }
+
+                .kpi-erp .info-box.is-active::after {
+                    content: "";
+                    position: absolute;
+                    inset: -1px;
+                    background: linear-gradient(135deg, var(--fai-active-from, rgba(148, 163, 184, 0.9)), var(--fai-active-to, rgba(100, 116, 139, 0.75)));
+                    opacity: .10;
+                    pointer-events: none;
                 }
 
                 #lateOrdersModal.is-loading #lateOrdersModalTable {
@@ -915,6 +1097,10 @@
                 }
 
                 #weekOrdersModal.is-loading #weekOrdersModalTable {
+                    visibility: hidden;
+                }
+
+                #newOrdersWeekModal.is-loading #newOrdersWeekModalTable {
                     visibility: hidden;
                 }
 
@@ -1009,6 +1195,8 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    position: relative;
+                    z-index: 1;
                 }
 
                 .kpi-erp .info-box-icon.bg-success { color: #198754 !important; }
@@ -1016,6 +1204,9 @@
                 .kpi-erp .info-box-icon.bg-primary { color: #0d6efd !important; }
                 .kpi-erp .info-box-icon.bg-warning { color: #f59e0b !important; }
                 .kpi-erp .info-box-icon.bg-info { color: #0d6efd !important; }
+                .kpi-erp .info-box-icon.bg-info-teal {
+                    color: var(--kpi-teal) !important;
+                }
                 .kpi-erp .info-box-icon.bg-secondary { color: #6b7280 !important; }
 
                 .kpi-erp .info-box .info-box-text {
@@ -1039,6 +1230,8 @@
                     width: 100%;
                     min-width: 0;
                     gap: 2px;
+                    position: relative;
+                    z-index: 1;
                 }
 
                 .kpi-erp .kpi-split {
@@ -1141,6 +1334,7 @@
                 /* Estilo ERP para el modal On Time/Late */
                 #onTimeModal .modal-content,
                 #weekOrdersModal .modal-content,
+                #newOrdersWeekModal .modal-content,
                 #lateOrdersModal .modal-content,
                 #ordersDetailModal .modal-content {
                     border: 1px solid #c5c9d2;
@@ -1150,21 +1344,25 @@
 
                 #onTimeModal .modal-header,
                 #weekOrdersModal .modal-header,
+                #newOrdersWeekModal .modal-header,
                 #lateOrdersModal .modal-header,
                 #ordersDetailModal .modal-header {
                     background: linear-gradient(180deg, #eef1f5 0%, #d9dde3 100%);
                     border-bottom: 1px solid #c5c9d2;
                     color: #0f172a;
                     letter-spacing: .2px;
+                    padding-top: .45rem;
+                    padding-bottom: .45rem;
                 }
 
-                /* Late Orders: header rojito */ 
-                #lateOrdersModal .modal-header { 
-                    /* igual al estilo de #onTimeModal.status-late */
-                    background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
-                    border-bottom-color: #e0c4bc;
-                    color: #0f172a; 
-                } 
+                /* Headers por theme (mismo color que el info-box) */
+                #lateOrdersModal.fai-theme-danger .modal-header,
+                #weekOrdersModal.fai-theme-primary .modal-header,
+                #newOrdersWeekModal.fai-theme-info .modal-header {
+                    background: linear-gradient(180deg, var(--fai-hover-border) 0%, var(--fai-active-shadow) 100%);
+                    border-bottom: 0 !important;
+                    color: #0f172a;
+                }
  
                 #lateOrdersModal .modal-header .close { 
                     color: #0f172a; 
@@ -1174,6 +1372,7 @@
 
                 #onTimeModal .modal-title,
                 #weekOrdersModal .modal-title,
+                #newOrdersWeekModal .modal-title,
                 #lateOrdersModal .modal-title,
                 #ordersDetailModal .modal-title {
                     font-weight: 700;
@@ -1181,6 +1380,7 @@
 
                 #onTimeModal .modal-body,
                 #weekOrdersModal .modal-body,
+                #newOrdersWeekModal .modal-body,
                 #lateOrdersModal .modal-body,
                 #ordersDetailModal .modal-body {
                     background: #f7f9fc;
@@ -1188,30 +1388,23 @@
 
                 #onTimeModal table thead,
                 #weekOrdersModal table thead,
+                #newOrdersWeekModal table thead,
                 #lateOrdersModal table thead,
                 #ordersDetailModal table thead {
                     background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
                     color: #0f172a;
                 }
 
-                #lateOrdersModal table thead {
-                    background: linear-gradient(180deg, #f8e9e5 0%, #edd8d3 100%);
-                    color: #0f172a;
-                }
-
-                /* Week Orders: header azulito (como el snippet) */
-                #weekOrdersModal .modal-header {
-                    background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
-                    border-bottom-color: #c5cedd;
-                }
-
-                #weekOrdersModal table thead {
-                    background: linear-gradient(180deg, #e9f0fb 0%, #d7deeb 100%);
+                #lateOrdersModal.fai-theme-danger table thead,
+                #weekOrdersModal.fai-theme-primary table thead,
+                #newOrdersWeekModal.fai-theme-info table thead {
+                    background: linear-gradient(180deg, var(--fai-hover-border) 0%, var(--fai-active-shadow) 100%);
                     color: #0f172a;
                 }
 
                 #onTimeModal table tbody tr:hover,
                 #weekOrdersModal table tbody tr:hover,
+                #newOrdersWeekModal table tbody tr:hover,
                 #lateOrdersModal table tbody tr:hover,
                 #ordersDetailModal table tbody tr:hover {
                     background: #eef2f7;
@@ -1221,6 +1414,7 @@
                 #weekOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #onTimeModal .dataTables_wrapper .dataTables_filter input,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
+                #newOrdersWeekModal .dataTables_wrapper .dataTables_filter input,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
                     border: 1px solid #c5c9d2;
                     border-radius: 6px;
@@ -1231,6 +1425,7 @@
                 #weekOrdersModal .dataTables_wrapper .dataTables_length select,
                 #onTimeModal .dataTables_wrapper .dataTables_length select,
                 #lateOrdersModal .dataTables_wrapper .dataTables_length select,
+                #newOrdersWeekModal .dataTables_wrapper .dataTables_length select,
                 #ordersDetailModal .dataTables_wrapper .dataTables_length select {
                     border: 1px solid #c5c9d2;
                     border-radius: 6px;
@@ -1242,6 +1437,7 @@
                 #weekOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #onTimeModal .dataTables_wrapper .dataTables_filter input,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
+                #newOrdersWeekModal .dataTables_wrapper .dataTables_filter input,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
                     font-size: 14px;
                 }
@@ -1250,6 +1446,7 @@
                 #weekOrdersModal .dataTables_wrapper .row:first-child,
                 #onTimeModal .dataTables_wrapper .row:first-child,
                 #lateOrdersModal .dataTables_wrapper .row:first-child,
+                #newOrdersWeekModal .dataTables_wrapper .row:first-child,
                 #ordersDetailModal .dataTables_wrapper .row:first-child {
                     margin-bottom: 0 !important;
                 }
@@ -1260,6 +1457,8 @@
                 #onTimeModal .dataTables_wrapper .dataTables_length,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter,
                 #lateOrdersModal .dataTables_wrapper .dataTables_length,
+                #newOrdersWeekModal .dataTables_wrapper .dataTables_filter,
+                #newOrdersWeekModal .dataTables_wrapper .dataTables_length,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter,
                 #ordersDetailModal .dataTables_wrapper .dataTables_length {
                     margin-bottom: 0 !important;
@@ -1269,6 +1468,7 @@
                 #weekOrdersModal .erp-filter-control,
                 #onTimeModal .erp-filter-control,
                 #lateOrdersModal .erp-filter-control,
+                #newOrdersWeekModal .erp-filter-control,
                 #ordersDetailModal .erp-filter-control {
                     border: 1px solid #c5c9d2;
                     border-radius: 8px;
@@ -1284,6 +1484,7 @@
                 #weekOrdersModal .erp-filter-control:focus,
                 #onTimeModal .erp-filter-control:focus,
                 #lateOrdersModal .erp-filter-control:focus,
+                #newOrdersWeekModal .erp-filter-control:focus,
                 #ordersDetailModal .erp-filter-control:focus {
                     border-color: #94a3b8;
                     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
@@ -1299,6 +1500,9 @@
                 #lateOrdersModal .btn-erp-success,
                 #lateOrdersModal .btn-erp-danger,
                 #lateOrdersModal .btn-erp-primary,
+                #newOrdersWeekModal .btn-erp-success,
+                #newOrdersWeekModal .btn-erp-danger,
+                #newOrdersWeekModal .btn-erp-primary,
                 #ordersDetailModal .btn-erp-success,
                 #ordersDetailModal .btn-erp-danger,
                 #ordersDetailModal .btn-erp-primary {
@@ -1313,6 +1517,7 @@
                 #weekOrdersModal .btn-erp-success i,
                 #onTimeModal .btn-erp-success i,
                 #lateOrdersModal .btn-erp-success i,
+                #newOrdersWeekModal .btn-erp-success i,
                 #ordersDetailModal .btn-erp-success i {
                     color: #0f5132;
                 }
@@ -1320,6 +1525,7 @@
                 #weekOrdersModal .btn-erp-danger i,
                 #onTimeModal .btn-erp-danger i,
                 #lateOrdersModal .btn-erp-danger i,
+                #newOrdersWeekModal .btn-erp-danger i,
                 #ordersDetailModal .btn-erp-danger i {
                     color: #b91c1c;
                 }
@@ -1327,6 +1533,7 @@
                 #weekOrdersModal .btn-erp-primary i,
                 #onTimeModal .btn-erp-primary i,
                 #lateOrdersModal .btn-erp-primary i,
+                #newOrdersWeekModal .btn-erp-primary i,
                 #ordersDetailModal .btn-erp-primary i {
                     color: #0b5ed7;
                 }
@@ -1358,6 +1565,7 @@
                 #onTimeDetailTable,
                 #lateOrdersModalTable,
                 #weekOrdersModalTable,
+                #newOrdersWeekModalTable,
                 #ordersDetailTable {
                     border: 1px solid #d1d5db;
                     border-radius: 10px;
@@ -1371,9 +1579,14 @@
                     min-width: 1050px;
                 }
 
+                #newOrdersWeekModalTable {
+                    min-width: 1200px;
+                }
+
                 #onTimeDetailTable thead th,
                 #lateOrdersModalTable thead th,
                 #weekOrdersModalTable thead th,
+                #newOrdersWeekModalTable thead th,
                 #ordersDetailTable thead th {
                     background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
                     color: #0f172a;
@@ -1388,6 +1601,8 @@
                 #lateOrdersModalTable th,
                 #weekOrdersModalTable td,
                 #weekOrdersModalTable th,
+                #newOrdersWeekModalTable td,
+                #newOrdersWeekModalTable th,
                 #ordersDetailTable td,
                 #ordersDetailTable th {
                     padding: 8px 10px;
@@ -1503,6 +1718,14 @@
                 }
 
                 #weekOrdersModalTable tbody tr:hover {
+                    background: #eef2f7;
+                }
+
+                #newOrdersWeekModalTable tbody tr:nth-child(odd) {
+                    background: #f8fafc;
+                }
+
+                #newOrdersWeekModalTable tbody tr:hover {
                     background: #eef2f7;
                 }
 
@@ -2802,6 +3025,19 @@
                         weekTableDt.on('draw', refreshWeekOrdersCache);
                     } catch (e) {}
 
+                    // KPI active highlight (por color del icono)
+                    $(document).on('click', '.kpi-erp .info-box[role="button"]', function() {
+                        $('.kpi-erp .info-box').removeClass('is-active');
+                        $(this).addClass('is-active');
+                    });
+
+                    $(document).on('keydown', '.kpi-erp .info-box[role="button"]', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            $(this).trigger('click');
+                        }
+                    });
+
                     // Pre-inicializa el DataTable del modal en segundo plano (abre casi instantáneo)
                     setTimeout(() => {
                         try {
@@ -2816,11 +3052,19 @@
                     const $lateOrdersLoading = $('#lateOrdersModalLoading');
                     const $lateOrdersCustomer = $('#lateOrdersModalCustomer');
                     const $lateOrdersStatus = $('#lateOrdersModalStatus');
+                    const $lateOrdersCount = $('#lateOrdersModalCount');
                     let lateOrdersDt = null;
                     let lateOrdersDidAdjust = false;
 
                     function escapeRegex(value) {
                         return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    }
+
+                    function updateFilteredCount(dt, $el) {
+                        if (!dt || !$el || !$el.length) return;
+                        const total = dt.rows().count();
+                        const filtered = dt.rows({ search: 'applied' }).count();
+                        $el.text(`Total: ${filtered} / ${total}`);
                     }
 
                     function populateLateOrdersFilters(dt) {
@@ -2874,7 +3118,17 @@
                         return lateOrdersDt;
                     }
 
+                    const KPI_THEME_CLASSES = 'fai-theme-info fai-theme-primary fai-theme-success fai-theme-danger fai-theme-warning fai-theme-secondary';
+                    function applyModalTheme($modal, $trigger) {
+                        if (!$modal || !$modal.length || !$trigger || !$trigger.length) return;
+                        const classes = ($trigger.attr('class') || '').split(/\s+/);
+                        const themeClass = classes.find(c => c && c.indexOf('fai-theme-') === 0);
+                        $modal.removeClass(KPI_THEME_CLASSES);
+                        if (themeClass) $modal.addClass(themeClass);
+                    }
+
                     function openLateOrdersModal() {
+                        applyModalTheme($lateOrdersModal, $lateOrdersTrigger);
                         if (!lateOrdersDt) {
                             $lateOrdersModal.addClass('is-loading');
                             $lateOrdersLoading.removeClass('d-none');
@@ -2901,7 +3155,12 @@
                                 try { dt.columns.adjust(); } catch (e) {}
                             }, 0);
                         }
+                        if (!dt.__countBound) {
+                            dt.__countBound = true;
+                            dt.on('draw', function() { updateFilteredCount(dt, $lateOrdersCount); });
+                        }
                         populateLateOrdersFilters(dt);
+                        updateFilteredCount(dt, $lateOrdersCount);
                         $lateOrdersModal.removeClass('is-loading');
                         $lateOrdersLoading.addClass('d-none');
                     });
@@ -2926,6 +3185,8 @@
                         $lateOrdersCustomer.val('');
                         $lateOrdersStatus.val('');
                         applyLateOrdersFilters();
+                        $lateOrdersCount.text('');
+                        $lateOrdersTrigger.removeClass('is-active');
                     });
 
                     // Pre-inicializa el DataTable en segundo plano (abre casi instantáneo)
@@ -2939,6 +3200,7 @@
                     const $weekOrdersButtons = $('#weekOrdersModalButtons');
                     const $weekOrdersCustomer = $('#weekOrdersModalCustomer');
                     const $weekOrdersStatus = $('#weekOrdersModalStatus');
+                    const $weekOrdersCount = $('#weekOrdersModalCount');
                     let weekOrdersDt = null;
                     let weekOrdersDidAdjust = false;
                     let weekOrdersLastSignature = null;
@@ -3011,6 +3273,7 @@
                     }
 
                     function openWeekOrdersModal() {
+                        applyModalTheme($weekOrdersModal, $weekOrdersTrigger);
                         const rows = (weekOrdersCachedRows && weekOrdersCachedRows.length) ? weekOrdersCachedRows : [];
                         const isReady = weekOrdersDt && (getWeekOrdersSignature(rows) === weekOrdersLastSignature);
                         if (!isReady) {
@@ -3081,6 +3344,11 @@
                     $weekOrdersModal.on('shown.bs.modal', function() {
                         ensureWeekOrdersDtInitialized();
                         syncWeekOrdersDtFromCache();
+                        if (weekOrdersDt && !weekOrdersDt.__countBound) {
+                            weekOrdersDt.__countBound = true;
+                            weekOrdersDt.on('draw', function() { updateFilteredCount(weekOrdersDt, $weekOrdersCount); });
+                        }
+                        updateFilteredCount(weekOrdersDt, $weekOrdersCount);
 
                         // Ajustar columnas ya visible
                         if (!weekOrdersDidAdjust) {
@@ -3103,7 +3371,171 @@
                             weekOrdersDt.column(5).search('', true, false);
                             weekOrdersDt.draw(false);
                         }
+                        $weekOrdersCount.text('');
+                        $weekOrdersTrigger.removeClass('is-active');
                     });
+
+                    // New Orders This Week KPI -> modal detail
+                    const $newOrdersWeekModal = $('#newOrdersWeekModal');
+                    const $newOrdersWeekLoading = $('#newOrdersWeekModalLoading');
+                    const $newOrdersWeekCustomer = $('#newOrdersWeekModalCustomer');
+                    const $newOrdersWeekStatus = $('#newOrdersWeekModalStatus');
+                    const $newOrdersWeekUploaded = $('#newOrdersWeekModalUploaded');
+                    const $newOrdersWeekCount = $('#newOrdersWeekModalCount');
+                    let newOrdersWeekDt = null;
+                    let newOrdersWeekDidAdjust = false;
+
+                    const $newOrdersWeekTrigger = $('.kpi-erp .info-box').filter(function() {
+                        return ($(this).find('.info-box-text').text() || '').trim() === 'New Orders This Week';
+                    }).first();
+
+                    if ($newOrdersWeekTrigger.length) {
+                        $newOrdersWeekTrigger
+                            .addClass('js-open-new-orders-week')
+                            .attr('role', 'button')
+                            .attr('tabindex', '0')
+                            .attr('aria-label', 'Open New Orders This Week detail');
+                    }
+
+                    function populateNewOrdersWeekFilters(dt) {
+                        if (!dt) return;
+                        const customerValues = dt.column(3).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const statusValues = dt.column(5).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const uploadedValues = dt.column(6).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+
+                        const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
+                        const uniqStatuses = Array.from(new Set(statusValues)).sort((a, b) => a.localeCompare(b));
+                        const uniqUploaded = Array.from(new Set(uploadedValues)).sort((a, b) => a.localeCompare(b));
+
+                        const prevCustomer = $newOrdersWeekCustomer.val();
+                        const prevStatus = $newOrdersWeekStatus.val();
+                        const prevUploaded = $newOrdersWeekUploaded.val();
+
+                        $newOrdersWeekCustomer.empty().append('<option value=\"\">-- All Customers --</option>');
+                        uniqCustomers.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            $newOrdersWeekCustomer.append(opt);
+                        });
+
+                        $newOrdersWeekStatus.empty().append('<option value=\"\">-- All Status --</option>');
+                        uniqStatuses.forEach(status => {
+                            const opt = document.createElement('option');
+                            opt.value = status;
+                            opt.textContent = status;
+                            $newOrdersWeekStatus.append(opt);
+                        });
+
+                        $newOrdersWeekUploaded.empty().append('<option value=\"\">-- All Uploaded --</option>');
+                        uniqUploaded.forEach(value => {
+                            const opt = document.createElement('option');
+                            opt.value = value;
+                            opt.textContent = value;
+                            $newOrdersWeekUploaded.append(opt);
+                        });
+
+                        if (prevCustomer && uniqCustomers.includes(prevCustomer)) $newOrdersWeekCustomer.val(prevCustomer);
+                        if (prevStatus && uniqStatuses.includes(prevStatus)) $newOrdersWeekStatus.val(prevStatus);
+                        if (prevUploaded && uniqUploaded.includes(prevUploaded)) $newOrdersWeekUploaded.val(prevUploaded);
+                    }
+
+                    function applyNewOrdersWeekFilters() {
+                        const tableSelector = '#newOrdersWeekModalTable';
+                        if (!$.fn.DataTable.isDataTable(tableSelector)) return;
+                        const dt = $(tableSelector).DataTable();
+
+                        const customer = ($newOrdersWeekCustomer.val() || '').trim();
+                        const status = ($newOrdersWeekStatus.val() || '').trim();
+                        const uploaded = ($newOrdersWeekUploaded.val() || '').trim();
+
+                        dt.column(3).search(customer ? `^${escapeRegex(customer)}$` : '', true, false);
+                        dt.column(5).search(status ? `^${escapeRegex(status)}$` : '', true, false);
+                        dt.column(6).search(uploaded ? `^${escapeRegex(uploaded)}$` : '', true, false);
+                        dt.draw();
+                    }
+
+                    $newOrdersWeekCustomer.on('change', applyNewOrdersWeekFilters);
+                    $newOrdersWeekStatus.on('change', applyNewOrdersWeekFilters);
+                    $newOrdersWeekUploaded.on('change', applyNewOrdersWeekFilters);
+
+                    function ensureNewOrdersWeekDtInitialized() {
+                        if (newOrdersWeekDt) return newOrdersWeekDt;
+                        const tableSelector = '#newOrdersWeekModalTable';
+                        newOrdersWeekDt = initDataTable(tableSelector, 'NEW ORDERS THIS WEEK', {
+                            buttonsHost: '#newOrdersWeekModalButtons',
+                            buttonStyle: 'erp',
+                            order: [[6, 'asc']],
+                            columnDefs: [{
+                                targets: [5, 6],
+                                render: function(data, type) {
+                                    if (type === 'filter' || type === 'sort') {
+                                        return $('<div>').html(data).text().trim();
+                                    }
+                                    return data;
+                                }
+                            }, {
+                                targets: [4, 5, 6, 7, 8, 9, 10],
+                                className: 'text-center'
+                            }, {
+                                targets: [0, 1, 6, 7, 8],
+                                className: 'text-nowrap'
+                            }]
+                        });
+                        populateNewOrdersWeekFilters(newOrdersWeekDt);
+                        return newOrdersWeekDt;
+                    }
+
+                    function openNewOrdersWeekModal() {
+                        applyModalTheme($newOrdersWeekModal, $newOrdersWeekTrigger);
+                        if (!newOrdersWeekDt) {
+                            $newOrdersWeekModal.addClass('is-loading');
+                            $newOrdersWeekLoading.removeClass('d-none');
+                        } else {
+                            $newOrdersWeekModal.removeClass('is-loading');
+                            $newOrdersWeekLoading.addClass('d-none');
+                        }
+                        $newOrdersWeekModal.modal('show');
+                    }
+
+                    $(document).on('click', '.js-open-new-orders-week', openNewOrdersWeekModal);
+                    $(document).on('keydown', '.js-open-new-orders-week', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openNewOrdersWeekModal();
+                        }
+                    });
+
+                    $newOrdersWeekModal.on('shown.bs.modal', function() {
+                        const dt = ensureNewOrdersWeekDtInitialized();
+                        if (!newOrdersWeekDidAdjust) {
+                            newOrdersWeekDidAdjust = true;
+                            setTimeout(() => {
+                                try { dt.columns.adjust(); } catch (e) {}
+                            }, 0);
+                        }
+                        if (!dt.__countBound) {
+                            dt.__countBound = true;
+                            dt.on('draw', function() { updateFilteredCount(dt, $newOrdersWeekCount); });
+                        }
+                        populateNewOrdersWeekFilters(dt);
+                        updateFilteredCount(dt, $newOrdersWeekCount);
+                        $newOrdersWeekModal.removeClass('is-loading');
+                        $newOrdersWeekLoading.addClass('d-none');
+                    });
+
+                    $newOrdersWeekModal.on('hidden.bs.modal', function() {
+                        $newOrdersWeekCustomer.val('');
+                        $newOrdersWeekStatus.val('');
+                        $newOrdersWeekUploaded.val('');
+                        applyNewOrdersWeekFilters();
+                        $newOrdersWeekCount.text('');
+                        $newOrdersWeekTrigger.removeClass('is-active');
+                    });
+
+                    setTimeout(() => {
+                        try { ensureNewOrdersWeekDtInitialized(); } catch (e) {}
+                    }, 220);
 
                     const weekFilter = document.getElementById('week-filter');
 
