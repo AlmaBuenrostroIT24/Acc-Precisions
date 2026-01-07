@@ -1496,6 +1496,11 @@ class Order_ScheduleController extends Controller
             ->whereYear('created_at', $currentYear)
             ->count();
 
+        $uploadedOrdersListYear = OrderSchedule::where('status_order', '!=', 'inactive')
+            ->whereYear('created_at', $currentYear)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
         $cantidadHearst = OrderSchedule::where('location', 'hearst')
             ->where('status', '!=', 'sent')
             ->where('status_order', '!=', 'inactive')
@@ -1612,6 +1617,7 @@ class Order_ScheduleController extends Controller
             'totalOrdenes',
             'completedOrdersYear',
             'uploadedOrdersYear',
+            'uploadedOrdersListYear',
             'ordenesPorCliente',
             'ordenesAgregadasSemana',
             'totalAgregadasSemana',
