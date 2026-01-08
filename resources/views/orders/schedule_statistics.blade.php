@@ -12,7 +12,7 @@
 {{-- Tabs --}}
 @include('orders.schedule_tab')
 
-{{-- M├ëTRICAS PRINCIPALES COMPACTAS & ATRACTIVAS --}}
+{{-- MeTRICAS PRINCIPALES COMPACTAS & ATRACTIVAS --}}
 <div class="container-fluid pt-0 pb-4">
 
     {{-- Cards resumen principal --}}
@@ -21,7 +21,7 @@
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
             <div class="info-box fai-theme-warning" role="button" tabindex="0" aria-label="Open Active Orders detail">
                 <span class="info-box-icon bg-warning shadow-sm">
-                    <i class="fas fa-cogs"></i> <!-- ├ìcono de engranaje m├║ltiple -->
+                    <i class="fas fa-cogs"></i> <!-- icono de engranaje m├║ltiple -->
                 </span>
                 <div class="info-box-content">
                     <div class="kpi-split">
@@ -105,9 +105,9 @@
         </div>
     </div>
 
-    <div class="row g-2 mt-2">
-        <div class="col-12 col-md-8 col-lg-8">
-            <div class="card shadow-sm border-0 rounded-3 h-100">
+    <div class="row g-2 mt-2 align-items-stretch">
+        <div class="col-12 col-xl-8 d-flex">
+            <div class="card shadow-sm border-0 rounded-3 h-100 w-100">
                 <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
                     {{-- T├¡tulo a la izquierda --}}
                     <div class="d-flex align-items-center">
@@ -190,38 +190,52 @@
         </div>
 
         {{-- Card: ordenes agregadas esta semana --}}
-        <div class="col-12 col-md-4 col-lg-4 mb-3">
-            <div class="card shadow rounded-4 border-0 h-100">
+        <div class="col-12 col-xl-4 d-flex">
+            <div class="card shadow-sm border-0 rounded-3 h-100 w-100">
                 @if ($resumen['all_shipping'])
-                <div class="card-header bg-success text-white text-center rounded-top-4 py-2">
-                    <h4 class="mb-0 fs-6 lh-1">
-                        <i class="fas fa-check-circle me-2"></i> PENDING ORDERS THIS WEEK
-                    </h4>
+                <div class="card-header erp-card-header erp-card-header--success d-flex align-items-center flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <span class="erp-card-icon erp-card-icon--success mr-2">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                        <div class="erp-card-title">Pending Orders This Week</div>
+                    </div>
+                    <div class="erp-card-meta ml-auto">
+                        Total: <strong>{{ $resumen['total'] }}</strong>
+                    </div>
                 </div>
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-box-open fa-3x text-success mb-3"></i>
-                    <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
-                        <strong>{{ $resumen['total'] }}</strong>
-                    </p>
-                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">Γ£à ┬íEverything shipped this
-                        week!</p>
+                <div class="card-body text-center py-3">
+                    <div class="erp-icon-box erp-icon-box--success mb-2">
+                        <i class="fas fa-box-open text-success fa-lg"></i>
+                    </div>
+                    <div class="text-muted font-weight-bold">Everything shipped this week</div>
+                    <div class="small text-muted">No pending orders.</div>
                 </div>
                 @else
-                <div class="card-header bg-warning text-dark text-center rounded-top-4 py-2">
-                    <h5 class="mb-0 fs-6 lh-1">
-                        <i class="fas fa-exclamation-circle me-2"></i> PENDING ORDERS THIS WEEK
-                    </h5>
+                <div class="card-header erp-card-header erp-card-header--warning d-flex align-items-center flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <span class="erp-card-icon erp-card-icon--warning mr-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </span>
+                        <div class="erp-card-title">Pending Orders This Week</div>
+                    </div>
+                    <div class="erp-card-meta ml-auto">
+                        Pending: <strong class="text-warning"> {{ $resumen['pendients'] }}</strong> /
+                        <strong>{{ $resumen['total'] }}</strong>
+                    </div>
                 </div>
-                <div class="card-body py-3">
+                <div class="card-body py-2">
                     <div class="row">
                         {{-- Columna izquierda: resumen --}}
 
                         <div class="col-4">
                             <div class="text-start small">
                                 {{-- Cabecera con ├¡cono --}}
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="fas fa-box fa-2x text-warning mr-3"></i>
-                                    <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="erp-card-icon erp-card-icon--warning mr-2" style="width: 28px; height: 28px;">
+                                        <i class="fas fa-box"></i>
+                                    </span>
+                                    <h6 class="mb-0 font-weight-bold text-dark">Summary</h6>
                                 </div>
 
                                 {{-- L├¡nea: Total --}}
@@ -229,9 +243,8 @@
                                     <div class="mr-2" style="width: 28px;">
                                         <i class="fas fa-list-alt text-muted"></i>
                                     </div>
-                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
-                                    <span class="font-weight-bold text-dark"
-                                        style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
+                                    <span class="flex-grow-1 text-muted font-weight-bold">Total</span>
+                                    <span class="font-weight-bold text-dark">{{ $resumen['total'] }}</span>
                                 </div>
 
                                 {{-- L├¡nea: Pending --}}
@@ -239,9 +252,8 @@
                                     <div class="mr-4" style="width: 28px;">
                                         <i class="fas fa-clock text-warning"></i>
                                     </div>
-                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
-                                    <span class="font-weight-bold text-warning"
-                                        style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
+                                    <span class="flex-grow-1 text-muted font-weight-bold">Pending</span>
+                                    <span class="font-weight-bold text-warning">{{ $resumen['pendients'] }}</span>
                                 </div>
 
                                 {{-- L├¡nea: Sent --}}
@@ -249,16 +261,16 @@
                                     <div class="mr-4" style="width: 28px;">
                                         <i class="fas fa-paper-plane text-success"></i>
                                     </div>
-                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
-                                    <span class="font-weight-bold text-success"
-                                        style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
+                                    <span class="flex-grow-1 text-muted font-weight-bold">Sent</span>
+                                    <span class="font-weight-bold text-success">{{ $resumen['send'] }}</span>
                                 </div>
 
                                 {{-- Mensaje final (solo si hay pendientes) --}}
                                 @if(!$resumen['all_shipping'])
-                                <div class="alert alert-warning py-2 px-3 mt-3 mb-0 d-flex align-items-center">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                                    <span class="font-weight-bold medium">There are still orders to be sent.</span>
+                                <div class="mt-2 px-2 py-1 d-flex align-items-center"
+                                    style="border: 1px solid rgba(255, 193, 7, 0.35); background: rgba(255, 193, 7, 0.12); border-radius: 10px;">
+                                    <i class="fas fa-exclamation-triangle mr-2 text-warning"></i>
+                                    <span class="small font-weight-bold text-dark">There are still orders to be sent.</span>
                                 </div>
                                 @endif
                             </div>
@@ -266,9 +278,9 @@
 
                         {{-- Columna derecha: tabla scroll --}}
                         <div class="col-8">
-                            <div class="table-responsive" style="max-height: 389px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered table-striped small mb-0">
-                                    <thead class="thead-light sticky-top">
+                            <div class="table-responsive erp-scroll-pane">
+                                <table class="table table-sm table-striped mb-0 erp-mini-table">
+                                    <thead class="sticky-top">
                                         <tr>
                                             <th>#</th>
                                             <th>ORDER</th>
@@ -277,14 +289,21 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($weeklyOrders->where('status', '!=', 'sent') as $order)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $order->work_id ?? 'N/A' }}</td>
-                                            <td>{{ $order->PN ?? 'N/A' }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
-                                        </tr>
-                                        @endforeach
+                                        @php
+                                            $pendingWeeklyOrders = $weeklyOrders->where('status', '!=', 'sent');
+                                        @endphp
+                                        @forelse ($pendingWeeklyOrders as $order)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $order->work_id ?? 'N/A' }}</td>
+                                                <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">No pending orders</td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -1658,6 +1677,22 @@
                     color: #198754;
                 }
 
+                .erp-card-icon--warning {
+                    background: rgba(255, 193, 7, 0.18);
+                    border-color: rgba(255, 193, 7, 0.40);
+                    color: #b45309;
+                }
+
+                .erp-card-header--success {
+                    background: linear-gradient(180deg, #e6f4ec 0%, #d5e7dc 100%);
+                    border-bottom-color: #c3e0cf;
+                }
+
+                .erp-card-header--warning {
+                    background: linear-gradient(180deg, #fff6dd 0%, #f5e6bf 100%);
+                    border-bottom-color: #e8d4a2;
+                }
+
                 .erp-card-meta {
                     display: inline-flex;
                     align-items: center;
@@ -1669,6 +1704,52 @@
                     font-weight: 800;
                     font-size: .8rem;
                     white-space: nowrap;
+                }
+
+                /* Mini table ERP (para cards pequeñas) */
+                .erp-scroll-pane {
+                    max-height: 389px;
+                    overflow-y: auto;
+                }
+
+                .erp-icon-box {
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 12px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid rgba(15, 23, 42, 0.16);
+                    background: rgba(241, 245, 249, 0.75);
+                }
+
+                .erp-icon-box--success {
+                    background: rgba(40, 167, 69, 0.12);
+                    border-color: rgba(40, 167, 69, 0.28);
+                }
+
+                .erp-cell-wrap {
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                }
+
+                .erp-mini-table {
+                    border: 1px solid #d1d5db;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    background: #fff;
+                }
+
+                .erp-mini-table thead th {
+                    background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
+                    color: #0f172a;
+                    border-bottom: 1px solid #c5c9d2;
+                    font-weight: 800;
+                    font-size: 12px;
+                }
+
+                .erp-mini-table td {
+                    font-size: 12px;
                 }
  
                 /* Tablas de página: mismo look ERP que modales */
