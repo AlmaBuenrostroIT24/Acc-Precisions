@@ -1479,6 +1479,11 @@ class Order_ScheduleController extends Controller
             ->where('status_order', '!=', 'inactive')
             ->count();
 
+        $activeOrdersList = OrderSchedule::where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->orderBy('due_date', 'asc')
+            ->get();
+
         /** 🟢 VERIFIED: Box text-> total Hearst */
         $currentYear = Carbon::now()->year;
         $completedOrdersYear = OrderSchedule::where('status', 'sent')
@@ -1627,6 +1632,7 @@ class Order_ScheduleController extends Controller
             'cantidadFloor',
             'cantidadStandby',
             'totalOrdenes',
+            'activeOrdersList',
             'completedOrdersYear',
             'completedOrdersListYear',
             'uploadedOrdersYear',

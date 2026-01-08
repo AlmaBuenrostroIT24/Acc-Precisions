@@ -345,7 +345,7 @@
                             <div class="table-responsive">
                                 <table id="tablelate" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export"
                                     style="table-layout: fixed; width: 100%;">
-                                    <thead class="bg-danger text-white">
+                                    <thead>
                                         <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
                                             <th style="width: 40px;">W.ID</th>
                                             <th style="width: 50px;">PN</th>
@@ -822,16 +822,16 @@
                                 <table id="weekOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
                                     <thead>
                                         <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                            <th>W.ID</th>
-                                            <th>PN</th>
-                                            <th>DESCRIPTION</th>
-                                            <th>CUSTOMER</th>
-                                            <th class="text-center">QTY</th>
-                                            <th class="text-center">STATUS</th>
-                                            <th class="text-center">DUE DATE</th>
-                                            <th class="text-center">SENT AT</th>
-                                            <th class="text-center">SENT</th>
-                                            <th class="text-center">DAYS +/-</th>
+                                            <th style="width: 55px;">W.ID</th>
+                                            <th style="width: 70px;">PN</th>
+                                            <th style="width: 320px;">DESCRIPTION</th>
+                                            <th style="width: 110px;">CUSTOMER</th>
+                                            <th class="text-center" style="width: 55px;">QTY</th>
+                                            <th class="text-center" style="width: 75px;">STATUS</th>
+                                            <th class="text-center" style="width: 90px;">DUE DATE</th>
+                                            <th class="text-center" style="width: 90px;">SENT AT</th>
+                                            <th class="text-center" style="width: 55px;">SENT</th>
+                                            <th class="text-center" style="width: 75px;">DAYS +/-</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -875,6 +875,64 @@
                                 <table id="newOrdersWeekModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
                                     <thead>
                                         <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                            <th style="width: 55px;">W.ID</th>
+                                            <th style="width: 70px;">PN</th>
+                                            <th style="width: 420px;">DESCRIPTION</th>
+                                            <th style="width: 110px;">CUSTOMER</th>
+                                            <th class="text-center" style="width: 55px;">QTY</th>
+                                            <th class="text-center" style="width: 80px;">STATUS</th>
+                                            <th class="text-center" style="width: 95px;">UPLOADED</th>
+                                            <th class="text-center" style="width: 90px;">DUE DATE</th>
+                                            <th class="text-center" style="width: 90px;">SENT AT</th>
+                                            <th class="text-center" style="width: 55px;">SENT</th>
+                                            <th class="text-center" style="width: 70px;">DAYS</th>
+                                            <th style="width: 180px;">NOTES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @include('orders.schedule_tableneworders_week', ['orders' => $ordenesAgregadasSemana])
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal: Active Orders detail --}}
+            <div class="modal fade" id="activeOrdersModal" tabindex="-1" role="dialog" aria-labelledby="activeOrdersModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 90%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="modal-title mb-0" id="activeOrdersModalLabel">Active Orders</h5>
+                            </div>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <select id="activeOrdersModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
+                                    <option value="">-- All Customers --</option>
+                                </select>
+                                <select id="activeOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Status --</option>
+                                </select>
+                                <select id="activeOrdersModalMonth" class="form-control form-control-sm erp-filter-control" style="max-width: 170px;">
+                                    <option value="">-- All Months --</option>
+                                </select>
+                                <select id="activeOrdersModalDay" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Days --</option>
+                                </select>
+                                <span id="activeOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <div id="activeOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
+                            </div>
+                            <div id="activeOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
+                            <div class="table-responsive small">
+                                <table id="activeOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                                    <thead>
+                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
                                             <th>W.ID</th>
                                             <th>PN</th>
                                             <th>DESCRIPTION</th>
@@ -883,14 +941,13 @@
                                             <th class="text-center">STATUS</th>
                                             <th class="text-center">UPLOADED</th>
                                             <th class="text-center">DUE DATE</th>
-                                            <th class="text-center">SENT AT</th>
-                                            <th class="text-center">SENT</th>
-                                            <th class="text-center">DAYS</th>
+                                            <th class="text-center">DUE-UPLOADED</th>
+                                            <th class="text-center">DUE-TODAY</th>
                                             <th>NOTES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @include('orders.schedule_tableneworders_week', ['orders' => $ordenesAgregadasSemana])
+                                        @include('orders.schedule_tableactive_orders', ['orders' => $activeOrdersList])
                                     </tbody>
                                 </table>
                             </div>
@@ -933,18 +990,18 @@
                                 <table id="uploadedOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
                                     <thead>
                                         <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                            <th>W.ID</th>
-                                            <th>PN</th>
-                                            <th>DESCRIPTION</th>
-                                            <th>CUSTOMER</th>
-                                            <th class="text-center">QTY</th>
-                                            <th class="text-center">STATUS</th>
-                                            <th class="text-center">UPLOADED</th>
-                                            <th class="text-center">DUE DATE</th>
-                                            <th class="text-center">SENT AT</th>
-                                            <th class="text-center">SENT</th>
-                                            <th class="text-center">DAYS</th>
-                                            <th>NOTES</th>
+                                            <th style="width: 55px;">W.ID</th>
+                                            <th style="width: 70px;">PN</th>
+                                            <th style="width: 420px;">DESCRIPTION</th>
+                                            <th style="width: 110px;">CUSTOMER</th>
+                                            <th class="text-center" style="width: 55px;">QTY</th>
+                                            <th class="text-center" style="width: 80px;">STATUS</th>
+                                            <th class="text-center" style="width: 95px;">UPLOADED</th>
+                                            <th class="text-center" style="width: 90px;">DUE DATE</th>
+                                            <th class="text-center" style="width: 90px;">SENT AT</th>
+                                            <th class="text-center" style="width: 55px;">SENT</th>
+                                            <th class="text-center" style="width: 70px;">DAYS</th>
+                                            <th style="width: 180px;">NOTES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -988,18 +1045,18 @@
                                 <table id="completedOrdersModalTable" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
                                     <thead>
                                         <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                            <th>W.ID</th>
-                                            <th>PN</th>
-                                            <th>DESCRIPTION</th>
-                                            <th>CUSTOMER</th>
-                                            <th class="text-center">QTY</th>
-                                            <th class="text-center">STATUS</th>
-                                            <th class="text-center">UPLOADED</th>
-                                            <th class="text-center">DUE DATE</th>
-                                            <th class="text-center">SENT AT</th>
-                                            <th class="text-center">SENT</th>
-                                            <th class="text-center">DAYS</th>
-                                            <th>NOTES</th>
+                                            <th style="width: 55px;">W.ID</th>
+                                            <th style="width: 70px;">PN</th>
+                                            <th style="width: 420px;">DESCRIPTION</th>
+                                            <th style="width: 110px;">CUSTOMER</th>
+                                            <th class="text-center" style="width: 55px;">QTY</th>
+                                            <th class="text-center" style="width: 80px;">STATUS</th>
+                                            <th class="text-center" style="width: 95px;">UPLOADED</th>
+                                            <th class="text-center" style="width: 90px;">DUE DATE</th>
+                                            <th class="text-center" style="width: 90px;">SENT AT</th>
+                                            <th class="text-center" style="width: 55px;">SENT</th>
+                                            <th class="text-center" style="width: 70px;">DAYS</th>
+                                            <th style="width: 180px;">NOTES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1214,6 +1271,15 @@
                 }
 
                 #newOrdersWeekModal.is-loading #newOrdersWeekModalTable {
+                    visibility: hidden;
+                }
+
+                #activeOrdersModal.is-loading #activeOrdersModalTable {
+                    visibility: hidden;
+                }
+
+                #activeOrdersModal.is-loading .dataTables_scrollHead,
+                #activeOrdersModal.is-loading .dataTables_scrollBody {
                     visibility: hidden;
                 }
 
@@ -1452,10 +1518,42 @@
                     height: 50px;
                 }
 
+                /* Encabezados de tablas de página (mismo estilo que modales) */
+                #tableweek thead th,
+                #tablelate thead th {
+                    background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
+                    color: #0f172a;
+                    border-bottom: 1px solid #c5c9d2;
+                }
+
+                /* ActiveOrdersModalTable usa header clonado (scrollX): forzar mismo color */
+                #activeOrdersModal .dataTables_scrollHead th {
+                    background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%) !important;
+                    color: #0f172a !important;
+                    border-bottom: 1px solid #c5c9d2 !important;
+                }
+
+                /* LateOrdersModal: mostrar scrollbar horizontal en pantallas chicas */
+                #lateOrdersModalTable {
+                    min-width: 900px;
+                    table-layout: fixed;
+                }
+
+                #lateOrdersModalTable th,
+                #lateOrdersModalTable td {
+                    white-space: nowrap;
+                }
+
+                #lateOrdersModalTable td:nth-child(3),
+                #lateOrdersModalTable td:nth-child(9) {
+                    white-space: normal;
+                }
+
                 /* Estilo ERP para el modal On Time/Late */
                 #onTimeModal .modal-content,
                 #weekOrdersModal .modal-content,
                 #newOrdersWeekModal .modal-content,
+                #activeOrdersModal .modal-content,
                 #uploadedOrdersModal .modal-content,
                 #completedOrdersModal .modal-content,
                 #lateOrdersModal .modal-content,
@@ -1468,6 +1566,7 @@
                 #onTimeModal .modal-header,
                 #weekOrdersModal .modal-header,
                 #newOrdersWeekModal .modal-header,
+                #activeOrdersModal .modal-header,
                 #uploadedOrdersModal .modal-header,
                 #completedOrdersModal .modal-header,
                 #lateOrdersModal .modal-header,
@@ -1484,6 +1583,7 @@
                 #lateOrdersModal.fai-theme-danger .modal-header,
                 #weekOrdersModal.fai-theme-primary .modal-header,
                 #newOrdersWeekModal.fai-theme-info .modal-header,
+                #activeOrdersModal.fai-theme-warning .modal-header,
                 #uploadedOrdersModal.fai-theme-secondary .modal-header,
                 #completedOrdersModal.fai-theme-success .modal-header {
                     background: linear-gradient(180deg, var(--fai-hover-border) 0%, var(--fai-active-shadow) 100%);
@@ -1500,6 +1600,7 @@
                 #onTimeModal .modal-title,
                 #weekOrdersModal .modal-title,
                 #newOrdersWeekModal .modal-title,
+                #activeOrdersModal .modal-title,
                 #uploadedOrdersModal .modal-title,
                 #completedOrdersModal .modal-title,
                 #lateOrdersModal .modal-title,
@@ -1510,6 +1611,7 @@
                 #onTimeModal .modal-body,
                 #weekOrdersModal .modal-body,
                 #newOrdersWeekModal .modal-body,
+                #activeOrdersModal .modal-body,
                 #uploadedOrdersModal .modal-body,
                 #completedOrdersModal .modal-body,
                 #lateOrdersModal .modal-body,
@@ -1520,6 +1622,7 @@
                 #onTimeModal table thead,
                 #weekOrdersModal table thead,
                 #newOrdersWeekModal table thead,
+                #activeOrdersModal table thead,
                 #uploadedOrdersModal table thead,
                 #completedOrdersModal table thead,
                 #lateOrdersModal table thead,
@@ -1531,6 +1634,7 @@
                 #lateOrdersModal.fai-theme-danger table thead,
                 #weekOrdersModal.fai-theme-primary table thead,
                 #newOrdersWeekModal.fai-theme-info table thead,
+                #activeOrdersModal.fai-theme-warning table thead,
                 #uploadedOrdersModal.fai-theme-secondary table thead,
                 #completedOrdersModal.fai-theme-success table thead {
                     background: linear-gradient(180deg, var(--fai-hover-border) 0%, var(--fai-active-shadow) 100%);
@@ -1540,6 +1644,7 @@
                 #onTimeModal table tbody tr:hover,
                 #weekOrdersModal table tbody tr:hover,
                 #newOrdersWeekModal table tbody tr:hover,
+                #activeOrdersModal table tbody tr:hover,
                 #uploadedOrdersModal table tbody tr:hover,
                 #completedOrdersModal table tbody tr:hover,
                 #lateOrdersModal table tbody tr:hover,
@@ -1552,6 +1657,7 @@
                 #onTimeModal .dataTables_wrapper .dataTables_filter input,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #newOrdersWeekModal .dataTables_wrapper .dataTables_filter input,
+                #activeOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #uploadedOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
                     border: 1px solid #c5c9d2;
@@ -1564,6 +1670,7 @@
                 #onTimeModal .dataTables_wrapper .dataTables_length select,
                 #lateOrdersModal .dataTables_wrapper .dataTables_length select,
                 #newOrdersWeekModal .dataTables_wrapper .dataTables_length select,
+                #activeOrdersModal .dataTables_wrapper .dataTables_length select,
                 #uploadedOrdersModal .dataTables_wrapper .dataTables_length select,
                 #ordersDetailModal .dataTables_wrapper .dataTables_length select {
                     border: 1px solid #c5c9d2;
@@ -1577,6 +1684,7 @@
                 #onTimeModal .dataTables_wrapper .dataTables_filter input,
                 #lateOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #newOrdersWeekModal .dataTables_wrapper .dataTables_filter input,
+                #activeOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #uploadedOrdersModal .dataTables_wrapper .dataTables_filter input,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter input {
                     font-size: 14px;
@@ -1587,6 +1695,7 @@
                 #onTimeModal .dataTables_wrapper .row:first-child,
                 #lateOrdersModal .dataTables_wrapper .row:first-child,
                 #newOrdersWeekModal .dataTables_wrapper .row:first-child,
+                #activeOrdersModal .dataTables_wrapper .row:first-child,
                 #uploadedOrdersModal .dataTables_wrapper .row:first-child,
                 #ordersDetailModal .dataTables_wrapper .row:first-child {
                     margin-bottom: 0 !important;
@@ -1600,6 +1709,8 @@
                 #lateOrdersModal .dataTables_wrapper .dataTables_length,
                 #newOrdersWeekModal .dataTables_wrapper .dataTables_filter,
                 #newOrdersWeekModal .dataTables_wrapper .dataTables_length,
+                #activeOrdersModal .dataTables_wrapper .dataTables_filter,
+                #activeOrdersModal .dataTables_wrapper .dataTables_length,
                 #uploadedOrdersModal .dataTables_wrapper .dataTables_filter,
                 #uploadedOrdersModal .dataTables_wrapper .dataTables_length,
                 #ordersDetailModal .dataTables_wrapper .dataTables_filter,
@@ -1612,6 +1723,7 @@
                 #onTimeModal .erp-filter-control,
                 #lateOrdersModal .erp-filter-control,
                 #newOrdersWeekModal .erp-filter-control,
+                #activeOrdersModal .erp-filter-control,
                 #uploadedOrdersModal .erp-filter-control,
                 #completedOrdersModal .erp-filter-control,
                 #ordersDetailModal .erp-filter-control {
@@ -1630,6 +1742,7 @@
                 #onTimeModal .erp-filter-control:focus,
                 #lateOrdersModal .erp-filter-control:focus,
                 #newOrdersWeekModal .erp-filter-control:focus,
+                #activeOrdersModal .erp-filter-control:focus,
                 #uploadedOrdersModal .erp-filter-control:focus,
                 #completedOrdersModal .erp-filter-control:focus,
                 #ordersDetailModal .erp-filter-control:focus {
@@ -1650,6 +1763,9 @@
                 #newOrdersWeekModal .btn-erp-success,
                 #newOrdersWeekModal .btn-erp-danger,
                 #newOrdersWeekModal .btn-erp-primary,
+                #activeOrdersModal .btn-erp-success,
+                #activeOrdersModal .btn-erp-danger,
+                #activeOrdersModal .btn-erp-primary,
                 #uploadedOrdersModal .btn-erp-success,
                 #uploadedOrdersModal .btn-erp-danger,
                 #uploadedOrdersModal .btn-erp-primary,
@@ -1671,6 +1787,7 @@
                 #onTimeModal .btn-erp-success i,
                 #lateOrdersModal .btn-erp-success i,
                 #newOrdersWeekModal .btn-erp-success i,
+                #activeOrdersModal .btn-erp-success i,
                 #uploadedOrdersModal .btn-erp-success i,
                 #completedOrdersModal .btn-erp-success i,
                 #ordersDetailModal .btn-erp-success i {
@@ -1681,6 +1798,7 @@
                 #onTimeModal .btn-erp-danger i,
                 #lateOrdersModal .btn-erp-danger i,
                 #newOrdersWeekModal .btn-erp-danger i,
+                #activeOrdersModal .btn-erp-danger i,
                 #uploadedOrdersModal .btn-erp-danger i,
                 #completedOrdersModal .btn-erp-danger i,
                 #ordersDetailModal .btn-erp-danger i {
@@ -1691,6 +1809,7 @@
                 #onTimeModal .btn-erp-primary i,
                 #lateOrdersModal .btn-erp-primary i,
                 #newOrdersWeekModal .btn-erp-primary i,
+                #activeOrdersModal .btn-erp-primary i,
                 #uploadedOrdersModal .btn-erp-primary i,
                 #completedOrdersModal .btn-erp-primary i,
                 #ordersDetailModal .btn-erp-primary i {
@@ -1703,6 +1822,9 @@
                 #lateOrdersModal .btn-erp-success:hover,
                 #lateOrdersModal .btn-erp-danger:hover,
                 #lateOrdersModal .btn-erp-primary:hover,
+                #activeOrdersModal .btn-erp-success:hover,
+                #activeOrdersModal .btn-erp-danger:hover,
+                #activeOrdersModal .btn-erp-primary:hover,
                 #uploadedOrdersModal .btn-erp-success:hover,
                 #uploadedOrdersModal .btn-erp-danger:hover,
                 #uploadedOrdersModal .btn-erp-primary:hover,
@@ -1731,6 +1853,7 @@
                 #lateOrdersModalTable,
                 #weekOrdersModalTable,
                 #newOrdersWeekModalTable,
+                #activeOrdersModalTable,
                 #uploadedOrdersModalTable,
                 #completedOrdersModalTable,
                 #ordersDetailTable {
@@ -1744,24 +1867,84 @@
                 /* Forzar scroll horizontal en pantallas chicas (como otros modales) */
                 #weekOrdersModalTable {
                     min-width: 1050px;
+                    table-layout: fixed;
+                }
+
+                #weekOrdersModalTable th,
+                #weekOrdersModalTable td {
+                    white-space: nowrap;
+                }
+
+                /* DESCRIPTION puede partir línea */
+                #weekOrdersModalTable td:nth-child(3) {
+                    white-space: normal;
+                    word-break: break-word;
+                    font-size: 12px;
+                    line-height: 1.1;
                 }
 
                 #newOrdersWeekModalTable {
-                    min-width: 1200px;
+                    min-width: 1350px;
+                    table-layout: fixed;
+                }
+
+                #newOrdersWeekModalTable th,
+                #newOrdersWeekModalTable td {
+                    white-space: nowrap;
+                }
+
+                /* DESCRIPTION y NOTES pueden partir línea */
+                #newOrdersWeekModalTable td:nth-child(3),
+                #newOrdersWeekModalTable td:nth-child(12) {
+                    white-space: normal;
+                    word-break: break-word;
+                }
+
+                #activeOrdersModalTable {
+                    min-width: 1350px;
+                    table-layout: fixed;
+                    width: 100% !important;
                 }
 
                 #uploadedOrdersModalTable {
-                    min-width: 1200px;
+                    min-width: 1350px;
+                    table-layout: fixed;
+                }
+
+                #uploadedOrdersModalTable th,
+                #uploadedOrdersModalTable td {
+                    white-space: nowrap;
+                }
+
+                /* DESCRIPTION y NOTES pueden partir línea */
+                #uploadedOrdersModalTable td:nth-child(3),
+                #uploadedOrdersModalTable td:nth-child(12) {
+                    white-space: normal;
+                    word-break: break-word;
                 }
 
                 #completedOrdersModalTable {
-                    min-width: 1200px;
+                    min-width: 1350px;
+                    table-layout: fixed;
+                }
+
+                #completedOrdersModalTable th,
+                #completedOrdersModalTable td {
+                    white-space: nowrap;
+                }
+
+                /* DESCRIPTION y NOTES pueden partir línea */
+                #completedOrdersModalTable td:nth-child(3),
+                #completedOrdersModalTable td:nth-child(12) {
+                    white-space: normal;
+                    word-break: break-word;
                 }
 
                 #onTimeDetailTable thead th,
                 #lateOrdersModalTable thead th,
                 #weekOrdersModalTable thead th,
                 #newOrdersWeekModalTable thead th,
+                #activeOrdersModalTable thead th,
                 #uploadedOrdersModalTable thead th,
                 #completedOrdersModalTable thead th,
                 #ordersDetailTable thead th {
@@ -1780,6 +1963,8 @@
                 #weekOrdersModalTable th,
                 #newOrdersWeekModalTable td,
                 #newOrdersWeekModalTable th,
+                #activeOrdersModalTable td,
+                #activeOrdersModalTable th,
                 #uploadedOrdersModalTable td,
                 #uploadedOrdersModalTable th,
                 #completedOrdersModalTable td,
@@ -1790,6 +1975,50 @@
                     vertical-align: middle;
                     font-size: 14px;
                     word-break: break-word;
+                }
+
+                /* Fijar anchos para evitar que se muevan al paginar (Active Orders) */
+                #activeOrdersModalTable th:nth-child(1),
+                #activeOrdersModalTable td:nth-child(1) { width: 70px; }
+                #activeOrdersModalTable th:nth-child(2),
+                #activeOrdersModalTable td:nth-child(2) { width: 120px; }
+                #activeOrdersModalTable th:nth-child(3),
+                #activeOrdersModalTable td:nth-child(3) { width: 280px; }
+                #activeOrdersModalTable th:nth-child(4),
+                #activeOrdersModalTable td:nth-child(4) { width: 150px; }
+                #activeOrdersModalTable th:nth-child(5),
+                #activeOrdersModalTable td:nth-child(5) { width: 70px; }
+                #activeOrdersModalTable th:nth-child(6),
+                #activeOrdersModalTable td:nth-child(6) { width: 95px; }
+                #activeOrdersModalTable th:nth-child(7),
+                #activeOrdersModalTable td:nth-child(7) { width: 110px; }
+                #activeOrdersModalTable th:nth-child(8),
+                #activeOrdersModalTable td:nth-child(8) { width: 110px; }
+                #activeOrdersModalTable th:nth-child(9),
+                #activeOrdersModalTable td:nth-child(9) { width: 90px; }
+                #activeOrdersModalTable th:nth-child(10),
+                #activeOrdersModalTable td:nth-child(10) { width: 90px; }
+                #activeOrdersModalTable th:nth-child(11),
+                #activeOrdersModalTable td:nth-child(11) { width: 170px; }
+
+                #activeOrdersModalTable td:nth-child(3),
+                #activeOrdersModalTable td:nth-child(11) {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                #activeOrdersModalTable th:nth-child(9),
+                #activeOrdersModalTable td:nth-child(9),
+                #activeOrdersModalTable th:nth-child(10),
+                #activeOrdersModalTable td:nth-child(10) {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    white-space: nowrap;
+                }
+
+                /* Reservar espacio del scrollbar para que no “salte” el layout */
+                #activeOrdersModal .modal-body {
+                    scrollbar-gutter: stable;
                 }
 
                 /* Anchos para fechas (Due y Sent) */
@@ -2435,6 +2664,18 @@
                         searching: true,
                         lengthChange: showLength,
                     };
+
+                    if (typeof opts.scrollX !== 'undefined') {
+                        dtConfig.scrollX = !!opts.scrollX;
+                    }
+
+                    if (typeof opts.scrollCollapse !== 'undefined') {
+                        dtConfig.scrollCollapse = !!opts.scrollCollapse;
+                    }
+
+                    if (typeof opts.scrollXInner !== 'undefined') {
+                        dtConfig.scrollXInner = opts.scrollXInner;
+                    }
 
                     if (typeof opts.pageLength === 'number') {
                         dtConfig.pageLength = opts.pageLength;
@@ -3310,7 +3551,8 @@
 
                     function openLateOrdersModal() {
                         applyModalTheme($lateOrdersModal, $lateOrdersTrigger);
-                        if (!lateOrdersDt) {
+                        const isReady = !!(lateOrdersDt && lateOrdersDt.__isSized && lateOrdersDt.__lastW === window.innerWidth);
+                        if (!isReady) {
                             $lateOrdersModal.addClass('is-loading');
                             $lateOrdersLoading.removeClass('d-none');
                         } else {
@@ -3330,20 +3572,19 @@
 
                     $lateOrdersModal.on('shown.bs.modal', function() {
                         const dt = ensureLateOrdersDtInitialized();
-                        if (!lateOrdersDidAdjust) {
-                            lateOrdersDidAdjust = true;
-                            setTimeout(() => {
-                                try { dt.columns.adjust(); } catch (e) {}
-                            }, 0);
-                        }
+                        requestAnimationFrame(() => {
+                            try { dt.columns.adjust().draw(false); } catch (e) {}
+                            dt.__isSized = true;
+                            dt.__lastW = window.innerWidth;
+                            $lateOrdersModal.removeClass('is-loading');
+                            $lateOrdersLoading.addClass('d-none');
+                        });
                         if (!dt.__countBound) {
                             dt.__countBound = true;
                             dt.on('draw', function() { updateFilteredCount(dt, $lateOrdersCount); });
                         }
                         populateLateOrdersFilters(dt);
                         updateFilteredCount(dt, $lateOrdersCount);
-                        $lateOrdersModal.removeClass('is-loading');
-                        $lateOrdersLoading.addClass('d-none');
                     });
 
                     function applyLateOrdersFilters() {
@@ -3368,12 +3609,12 @@
                         applyLateOrdersFilters();
                         $lateOrdersCount.text('');
                         $lateOrdersTrigger.removeClass('is-active');
+                        $lateOrdersModal.removeClass('is-loading');
+                        $lateOrdersLoading.addClass('d-none');
                     });
 
                     // Pre-inicializa el DataTable en segundo plano (abre casi instantáneo)
-                    setTimeout(() => {
-                        try { ensureLateOrdersDtInitialized(); } catch (e) {}
-                    }, 120);
+                    // Nota: no pre-inicializar (evita cálculos de anchos estando oculto)
 
                     // Orders This Week KPI -> modal detail (clona el contenido actual de #tableweek)
                     const $weekOrdersModal = $('#weekOrdersModal');
@@ -3957,6 +4198,209 @@
                     setTimeout(() => {
                         try { ensureUploadedOrdersDtInitialized(); } catch (e) {}
                     }, 260);
+
+                    // Active Orders KPI -> modal detail
+                    const $activeOrdersModal = $('#activeOrdersModal');
+                    const $activeOrdersLoading = $('#activeOrdersModalLoading');
+                    const $activeOrdersCustomer = $('#activeOrdersModalCustomer');
+                    const $activeOrdersStatus = $('#activeOrdersModalStatus');
+                    const $activeOrdersMonth = $('#activeOrdersModalMonth');
+                    const $activeOrdersDay = $('#activeOrdersModalDay');
+                    const $activeOrdersButtons = $('#activeOrdersModalButtons');
+                    const $activeOrdersCount = $('#activeOrdersModalCount');
+                    let activeOrdersDt = null;
+                    let activeOrdersDidAdjust = false;
+                    let activeOrdersResizeTimer = null;
+
+                    const $activeOrdersTrigger = $('.kpi-erp .info-box').filter(function() {
+                        return ($(this).find('.info-box-text').text() || '').trim() === 'Active';
+                    }).first();
+
+                    if ($activeOrdersTrigger.length) {
+                        $activeOrdersTrigger
+                            .addClass('js-open-active-orders')
+                            .attr('role', 'button')
+                            .attr('tabindex', '0')
+                            .attr('aria-label', 'Open Active Orders detail');
+                    }
+
+                    function populateActiveOrdersFilters(dt) {
+                        if (!dt) return;
+                        const customerValues = dt.column(3).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const statusValues = dt.column(5).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const uploadedValues = dt.column(6).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+
+                        const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
+                        const uniqStatuses = Array.from(new Set(statusValues)).sort((a, b) => a.localeCompare(b));
+
+                        const monthToDays = new Map(); // key YYYY-MM -> Set(dates text)
+                        uploadedValues.forEach(text => {
+                            const key = parseMonthKeyFromUploaded(text);
+                            if (!key) return;
+                            if (!monthToDays.has(key)) monthToDays.set(key, new Set());
+                            monthToDays.get(key).add(text);
+                        });
+                        const uniqMonths = Array.from(monthToDays.keys()).sort((a, b) => a.localeCompare(b));
+
+                        const prevCustomer = $activeOrdersCustomer.val();
+                        const prevStatus = $activeOrdersStatus.val();
+                        const prevMonth = $activeOrdersMonth.val();
+                        const prevDay = $activeOrdersDay.val();
+
+                        $activeOrdersCustomer.empty().append('<option value=\"\">-- All Customers --</option>');
+                        uniqCustomers.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            $activeOrdersCustomer.append(opt);
+                        });
+
+                        $activeOrdersStatus.empty().append('<option value=\"\">-- All Status --</option>');
+                        uniqStatuses.forEach(status => {
+                            const opt = document.createElement('option');
+                            opt.value = status;
+                            opt.textContent = status;
+                            $activeOrdersStatus.append(opt);
+                        });
+
+                        if (prevCustomer && uniqCustomers.includes(prevCustomer)) $activeOrdersCustomer.val(prevCustomer);
+                        if (prevStatus && uniqStatuses.includes(prevStatus)) $activeOrdersStatus.val(prevStatus);
+
+                        $activeOrdersMonth.empty().append('<option value=\"\">-- All Months --</option>');
+                        uniqMonths.forEach(key => {
+                            const opt = document.createElement('option');
+                            opt.value = key;
+                            opt.textContent = monthLabelFromKey(key);
+                            $activeOrdersMonth.append(opt);
+                        });
+
+                        const monthSelected = (prevMonth && uniqMonths.includes(prevMonth)) ? prevMonth : ($activeOrdersMonth.val() || '');
+                        if (monthSelected && uniqMonths.includes(monthSelected)) {
+                            $activeOrdersMonth.val(monthSelected);
+                        }
+
+                        const days = monthSelected && monthToDays.has(monthSelected)
+                            ? Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b))
+                            : [];
+
+                        $activeOrdersDay.empty().append('<option value=\"\">-- All Days --</option>');
+                        days.forEach(value => {
+                            const opt = document.createElement('option');
+                            opt.value = value;
+                            opt.textContent = value;
+                            $activeOrdersDay.append(opt);
+                        });
+
+                        if (prevDay && days.includes(prevDay)) $activeOrdersDay.val(prevDay);
+                    }
+
+                    function applyActiveOrdersFilters() {
+                        const tableSelector = '#activeOrdersModalTable';
+                        if (!$.fn.DataTable.isDataTable(tableSelector)) return;
+                        const dt = $(tableSelector).DataTable();
+
+                        const customer = ($activeOrdersCustomer.val() || '').trim();
+                        const status = ($activeOrdersStatus.val() || '').trim();
+                        const monthKey = ($activeOrdersMonth.val() || '').trim();
+                        const day = ($activeOrdersDay.val() || '').trim();
+
+                        dt.column(3).search(customer ? `^${escapeRegex(customer)}$` : '', true, false);
+                        dt.column(5).search(status ? `^${escapeRegex(status)}$` : '', true, false);
+                        if (day) {
+                            dt.column(6).search(`^${escapeRegex(day)}$`, true, false);
+                        } else if (monthKey) {
+                            dt.column(6).search(monthRegexFromKey(monthKey), true, false);
+                        } else {
+                            dt.column(6).search('', true, false);
+                        }
+                        dt.draw();
+                    }
+
+                    $activeOrdersCustomer.on('change', applyActiveOrdersFilters);
+                    $activeOrdersStatus.on('change', applyActiveOrdersFilters);
+                    $activeOrdersMonth.on('change', function() {
+                        if (activeOrdersDt) populateActiveOrdersFilters(activeOrdersDt);
+                        $activeOrdersDay.val('');
+                        applyActiveOrdersFilters();
+                    });
+                    $activeOrdersDay.on('change', applyActiveOrdersFilters);
+
+                    function ensureActiveOrdersDtInitialized() {
+                        if (activeOrdersDt) return activeOrdersDt;
+                        const tableSelector = '#activeOrdersModalTable';
+                        activeOrdersDt = initDataTable(tableSelector, 'ACTIVE ORDERS', {
+                            buttonsHost: '#activeOrdersModalButtons',
+                            buttonStyle: 'erp',
+                            order: [[7, 'asc']],
+                            columnDefs: [{
+                                targets: [5, 6, 7],
+                                render: function(data, type) {
+                                    if (type === 'filter' || type === 'sort') {
+                                        return $('<div>').html(data).text().trim();
+                                    }
+                                    return data;
+                                }
+                            }, {
+                                targets: [4, 5, 6, 7, 8, 9],
+                                className: 'text-center'
+                            }, {
+                                targets: [0, 1, 6, 7],
+                                className: 'text-nowrap'
+                            }]
+                        });
+                        populateActiveOrdersFilters(activeOrdersDt);
+                        return activeOrdersDt;
+                    }
+
+                    function openActiveOrdersModal() {
+                        applyModalTheme($activeOrdersModal, $activeOrdersTrigger);
+                        if (!activeOrdersDt) {
+                            $activeOrdersModal.addClass('is-loading');
+                            $activeOrdersLoading.removeClass('d-none');
+                        } else {
+                            $activeOrdersModal.removeClass('is-loading');
+                            $activeOrdersLoading.addClass('d-none');
+                        }
+                        $activeOrdersModal.modal('show');
+                    }
+
+                    $(document).on('click', '.js-open-active-orders', openActiveOrdersModal);
+                    $(document).on('keydown', '.js-open-active-orders', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openActiveOrdersModal();
+                        }
+                    });
+
+                    $activeOrdersModal.on('shown.bs.modal', function() {
+                        const dt = ensureActiveOrdersDtInitialized();
+                        // Inicializa ya visible para evitar "brinco" (estilo onTimeModal)
+                        setTimeout(() => {
+                            try { dt.draw(false); } catch (e) {}
+                            $activeOrdersModal.removeClass('is-loading');
+                            $activeOrdersLoading.addClass('d-none');
+                        }, 0);
+                        if (!dt.__countBound) {
+                            dt.__countBound = true;
+                            dt.on('draw', function() { updateFilteredCount(dt, $activeOrdersCount); });
+                        }
+                        populateActiveOrdersFilters(dt);
+                        updateFilteredCount(dt, $activeOrdersCount);
+                    });
+
+                    $activeOrdersModal.on('hidden.bs.modal', function() {
+                        $activeOrdersCustomer.val('');
+                        $activeOrdersStatus.val('');
+                        $activeOrdersMonth.val('');
+                        $activeOrdersDay.val('');
+                        applyActiveOrdersFilters();
+                        $activeOrdersCount.text('');
+                        $activeOrdersTrigger.removeClass('is-active');
+                        $activeOrdersModal.removeClass('is-loading');
+                        $activeOrdersLoading.addClass('d-none');
+                    });
+
+                    // Nota: no pre-inicializar para evitar salto en header (como onTimeModal)
 
                     // Completed Orders KPI -> modal detail (Completed Orders - current year)
                     const $completedOrdersModal = $('#completedOrdersModal');
