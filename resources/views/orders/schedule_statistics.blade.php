@@ -41,7 +41,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
         </div>
         <!-- /.col -->
         <div class="col-12 col-sm-6 col-md-3 col-lg-2">
@@ -105,6 +105,229 @@
         </div>
     </div>
 
+    <div class="row g-2 mt-2">
+        <div class="col-12 col-md-8 col-lg-8">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
+                    {{-- T├¡tulo a la izquierda --}}
+                    <div class="d-flex align-items-center">
+                        <span class="erp-card-icon erp-card-icon--success mr-2">
+                            <i class="fas fa-calendar-week"></i>
+                        </span>
+                        <div class="erp-card-title">Orders This Week</div>
+                    </div>
+                    <div class="erp-card-meta ml-auto">
+                        Total: <strong id="order-count">{{ $ordenesSemana->count() }}</strong>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div id="tableweekFilters" class="px-3 pt-0 pb-0">
+                        @php
+                            $weekParam = request('week');
+                            $weekValue = ($weekParam && preg_match('/^\d{4}-W\d{2}$/', $weekParam))
+                                ? $weekParam
+                                : now()->format('o-\WW');
+
+                            try {
+                                [$weekYear, $weekNo] = explode('-W', $weekValue);
+                                $weekDisplayText = \Carbon\Carbon::now()
+                                    ->setISODate((int) $weekYear, (int) $weekNo, 1)
+                                    ->format('F j, Y');
+                            } catch (\Throwable $e) {
+                                $weekDisplayText = \Carbon\Carbon::now()
+                                    ->startOfWeek(\Carbon\Carbon::MONDAY)
+                                    ->format('F j, Y');
+                            }
+                        @endphp
+                        <div id="tableweekCal" class="d-flex align-items-center">
+                            <span id="week-display" class="text-dark font-weight-bold small mr-2" style="white-space: nowrap;">{{ $weekDisplayText }}</span>
+                            <div class="input-group input-group-sm" style="width: 180px;">
+                                <input type="week" name="week" id="week-filter" class="form-control form-control-sm erp-filter-control" value="{{ $weekValue }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="tableweek"
+                            class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
+                            {{-- Anchos consistentes sin inline-styles --}}
+                        <colgroup>
+                            <col style="width:8%">
+                            <col style="width:10%">
+                            <col style="width:29%"> {{-- DESCRIPTION --}}
+                            <col style="width:12%">
+                            <col style="width:6%"> {{-- QTY --}}
+                            <col style="width:8%"> {{-- STATUS --}}
+                            <col style="width:8%"> {{-- DUE DATE --}}
+                            <col style="width:8%"> {{-- SENT AT --}}
+                            <col style="width:5%"> {{-- SENT? --}}
+                            <col style="width:6%"> {{-- DAYS +/- --}}
+                        </colgroup>
+
+                            <thead>
+                                <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                                    <th>W.ID</th>
+                                    <th>PN</th>
+                                    <th>DESCRIPTION</th>
+                                    <th>CUSTOMER</th>
+                                    <th>QTY</th>
+                                    <th>STATUS</th>
+                                    <th>DUE DATE</th>
+                                    <th>SENT AT</th>
+                                    <th>SENT</th>
+                                    <th>DAYS +/-</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableweek-body">
+                                @include('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenesSemana])
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        {{-- Card: ordenes agregadas esta semana --}}
+        <div class="col-12 col-md-4 col-lg-4 mb-3">
+            <div class="card shadow rounded-4 border-0 h-100">
+                @if ($resumen['all_shipping'])
+                <div class="card-header bg-success text-white text-center rounded-top-4 py-2">
+                    <h4 class="mb-0 fs-6 lh-1">
+                        <i class="fas fa-check-circle me-2"></i> PENDING ORDERS THIS WEEK
+                    </h4>
+                </div>
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-success mb-3"></i>
+                    <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
+                        <strong>{{ $resumen['total'] }}</strong>
+                    </p>
+                    <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">Γ£à ┬íEverything shipped this
+                        week!</p>
+                </div>
+                @else
+                <div class="card-header bg-warning text-dark text-center rounded-top-4 py-2">
+                    <h5 class="mb-0 fs-6 lh-1">
+                        <i class="fas fa-exclamation-circle me-2"></i> PENDING ORDERS THIS WEEK
+                    </h5>
+                </div>
+                <div class="card-body py-3">
+                    <div class="row">
+                        {{-- Columna izquierda: resumen --}}
+
+                        <div class="col-4">
+                            <div class="text-start small">
+                                {{-- Cabecera con ├¡cono --}}
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-box fa-2x text-warning mr-3"></i>
+                                    <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
+                                </div>
+
+                                {{-- L├¡nea: Total --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="mr-2" style="width: 28px;">
+                                        <i class="fas fa-list-alt text-muted"></i>
+                                    </div>
+                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
+                                    <span class="font-weight-bold text-dark"
+                                        style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
+                                </div>
+
+                                {{-- L├¡nea: Pending --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="mr-4" style="width: 28px;">
+                                        <i class="fas fa-clock text-warning"></i>
+                                    </div>
+                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
+                                    <span class="font-weight-bold text-warning"
+                                        style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
+                                </div>
+
+                                {{-- L├¡nea: Sent --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="mr-4" style="width: 28px;">
+                                        <i class="fas fa-paper-plane text-success"></i>
+                                    </div>
+                                    <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
+                                    <span class="font-weight-bold text-success"
+                                        style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
+                                </div>
+
+                                {{-- Mensaje final (solo si hay pendientes) --}}
+                                @if(!$resumen['all_shipping'])
+                                <div class="alert alert-warning py-2 px-3 mt-3 mb-0 d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <span class="font-weight-bold medium">There are still orders to be sent.</span>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Columna derecha: tabla scroll --}}
+                        <div class="col-8">
+                            <div class="table-responsive" style="max-height: 389px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered table-striped small mb-0">
+                                    <thead class="thead-light sticky-top">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ORDER</th>
+                                            <th>PN</th>
+                                            <th>DUE DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($weeklyOrders->where('status', '!=', 'sent') as $order)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $order->work_id ?? 'N/A' }}</td>
+                                            <td>{{ $order->PN ?? 'N/A' }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div> {{-- end row --}}
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- Card: Clientes con órdenes --}}
+    <div id="card-to-print-customers" class="col-12 col-md-4 col-lg-4 d-none">
+        <div class="card shadow-sm rounded-3 border-0 h-100">
+            <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2 fw-semibold fs-5">
+                    <i class="bi bi-people-fill"></i>
+                    Customers with Orders
+                </div>
+                <span class="badge bg-light text-primary fs-6">{{ $totalOrdenes }}</span>
+            </div>
+            <div class="card-body px-3 py-2" style="max-height: 410px; overflow-y: auto;">
+                @if ($ordenesPorCliente->isNotEmpty())
+                <ul class="list-group list-group-flush small">
+                    @foreach ($ordenesPorCliente as $grupo)
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                        <span class="text-truncate" style="max-width: 65%;">
+                            <i class="bi bi-person-circle me-2 text-muted fs-5"></i>
+                            {{ ucfirst($grupo->costumer) }}
+                        </span>
+                        <span class="badge bg-success rounded-pill fs-6">{{ $grupo->total }}</span>
+                    </li>
+                    @endforeach
+                </ul>
+                @else
+                <div class="text-center text-muted small py-5">
+                    <i class="bi bi-info-circle fs-2 mb-2"></i>
+                    No orders registered
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-4 col-sm-12 mb-3">
             {{-- Card: Clientes con ordenes --}}
@@ -155,187 +378,16 @@
         </div>
     </div>
 
-    {{-- Card: ordenes agregadas esta semana --}}
-    <div class="col-md-4 col-sm-12 mb-3">
-        <div class="card shadow rounded-4 border-0 h-100">
-            @if ($resumen['all_shipping'])
-            <div class="card-header bg-success text-white text-center rounded-top-4 py-2">
-                <h4 class="mb-0 fs-6 lh-1">
-                    <i class="fas fa-check-circle me-2"></i> PENDING ORDERS THIS WEEK
-                </h4>
-            </div>
-            <div class="card-body text-center py-4">
-                <i class="fas fa-box-open fa-3x text-success mb-3"></i>
-                <p class="mb-1 text-dark" style="font-size: 1.25rem;">TOTAL ORDERS:
-                    <strong>{{ $resumen['total'] }}</strong>
-                </p>
-                <p class="fs-6 fw-bold text-success mb-0" style="font-size: 1.25rem;">Γ£à ┬íEverything shipped this
-                    week!</p>
-            </div>
-            @else
-            <div class="card-header bg-warning text-dark text-center rounded-top-4 py-2">
-                <h5 class="mb-0 fs-6 lh-1">
-                    <i class="fas fa-exclamation-circle me-2"></i> PENDING ORDERS THIS WEEK
-                </h5>
-            </div>
-            <div class="card-body py-3">
-                <div class="row">
-                    {{-- Columna izquierda: resumen --}}
-
-                    <div class="col-4">
-                        <div class="text-start small">
-                            {{-- Cabecera con ├¡cono --}}
-                            <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-box fa-2x text-warning mr-3"></i>
-                                <h6 class="mb-0 font-weight-bold text-dark">Order Summary</h6>
-                            </div>
-
-                            {{-- L├¡nea: Total --}}
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="mr-2" style="width: 28px;">
-                                    <i class="fas fa-list-alt text-muted"></i>
-                                </div>
-                                <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Total Orders</span>
-                                <span class="font-weight-bold text-dark"
-                                    style="font-size: 1.2rem;">{{ $resumen['total'] }}</span>
-                            </div>
-
-                            {{-- L├¡nea: Pending --}}
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="mr-4" style="width: 28px;">
-                                    <i class="fas fa-clock text-warning"></i>
-                                </div>
-                                <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Pending</span>
-                                <span class="font-weight-bold text-warning"
-                                    style="font-size: 1.2rem;">{{ $resumen['pendients'] }}</span>
-                            </div>
-
-                            {{-- L├¡nea: Sent --}}
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="mr-4" style="width: 28px;">
-                                    <i class="fas fa-paper-plane text-success"></i>
-                                </div>
-                                <span class="flex-grow-1 text-dark" style="font-size: 1.2rem;">Sent</span>
-                                <span class="font-weight-bold text-success"
-                                    style="font-size: 1.2rem;">{{ $resumen['send'] }}</span>
-                            </div>
-
-                            {{-- Mensaje final (solo si hay pendientes) --}}
-                            @if(!$resumen['all_shipping'])
-                            <div class="alert alert-warning py-2 px-3 mt-3 mb-0 d-flex align-items-center">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                <span class="font-weight-bold medium">There are still orders to be sent.</span>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- Columna derecha: tabla scroll --}}
-                    <div class="col-8">
-                        <div class="table-responsive" style="max-height: 389px; overflow-y: auto;">
-                            <table class="table table-sm table-bordered table-striped small mb-0">
-                                <thead class="thead-light sticky-top">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>ORDER</th>
-                                        <th>PN</th>
-                                        <th>DUE DATE</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($weeklyOrders->where('status', '!=', 'sent') as $order)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $order->work_id ?? 'N/A' }}</td>
-                                        <td>{{ $order->PN ?? 'N/A' }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div> {{-- end row --}}
-            </div>
-            @endif
-        </div>
-    </div>
 
     <div class="col-md-12"> {{-- Ocupa toda la fila --}}
         <div class="container-fluid py-4">
             {{-- Cards con tablas --}}
             <div class="row g-4 mb-4">
                 {{-- Ordenes esta semana --}}
-                <div class="col-lg-6">
 
-                    <div class="card shadow-sm border-0 rounded-3 h-100">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
-                            {{-- T├¡tulo a la izquierda --}}
-                            <div class="d-flex align-items-center mb-2 mb-md-0">
-                                <i class="fas fa-calendar-week text-success fa-lg mr-2"></i>
-                                <h6 class="mb-0 text-success">Orders This Week</h6>
-                            </div>
-                            {{-- Selector de semana a la derecha --}}
-                            <div class="d-flex align-items-center ml-auto">
-                                <span id="week-display" class="text-dark font-weight-bold small align-middle mr-2"
-                                    style="white-space: nowrap;">
-                                </span>
-                                <div class="input-group input-group-sm" style="width: 180px;">
-                                    <input type="week" name="week" id="week-filter"
-                                        class="form-control border-secondary text-dark font-weight-bold" style="height: 32px;">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table id="tableweek"
-                                    class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export">
-                                    {{-- Anchos consistentes sin inline-styles --}}
-                                    <colgroup>
-                                        <col style="width:10%">
-                                        <col style="width:12%">
-                                        <col style="width:36%"> {{-- DESCRIPTION --}}
-                                        <col style="width:14%">
-                                        <col style="width:8%"> {{-- QTY --}}
-                                        <col style="width:10%"> {{-- STATUS --}}
-                                        <col style="width:10%"> {{-- DUE DATE --}}
-                                        <col style="width:10%"> {{-- SENT AT --}}
-                                        <col style="width:6%"> {{-- SENT? --}}
-                                        <col style="width:8%"> {{-- DAYS +/- --}}
-                                    </colgroup>
-
-                                    <thead>
-                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                            <th>W.ID</th>
-                                            <th>PN</th>
-                                            <th>DESCRIPTION</th>
-                                            <th>CUSTOMER</th>
-                                            <th>QTY</th>
-                                            <th>STATUS</th>
-                                            <th>DUE DATE</th>
-                                            <th>SENT AT</th>
-                                            <th>SENT</th>
-                                            <th>DAYS +/-</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tableweek-body">
-                                        @include('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenesSemana])
-                                    </tbody>
-                                </table>
-
-                            </div>
-                        </div>
-                        <div class="card-footer bg-light text-center py-2">
-                            <small class="text-muted">Total orders: <strong
-                                    id="order-count">{{ $ordenesSemana->count() }}</strong></small>
-                        </div>
-
-                    </div>
-                </div>
 
                 {{-- Ordenes atrasadas --}}
-                <div class="col-lg-6">
+                <div class="col-12">
                     <div class="card shadow-sm border-0 rounded-3 h-100">
                         <div class="card-header bg-light d-flex align-items-center gap-2">
                             <i class="fas fa-exclamation-triangle fs-5 text-danger mr-2"></i>
@@ -549,7 +601,7 @@
 
             <div class="row mb-2">
                 {{-- Card: Clientes con ├│rdenes --}}
-                <div id="card-to-print" class="col-md-4 col-sm-6 mb-3">
+                <div id="card-to-print-old" class="col-md-4 col-sm-6 mb-3 d-none">
                     <div class="card shadow-sm rounded-3 border-0 h-100">
                         <div
                             class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
@@ -744,8 +796,7 @@
                                     id="lateOrdersModalCount"
                                     class="badge bg-light text-dark border"
                                     data-default="Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}"
-                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
-                                >Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}</span>
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}</span>
                                 <div id="lateOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="lateOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -823,8 +874,7 @@
                                     id="weekOrdersModalCount"
                                     class="badge bg-light text-dark border"
                                     data-default="Total: 0 / 0"
-                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
-                                >Total: 0 / 0</span>
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: 0 / 0</span>
                                 <div id="weekOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="weekOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -866,7 +916,7 @@
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                            <div class="modal-body">
+                        <div class="modal-body">
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                 <select id="newOrdersWeekModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
                                     <option value="">-- All Customers --</option>
@@ -881,8 +931,7 @@
                                     id="newOrdersWeekModalCount"
                                     class="badge bg-light text-dark border"
                                     data-default="Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}"
-                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
-                                >Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}</span>
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}</span>
                                 <div id="newOrdersWeekModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="newOrdersWeekModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -947,8 +996,7 @@
                                     id="activeOrdersModalCount"
                                     class="badge bg-light text-dark border"
                                     data-default="Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}"
-                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
-                                >Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}</span>
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}</span>
                                 <div id="activeOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="activeOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1010,8 +1058,7 @@
                                     id="uploadedOrdersModalCount"
                                     class="badge bg-light text-dark border"
                                     data-default="Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}"
-                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
-                                >Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}</span>
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}</span>
                                 <div id="uploadedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="uploadedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1070,8 +1117,7 @@
                                     id="completedOrdersModalCount"
                                     class="badge bg-light text-dark border"
                                     data-default="Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}"
-                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
-                                >Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}</span>
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}</span>
                                 <div id="completedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="completedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1335,7 +1381,7 @@
                         margin: 12mm;
                     }
 
-                    body.dt-printing > :not(.dt-print-area) {
+                    body.dt-printing> :not(.dt-print-area) {
                         display: none !important;
                     }
 
@@ -1420,15 +1466,33 @@
                     z-index: 1;
                 }
 
-                .kpi-erp .info-box-icon.bg-success { color: #198754 !important; }
-                .kpi-erp .info-box-icon.bg-danger { color: #dc3545 !important; }
-                .kpi-erp .info-box-icon.bg-primary { color: #0d6efd !important; }
-                .kpi-erp .info-box-icon.bg-warning { color: #f59e0b !important; }
-                .kpi-erp .info-box-icon.bg-info { color: #0d6efd !important; }
+                .kpi-erp .info-box-icon.bg-success {
+                    color: #198754 !important;
+                }
+
+                .kpi-erp .info-box-icon.bg-danger {
+                    color: #dc3545 !important;
+                }
+
+                .kpi-erp .info-box-icon.bg-primary {
+                    color: #0d6efd !important;
+                }
+
+                .kpi-erp .info-box-icon.bg-warning {
+                    color: #f59e0b !important;
+                }
+
+                .kpi-erp .info-box-icon.bg-info {
+                    color: #0d6efd !important;
+                }
+
                 .kpi-erp .info-box-icon.bg-info-teal {
                     color: var(--kpi-teal) !important;
                 }
-                .kpi-erp .info-box-icon.bg-secondary { color: #6b7280 !important; }
+
+                .kpi-erp .info-box-icon.bg-secondary {
+                    color: #6b7280 !important;
+                }
 
                 .kpi-erp .info-box .info-box-text {
                     font-size: .70rem;
@@ -1545,7 +1609,7 @@
                 }
 
                 #tableweek tbody td {
-                    height: 50px;
+                    height: 34px;
                 }
 
                 #tablelate tbody td {
@@ -1558,6 +1622,216 @@
                     background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
                     color: #0f172a;
                     border-bottom: 1px solid #c5c9d2;
+                    font-size: 14px;
+                    font-weight: 700;
+                }
+
+                /* Card header estilo ERP */
+                .erp-card-header {
+                    background: linear-gradient(180deg, #eef1f5 0%, #e1e6ee 100%);
+                    border-bottom: 1px solid #c5c9d2;
+                    padding: .4rem .75rem;
+                }
+
+                .erp-card-title {
+                    font-weight: 800;
+                    color: #0f172a;
+                    letter-spacing: .2px;
+                    font-size: .95rem;
+                }
+
+                .erp-card-icon {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 10px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid #d5d8dd;
+                    background: rgba(255, 255, 255, 0.65);
+                    color: #0f172a;
+                }
+
+                .erp-card-icon--success {
+                    background: rgba(40, 167, 69, 0.14);
+                    border-color: rgba(40, 167, 69, 0.30);
+                    color: #198754;
+                }
+
+                .erp-card-meta {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: .2rem .55rem;
+                    border-radius: 999px;
+                    border: 1px solid #d5d8dd;
+                    background: rgba(255, 255, 255, 0.65);
+                    color: #334155;
+                    font-weight: 800;
+                    font-size: .8rem;
+                    white-space: nowrap;
+                }
+ 
+                /* Tablas de página: mismo look ERP que modales */
+                #tableweek,
+                #tablelate {
+                    border: 1px solid #d1d5db;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    background: #fff;
+                }
+
+                #tableweek td,
+                #tableweek th,
+                #tablelate td,
+                #tablelate th {
+                    padding: 8px 10px;
+                    vertical-align: middle;
+                    font-size: 14px;
+                    word-break: break-word;
+                }
+
+                /* Page tableweek: más compacto */
+                #tableweek {
+                    table-layout: fixed;
+                    /* Igual que weekOrdersModal: forzar scroll horizontal en pantallas chicas */
+                    min-width: 1050px;
+                }
+
+                #tableweek td {
+                    padding: 3px 8px;
+                }
+
+                #tableweek th,
+                #tableweek td {
+                    white-space: nowrap;
+                }
+
+                /* DESCRIPTION: permitir ver todo el contenido */
+                #tableweek td:nth-child(3) {
+                    white-space: normal;
+                    word-break: break-word;
+                }
+
+                /* PN: evitar que se salga de la celda */
+                #tableweek td:nth-child(2) {
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                }
+
+                /* Header normal (no tan compacto) */
+                #tableweek thead th {
+                    padding: 6px 8px;
+                }
+ 
+                #tableweek tbody tr:hover,
+                #tablelate tbody tr:hover {
+                    background: #eef2f7;
+                }
+ 
+                /* Controles DataTables (Search/Show entries) estilo ERP */
+                #tableweek_wrapper .dataTables_filter input,
+                #tablelate_wrapper .dataTables_filter input {
+                    height: 34px;
+                    border-radius: 10px;
+                    border: 1px solid #d5d8dd;
+                    padding: 6px 10px;
+                    background: #fff;
+                }
+ 
+                #tableweek_wrapper .dataTables_length select,
+                #tablelate_wrapper .dataTables_length select {
+                    height: 34px;
+                    border-radius: 10px;
+                    border: 1px solid #d5d8dd;
+                    padding: 6px 10px;
+                    background: #fff;
+                }
+ 
+                #tableweek_wrapper .row:first-child,
+                #tablelate_wrapper .row:first-child {
+                    margin-bottom: .05rem !important;
+                    margin-top: -0.4rem !important;
+                    align-items: center;
+                }
+
+                #tableweek_wrapper .dt-buttons,
+                #tableweek_wrapper .dataTables_filter {
+                    margin-top: 0 !important;
+                    padding-top: 0 !important;
+                }
+
+                /* Paginado más compacto (tabla Orders This Week) */
+                #tableweek_wrapper .row.mt-2 {
+                    margin-top: .25rem !important;
+                }
+
+                #tableweek_wrapper .dataTables_paginate {
+                    margin-top: 0 !important;
+                    padding-top: 0 !important;
+                    border-top: 0 !important;
+                }
+
+                #tableweek_wrapper .dataTables_paginate .pagination {
+                    margin: 0 !important;
+                }
+
+                #tableweek_wrapper .dataTables_paginate .paginate_button {
+                    border: 1px solid rgba(15, 23, 42, 0.18) !important;
+                    background: rgba(241, 245, 249, 0.95) !important;
+                    color: #0f172a !important;
+                    margin: 0 0.14rem !important;
+                    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+                    border-radius: 0.65rem !important;
+                }
+
+                #tableweek_wrapper .dataTables_paginate .paginate_button .page-link {
+                    padding: 0.2rem 0.62rem !important;
+                    font-size: 0.92rem !important;
+                    line-height: 1.15 !important;
+                    border: none !important;
+                    background: transparent !important;
+                    color: inherit !important;
+                    border-radius: 0.5rem;
+                }
+
+                #tableweek_wrapper .dataTables_info {
+                    font-size: 12px;
+                    color: #475569;
+                }
+
+                /* Calendario (week input) estilo ERP en tabla Orders This Week */
+                #tableweekCal .erp-filter-control {
+                    border: 1px solid #c5c9d2;
+                    border-radius: 8px;
+                    padding: 6px 10px;
+                    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+                    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+                    color: #0f172a;
+                    font-weight: 600;
+                    height: 34px;
+                    line-height: 1.2;
+                }
+
+                #tableweekCal .erp-filter-control:focus {
+                    border-color: #94a3b8;
+                    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+                }
+
+                /* Calendar next to DataTables buttons (Orders This Week) */
+                #tableweek_wrapper #tableweekCal {
+                    margin-left: .5rem;
+                    flex-wrap: nowrap;
+                }
+
+                #tableweek_wrapper #tableweekCal #week-display {
+                    margin-left: .5rem;
+                    order: 1;
+                    white-space: nowrap;
+                }
+
+                #tableweek_wrapper #tableweekCal .input-group,
+                #tableweek_wrapper #tableweekCal #week-filter {
+                    order: 0;
                 }
 
                 /* ActiveOrdersModalTable usa header clonado (scrollX): forzar mismo color */
@@ -1624,12 +1898,12 @@
                     border-bottom: 0 !important;
                     color: #0f172a;
                 }
- 
-                #lateOrdersModal .modal-header .close { 
-                    color: #0f172a; 
-                    opacity: 1; 
-                    text-shadow: none; 
-                } 
+
+                #lateOrdersModal .modal-header .close {
+                    color: #0f172a;
+                    opacity: 1;
+                    text-shadow: none;
+                }
 
                 #onTimeModal .modal-title,
                 #weekOrdersModal .modal-title,
@@ -1872,6 +2146,38 @@
                     color: #111827;
                 }
 
+                /* Botones ERP para tabla de página (Orders This Week) */
+                #tableweek_wrapper .btn-erp-success,
+                #tableweek_wrapper .btn-erp-danger,
+                #tableweek_wrapper .btn-erp-primary {
+                    background: #f8fafc;
+                    border: 1px solid #d5d8dd;
+                    color: #1f2937;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    box-shadow: none;
+                }
+
+                #tableweek_wrapper .btn-erp-success i { color: #0f5132; }
+                #tableweek_wrapper .btn-erp-danger i { color: #b91c1c; }
+                #tableweek_wrapper .btn-erp-primary i { color: #0b5ed7; }
+
+                #tableweek_wrapper .btn-erp-success:hover,
+                #tableweek_wrapper .btn-erp-danger:hover,
+                #tableweek_wrapper .btn-erp-primary:hover {
+                    filter: brightness(0.97);
+                    color: #111827;
+                }
+
+                /* Igualar alto de botones con calendario (34px) */
+                #tableweek_wrapper .dt-buttons .btn {
+                    height: 34px;
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 0 10px;
+                    line-height: 1;
+                }
+
                 #ordersDetailModalFilters {
                     display: inline-flex;
                     align-items: center;
@@ -2013,29 +2319,64 @@
 
                 /* Fijar anchos para evitar que se muevan al paginar (Active Orders) */
                 #activeOrdersModalTable th:nth-child(1),
-                #activeOrdersModalTable td:nth-child(1) { width: 70px; }
+                #activeOrdersModalTable td:nth-child(1) {
+                    width: 70px;
+                }
+
                 #activeOrdersModalTable th:nth-child(2),
-                #activeOrdersModalTable td:nth-child(2) { width: 120px; }
+                #activeOrdersModalTable td:nth-child(2) {
+                    width: 120px;
+                }
+
                 #activeOrdersModalTable th:nth-child(3),
-                #activeOrdersModalTable td:nth-child(3) { width: 280px; }
+                #activeOrdersModalTable td:nth-child(3) {
+                    width: 280px;
+                }
+
                 #activeOrdersModalTable th:nth-child(4),
-                #activeOrdersModalTable td:nth-child(4) { width: 150px; }
+                #activeOrdersModalTable td:nth-child(4) {
+                    width: 150px;
+                }
+
                 #activeOrdersModalTable th:nth-child(5),
-                #activeOrdersModalTable td:nth-child(5) { width: 55px; }
+                #activeOrdersModalTable td:nth-child(5) {
+                    width: 55px;
+                }
+
                 #activeOrdersModalTable th:nth-child(6),
-                #activeOrdersModalTable td:nth-child(6) { width: 95px; }
+                #activeOrdersModalTable td:nth-child(6) {
+                    width: 95px;
+                }
+
                 #activeOrdersModalTable th:nth-child(7),
-                #activeOrdersModalTable td:nth-child(7) { width: 95px; }
+                #activeOrdersModalTable td:nth-child(7) {
+                    width: 95px;
+                }
+
                 #activeOrdersModalTable th:nth-child(8),
-                #activeOrdersModalTable td:nth-child(8) { width: 110px; }
+                #activeOrdersModalTable td:nth-child(8) {
+                    width: 110px;
+                }
+
                 #activeOrdersModalTable th:nth-child(9),
-                #activeOrdersModalTable td:nth-child(9) { width: 110px; }
+                #activeOrdersModalTable td:nth-child(9) {
+                    width: 110px;
+                }
+
                 #activeOrdersModalTable th:nth-child(10),
-                #activeOrdersModalTable td:nth-child(10) { width: 70px; }
+                #activeOrdersModalTable td:nth-child(10) {
+                    width: 70px;
+                }
+
                 #activeOrdersModalTable th:nth-child(11),
-                #activeOrdersModalTable td:nth-child(11) { width: 90px; }
+                #activeOrdersModalTable td:nth-child(11) {
+                    width: 90px;
+                }
+
                 #activeOrdersModalTable th:nth-child(12),
-                #activeOrdersModalTable td:nth-child(12) { width: 170px; }
+                #activeOrdersModalTable td:nth-child(12) {
+                    width: 170px;
+                }
 
                 #activeOrdersModalTable td:nth-child(3),
                 #activeOrdersModalTable td:nth-child(12) {
@@ -2332,59 +2673,59 @@
                                 const exportTitle = `Schedule Statistics - ${ordersModalTitleEl?.textContent || 'Orders detail'}`;
                                 const exportFilename = `${exportTitle}${filtersText ? '_' + filtersText : ''}`.replace(/[\\/:*?"<>| ]+/g, '_');
 
-                                    const dt = $table.DataTable({
-                                        dom: "<'row mb-0'<'col-sm-6 d-flex align-items-center'l><'col-sm-6 d-flex justify-content-end align-items-center'f>>" +
-                                            "<'row'<'col-12'tr>>" +
-                                            "<'row mt-2'<'col-sm-5'i><'col-sm-7'p>>",
+                                const dt = $table.DataTable({
+                                    dom: "<'row mb-0'<'col-sm-6 d-flex align-items-center'l><'col-sm-6 d-flex justify-content-end align-items-center'f>>" +
+                                        "<'row'<'col-12'tr>>" +
+                                        "<'row mt-2'<'col-sm-5'i><'col-sm-7'p>>",
                                     pageLength: 14,
                                     lengthMenu: [14, 25, 50, 100],
-                                        searching: true,
-                                        ordering: true,
-                                        info: true,
-                                        order: [
-                                            [6, 'asc'],
-                                            [7, 'asc']
-                                        ], // Uploaded then Due
-                                        buttons: [{
-                                                extend: 'excelHtml5',
-                                                text: '<i class="fas fa-file-excel"></i> Excel',
-                                                className: 'btn btn-erp-success btn-sm mx-1',
-                                                title: exportTitle,
-                                                filename: exportFilename,
-                                                messageTop: filtersText || null
-                                            },
-                                            {
-                                                extend: 'pdfHtml5',
-                                                text: '<i class="fas fa-file-pdf"></i> PDF',
-                                                className: 'btn btn-erp-danger btn-sm mx-1',
-                                                orientation: 'landscape',
-                                                pageSize: 'A4',
-                                                title: exportTitle,
-                                                filename: exportFilename,
-                                                messageTop: filtersText || null,
-                                                customize: function(doc) {
-                                                    addPdfRowNumbers(doc, '#');
-                                                }
-                                            },
-                                            {
-                                                extend: 'print',
-                                                text: '<i class="fas fa-print"></i> Print',
-                                                className: 'btn btn-erp-primary btn-sm mx-1',
-                                                action: function(e, dt) {
-                                                    e.preventDefault();
-                                                    const printed = printDataTableAsPdf(dt, exportTitle, getFechaHoraActual(), {
-                                                        title: exportTitle,
-                                                        messageTop: filtersText || null,
-                                                        orientation: 'landscape',
-                                                        pageSize: 'A4'
-                                                    });
-                                                    if (!printed) {
-                                                        printDataTableInPlace(dt, exportTitle, getFechaHoraActual());
-                                                    }
+                                    searching: true,
+                                    ordering: true,
+                                    info: true,
+                                    order: [
+                                        [6, 'asc'],
+                                        [7, 'asc']
+                                    ], // Uploaded then Due
+                                    buttons: [{
+                                            extend: 'excelHtml5',
+                                            text: '<i class="fas fa-file-excel"></i> Excel',
+                                            className: 'btn btn-erp-success btn-sm mx-1',
+                                            title: exportTitle,
+                                            filename: exportFilename,
+                                            messageTop: filtersText || null
+                                        },
+                                        {
+                                            extend: 'pdfHtml5',
+                                            text: '<i class="fas fa-file-pdf"></i> PDF',
+                                            className: 'btn btn-erp-danger btn-sm mx-1',
+                                            orientation: 'landscape',
+                                            pageSize: 'A4',
+                                            title: exportTitle,
+                                            filename: exportFilename,
+                                            messageTop: filtersText || null,
+                                            customize: function(doc) {
+                                                addPdfRowNumbers(doc, '#');
+                                            }
+                                        },
+                                        {
+                                            extend: 'print',
+                                            text: '<i class="fas fa-print"></i> Print',
+                                            className: 'btn btn-erp-primary btn-sm mx-1',
+                                            action: function(e, dt) {
+                                                e.preventDefault();
+                                                const printed = printDataTableAsPdf(dt, exportTitle, getFechaHoraActual(), {
+                                                    title: exportTitle,
+                                                    messageTop: filtersText || null,
+                                                    orientation: 'landscape',
+                                                    pageSize: 'A4'
+                                                });
+                                                if (!printed) {
+                                                    printDataTableInPlace(dt, exportTitle, getFechaHoraActual());
                                                 }
                                             }
-                                        ]
-                                    });
+                                        }
+                                    ]
+                                });
                                 const $host = $(ordersModalButtonsEl);
                                 if ($host.length) {
                                     $host.empty();
@@ -2510,7 +2851,7 @@
 
                     for (let rowIndex = 0; rowIndex < exportData.body.length; rowIndex++) {
                         body.push(exportData.body[rowIndex].map(cell => ({
-                            text: typeof (cell = (cell ?? '')) === 'string' ? cell : cell + '',
+                            text: typeof(cell = (cell ?? '')) === 'string' ? cell : cell + '',
                             style: (rowIndex % 2) ? 'tableBodyEven' : 'tableBodyOdd'
                         })));
                     }
@@ -2533,37 +2874,70 @@
                             layout: 'noBorders'
                         }],
                         styles: {
-                            tableHeader: { bold: true, fontSize: 11, color: 'white', fillColor: '#2d4154', alignment: 'center' },
+                            tableHeader: {
+                                bold: true,
+                                fontSize: 11,
+                                color: 'white',
+                                fillColor: '#2d4154',
+                                alignment: 'center'
+                            },
                             tableBodyEven: {},
-                            tableBodyOdd: { fillColor: '#f3f3f3' },
-                            tableFooter: { bold: true, fontSize: 11, color: 'white', fillColor: '#2d4154' },
-                            title: { alignment: 'center', fontSize: 15 },
+                            tableBodyOdd: {
+                                fillColor: '#f3f3f3'
+                            },
+                            tableFooter: {
+                                bold: true,
+                                fontSize: 11,
+                                color: 'white',
+                                fillColor: '#2d4154'
+                            },
+                            title: {
+                                alignment: 'center',
+                                fontSize: 15
+                            },
                             message: {}
                         },
-                        defaultStyle: { fontSize: 10 }
+                        defaultStyle: {
+                            fontSize: 10
+                        }
                     };
 
                     if (exportInfo.messageTop) {
-                        doc.content.unshift({ text: exportInfo.messageTop, style: 'message', margin: [0, 0, 0, 12] });
+                        doc.content.unshift({
+                            text: exportInfo.messageTop,
+                            style: 'message',
+                            margin: [0, 0, 0, 12]
+                        });
                     }
                     if (exportInfo.messageBottom) {
-                        doc.content.push({ text: exportInfo.messageBottom, style: 'message', margin: [0, 0, 0, 12] });
+                        doc.content.push({
+                            text: exportInfo.messageBottom,
+                            style: 'message',
+                            margin: [0, 0, 0, 12]
+                        });
                     }
                     if (exportInfo.title) {
-                        doc.content.unshift({ text: exportInfo.title, style: 'title', margin: [0, 0, 0, 12] });
+                        doc.content.unshift({
+                            text: exportInfo.title,
+                            style: 'title',
+                            margin: [0, 0, 0, 12]
+                        });
                     }
 
                     if (config && typeof config.customize === 'function') {
                         config.customize(doc, config, dt);
                     }
 
-                    return { doc, exportInfo };
+                    return {
+                        doc,
+                        exportInfo
+                    };
                 }
 
                 function printPdfDocInHiddenFrame(doc) {
-                    const pdfMake = (window.pdfMake)
-                        ? window.pdfMake
-                        : ($.fn.dataTable && $.fn.dataTable.Buttons && $.fn.dataTable.Buttons.pdfMake ? $.fn.dataTable.Buttons.pdfMake() : null);
+                    const pdfMake = (window.pdfMake) ?
+                        window.pdfMake :
+                        ($.fn.dataTable && $.fn.dataTable.Buttons && $.fn.dataTable.Buttons.pdfMake ? $.fn.dataTable.Buttons.pdfMake() : null);
 
                     if (!pdfMake || !pdfMake.createPdf) return false;
 
@@ -2586,7 +2960,9 @@
                         }
 
                         const cleanup = () => {
-                            try { URL.revokeObjectURL(url); } catch (_) {}
+                            try {
+                                URL.revokeObjectURL(url);
+                            } catch (_) {}
                             iframe.removeEventListener('load', onLoad);
                             iframe.removeEventListener('error', onError);
                         };
@@ -2619,7 +2995,10 @@
 
                     // Header row
                     if (Array.isArray(body[0])) {
-                        body[0].unshift({ text: label, style: 'tableHeader' });
+                        body[0].unshift({
+                            text: label,
+                            style: 'tableHeader'
+                        });
                     }
 
                     // Body rows (skip footer rows with tableFooter style)
@@ -2632,12 +3011,18 @@
                         const isFooterRow = firstCellStyle === 'tableFooter';
 
                         if (isFooterRow) {
-                            row.unshift({ text: '', style: 'tableFooter' });
+                            row.unshift({
+                                text: '',
+                                style: 'tableFooter'
+                            });
                             continue;
                         }
 
                         const zebraStyle = ((counter - 1) % 2) ? 'tableBodyEven' : 'tableBodyOdd';
-                        row.unshift({ text: String(counter), style: zebraStyle });
+                        row.unshift({
+                            text: String(counter),
+                            style: zebraStyle
+                        });
                         counter++;
                     }
                 }
@@ -2654,7 +3039,9 @@
                         if (extraConfig && typeof extraConfig === 'object') {
                             Object.assign(cfg, extraConfig);
                         }
-                        const { doc } = buildPdfDocFromDataTable(dt, cfg);
+                        const {
+                            doc
+                        } = buildPdfDocFromDataTable(dt, cfg);
                         addPdfRowNumbers(doc, '#');
                         return printPdfDocInHiddenFrame(doc);
                     } catch (e) {
@@ -2671,15 +3058,17 @@
                         deferRender: true,
                         autoWidth: false,
                         pageLength: 14,
-                        lengthMenu: [[14, 25, 50, 100], [14, 25, 50, 100]],
+                        lengthMenu: [
+                            [14, 25, 50, 100],
+                            [14, 25, 50, 100]
+                        ],
                         order: [
                             [6, 'asc']
                         ],
-                        dom: showLength
-                            ? "<'row mb-3'<'col-md-6 d-flex align-items-center'lB><'col-md-6 d-flex justify-content-end'f>>" +
-                              "<'row'<'col-12'tr>>" +
-                              "<'row mt-2'<'col-md-6'i><'col-md-6'p>>"
-                            : "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
+                        dom: showLength ?
+                            "<'row mb-3'<'col-md-6 d-flex align-items-center'lB><'col-md-6 d-flex justify-content-end'f>>" +
+                            "<'row'<'col-12'tr>>" +
+                            "<'row mt-2'<'col-md-6'i><'col-md-6'p>>" : "<'row mb-3'<'col-md-6 d-flex'B><'col-md-6 d-flex justify-content-end'f>>" +
                             "<'row'<'col-12'tr>>" +
                             "<'row mt-2'<'col-md-6'i><'col-md-6'p>>",
                         buttons: [{
@@ -3478,17 +3867,52 @@
 
 
                 $(document).ready(function() {
-                    let weekTableDt = initDataTable('#tableweek', 'ORDERS THIS WEEK');
+                    let weekTableDt = initDataTable('#tableweek', 'ORDERS THIS WEEK', {
+                        buttonStyle: 'erp',
+                        showLength: false
+                    });
                     initDataTable('#tablelate', 'LATE ORDERS');
                     loadChartElements();
                     loadCustomerChartElements();
 
+                    function detachTableweekCalToPlaceholder() {
+                        const cal = document.getElementById('tableweekCal');
+                        const placeholder = document.getElementById('tableweekFilters');
+                        if (!cal || !placeholder) return;
+                        placeholder.classList.remove('d-none');
+                        placeholder.appendChild(cal);
+                    }
+
+                    function attachTableweekCalToDt() {
+                        const cal = document.getElementById('tableweekCal');
+                        const placeholder = document.getElementById('tableweekFilters');
+                        const wrapper = document.getElementById('tableweek_wrapper');
+                        if (!cal || !wrapper) return;
+
+                        const buttons = wrapper.querySelector('.dt-buttons');
+                        if (!buttons || !buttons.parentElement) return;
+
+                        const host = buttons.parentElement;
+                        host.classList.add('align-items-center', 'flex-wrap');
+                        host.style.gap = '.35rem';
+                        cal.classList.add('d-flex', 'align-items-center');
+                        host.appendChild(cal);
+                        if (placeholder) placeholder.classList.add('d-none');
+                    }
+
+                    // Place calendar next to DataTables buttons (top-left)
+                    attachTableweekCalToDt();
+
                     // Cache de datos para abrir el modal "Orders This Week" más rápido
                     let weekOrdersCachedRows = null;
+
                     function refreshWeekOrdersCache() {
                         if ($.fn.DataTable.isDataTable('#tableweek')) {
                             const srcDt = $('#tableweek').DataTable();
-                            weekOrdersCachedRows = srcDt.rows({ search: 'applied', order: 'applied' }).data().toArray();
+                            weekOrdersCachedRows = srcDt.rows({
+                                search: 'applied',
+                                order: 'applied'
+                            }).data().toArray();
                         } else {
                             weekOrdersCachedRows = $('#tableweek tbody tr').toArray().map(tr => {
                                 const tds = $(tr).find('td').toArray();
@@ -3539,7 +3963,9 @@
                     function updateFilteredCount(dt, $el) {
                         if (!dt || !$el || !$el.length) return;
                         const total = dt.rows().count();
-                        const filtered = dt.rows({ search: 'applied' }).count();
+                        const filtered = dt.rows({
+                            search: 'applied'
+                        }).count();
                         $el.text(`Total: ${filtered} / ${total}`);
                     }
 
@@ -3595,6 +4021,7 @@
                     }
 
                     const KPI_THEME_CLASSES = 'fai-theme-info fai-theme-primary fai-theme-success fai-theme-danger fai-theme-warning fai-theme-secondary';
+
                     function applyModalTheme($modal, $trigger) {
                         if (!$modal || !$modal.length || !$trigger || !$trigger.length) return;
                         const classes = ($trigger.attr('class') || '').split(/\s+/);
@@ -3629,7 +4056,9 @@
                     $lateOrdersModal.on('shown.bs.modal', function() {
                         const dt = ensureLateOrdersDtInitialized();
                         requestAnimationFrame(() => {
-                            try { dt.columns.adjust().draw(false); } catch (e) {}
+                            try {
+                                dt.columns.adjust().draw(false);
+                            } catch (e) {}
                             dt.__isSized = true;
                             dt.__lastW = window.innerWidth;
                             $lateOrdersModal.removeClass('is-loading');
@@ -3637,7 +4066,9 @@
                         });
                         if (!dt.__countBound) {
                             dt.__countBound = true;
-                            dt.on('draw', function() { updateFilteredCount(dt, $lateOrdersCount); });
+                            dt.on('draw', function() {
+                                updateFilteredCount(dt, $lateOrdersCount);
+                            });
                         }
                         populateLateOrdersFilters(dt);
                         updateFilteredCount(dt, $lateOrdersCount);
@@ -3702,7 +4133,9 @@
                         weekOrdersDt = initDataTable(tableSelector, 'ORDERS THIS WEEK', {
                             buttonsHost: '#weekOrdersModalButtons',
                             buttonStyle: 'erp',
-                            order: [[6, 'asc']],
+                            order: [
+                                [6, 'asc']
+                            ],
                             // Status column has badge HTML; use plain text for filtering/sorting
                             columnDefs: [{
                                 targets: [5],
@@ -3828,7 +4261,9 @@
                         syncWeekOrdersDtFromCache();
                         if (weekOrdersDt && !weekOrdersDt.__countBound) {
                             weekOrdersDt.__countBound = true;
-                            weekOrdersDt.on('draw', function() { updateFilteredCount(weekOrdersDt, $weekOrdersCount); });
+                            weekOrdersDt.on('draw', function() {
+                                updateFilteredCount(weekOrdersDt, $weekOrdersCount);
+                            });
                         }
                         updateFilteredCount(weekOrdersDt, $weekOrdersCount);
 
@@ -3836,7 +4271,9 @@
                         if (!weekOrdersDidAdjust) {
                             weekOrdersDidAdjust = true;
                             setTimeout(() => {
-                                try { weekOrdersDt.columns.adjust(); } catch (e) {}
+                                try {
+                                    weekOrdersDt.columns.adjust();
+                                } catch (e) {}
                             }, 0);
                         }
 
@@ -3949,7 +4386,9 @@
                         newOrdersWeekDt = initDataTable(tableSelector, 'NEW ORDERS THIS WEEK', {
                             buttonsHost: '#newOrdersWeekModalButtons',
                             buttonStyle: 'erp',
-                            order: [[6, 'asc']],
+                            order: [
+                                [6, 'asc']
+                            ],
                             columnDefs: [{
                                 targets: [5, 6],
                                 render: function(data, type) {
@@ -3997,12 +4436,16 @@
                         if (!newOrdersWeekDidAdjust) {
                             newOrdersWeekDidAdjust = true;
                             setTimeout(() => {
-                                try { dt.columns.adjust(); } catch (e) {}
+                                try {
+                                    dt.columns.adjust();
+                                } catch (e) {}
                             }, 0);
                         }
                         if (!dt.__countBound) {
                             dt.__countBound = true;
-                            dt.on('draw', function() { updateFilteredCount(dt, $newOrdersWeekCount); });
+                            dt.on('draw', function() {
+                                updateFilteredCount(dt, $newOrdersWeekCount);
+                            });
                         }
                         populateNewOrdersWeekFilters(dt);
                         updateFilteredCount(dt, $newOrdersWeekCount);
@@ -4021,7 +4464,9 @@
                     });
 
                     setTimeout(() => {
-                        try { ensureNewOrdersWeekDtInitialized(); } catch (e) {}
+                        try {
+                            ensureNewOrdersWeekDtInitialized();
+                        } catch (e) {}
                     }, 220);
 
                     // Orders Uploaded KPI -> modal detail (Orders Uploaded - current year)
@@ -4136,9 +4581,8 @@
                             $uploadedOrdersMonth.val(monthSelected);
                         }
 
-                        const days = monthSelected && monthToDays.has(monthSelected)
-                            ? Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b))
-                            : [];
+                        const days = monthSelected && monthToDays.has(monthSelected) ?
+                            Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b)) : [];
 
                         $uploadedOrdersDay.empty().append('<option value=\"\">-- All Days --</option>');
                         days.forEach(value => {
@@ -4190,7 +4634,9 @@
                         uploadedOrdersDt = initDataTable(tableSelector, `ORDERS UPLOADED (${new Date().getFullYear()})`, {
                             buttonsHost: '#uploadedOrdersModalButtons',
                             buttonStyle: 'erp',
-                            order: [[6, 'asc']],
+                            order: [
+                                [6, 'asc']
+                            ],
                             columnDefs: [{
                                 targets: [5, 6],
                                 render: function(data, type) {
@@ -4238,12 +4684,16 @@
                         if (!uploadedOrdersDidAdjust) {
                             uploadedOrdersDidAdjust = true;
                             setTimeout(() => {
-                                try { dt.columns.adjust(); } catch (e) {}
+                                try {
+                                    dt.columns.adjust();
+                                } catch (e) {}
                             }, 0);
                         }
                         if (!dt.__countBound) {
                             dt.__countBound = true;
-                            dt.on('draw', function() { updateFilteredCount(dt, $uploadedOrdersCount); });
+                            dt.on('draw', function() {
+                                updateFilteredCount(dt, $uploadedOrdersCount);
+                            });
                         }
                         populateUploadedOrdersFilters(dt);
                         updateFilteredCount(dt, $uploadedOrdersCount);
@@ -4263,7 +4713,9 @@
                     });
 
                     setTimeout(() => {
-                        try { ensureUploadedOrdersDtInitialized(); } catch (e) {}
+                        try {
+                            ensureUploadedOrdersDtInitialized();
+                        } catch (e) {}
                     }, 260);
 
                     // Active Orders KPI -> modal detail
@@ -4359,9 +4811,8 @@
                             $activeOrdersMonth.val(monthSelected);
                         }
 
-                        const days = monthSelected && monthToDays.has(monthSelected)
-                            ? Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b))
-                            : [];
+                        const days = monthSelected && monthToDays.has(monthSelected) ?
+                            Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b)) : [];
 
                         $activeOrdersDay.empty().append('<option value=\"\">-- All Days --</option>');
                         days.forEach(value => {
@@ -4414,7 +4865,9 @@
                         activeOrdersDt = initDataTable(tableSelector, 'ACTIVE ORDERS', {
                             buttonsHost: '#activeOrdersModalButtons',
                             buttonStyle: 'erp',
-                            order: [[8, 'asc']],
+                            order: [
+                                [8, 'asc']
+                            ],
                             columnDefs: [{
                                 targets: [5, 6, 7, 8],
                                 render: function(data, type) {
@@ -4483,13 +4936,17 @@
                         const dt = ensureActiveOrdersDtInitialized();
                         // Inicializa ya visible para evitar "brinco" (estilo onTimeModal)
                         setTimeout(() => {
-                            try { dt.draw(false); } catch (e) {}
+                            try {
+                                dt.draw(false);
+                            } catch (e) {}
                             $activeOrdersModal.removeClass('is-loading');
                             $activeOrdersLoading.addClass('d-none');
                         }, 0);
                         if (!dt.__countBound) {
                             dt.__countBound = true;
-                            dt.on('draw', function() { updateFilteredCount(dt, $activeOrdersCount); });
+                            dt.on('draw', function() {
+                                updateFilteredCount(dt, $activeOrdersCount);
+                            });
                         }
                         populateActiveOrdersFilters(dt);
                         updateFilteredCount(dt, $activeOrdersCount);
@@ -4615,9 +5072,8 @@
                         const monthSelected = (prevMonth && uniqMonths.includes(prevMonth)) ? prevMonth : ($completedOrdersMonth.val() || '');
                         if (monthSelected && uniqMonths.includes(monthSelected)) $completedOrdersMonth.val(monthSelected);
 
-                        const days = monthSelected && monthToDays.has(monthSelected)
-                            ? Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b))
-                            : [];
+                        const days = monthSelected && monthToDays.has(monthSelected) ?
+                            Array.from(monthToDays.get(monthSelected)).sort((a, b) => a.localeCompare(b)) : [];
 
                         $completedOrdersDay.empty().append('<option value=\"\">-- All Days --</option>');
                         days.forEach(value => {
@@ -4657,7 +5113,9 @@
                         completedOrdersDt = initDataTable(tableSelector, `COMPLETED ORDERS (${new Date().getFullYear()})`, {
                             buttonsHost: '#completedOrdersModalButtons',
                             buttonStyle: 'erp',
-                            order: [[8, 'asc']],
+                            order: [
+                                [8, 'asc']
+                            ],
                             columnDefs: [{
                                 targets: [5, 6, 7, 8],
                                 render: function(data, type) {
@@ -4732,12 +5190,16 @@
                         if (!completedOrdersDidAdjust) {
                             completedOrdersDidAdjust = true;
                             setTimeout(() => {
-                                try { dt.columns.adjust(); } catch (e) {}
+                                try {
+                                    dt.columns.adjust();
+                                } catch (e) {}
                             }, 0);
                         }
                         if (!dt.__countBound) {
                             dt.__countBound = true;
-                            dt.on('draw', function() { updateFilteredCount(dt, $completedOrdersCount); });
+                            dt.on('draw', function() {
+                                updateFilteredCount(dt, $completedOrdersCount);
+                            });
                         }
                         populateCompletedOrdersFilters(dt);
                         updateFilteredCount(dt, $completedOrdersCount);
@@ -4756,7 +5218,9 @@
                     });
 
                     setTimeout(() => {
-                        try { ensureCompletedOrdersDtInitialized(); } catch (e) {}
+                        try {
+                            ensureCompletedOrdersDtInitialized();
+                        } catch (e) {}
                     }, 280);
 
                     const weekFilter = document.getElementById('week-filter');
@@ -4795,6 +5259,7 @@
                                     // ≡ƒÆí Destruir DataTable anterior si existe
                                     const table = $("#tableweek");
                                     if ($.fn.DataTable.isDataTable(table)) {
+                                        detachTableweekCalToPlaceholder();
                                         table.DataTable().clear().destroy();
                                     }
                                     // ≡ƒÆí Actualizar tbody con nuevas filas
@@ -4804,8 +5269,14 @@
                                     count.textContent = data.count;
 
                                     // ≡ƒÆí Reinicializar DataTable
-                                    weekTableDt = initDataTable("#tableweek", "ORDERS THIS WEEK");
-                                    try { weekTableDt.on('draw', refreshWeekOrdersCache); } catch (e) {}
+                                    weekTableDt = initDataTable("#tableweek", "ORDERS THIS WEEK", {
+                                        buttonStyle: 'erp',
+                                        showLength: false
+                                    });
+                                    attachTableweekCalToDt();
+                                    try {
+                                        weekTableDt.on('draw', refreshWeekOrdersCache);
+                                    } catch (e) {}
                                     // Recache para el modal de semana
                                     refreshWeekOrdersCache();
 
@@ -4822,7 +5293,7 @@
                                             day: 'numeric'
                                         };
                                         const formatted = simpleDate.toLocaleDateString('en-US', options);
-                                        weekDisplay.textContent = `Week starting: ${formatted}`;
+                                        weekDisplay.textContent = `${formatted}`;
                                     }
 
                                     // ≡ƒæë Funci├│n para obtener lunes de la semana ISO
