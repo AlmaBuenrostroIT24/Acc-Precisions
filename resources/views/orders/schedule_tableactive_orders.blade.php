@@ -1,7 +1,9 @@
 @forelse ($orders as $order)
 <tr>
     <td>{{ $order->work_id }}</td>
-    <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">{{ $order->PN }}</td>
+    <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word; overflow-wrap:anywhere;">
+        {{ $order->PN }}
+    </td>
     <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
         {{ $order->Part_description }}
     </td>
@@ -9,6 +11,9 @@
     <td class="text-center">{{ $order->qty }}</td>
     <td class="text-center">
         <span class="badge bg-info text-dark">{{ $order->status }}</span>
+    </td>
+    <td class="text-center">
+        {{ ucfirst($order->location ?? '-') }}
     </td>
     <td class="text-center">
         @if(!empty($order->created_at))

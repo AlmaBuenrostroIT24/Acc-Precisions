@@ -740,7 +740,12 @@
                                 <select id="lateOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Status --</option>
                                 </select>
-                                <span id="lateOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <span
+                                    id="lateOrdersModalCount"
+                                    class="badge bg-light text-dark border"
+                                    data-default="Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}"
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
+                                >Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}</span>
                                 <div id="lateOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="lateOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -814,7 +819,12 @@
                                 <select id="weekOrdersModalStatus" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Status --</option>
                                 </select>
-                                <span id="weekOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <span
+                                    id="weekOrdersModalCount"
+                                    class="badge bg-light text-dark border"
+                                    data-default="Total: 0 / 0"
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
+                                >Total: 0 / 0</span>
                                 <div id="weekOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="weekOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -867,7 +877,12 @@
                                 <select id="newOrdersWeekModalUploaded" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Uploaded --</option>
                                 </select>
-                                <span id="newOrdersWeekModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <span
+                                    id="newOrdersWeekModalCount"
+                                    class="badge bg-light text-dark border"
+                                    data-default="Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}"
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
+                                >Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}</span>
                                 <div id="newOrdersWeekModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="newOrdersWeekModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -913,6 +928,9 @@
                         </div>
                         <div class="modal-body">
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <select id="activeOrdersModalLocation" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
+                                    <option value="">-- All Locations --</option>
+                                </select>
                                 <select id="activeOrdersModalCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 220px;">
                                     <option value="">-- All Customers --</option>
                                 </select>
@@ -925,7 +943,12 @@
                                 <select id="activeOrdersModalDay" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Days --</option>
                                 </select>
-                                <span id="activeOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <span
+                                    id="activeOrdersModalCount"
+                                    class="badge bg-light text-dark border"
+                                    data-default="Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}"
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
+                                >Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}</span>
                                 <div id="activeOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="activeOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -939,9 +962,10 @@
                                             <th>CUSTOMER</th>
                                             <th class="text-center">QTY</th>
                                             <th class="text-center">STATUS</th>
+                                            <th class="text-center">LOCATION</th>
                                             <th class="text-center">UPLOADED</th>
                                             <th class="text-center">DUE DATE</th>
-                                            <th class="text-center">DUE-UPLOADED</th>
+                                            <th class="text-center">DUE-UP</th>
                                             <th class="text-center">DUE-TODAY</th>
                                             <th>NOTES</th>
                                         </tr>
@@ -982,7 +1006,12 @@
                                 <select id="uploadedOrdersModalDay" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Days --</option>
                                 </select>
-                                <span id="uploadedOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <span
+                                    id="uploadedOrdersModalCount"
+                                    class="badge bg-light text-dark border"
+                                    data-default="Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}"
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
+                                >Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}</span>
                                 <div id="uploadedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="uploadedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1037,7 +1066,12 @@
                                 <select id="completedOrdersModalDay" class="form-control form-control-sm erp-filter-control" style="max-width: 160px;">
                                     <option value="">-- All Days --</option>
                                 </select>
-                                <span id="completedOrdersModalCount" class="badge bg-light text-dark border" style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"></span>
+                                <span
+                                    id="completedOrdersModalCount"
+                                    class="badge bg-light text-dark border"
+                                    data-default="Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}"
+                                    style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;"
+                                >Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}</span>
                                 <div id="completedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                             </div>
                             <div id="completedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1987,30 +2021,50 @@
                 #activeOrdersModalTable th:nth-child(4),
                 #activeOrdersModalTable td:nth-child(4) { width: 150px; }
                 #activeOrdersModalTable th:nth-child(5),
-                #activeOrdersModalTable td:nth-child(5) { width: 70px; }
+                #activeOrdersModalTable td:nth-child(5) { width: 55px; }
                 #activeOrdersModalTable th:nth-child(6),
                 #activeOrdersModalTable td:nth-child(6) { width: 95px; }
                 #activeOrdersModalTable th:nth-child(7),
-                #activeOrdersModalTable td:nth-child(7) { width: 110px; }
+                #activeOrdersModalTable td:nth-child(7) { width: 95px; }
                 #activeOrdersModalTable th:nth-child(8),
                 #activeOrdersModalTable td:nth-child(8) { width: 110px; }
                 #activeOrdersModalTable th:nth-child(9),
-                #activeOrdersModalTable td:nth-child(9) { width: 90px; }
+                #activeOrdersModalTable td:nth-child(9) { width: 110px; }
                 #activeOrdersModalTable th:nth-child(10),
-                #activeOrdersModalTable td:nth-child(10) { width: 90px; }
+                #activeOrdersModalTable td:nth-child(10) { width: 70px; }
                 #activeOrdersModalTable th:nth-child(11),
-                #activeOrdersModalTable td:nth-child(11) { width: 170px; }
+                #activeOrdersModalTable td:nth-child(11) { width: 90px; }
+                #activeOrdersModalTable th:nth-child(12),
+                #activeOrdersModalTable td:nth-child(12) { width: 170px; }
 
                 #activeOrdersModalTable td:nth-child(3),
-                #activeOrdersModalTable td:nth-child(11) {
+                #activeOrdersModalTable td:nth-child(12) {
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
 
-                #activeOrdersModalTable th:nth-child(9),
-                #activeOrdersModalTable td:nth-child(9),
+                /* PN: permitir salto de línea (evita que se salga de la celda) */
+                #activeOrdersModalTable td:nth-child(2) {
+                    white-space: normal;
+                    word-break: break-word;
+                    overflow-wrap: anywhere;
+                }
+
+                /* PN: permitir salto de l》ea en todos los modales (evita overflow) */
+                #lateOrdersModalTable td:nth-child(2),
+                #weekOrdersModalTable td:nth-child(2),
+                #newOrdersWeekModalTable td:nth-child(2),
+                #uploadedOrdersModalTable td:nth-child(2),
+                #completedOrdersModalTable td:nth-child(2) {
+                    white-space: normal;
+                    word-break: break-word;
+                    overflow-wrap: anywhere;
+                }
+
                 #activeOrdersModalTable th:nth-child(10),
-                #activeOrdersModalTable td:nth-child(10) {
+                #activeOrdersModalTable td:nth-child(10),
+                #activeOrdersModalTable th:nth-child(11),
+                #activeOrdersModalTable td:nth-child(11) {
                     padding-left: 6px;
                     padding-right: 6px;
                     white-space: nowrap;
@@ -3551,6 +3605,8 @@
 
                     function openLateOrdersModal() {
                         applyModalTheme($lateOrdersModal, $lateOrdersTrigger);
+                        const lateDefaultText = ($lateOrdersCount.data('default') || '').toString();
+                        if (lateDefaultText) $lateOrdersCount.text(lateDefaultText);
                         const isReady = !!(lateOrdersDt && lateOrdersDt.__isSized && lateOrdersDt.__lastW === window.innerWidth);
                         if (!isReady) {
                             $lateOrdersModal.addClass('is-loading');
@@ -3607,7 +3663,8 @@
                         $lateOrdersCustomer.val('');
                         $lateOrdersStatus.val('');
                         applyLateOrdersFilters();
-                        $lateOrdersCount.text('');
+                        const lateDefaultText = ($lateOrdersCount.data('default') || '').toString();
+                        $lateOrdersCount.text(lateDefaultText);
                         $lateOrdersTrigger.removeClass('is-active');
                         $lateOrdersModal.removeClass('is-loading');
                         $lateOrdersLoading.addClass('d-none');
@@ -3660,7 +3717,7 @@
                                 targets: [4, 6, 7, 8, 9],
                                 className: 'text-center'
                             }, {
-                                targets: [0, 1, 6, 7],
+                                targets: [0, 6, 7],
                                 className: 'text-nowrap'
                             }]
                         });
@@ -3697,6 +3754,9 @@
                     function openWeekOrdersModal() {
                         applyModalTheme($weekOrdersModal, $weekOrdersTrigger);
                         const rows = (weekOrdersCachedRows && weekOrdersCachedRows.length) ? weekOrdersCachedRows : [];
+                        const weekDefaultText = `Total: ${rows.length} / ${rows.length}`;
+                        $weekOrdersCount.data('default', weekDefaultText);
+                        $weekOrdersCount.text(weekDefaultText);
                         const isReady = weekOrdersDt && (getWeekOrdersSignature(rows) === weekOrdersLastSignature);
                         if (!isReady) {
                             $weekOrdersModal.addClass('is-loading');
@@ -3793,7 +3853,8 @@
                             weekOrdersDt.column(5).search('', true, false);
                             weekOrdersDt.draw(false);
                         }
-                        $weekOrdersCount.text('');
+                        const weekDefaultText = ($weekOrdersCount.data('default') || '').toString();
+                        $weekOrdersCount.text(weekDefaultText);
                         $weekOrdersTrigger.removeClass('is-active');
                     });
 
@@ -3901,7 +3962,7 @@
                                 targets: [4, 5, 6, 7, 8, 9, 10],
                                 className: 'text-center'
                             }, {
-                                targets: [0, 1, 6, 7, 8],
+                                targets: [0, 6, 7, 8],
                                 className: 'text-nowrap'
                             }]
                         });
@@ -3911,6 +3972,8 @@
 
                     function openNewOrdersWeekModal() {
                         applyModalTheme($newOrdersWeekModal, $newOrdersWeekTrigger);
+                        const newDefaultText = ($newOrdersWeekCount.data('default') || '').toString();
+                        if (newDefaultText) $newOrdersWeekCount.text(newDefaultText);
                         if (!newOrdersWeekDt) {
                             $newOrdersWeekModal.addClass('is-loading');
                             $newOrdersWeekLoading.removeClass('d-none');
@@ -3952,7 +4015,8 @@
                         $newOrdersWeekStatus.val('');
                         $newOrdersWeekUploaded.val('');
                         applyNewOrdersWeekFilters();
-                        $newOrdersWeekCount.text('');
+                        const newDefaultText = ($newOrdersWeekCount.data('default') || '').toString();
+                        $newOrdersWeekCount.text(newDefaultText);
                         $newOrdersWeekTrigger.removeClass('is-active');
                     });
 
@@ -4139,7 +4203,7 @@
                                 targets: [4, 5, 6, 7, 8, 9, 10],
                                 className: 'text-center'
                             }, {
-                                targets: [0, 1, 6, 7, 8],
+                                targets: [0, 6, 7, 8],
                                 className: 'text-nowrap'
                             }]
                         });
@@ -4149,6 +4213,8 @@
 
                     function openUploadedOrdersModal() {
                         applyModalTheme($uploadedOrdersModal, $uploadedOrdersTrigger);
+                        const upDefaultText = ($uploadedOrdersCount.data('default') || '').toString();
+                        if (upDefaultText) $uploadedOrdersCount.text(upDefaultText);
                         if (!uploadedOrdersDt) {
                             $uploadedOrdersModal.addClass('is-loading');
                             $uploadedOrdersLoading.removeClass('d-none');
@@ -4191,7 +4257,8 @@
                         $uploadedOrdersMonth.val('');
                         $uploadedOrdersDay.val('');
                         applyUploadedOrdersFilters();
-                        $uploadedOrdersCount.text('');
+                        const upDefaultText = ($uploadedOrdersCount.data('default') || '').toString();
+                        $uploadedOrdersCount.text(upDefaultText);
                         $uploadedOrdersTrigger.removeClass('is-active');
                     });
 
@@ -4202,6 +4269,7 @@
                     // Active Orders KPI -> modal detail
                     const $activeOrdersModal = $('#activeOrdersModal');
                     const $activeOrdersLoading = $('#activeOrdersModalLoading');
+                    const $activeOrdersLocation = $('#activeOrdersModalLocation');
                     const $activeOrdersCustomer = $('#activeOrdersModalCustomer');
                     const $activeOrdersStatus = $('#activeOrdersModalStatus');
                     const $activeOrdersMonth = $('#activeOrdersModalMonth');
@@ -4226,10 +4294,12 @@
 
                     function populateActiveOrdersFilters(dt) {
                         if (!dt) return;
+                        const locationValues = dt.column(6).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
                         const customerValues = dt.column(3).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
                         const statusValues = dt.column(5).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
-                        const uploadedValues = dt.column(6).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
+                        const uploadedValues = dt.column(7).nodes().toArray().map(td => ($(td).text() || '').trim()).filter(Boolean);
 
+                        const uniqLocations = Array.from(new Set(locationValues)).sort((a, b) => a.localeCompare(b));
                         const uniqCustomers = Array.from(new Set(customerValues)).sort((a, b) => a.localeCompare(b));
                         const uniqStatuses = Array.from(new Set(statusValues)).sort((a, b) => a.localeCompare(b));
 
@@ -4242,10 +4312,19 @@
                         });
                         const uniqMonths = Array.from(monthToDays.keys()).sort((a, b) => a.localeCompare(b));
 
+                        const prevLocation = $activeOrdersLocation.val();
                         const prevCustomer = $activeOrdersCustomer.val();
                         const prevStatus = $activeOrdersStatus.val();
                         const prevMonth = $activeOrdersMonth.val();
                         const prevDay = $activeOrdersDay.val();
+
+                        $activeOrdersLocation.empty().append('<option value=\"\">-- All Locations --</option>');
+                        uniqLocations.forEach(loc => {
+                            const opt = document.createElement('option');
+                            opt.value = loc;
+                            opt.textContent = loc;
+                            $activeOrdersLocation.append(opt);
+                        });
 
                         $activeOrdersCustomer.empty().append('<option value=\"\">-- All Customers --</option>');
                         uniqCustomers.forEach(name => {
@@ -4263,6 +4342,7 @@
                             $activeOrdersStatus.append(opt);
                         });
 
+                        if (prevLocation && uniqLocations.includes(prevLocation)) $activeOrdersLocation.val(prevLocation);
                         if (prevCustomer && uniqCustomers.includes(prevCustomer)) $activeOrdersCustomer.val(prevCustomer);
                         if (prevStatus && uniqStatuses.includes(prevStatus)) $activeOrdersStatus.val(prevStatus);
 
@@ -4299,23 +4379,26 @@
                         if (!$.fn.DataTable.isDataTable(tableSelector)) return;
                         const dt = $(tableSelector).DataTable();
 
+                        const location = ($activeOrdersLocation.val() || '').trim();
                         const customer = ($activeOrdersCustomer.val() || '').trim();
                         const status = ($activeOrdersStatus.val() || '').trim();
                         const monthKey = ($activeOrdersMonth.val() || '').trim();
                         const day = ($activeOrdersDay.val() || '').trim();
 
+                        dt.column(6).search(location ? `^${escapeRegex(location)}$` : '', true, false);
                         dt.column(3).search(customer ? `^${escapeRegex(customer)}$` : '', true, false);
                         dt.column(5).search(status ? `^${escapeRegex(status)}$` : '', true, false);
                         if (day) {
-                            dt.column(6).search(`^${escapeRegex(day)}$`, true, false);
+                            dt.column(7).search(`^${escapeRegex(day)}$`, true, false);
                         } else if (monthKey) {
-                            dt.column(6).search(monthRegexFromKey(monthKey), true, false);
+                            dt.column(7).search(monthRegexFromKey(monthKey), true, false);
                         } else {
-                            dt.column(6).search('', true, false);
+                            dt.column(7).search('', true, false);
                         }
                         dt.draw();
                     }
 
+                    $activeOrdersLocation.on('change', applyActiveOrdersFilters);
                     $activeOrdersCustomer.on('change', applyActiveOrdersFilters);
                     $activeOrdersStatus.on('change', applyActiveOrdersFilters);
                     $activeOrdersMonth.on('change', function() {
@@ -4331,9 +4414,9 @@
                         activeOrdersDt = initDataTable(tableSelector, 'ACTIVE ORDERS', {
                             buttonsHost: '#activeOrdersModalButtons',
                             buttonStyle: 'erp',
-                            order: [[7, 'asc']],
+                            order: [[8, 'asc']],
                             columnDefs: [{
-                                targets: [5, 6, 7],
+                                targets: [5, 6, 7, 8],
                                 render: function(data, type) {
                                     if (type === 'filter' || type === 'sort') {
                                         return $('<div>').html(data).text().trim();
@@ -4341,10 +4424,10 @@
                                     return data;
                                 }
                             }, {
-                                targets: [4, 5, 6, 7, 8, 9],
+                                targets: [4, 5, 6, 7, 8, 9, 10],
                                 className: 'text-center'
                             }, {
-                                targets: [0, 1, 6, 7],
+                                targets: [0, 7, 8],
                                 className: 'text-nowrap'
                             }]
                         });
@@ -4352,8 +4435,32 @@
                         return activeOrdersDt;
                     }
 
+                    function setActiveOrdersCountFromDom() {
+                        const $rows = $('#activeOrdersModalTable tbody tr');
+                        if (!$rows.length) {
+                            $activeOrdersCount.text('Total: 0 / 0');
+                            return;
+                        }
+                        if ($rows.length === 1) {
+                            const text = ($rows.first().text() || '').trim().toLowerCase();
+                            if (text.includes('no orders found')) {
+                                $activeOrdersCount.text('Total: 0 / 0');
+                                return;
+                            }
+                        }
+                        const total = $rows.length;
+                        $activeOrdersCount.text(`Total: ${total} / ${total}`);
+                    }
+
                     function openActiveOrdersModal() {
                         applyModalTheme($activeOrdersModal, $activeOrdersTrigger);
+                        // Mostrar el total inmediatamente (antes de inicializar DataTables)
+                        const defaultText = ($activeOrdersCount.data('default') || '').toString();
+                        if (defaultText) {
+                            $activeOrdersCount.text(defaultText);
+                        } else {
+                            setActiveOrdersCountFromDom();
+                        }
                         if (!activeOrdersDt) {
                             $activeOrdersModal.addClass('is-loading');
                             $activeOrdersLoading.removeClass('d-none');
@@ -4389,12 +4496,14 @@
                     });
 
                     $activeOrdersModal.on('hidden.bs.modal', function() {
+                        $activeOrdersLocation.val('');
                         $activeOrdersCustomer.val('');
                         $activeOrdersStatus.val('');
                         $activeOrdersMonth.val('');
                         $activeOrdersDay.val('');
                         applyActiveOrdersFilters();
-                        $activeOrdersCount.text('');
+                        const defaultText = ($activeOrdersCount.data('default') || '').toString();
+                        $activeOrdersCount.text(defaultText);
                         $activeOrdersTrigger.removeClass('is-active');
                         $activeOrdersModal.removeClass('is-loading');
                         $activeOrdersLoading.addClass('d-none');
@@ -4561,7 +4670,7 @@
                                 targets: [4, 5, 6, 7, 8, 9, 10],
                                 className: 'text-center'
                             }, {
-                                targets: [0, 1, 6, 7, 8],
+                                targets: [0, 6, 7, 8],
                                 className: 'text-nowrap'
                             }]
                         });
@@ -4598,6 +4707,8 @@
 
                     function openCompletedOrdersModal() {
                         applyModalTheme($completedOrdersModal, $completedOrdersTrigger);
+                        const compDefaultText = ($completedOrdersCount.data('default') || '').toString();
+                        if (compDefaultText) $completedOrdersCount.text(compDefaultText);
                         if (!completedOrdersDt) {
                             $completedOrdersModal.addClass('is-loading');
                             $completedOrdersLoading.removeClass('d-none');
@@ -4639,7 +4750,8 @@
                         $completedOrdersMonth.val('');
                         $completedOrdersDay.val('');
                         applyCompletedOrdersFilters();
-                        $completedOrdersCount.text('');
+                        const compDefaultText = ($completedOrdersCount.data('default') || '').toString();
+                        $completedOrdersCount.text(compDefaultText);
                         $completedOrdersTrigger.removeClass('is-active');
                     });
 
