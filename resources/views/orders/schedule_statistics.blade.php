@@ -421,15 +421,15 @@
                                             </button>
                                         </div>
 
-                                        <div class="d-flex flex-wrap align-items-center mb-2">
-                                            <input type="month" id="monthFilter" class="form-control form-control-sm erp-filter-control mr-2 mb-2" style="max-width: 160px;" title="Filter by Month">
-                                            <select id="yearFilter" class="form-control form-control-sm erp-filter-control mr-2 mb-2" style="max-width: 120px;" title="Filter by Year">
+                                        <div class="d-flex align-items-center flex-nowrap mb-2 erp-inline-filters">
+                                            <input type="month" id="monthFilter" class="form-control form-control-sm erp-filter-control" style="flex: 0 0 128px; max-width: 128px;" title="Filter by Month">
+                                            <select id="yearFilter" class="form-control form-control-sm erp-filter-control" style="flex: 0 0 92px; max-width: 92px;" title="Filter by Year">
                                                 <option value="">-- Year --</option>
                                                 @for ($y = now()->year; $y >= 2025; $y--)
                                                 <option value="{{ $y }}" @selected($y==now()->year)>{{ $y }}</option>
                                                 @endfor
                                             </select>
-                                            <select id="customerFilterOnTime" class="form-control form-control-sm erp-filter-control mb-2" style="max-width: 220px;" title="Filter by Customer">
+                                            <select id="customerFilterOnTime" class="form-control form-control-sm erp-filter-control" style="flex: 1 1 auto; min-width: 0;" title="Filter by Customer">
                                                 <option value="">-- All --</option>
                                                 @foreach ($customers as $customer)
                                                 <option value="{{ $customer }}">{{ $customer }}</option>
@@ -1854,8 +1854,8 @@
 
     /* Tablas de página: mismo look ERP que modales */
                 .erp-customer-tile {
-                    padding: .34rem .48rem;
-                    min-height: 54px;
+                    padding: .26rem .44rem;
+                    min-height: 48px;
                     border: 1px solid #d1d5db;
                     border-radius: 12px;
                     background: rgba(241, 245, 249, 0.85);
@@ -1876,6 +1876,20 @@
         border-radius: 12px;
         background: rgba(248, 250, 252, 0.75);
         padding: .6rem .75rem;
+    }
+
+    .erp-inline-filters {
+        gap: .35rem;
+    }
+
+    .erp-inline-filters .erp-filter-control {
+        margin: 0 !important;
+        flex: 0 0 auto;
+    }
+
+    .erp-inline-filters select.erp-filter-control {
+        min-width: 0;
+        text-overflow: ellipsis;
     }
 
     .erp-panel-title {
@@ -1951,13 +1965,7 @@
         width: 100%;
         border-radius: 12px;
         border: 1.5px solid rgba(15, 23, 42, 0.14);
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(241, 245, 249, 0.55)),
-            repeating-linear-gradient(to right,
-                rgba(148, 163, 184, 0.10),
-                rgba(148, 163, 184, 0.10) 1px,
-                transparent 1px,
-                transparent 44px);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.94));
         padding: 10px;
     }
 
@@ -1966,7 +1974,9 @@
     }
 
     .erp-canvas-wrap--donut {
-        height: 340px;
+        height: 380px;
+        padding: 8px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.92));
     }
 
     .erp-canvas-wrap canvas {
@@ -4148,21 +4158,25 @@
                         type: 'doughnut',
                         data: {
                             labels,
-                            datasets: [{
-                                data: numericData,
-                                backgroundColor: colors,
-                                borderColor: 'rgba(255, 255, 255, 0.92)',
-                                borderWidth: 2,
+                                datasets: [{
+                                    data: numericData,
+                                    backgroundColor: colors,
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
                                 hoverOffset: 6
-                            }]
-                        },
+                                }]
+                            },
                         options: {
                             maintainAspectRatio: true,
                             aspectRatio: 1,
                             responsive: true,
+                            devicePixelRatio: 2,
                             cutout: '66%',
                             animation: {
                                 duration: 350
+                            },
+                            layout: {
+                                padding: 2
                             },
                             plugins: {
                                 title: {
