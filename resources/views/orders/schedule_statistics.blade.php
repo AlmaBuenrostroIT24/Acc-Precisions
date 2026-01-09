@@ -225,79 +225,70 @@
                     </div>
                 </div>
                 <div class="card-body py-2">
-                    <div class="row">
-                        {{-- Columna izquierda: resumen --}}
-
-                        <div class="col-4">
-                            <div class="text-start small">
-                                {{-- Cabecera con ├¡cono --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <span class="erp-card-icon erp-card-icon--warning mr-2" style="width: 28px; height: 28px;">
-                                        <i class="fas fa-box"></i>
-                                    </span>
-                                    <h6 class="mb-0 font-weight-bold text-dark">Summary</h6>
-                                </div>
-
-                                {{-- L├¡nea: Total --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="mr-2" style="width: 28px;">
-                                        <i class="fas fa-list-alt text-muted"></i>
+                    @php
+                        $pendingWeeklyOrders = $weeklyOrders->where('status', '!=', 'sent');
+                        $lateOrdersMini = ($ordenesAtrasadas ?? collect())->take(20);
+                    @endphp
+                    <div class="row g-2">
+                        {{-- Columna izquierda: resumen + pendientes --}}
+                        <div class="col-12">
+                            <div class="text-start small mb-2">
+                                <div class="erp-summary-grid">
+                                    <div class="erp-summary-heading">
+                                        <i class="fas fa-box text-warning"></i> Summary
                                     </div>
-                                    <span class="flex-grow-1 text-muted font-weight-bold">Total</span>
-                                    <span class="font-weight-bold text-dark">{{ $resumen['total'] }}</span>
-                                </div>
 
-                                {{-- L├¡nea: Pending --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="mr-4" style="width: 28px;">
-                                        <i class="fas fa-clock text-warning"></i>
+                                    <div class="erp-summary-left">
+                                        <div class="erp-summary-pair">
+                                            <div class="erp-summary-label text-dark">
+                                                <i class="fas fa-list-alt"></i> Total
+                                            </div>
+                                            <div class="erp-summary-value">{{ $resumen['total'] }}</div>
+                                        </div>
+
+                                        <div class="erp-summary-pair">
+                                            <div class="erp-summary-label text-dark">
+                                                <i class="fas fa-clock text-warning"></i> Pending
+                                            </div>
+                                            <div class="erp-summary-value text-warning">{{ $resumen['pendients'] }}</div>
+                                        </div>
+
+                                        <div class="erp-summary-pair">
+                                            <div class="erp-summary-label text-dark">
+                                                <i class="fas fa-paper-plane text-success"></i> Sent
+                                            </div>
+                                            <div class="erp-summary-value text-success">{{ $resumen['send'] }}</div>
+                                        </div>
                                     </div>
-                                    <span class="flex-grow-1 text-muted font-weight-bold">Pending</span>
-                                    <span class="font-weight-bold text-warning">{{ $resumen['pendients'] }}</span>
-                                </div>
 
-                                {{-- L├¡nea: Sent --}}
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="mr-4" style="width: 28px;">
-                                        <i class="fas fa-paper-plane text-success"></i>
+                                    <div class="erp-summary-alert">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        <span class="small font-weight-bold">There are still orders to be sent.</span>
                                     </div>
-                                    <span class="flex-grow-1 text-muted font-weight-bold">Sent</span>
-                                    <span class="font-weight-bold text-success">{{ $resumen['send'] }}</span>
                                 </div>
-
-                                {{-- Mensaje final (solo si hay pendientes) --}}
-                                @if(!$resumen['all_shipping'])
-                                <div class="mt-2 px-2 py-1 d-flex align-items-center"
-                                    style="border: 1px solid rgba(255, 193, 7, 0.35); background: rgba(255, 193, 7, 0.12); border-radius: 10px;">
-                                    <i class="fas fa-exclamation-triangle mr-2 text-warning"></i>
-                                    <span class="small font-weight-bold text-dark">There are still orders to be sent.</span>
-                                </div>
-                                @endif
                             </div>
-                        </div>
 
-                        {{-- Columna derecha: tabla scroll --}}
-                        <div class="col-8">
-                            <div class="table-responsive erp-scroll-pane">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="small font-weight-bold text-dark">Pending</div>
+                                <span class="badge bg-warning text-dark">{{ $pendingWeeklyOrders->count() }}</span>
+                            </div>
+                            <div class="table-responsive erp-scroll-pane erp-scroll-pane--pending">
                                 <table class="table table-sm table-striped mb-0 erp-mini-table">
                                     <thead class="sticky-top">
                                         <tr>
-                                            <th>#</th>
-                                            <th>ORDER</th>
+                                            <th style="width: 10%;">#</th>
+                                            <th style="width: 28%;">ORDER</th>
                                             <th>PN</th>
-                                            <th>DUE DATE</th>
+                                            <th style="width: 28%;">DUE</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-                                            $pendingWeeklyOrders = $weeklyOrders->where('status', '!=', 'sent');
-                                        @endphp
                                         @forelse ($pendingWeeklyOrders as $order)
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $order->work_id ?? 'N/A' }}</td>
+                                                <td class="text-nowrap">{{ $order->work_id ?? 'N/A' }}</td>
                                                 <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
-                                                <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
+                                                <td class="text-nowrap">{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
                                             </tr>
                                         @empty
                                             <tr>
@@ -308,7 +299,77 @@
                                 </table>
                             </div>
                         </div>
-                    </div> {{-- end row --}}
+
+                        {{-- Columna derecha: órdenes tardes --}}
+                        <div class="col-12 mt-2">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="d-flex align-items-center">
+                                    <span class="erp-card-icon mr-2" style="width: 26px; height: 26px; border-radius: 9px; background: rgba(220, 53, 69, 0.14); border-color: rgba(220, 53, 69, 0.30); color: #b91c1c;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                    <div class="small font-weight-bold text-dark">Late</div>
+                                </div>
+                                <span class="badge bg-danger text-white">{{ ($ordenesAtrasadas ?? collect())->count() }}</span>
+                            </div>
+                            <div class="table-responsive erp-scroll-pane erp-scroll-pane--late">
+                                <table class="table table-sm table-striped mb-0 erp-mini-table erp-mini-table--fixed">
+                                    <colgroup>
+                                        <col style="width:5%">
+                                        <col style="width:12%">
+                                        <col style="width:20%">
+                                        <col style="width:20%">
+                                        <col style="width:16%">
+                                        <col style="width:12%">
+                                        <col style="width:11%">
+                                    </colgroup>
+                                    <thead class="sticky-top">
+                                        <tr>
+                                            <th class="text-center">#</th>
+                                            <th>ORDER</th>
+                                            <th>PN</th>
+                                            <th class="text-center">STATUS</th>
+                                            <th>LOCATION</th>
+                                            <th class="text-center">DUE</th>
+                                            <th class="text-center">DAYS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($lateOrdersMini as $order)
+                                            <tr>
+                                                <td class="text-center">{{ $loop->iteration }}</td>
+                                                <td class="text-nowrap">{{ $order->work_id ?? 'N/A' }}</td>
+                                                <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
+                                                <td class="text-center">
+                                                    <span class="badge text-truncate d-inline-block px-1 py-0"
+                                                        style="max-width: 90px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.14); border: 1px solid rgba(220, 53, 69, 0.30); color: #b91c1c;"
+                                                        title="{{ $order->status }}">
+                                                        {{ ucfirst($order->status ?? '') }}
+                                                    </span>
+                                                </td>
+                                                <td class="erp-cell-wrap">
+                                                    @php
+                                                        $lastLocLower = strtolower(trim($order->last_location ?? ''));
+                                                    @endphp
+                                                    {{ $order->location ?? 'N/A' }}
+                                                    @if($lastLocLower === 'yarnell')
+                                                        <span class="d-block text-muted small">{{ $order->last_location }}</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center text-nowrap">{{ optional($order->due_date)->format('d/m/Y') }}</td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-danger">{{ optional($order->due_date)->diffInDays(now()) }}</span>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-3">No late orders</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 @endif
             </div>
@@ -401,72 +462,7 @@
     <div class="col-md-12"> {{-- Ocupa toda la fila --}}
         <div class="container-fluid py-4">
             {{-- Cards con tablas --}}
-            <div class="row g-4 mb-4">
-                {{-- Ordenes esta semana --}}
-
-
-                {{-- Ordenes atrasadas --}}
-                <div class="col-12">
-                    <div class="card shadow-sm border-0 rounded-3 h-100">
-                        <div class="card-header bg-light d-flex align-items-center gap-2">
-                            <i class="fas fa-exclamation-triangle fs-5 text-danger mr-2"></i>
-                            <h6 class="mb-0 text-danger">Late Orders</h6>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table id="tablelate" class="table table-striped table-hover table-sm align-middle mb-0 table-modern datatable-export"
-                                    style="table-layout: fixed; width: 100%;">
-                                    <thead>
-                                        <tr style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                            <th style="width: 40px;">W.ID</th>
-                                            <th style="width: 50px;">PN</th>
-                                            <th style="width: 150px;">DESCRIPTION</th>
-                                            <th style="width: 70px;">CUSTOMER</th>
-                                            <th style="width: 30px;">QTY</th>
-                                            <th style="width: 50px;">STATUS</th>
-                                            <th style="width: 70px;">DUE DATE</th>
-                                            <th style="width: 60px;">DAYS LATE</th>
-                                            <th style="width: 80px;">NOTES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($ordenesAtrasadas as $order)
-                                        <tr>
-                                            <td>{{ $order->work_id }}</td>
-                                            <td>{{ $order->PN }}</td>
-                                            <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                                {{ $order->Part_description }}
-                                            </td>
-                                            <td>{{ ucfirst($order->costumer) }}</td>
-                                            <td>{{ $order->qty }}</td>
-                                            <td>
-                                                <span class="badge bg-warning text-dark text-truncate d-inline-block" style="max-width: 70px;"
-                                                    title="{{ $order->status }}">
-                                                    {{ $order->status }}
-                                                </span>
-                                            </td>
-                                            <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
-                                            <td>
-                                                <span class="badge bg-danger">
-                                                    {{ $order->due_date->diffInDays(now()) }}
-                                                </span>
-                                            </td>
-                                            <td style="white-space: normal !important; font-size: 12px !important; word-break: break-word;" title="{{ $order->notes }}">
-                                                {{ $order->notes}}
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-light text-center py-2">
-                            <small class="text-muted">Total orders this week: <strong>{{ $cantidadAtrasadas }}</strong></small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+           
 
 
             <div class="card mb-4">
@@ -1712,6 +1708,14 @@
                     overflow-y: auto;
                 }
 
+                .erp-scroll-pane--pending {
+                    max-height: 315px;
+                }
+
+                .erp-scroll-pane--late {
+                    max-height: 200px;
+                }
+
                 .erp-icon-box {
                     width: 48px;
                     height: 48px;
@@ -1733,6 +1737,78 @@
                     overflow-wrap: anywhere;
                 }
 
+                .erp-summary-grid {
+                    display: grid;
+                    grid-template-columns: 1fr auto;
+                    gap: 8px 14px;
+                    align-items: start;
+                }
+
+                .erp-summary-left {
+                    display: inline-flex;
+                    flex-wrap: wrap;
+                    gap: 8px 16px;
+                    align-items: center;
+                    font-size: 0.95rem;
+                }
+
+                .erp-summary-pair {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    white-space: nowrap;
+                }
+
+                .erp-summary-alert {
+                    padding: .25rem .5rem;
+                    display: inline-flex;
+                    align-items: center;
+                    border: 1px solid rgba(255, 193, 7, 0.35);
+                    background: rgba(255, 193, 7, 0.12);
+                    border-radius: 10px;
+                    color: #0f172a;
+                    justify-self: end;
+                    font-size: 0.95rem;
+                }
+
+                .erp-summary-alert i {
+                    margin-right: .5rem;
+                }
+
+                .erp-summary-label {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #475569;
+                    font-weight: 700;
+                    white-space: nowrap;
+                }
+
+                .erp-summary-heading {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #0f172a;
+                    font-weight: 800;
+                    grid-column: 1 / -1;
+                }
+
+                .erp-summary-value {
+                    font-weight: 800;
+                    color: #0f172a;
+                    white-space: nowrap;
+                }
+
+                @media (max-width: 575.98px) {
+                    .erp-summary-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .erp-summary-alert {
+                        justify-self: start;
+                    }
+                }
+
                 .erp-mini-table {
                     border: 1px solid #d1d5db;
                     border-radius: 10px;
@@ -1750,6 +1826,11 @@
 
                 .erp-mini-table td {
                     font-size: 12px;
+                }
+
+                .erp-mini-table--fixed {
+                    table-layout: fixed;
+                    width: 100%;
                 }
  
                 /* Tablas de página: mismo look ERP que modales */
