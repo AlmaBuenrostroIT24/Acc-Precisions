@@ -389,7 +389,7 @@
                                 </span>
                                 <div class="erp-card-title">Next Orders and Deliveries</div>
                             </div>
-                            <div class="erp-card-meta ml-auto">Next 8 weeks</div>
+                          
                         </div>
                         <div class="card-body p-2">
                             <div class="row g-0">
@@ -663,6 +663,7 @@
 </div>
 </div>
 </div>
+--}}
 
 <div class="row mb-2">
     {{-- Card: Aqu├¡ puedes agregar una tercera tarjeta si la necesitas --}}
@@ -4129,7 +4130,7 @@
                         'All';
 
                     const displayYear = selectedYear || '';
-                    const titleParts = [`Total Orders: ${totalOrders}`];
+                    const titleParts = [`Orders: ${totalOrders}`];
                     if (displayCustomer !== 'All') titleParts.push(`Customer: ${displayCustomer}`);
                     if (displayYear) titleParts.push(`Year: ${displayYear}`);
                     if (displayMonth) titleParts.push(`Month: ${displayMonth}`);
@@ -4150,14 +4151,16 @@
                             datasets: [{
                                 data: numericData,
                                 backgroundColor: colors,
-                                borderColor: '#fff',
-                                borderWidth: 8
+                                borderColor: 'rgba(255, 255, 255, 0.92)',
+                                borderWidth: 2,
+                                hoverOffset: 6
                             }]
                         },
                         options: {
-                            maintainAspectRatio: false,
+                            maintainAspectRatio: true,
+                            aspectRatio: 1,
                             responsive: true,
-                            cutout: '34%',
+                            cutout: '66%',
                             animation: {
                                 duration: 350
                             },
@@ -4172,14 +4175,22 @@
                                     color: '#334155',
                                     padding: {
                                         top: 2,
-                                        bottom: 8
+                                        bottom: 6
                                     }
                                 },
                                 datalabels: {
                                     color: '#0f172a',
                                     font: {
                                         weight: '800',
-                                        size: 12
+                                        size: 11
+                                    },
+                                    display: (context) => {
+                                        const dataset = context.chart.data.datasets[0];
+                                        const value = Number(dataset.data[context.dataIndex]) || 0;
+                                        const sum = dataset.data.reduce((a, b) => a + Number(b || 0), 0);
+                                        if (!sum) return false;
+                                        const pct = (value / sum) * 100;
+                                        return value > 0 && pct >= 8;
                                     },
                                     formatter: (value, context) => {
                                         const dataset = context.chart.data.datasets[0];
@@ -4196,7 +4207,7 @@
                                             Math.round((numericValue / sum) * 100) :
                                             0;
 
-                                        return `${numericValue} (${percent}%)`;
+                                        return `${percent}%`;
                                     }
                                 },
                                 legend: {
