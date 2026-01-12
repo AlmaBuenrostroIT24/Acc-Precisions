@@ -134,6 +134,7 @@ Route::get('/orders/summary/next-weeks/{weeks}', [Order_ScheduleController::clas
 Route::get('/orders/summary/on-time-filtered', [Order_ScheduleController::class, 'summaryOnTimeFiltered']);
 Route::get('/orders/summary/on-time-filtered-detail', [Order_ScheduleController::class, 'summaryOnTimeFilteredDetail']);
 Route::get('/orders/summary/detail', [Order_ScheduleController::class, 'summaryOrdersDetail']);
+Route::get('/orders/weekly-orders/ajax', [Order_ScheduleController::class, 'weeklyOrdersAjax'])->name('orders.weeklyOrders.ajax')->middleware('auth');
 
 Route::get('/orders/by-week/ajax', [Order_ScheduleController::class, 'getOrdersByWeekAjax'])->name('orders.byWeek.ajax');
 

@@ -1586,12 +1586,20 @@ class Order_ScheduleController extends Controller
          */
 
         //1. Controlador con filtro hasta la semana actual (Weekly Orders)
+        // Weekly Orders: filtrar por "año ISO de semana" (YEARWEEK(...,1)) para que el año coincida con las semanas mostradas.
+        $currentIsoYear = (int)Carbon::now()->isoWeekYear;
+        $weeklyYear = (int)$request->query('weekly_year', $currentIsoYear);
+        if ($weeklyYear < 2000 || $weeklyYear > $currentIsoYear) {
+            $weeklyYear = $currentIsoYear;
+        }
+
         $orders = DB::table('orders_schedule')
             ->selectRaw('
         YEARWEEK(due_date, 1) as week,
         COUNT(*) as total,SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)') //órdenes cuya due_date está hasta la semana actual (inclusive), ignorando futuras semanas.
+            ->whereRaw('FLOOR(YEARWEEK(due_date, 1) / 100) = ?', [$weeklyYear])
             ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
             ->groupBy('week')
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
@@ -1602,6 +1610,7 @@ class Order_ScheduleController extends Controller
         $totalWeeks = DB::table('orders_schedule')
             ->selectRaw('YEARWEEK(due_date, 1) as week')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->whereRaw('FLOOR(YEARWEEK(due_date, 1) / 100) = ?', [$weeklyYear])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->groupBy('week')
             ->get()
@@ -1610,6 +1619,7 @@ class Order_ScheduleController extends Controller
         $weeksOnTime = DB::table('orders_schedule')
             ->selectRaw('YEARWEEK(due_date, 1) as week')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
+            ->whereRaw('FLOOR(YEARWEEK(due_date, 1) / 100) = ?', [$weeklyYear])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->groupBy('week')
             ->havingRaw('SUM(CASE WHEN status != "sent" THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN sent_at > due_date THEN 1 ELSE 0 END) = 0')
@@ -1644,6 +1654,7 @@ class Order_ScheduleController extends Controller
             'resumen',
             'weeklyOrders',
             'orders',
+            'weeklyYear',
             'percentageOnTime'
         ));
     }
@@ -1674,6 +1685,67 @@ class Order_ScheduleController extends Controller
         return response()->json([
             'html' => view('orders.schedule_tablestatistics', ['ordenesSemana' => $ordenes])->render(),
             'count' => $ordenes->count(),
+        ]);
+    }
+
+    public function weeklyOrdersAjax(Request $request)
+    {
+        $currentIsoYear = (int)Carbon::now()->isoWeekYear;
+        $weeklyYear = (int)$request->query('weekly_year', $currentIsoYear);
+        if ($weeklyYear < 2000 || $weeklyYear > $currentIsoYear) {
+            $weeklyYear = $currentIsoYear;
+        }
+
+        $weekExpr = 'YEARWEEK(due_date, 1)';
+
+        $ordersQuery = DB::table('orders_schedule')
+            ->selectRaw('
+                ' . $weekExpr . ' as week,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = "sent" AND sent_at > due_date THEN 1 ELSE 0 END) as late
+            ')
+            ->whereRaw('FLOOR(YEARWEEK(due_date, 1) / 100) = ?', [$weeklyYear])
+            ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'");
+
+        if ($weeklyYear === $currentIsoYear) {
+            $ordersQuery->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)');
+        }
+
+        $orders = $ordersQuery
+            ->groupBy(DB::raw($weekExpr))
+            ->orderBy('week', 'desc')
+            ->get();
+
+        $weeksBaseQuery = DB::table('orders_schedule')
+            ->whereRaw('FLOOR(YEARWEEK(due_date, 1) / 100) = ?', [$weeklyYear])
+            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'");
+
+        if ($weeklyYear === $currentIsoYear) {
+            $weeksBaseQuery->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)');
+        }
+
+        $totalWeeks = (clone $weeksBaseQuery)
+            ->selectRaw($weekExpr . ' as wk')
+            ->groupBy(DB::raw($weekExpr))
+            ->get()
+            ->count();
+
+        $weeksOnTime = (clone $weeksBaseQuery)
+            ->selectRaw($weekExpr . ' as wk')
+            ->groupBy(DB::raw($weekExpr))
+            ->havingRaw('SUM(CASE WHEN status != "sent" THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN sent_at > due_date THEN 1 ELSE 0 END) = 0')
+            ->get()
+            ->count();
+
+        $percentageOnTime = $totalWeeks > 0 ? round(($weeksOnTime / $totalWeeks) * 100) : 0;
+
+        return response()->json([
+            'rows_html' => view('orders.partials.weekly_orders_rows', compact('orders'))->render(),
+            'percentageOnTime' => $percentageOnTime,
+            'weeksCount' => $orders->count(),
+            'weeklyYear' => $weeklyYear,
         ]);
     }
 

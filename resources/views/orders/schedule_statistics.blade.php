@@ -797,9 +797,49 @@
     {{-- Card: Aqu├¡ puedes agregar una tercera tarjeta si la necesitas --}}
     <div class="col-md-4 col-sm-6 mb-3">
         <div class="card shadow-sm rounded-3 border-0 h-100">
-            {{-- Header --}}
-            <div class="card-header bg-secondary text-white d-flex align-items-center font-weight-semibold">
-                <i class="fas fa-calendar-week mr-2"></i> Weekly Orders
+            @php
+            // Dinámica de colores e íconos según el cumplimiento global
+            if ($percentageOnTime >= 90) {
+            $percentColor = 'text-success';
+            $circleColor = 'bg-success';
+            $icon = 'fa-check';
+            } elseif ($percentageOnTime >= 70) {
+            $percentColor = 'text-warning';
+            $circleColor = 'bg-warning';
+            $icon = 'fa-exclamation';
+            } else {
+            $percentColor = 'text-danger';
+            $circleColor = 'bg-danger';
+            $icon = 'fa-times';
+            }
+            @endphp
+
+            {{-- Header (ERP) --}}
+            <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
+                <div class="d-flex align-items-center">
+                    <span class="erp-card-icon mr-2">
+                        <i class="fas fa-calendar-week"></i>
+                    </span>
+                    <div class="erp-card-title">Weekly Orders</div>
+                </div>
+                <div class="d-flex align-items-center ml-auto erp-inline-filters">
+                    <div class="erp-year-filter" title="Year">
+                        <span class="erp-year-filter-icon" aria-hidden="true">
+                            <i class="fas fa-calendar-alt"></i>
+                        </span>
+                        <select class="erp-year-filter-select erp-filter-control" id="weeklyOrdersYearSelect" aria-label="Weekly Orders Year">
+                            @for ($y = now()->isoWeekYear; $y >= 2025; $y--)
+                                <option value="{{ $y }}" @selected((int)request()->query('weekly_year', now()->isoWeekYear) === $y)>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                </div>
+                <div class="erp-card-meta ml-2" tabindex="0" data-toggle="tooltip" title="Based on {{ $orders->count() }} weeks">
+                    On-time:
+                    <strong class="{{ $percentageOnTime >= 90 ? 'text-success' : ($percentageOnTime >= 70 ? 'text-warning' : 'text-danger') }}">
+                        {{ $percentageOnTime }}%
+                    </strong>
+                </div>
             </div>
 
             @php
@@ -819,74 +859,40 @@
             }
             @endphp
 
-            {{-- Porcentaje general de cumplimiento --}}
-            <div class="px-3 py-2 border-bottom" style="background-color: #f8f9fa;">
-                <div class="d-flex justify-content-center align-items-center mb-1">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center {{ $circleColor }} mr-2"
-                        style="width: 20px; height: 20px;">
-                        <i class="fas {{ $icon }} text-white" style="font-size: 0.75rem;"></i>
-                    </div>
-                    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Based on {{ $orders->count() }} weeks">
-                        <h7 class="font-weight-bold mb-0 {{ $percentColor }}" style="font-size: 1.25rem;">
-                            {{ $percentageOnTime }}%
-                        </h7>
+            {{-- Resumen (ERP) --}}
+            <div class="px-3 py-2 border-bottom">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="small font-weight-bold text-dark">Weeks 100% on time</div>
+                    <span id="weeklyOrdersSummaryPercent" class="badge {{ $percentageOnTime >= 90 ? 'bg-success' : ($percentageOnTime >= 70 ? 'bg-warning' : 'bg-danger') }} text-white">
+                        {{ $percentageOnTime }}%
                     </span>
                 </div>
-                <p class="text-dark text-center mb-0 small">Of weeks had 100% of orders completed on time</p>
+                <div class="small text-muted" id="weeklyOrdersBasedOn">Based on {{ $orders->count() }} weeks</div>
             </div>
 
             {{-- Tabla de ├│rdenes por semana --}}
-            <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
-                <table class="table table-sm table-bordered table-striped small mb-0">
-                    <thead class="thead-light sticky-top">
+            <div class="table-responsive erp-scroll-pane" style="max-height: 340px;">
+                <table class="table table-sm table-striped mb-0 erp-mini-table erp-mini-table--fixed">
+                    <colgroup>
+                        <col style="width: 16%">
+                        <col style="width: 34%">
+                        <col style="width: 10%">
+                        <col style="width: 12%">
+                        <col style="width: 12%">
+                        <col style="width: 16%">
+                    </colgroup>
+                    <thead class="sticky-top">
                         <tr class="text-center">
-                            <th>Week</th>
-                            <th>Date Range</th>
-                            <th>Total</th>
-                            <th class="text-success">Done</th>
-                            <th class="text-warning">Late</th>
+                            <th>WEEK</th>
+                            <th>DATE RANGE</th>
+                            <th>TOTAL</th>
+                            <th>DONE</th>
+                            <th>LATE</th>
                             <th>%</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse($orders as $item)
-                        @php
-                        $year = substr($item->week, 0, 4);
-                        $week = substr($item->week, 4);
-                        $startOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->startOfWeek();
-                        $endOfWeek = \Carbon\Carbon::now()->setISODate($year, $week)->endOfWeek();
-
-                        $completed = $item->completed ?? 0;
-                        $late = $item->late ?? 0;
-                        $total = $item->total ?: 1;
-
-                        $completedPercent = round(($completed / $total) * 100);
-                        $latePercent = round(($late / $total) * 100);
-                        @endphp
-
-                        <tr class="text-center">
-                            <td>{{ $year }} W{{ $week }}</td>
-                            <td>{{ $startOfWeek->format('M d') }} - {{ $endOfWeek->format('M d') }}</td>
-                            <td>{{ $item->total }}</td>
-                            <td class="text-success font-weight-bold">{{ $completed }}</td>
-                            <td class="text-danger font-weight-bold">{{ $late }}</td>
-                            <td>
-                                <span class="badge badge-pill 
-                                    {{ $completedPercent >= 90 ? 'badge-success' : ($completedPercent >= 70 ? 'badge-warning' : 'badge-danger') }}">
-                                    {{ $completedPercent }}%
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="6" class="p-1">
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" style="width: {{ $completedPercent }}%;"></div>
-                                    <div class="progress-bar bg-warning" style="width: {{ $latePercent }}%;"></div>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        @endforelse
+                    <tbody id="weeklyOrdersBody">
+                        @include('orders.partials.weekly_orders_rows', ['orders' => $orders])
                     </tbody>
                 </table>
             </div>
@@ -2018,6 +2024,47 @@
     .erp-inline-filters select.erp-filter-control {
         min-width: 0;
         text-overflow: ellipsis;
+    }
+
+    /* Weekly Orders: filtro Year estilo ERP (sin input-group para evitar desalineaciones) */
+    .erp-year-filter {
+        display: inline-flex;
+        align-items: center;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #c5c9d2;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .erp-year-filter-icon {
+        height: 34px;
+        width: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid #c5c9d2;
+        color: #0f172a;
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    .erp-year-filter-select {
+        height: 34px;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 12px !important;
+        font-weight: 700;
+        min-width: 96px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .erp-year-filter:focus-within {
+        border-color: rgba(13, 110, 253, 0.45);
+        box-shadow: 0 0 0 .18rem rgba(13, 110, 253, 0.16);
     }
 
     .erp-panel-title {
@@ -4385,6 +4432,29 @@
 
         return dt;
     }
+
+    // Weekly Orders: actualizar solo la tabla (sin recargar la página)
+    $(document).on('change', '#weeklyOrdersYearSelect', function () {
+        const year = $(this).val();
+        $.get('{{ route('orders.weeklyOrders.ajax') }}', { weekly_year: year })
+            .done(function (res) {
+                if (res && typeof res.rows_html === 'string') {
+                    $('#weeklyOrdersBody').html(res.rows_html);
+                }
+                if (typeof res.percentageOnTime === 'number') {
+                    // Actualizar badge del resumen y color por %
+                    const pct = res.percentageOnTime;
+                    const cls = (pct >= 90) ? 'bg-success' : (pct >= 70 ? 'bg-warning' : 'bg-danger');
+                    const $badge = $('#weeklyOrdersSummaryPercent');
+                    if ($badge.length) {
+                        $badge.removeClass('bg-success bg-warning bg-danger').addClass(cls).text(pct + '%');
+                    }
+                }
+                if (typeof res.weeksCount === 'number') {
+                    $('#weeklyOrdersBasedOn').text('Based on ' + res.weeksCount + ' weeks');
+                }
+            });
+    });
 
     function updateVisibleInputs(typeSelect, yearInp, monthInp, weekInp) {
         if (!yearInp || !monthInp || !weekInp) return;
