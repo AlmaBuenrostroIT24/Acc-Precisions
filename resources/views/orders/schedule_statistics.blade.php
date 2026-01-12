@@ -192,26 +192,130 @@
         <div class="col-12 col-xl-4 d-flex">
             <div class="card shadow-sm border-0 rounded-3 h-100 w-100">
                 @if ($resumen['all_shipping'])
-                <div class="card-header erp-card-header erp-card-header--success d-flex align-items-center flex-wrap">
+                <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
                     <div class="d-flex align-items-center">
-                        <span class="erp-card-icon erp-card-icon--success mr-2">
-                            <i class="fas fa-check-circle"></i>
+                        <span class="erp-card-icon mr-2">
+                            <i class="fas fa-box"></i>
                         </span>
-                        <div class="erp-card-title">Pending Orders This Week</div>
-                    </div>
-                    <div class="erp-card-meta ml-auto">
-                        Total: <strong>{{ $resumen['total'] }}</strong>
+                        <div class="erp-card-title">Pending & Late Orders This Week</div>
                     </div>
                 </div>
-                <div class="card-body text-center py-3">
-                    <div class="erp-icon-box erp-icon-box--success mb-2">
-                        <i class="fas fa-box-open text-success fa-lg"></i>
+                <div class="card-body py-2">
+                    <div class="text-start small mb-2">
+                        <div class="erp-summary-grid">
+                            <div class="erp-summary-left">
+                                <div class="erp-summary-pair">
+                                    <div class="erp-summary-label text-dark">
+                                        <i class="fas fa-list-alt"></i> Total
+                                    </div>
+                                    <div class="erp-summary-value">{{ $resumen['total'] }}</div>
+                                </div>
+
+                                <div class="erp-summary-pair">
+                                    <div class="erp-summary-label text-dark">
+                                        <i class="fas fa-check-circle text-success"></i> Pending
+                                    </div>
+                                    <div class="erp-summary-value text-success">0</div>
+                                </div>
+
+                                <div class="erp-summary-pair">
+                                    <div class="erp-summary-label text-dark">
+                                        <i class="fas fa-paper-plane text-success"></i> Sent
+                                    </div>
+                                    <div class="erp-summary-value text-success">{{ $resumen['send'] }}</div>
+                                </div>
+                            </div>
+
+                            <div class="erp-summary-alert"
+                                style="border: 1px solid rgba(40, 167, 69, 0.35); background: rgba(40, 167, 69, 0.12);">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span class="small font-weight-bold">Everything shipped this week.</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-muted font-weight-bold">Everything shipped this week</div>
-                    <div class="small text-muted">No pending orders.</div>
+
+                    <div class="text-center mt-2">
+                        <div class="erp-icon-box erp-icon-box--success mb-2">
+                            <i class="fas fa-box-open text-success fa-lg"></i>
+                        </div>
+                        <div class="text-muted font-weight-bold">No pending orders.</div>
+                    </div>
+
+                    @php
+                        $lateOrdersMini = ($ordenesAtrasadas ?? collect())->take(20);
+                    @endphp
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center">
+                                <span class="erp-card-icon mr-2"
+                                    style="width: 26px; height: 26px; border-radius: 9px; background: rgba(220, 53, 69, 0.14); border-color: rgba(220, 53, 69, 0.30); color: #b91c1c;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                                <div class="small font-weight-bold text-dark">Late</div>
+                            </div>
+                            <span class="badge bg-danger text-white">{{ ($ordenesAtrasadas ?? collect())->count() }}</span>
+                        </div>
+                        <div class="table-responsive erp-scroll-pane erp-scroll-pane--late">
+                            <table class="table table-sm table-striped mb-0 erp-mini-table erp-mini-table--fixed">
+                                <colgroup>
+                                    <col style="width:5%">
+                                    <col style="width:12%">
+                                    <col style="width:20%">
+                                    <col style="width:20%">
+                                    <col style="width:16%">
+                                    <col style="width:12%">
+                                    <col style="width:11%">
+                                </colgroup>
+                                <thead class="sticky-top">
+                                    <tr>
+                                        <th class="text-center">#</th>
+                                        <th>ORDER</th>
+                                        <th>PN</th>
+                                        <th class="text-center">STATUS</th>
+                                        <th>LOCATION</th>
+                                        <th class="text-center">DUE</th>
+                                        <th class="text-center">DAYS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($lateOrdersMini as $order)
+                                        <tr>
+                                            <td class="text-center">{{ $loop->iteration }}</td>
+                                            <td class="text-nowrap">{{ $order->work_id ?? 'N/A' }}</td>
+                                            <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
+                                            <td class="text-center">
+                                                <span class="badge text-truncate d-inline-block px-1 py-0"
+                                                    style="max-width: 90px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.14); border: 1px solid rgba(220, 53, 69, 0.30); color: #b91c1c;"
+                                                    title="{{ $order->status }}">
+                                                    {{ ucfirst($order->status ?? '') }}
+                                                </span>
+                                            </td>
+                                            <td class="erp-cell-wrap">
+                                                @php
+                                                    $lastLocLower = strtolower(trim($order->last_location ?? ''));
+                                                @endphp
+                                                {{ $order->location ?? 'N/A' }}
+                                                @if($lastLocLower === 'yarnell')
+                                                    <span class="d-block text-muted small">{{ $order->last_location }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center text-nowrap">{{ optional($order->due_date)->format('d/m/Y') }}</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-danger">{{ optional($order->due_date)->diffInDays(now()) }}</span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-3">No late orders</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                 @else
-                <div class="card-header erp-card-header erp-card-header--warning d-flex align-items-center flex-wrap">
+                <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
                     <div class="d-flex align-items-center">
                         <span class="erp-card-icon erp-card-icon--warning mr-2">
                             <i class="fas fa-exclamation-circle"></i>
@@ -233,10 +337,6 @@
                         <div class="col-12">
                             <div class="text-start small mb-2">
                                 <div class="erp-summary-grid">
-                                    <div class="erp-summary-heading">
-                                        <i class="fas fa-box text-warning"></i> Summary
-                                    </div>
-
                                     <div class="erp-summary-left">
                                         <div class="erp-summary-pair">
                                             <div class="erp-summary-label text-dark">
@@ -268,8 +368,21 @@
                             </div>
 
                             <div class="d-flex align-items-center justify-content-between mb-1">
-                                <div class="small font-weight-bold text-dark">Pending</div>
-                                <span class="badge bg-warning text-dark">{{ $pendingWeeklyOrders->count() }}</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="erp-card-icon mr-2 {{ $pendingWeeklyOrders->count() === 0 ? 'erp-card-icon--success' : 'erp-card-icon--warning' }}"
+                                        style="width: 26px; height: 26px; border-radius: 9px;">
+                                        <i class="fas {{ $pendingWeeklyOrders->count() === 0 ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                                    </span>
+                                    <div class="small font-weight-bold text-dark">Pending</div>
+                                    @if ($pendingWeeklyOrders->count() === 0)
+                                        <span class="ml-2 px-2 py-0 small font-weight-bold"
+                                            style="border: 1px solid rgba(40, 167, 69, 0.35); background: rgba(40, 167, 69, 0.12); border-radius: 999px; color: #0f172a;">
+                                            Everything shipped this week
+                                        </span>
+                                    @endif
+                                </div>
+                                <span
+                                    class="badge {{ $pendingWeeklyOrders->count() === 0 ? 'bg-success text-white' : 'bg-warning text-dark' }}">{{ $pendingWeeklyOrders->count() }}</span>
                             </div>
                             <div class="table-responsive erp-scroll-pane erp-scroll-pane--pending">
                                 <table class="table table-sm table-striped mb-0 erp-mini-table">
