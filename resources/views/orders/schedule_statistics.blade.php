@@ -389,7 +389,7 @@
                                 </span>
                                 <div class="erp-card-title">Next Orders and Deliveries</div>
                             </div>
-                          
+                          Missing year/month
                         </div>
                         <div class="card-body p-2">
                             <div class="row g-0">
@@ -415,10 +415,10 @@
                                     <div class="erp-chart-panel w-100 h-100">
                                         <div class="d-flex align-items-center justify-content-between mb-2">
                                             <div class="erp-panel-title">On Time vs Late Deliveries</div>
-                                            <button onclick="printChart('onTimeChart', 'ON TIME VS LATE')"
-                                                class="btn btn-erp-primary btn-sm erp-chart-btn">
-                                                <i class="fas fa-print mr-1"></i> Print
-                                            </button>
+                                            <button onclick="printOnTimeVsLateChart()"
+                                                 class="btn btn-erp-primary btn-sm erp-chart-btn">
+                                                 <i class="fas fa-print mr-1"></i> Print
+                                             </button>
                                         </div>
 
                                         <div class="d-flex align-items-center flex-nowrap mb-2 erp-inline-filters">
@@ -510,85 +510,100 @@
                 </div>
             </div>
         </div>
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>Filters and Order Charts</h5>
+        <div class="card shadow-sm border-0 rounded-3 mb-4 erp-chart-card">
+            <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
+                <div class="d-flex align-items-center">
+                    <span class="erp-card-icon mr-2">
+                        <i class="fas fa-sliders-h"></i>
+                    </span>
+                    <div class="erp-card-title">Filters and Order Charts</div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="card-body p-2">
+                <div class="row g-2">
                     <!-- Columna izquierda: primer filtro + bot├│n + gr├ífica -->
-                    <div class="col-md-6" style="border-right: 1px solid #ddd; padding-right: 20px;">
-                        <!-- Primer bloque de filtros -->
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="filterType">Year / Month / Week:</label>
-                                <select id="filterType" class="form-control">
-                                    <option value="year">Year</option>
-                                    <option value="month">Month</option>
-                                    <option value="week">Week</option>
-                                </select>
+                    <div class="col-12 col-lg-6 d-flex">
+                        <div class="erp-chart-panel w-100 h-100">
+                            <div class="d-flex align-items-end flex-wrap mb-2 erp-inline-filters">
+                                <div>
+                                    <label for="filterType" class="erp-filter-label mb-1">Type</label>
+                                    <select id="filterType" class="form-control form-control-sm erp-filter-control" style="max-width: 120px;">
+                                        <option value="year">Year</option>
+                                        <option value="month">Month</option>
+                                        <option value="week">Week</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="yearInput" class="erp-filter-label mb-1">Date</label>
+                                    <input type="month" id="monthInput" class="form-control form-control-sm erp-filter-control d-none" style="max-width: 150px;">
+                                    <input type="week" id="weekInput" class="form-control form-control-sm erp-filter-control d-none" style="max-width: 150px;">
+                                    <select id="yearInput" class="form-control form-control-sm erp-filter-control" style="max-width: 110px;">
+                                        @for ($y = date('Y'); $y >= 2025; $y--)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+
+                                <div class="flex-grow-1" style="min-width: 160px;">
+                                    <label for="customerFilter" class="erp-filter-label mb-1">Customer</label>
+                                    <select id="customerFilter" class="form-control form-control-sm erp-filter-control">
+                                        <option value="">All Customers</option>
+                                        @foreach ($customers as $customer)
+                                        <option value="{{ $customer }}">{{ $customer }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="ml-auto">
+                                    <label class="erp-filter-label mb-1 d-block" style="opacity: 0;">Print</label>
+                                    <button onclick="printOrdersChart()"
+                                        class="btn btn-erp-primary btn-sm erp-chart-btn">
+                                        <i class="fas fa-print mr-1"></i> Print
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="col-md-4">
-                                <label for="yearInput">Date:</label>
-                                <input type="month" id="monthInput" class="form-control d-none">
-                                <input type="week" id="weekInput" class="form-control d-none">
-                                <select id="yearInput" class="form-control">
-                                    @for ($y = date('Y'); $y >= 2025; $y--)
-                                    <option value="{{ $y }}">{{ $y }}</option>
-                                    @endfor
-                                </select>
+                            <div class="erp-canvas-wrap erp-canvas-wrap--mini">
+                                <canvas id="ordersChart"></canvas>
                             </div>
-                            <div class="col-md-4">
-                                <label for="customerFilter">Customer:</label>
-                                <select id="customerFilter" class="form-control">
-                                    <option value="">All Customers</option>
-                                    @foreach ($customers as $customer)
-                                    <option value="{{ $customer }}">{{ $customer }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <button onclick="printChart('ordersChart', 'TOTAL ORDERS')" class="btn btn-secondary mb-2 w-75">
-                                Print Order Totals
-                            </button>
-                        </div>
-                        <div class="d-flex flex-column align-items-center mb-3">
-                            <canvas id="ordersChart"></canvas>
                         </div>
                     </div>
                     <!-- Columna derecha: segundo filtro + bot├│n + gr├ífica -->
-                    <div class="col-md-6" style="padding-left: 20px;">
-                        <!-- Segundo bloque de filtros -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="filterTypeCustomer">Year / Month / Week:</label>
-                                <select id="filterTypeCustomer" class="form-control">
-                                    <option value="year" selected>Year</option>
-                                    <option value="month">Month</option>
-                                    <option value="week">Week</option>
-                                </select>
+                    <div class="col-12 col-lg-6 d-flex">
+                        <div class="erp-chart-panel w-100 h-100">
+                            <div class="d-flex align-items-end flex-wrap mb-2 erp-inline-filters">
+                                <div>
+                                    <label for="filterTypeCustomer" class="erp-filter-label mb-1">Type</label>
+                                    <select id="filterTypeCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 120px;">
+                                        <option value="year" selected>Year</option>
+                                        <option value="month">Month</option>
+                                        <option value="week">Week</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow-1" style="min-width: 150px;">
+                                    <label for="yearInputCustomer" class="erp-filter-label mb-1">Date</label>
+                                    <select id="yearInputCustomer" class="form-control form-control-sm erp-filter-control" style="max-width: 110px;">
+                                        @for ($y = date('Y'); $y >= 2025; $y--)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                    <input type="month" id="monthInputCustomer" class="form-control form-control-sm erp-filter-control d-none" style="max-width: 150px;">
+                                    <input type="week" id="weekInputCustomer" class="form-control form-control-sm erp-filter-control d-none" style="max-width: 150px;">
+                                </div>
+
+                                <div class="ml-auto">
+                                    <label class="erp-filter-label mb-1 d-block" style="opacity: 0;">Print</label>
+                                    <button onclick="printByCustomerChart()"
+                                        class="btn btn-erp-primary btn-sm erp-chart-btn">
+                                        <i class="fas fa-print mr-1"></i> Print
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="yearInputCustomer">Date:</label>
-                                <select id="yearInputCustomer" class="form-control">
-                                    @for ($y = date('Y'); $y >= 2025; $y--)
-                                    <option value="{{ $y }}">{{ $y }}</option>
-                                    @endfor
-                                </select>
-                                <input type="month" id="monthInputCustomer" class="form-control d-none">
-                                <input type="week" id="weekInputCustomer" class="form-control d-none">
+
+                            <div class="erp-canvas-wrap erp-canvas-wrap--mini">
+                                <canvas id="byCustomerChart"></canvas>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <button onclick="printChart('byCustomerChart', 'ORDERS PER CUSTOMER')"
-                                class="btn btn-secondary mb-2 w-75">
-                                Print Order Customer
-                            </button>
-                        </div>
-                        <div class="d-flex flex-column align-items-center">
-                            <canvas id="byCustomerChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -1979,10 +1994,20 @@
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.92));
     }
 
+    .erp-canvas-wrap--mini {
+        height: 470px;
+    }
+
     .erp-canvas-wrap canvas {
         width: 100% !important;
         height: 100% !important;
         display: block;
+    }
+
+    .erp-filter-label {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #475569;
     }
 
                 .erp-customer-count {
@@ -2266,6 +2291,236 @@
     #ordersDetailModal table thead {
         background: linear-gradient(180deg, #f1f4f8 0%, #e4e9f0 100%);
         color: #0f172a;
+    }
+
+    /* ===== Orders Detail (stats arriba de tabla) ===== */
+    #ordersDetailModal .erp-orders-stats {
+        background: transparent;
+    }
+
+    #ordersDetailModal .erp-orders-stats-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 2px 6px 2px;
+    }
+
+    #ordersDetailModal .erp-orders-stats-header-title {
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: 0.2px;
+    }
+
+    #ordersDetailModal .erp-orders-stats-header-total {
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    #ordersDetailModal .erp-orders-stats-header-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 24px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        font-weight: 900;
+    }
+
+    #ordersDetailModal .erp-orders-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 200px));
+        gap: 8px;
+        justify-content: flex-start;
+    }
+
+    @media (min-width: 992px) and (max-width: 1199.98px) {
+        #ordersDetailModal .erp-orders-stats-grid {
+            grid-template-columns: repeat(3, minmax(0, 185px));
+        }
+    }
+
+    @media (max-width: 992px) {
+        #ordersDetailModal .erp-orders-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    #ordersDetailModal .erp-orders-stat,
+    #ordersDetailModal .erp-orders-notes {
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.55);
+        border-radius: 12px;
+        padding: 8px 10px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #ordersDetailModal .erp-orders-stat.is-active,
+    #ordersDetailModal .erp-orders-notes.is-active {
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+        transform: translateY(-1px);
+        border-color: rgba(15, 23, 42, 0.18);
+    }
+
+    /* Pintar (highlight) por tipo cuando está activo */
+    #ordersDetailModal .erp-orders-stat--late.is-active {
+        background: rgba(220, 53, 69, 0.10);
+        border-color: rgba(220, 53, 69, 0.30);
+    }
+
+    #ordersDetailModal .erp-orders-stat--ontime.is-active {
+        background: rgba(40, 167, 69, 0.10);
+        border-color: rgba(40, 167, 69, 0.30);
+    }
+
+    #ordersDetailModal .erp-orders-stat--early.is-active {
+        background: rgba(13, 110, 253, 0.10);
+        border-color: rgba(13, 110, 253, 0.30);
+    }
+
+    #ordersDetailModal .erp-orders-notes.is-active {
+        background: rgba(148, 163, 184, 0.16);
+        border-color: rgba(148, 163, 184, 0.45);
+    }
+
+    #ordersDetailModal .erp-orders-stat-top,
+    #ordersDetailModal .erp-orders-notes-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    #ordersDetailModal .erp-orders-stat-title,
+    #ordersDetailModal .erp-orders-notes-title {
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 0.9rem;
+        letter-spacing: 0.2px;
+    }
+
+    #ordersDetailModal .erp-orders-stat-badge,
+    #ordersDetailModal .erp-orders-notes-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 26px;
+        height: 20px;
+        padding: 0 7px;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: 0.8rem;
+        color: #0f172a;
+        background: rgba(148, 163, 184, 0.18);
+        border: 1px solid rgba(148, 163, 184, 0.40);
+    }
+
+    #ordersDetailModal .erp-orders-stat-meta {
+        font-size: 0.75rem;
+        color: #475569;
+    }
+
+    #ordersDetailModal .erp-orders-stat--early {
+        border-color: rgba(13, 110, 253, 0.32);
+    }
+
+    #ordersDetailModal .erp-orders-stat--early .erp-orders-stat-badge {
+        background: rgba(13, 110, 253, 0.10);
+        border-color: rgba(13, 110, 253, 0.25);
+    }
+
+    #ordersDetailModal .erp-orders-stat--ontime {
+        border-color: rgba(40, 167, 69, 0.32);
+    }
+
+    #ordersDetailModal .erp-orders-stat--ontime .erp-orders-stat-badge {
+        background: rgba(40, 167, 69, 0.10);
+        border-color: rgba(40, 167, 69, 0.25);
+    }
+
+    #ordersDetailModal .erp-orders-stat--late {
+        border-color: rgba(220, 53, 69, 0.32);
+    }
+
+    #ordersDetailModal .erp-orders-stat--late .erp-orders-stat-badge {
+        background: rgba(220, 53, 69, 0.10);
+        border-color: rgba(220, 53, 69, 0.25);
+    }
+
+    #ordersDetailModal .erp-orders-notes-list {
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 110px;
+        overflow: auto;
+        padding-right: 4px;
+        margin-top: 6px;
+    }
+
+    /* Mostrar notas solo cuando se selecciona el box "Notes" */
+    #ordersDetailModal .erp-orders-notes.is-active .erp-orders-notes-list {
+        display: flex;
+    }
+
+    /* El mensaje "No notes" también solo cuando está activo */
+    #ordersDetailModal .erp-orders-notes [data-report-notes-empty] {
+        display: none;
+    }
+
+    #ordersDetailModal .erp-orders-notes.is-active [data-report-notes-empty] {
+        display: block !important;
+    }
+
+    #ordersDetailModal .erp-orders-note-item {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 8px;
+        align-items: start;
+        font-size: 0.78rem;
+        color: #0f172a;
+        padding: 5px 7px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-left: 4px solid rgba(99, 102, 241, 0.55);
+        cursor: pointer;
+    }
+
+    #ordersDetailModal .erp-orders-note-item:hover {
+        background: #eef2ff;
+        border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    #ordersDetailModal .erp-orders-note-item.is-active {
+        background: #e0e7ff;
+        border-color: rgba(79, 70, 229, 0.45);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.10);
+    }
+
+    #ordersDetailModal .erp-orders-note-id {
+        font-weight: 900;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #ordersDetailModal .erp-orders-note-text {
+        color: #334155;
+        overflow: hidden;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    #ordersDetailModal .erp-orders-note-more {
+        font-size: 0.75rem;
+        margin-top: 4px;
     }
 
     #lateOrdersModal.fai-theme-danger table thead,
@@ -2839,6 +3094,262 @@
         width: auto;
     }
 
+    /* Orders per Customer -> Orders Detail Modal:
+       - En pantallas muy grandes: sin scroll horizontal (fit + wrap)
+       - En pantallas medianas/chicas: permitir scroll horizontal (evita que se "distorsionen" Days/Notes) */
+    #ordersDetailModal #ordersDetailModalContent {
+        overflow-x: auto;
+    }
+
+    @media (max-width: 1399.98px) {
+        #ordersDetailModal #ordersDetailTable {
+            min-width: 1360px;
+        }
+    }
+
+    @media (min-width: 1400px) {
+        /* Si el contenido lo requiere, permitir scroll horizontal (evita letras "en vertical") */
+        #ordersDetailModal #ordersDetailModalContent {
+            overflow-x: auto;
+        }
+
+        #ordersDetailModal #ordersDetailTable {
+            table-layout: fixed;
+            width: 100% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable td,
+        #ordersDetailModal #ordersDetailTable th {
+            white-space: normal;
+            word-break: normal;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        /* Fechas/días: mantener en una sola línea */
+        #ordersDetailModal #ordersDetailTable th:nth-child(7),
+        #ordersDetailModal #ordersDetailTable td:nth-child(7),
+        #ordersDetailModal #ordersDetailTable th:nth-child(8),
+        #ordersDetailModal #ordersDetailTable td:nth-child(8),
+        #ordersDetailModal #ordersDetailTable th:nth-child(9),
+        #ordersDetailModal #ordersDetailTable td:nth-child(9),
+        #ordersDetailModal #ordersDetailTable th:nth-child(11),
+        #ordersDetailModal #ordersDetailTable td:nth-child(11) {
+            white-space: nowrap;
+        }
+
+        /* Badge Performance (Early/On time/Late) -> tonos claros tipo ERP */
+        #ordersDetailModal .erp-perf-badge {
+            font-weight: 800;
+            letter-spacing: .2px;
+            border: 1px solid transparent;
+            color: #0f172a;
+        }
+
+        #ordersDetailModal .erp-perf-badge--late {
+            background: rgba(220, 53, 69, 0.14);
+            border-color: rgba(220, 53, 69, 0.30);
+        }
+
+        #ordersDetailModal .erp-perf-badge--ontime {
+            background: rgba(40, 167, 69, 0.14);
+            border-color: rgba(40, 167, 69, 0.30);
+        }
+
+        #ordersDetailModal .erp-perf-badge--early {
+            background: rgba(13, 110, 253, 0.14);
+            border-color: rgba(13, 110, 253, 0.30);
+        }
+
+        /* Override de min-widths que causan overflow */
+        #ordersDetailModal #ordersDetailTable th:nth-child(1),
+        #ordersDetailModal #ordersDetailTable td:nth-child(1),
+        #ordersDetailModal #ordersDetailTable th:nth-child(2),
+        #ordersDetailModal #ordersDetailTable td:nth-child(2),
+        #ordersDetailModal #ordersDetailTable th:nth-child(3),
+        #ordersDetailModal #ordersDetailTable td:nth-child(3),
+        #ordersDetailModal #ordersDetailTable th:nth-child(4),
+        #ordersDetailModal #ordersDetailTable td:nth-child(4),
+        #ordersDetailModal #ordersDetailTable th:nth-child(5),
+        #ordersDetailModal #ordersDetailTable td:nth-child(5),
+        #ordersDetailModal #ordersDetailTable th:nth-child(6),
+        #ordersDetailModal #ordersDetailTable td:nth-child(6),
+        #ordersDetailModal #ordersDetailTable th:nth-child(7),
+        #ordersDetailModal #ordersDetailTable td:nth-child(7),
+        #ordersDetailModal #ordersDetailTable th:nth-child(8),
+        #ordersDetailModal #ordersDetailTable td:nth-child(8),
+        #ordersDetailModal #ordersDetailTable th:nth-child(9),
+        #ordersDetailModal #ordersDetailTable td:nth-child(9),
+        #ordersDetailModal #ordersDetailTable th:nth-child(10),
+        #ordersDetailModal #ordersDetailTable td:nth-child(10),
+        #ordersDetailModal #ordersDetailTable th:nth-child(11),
+        #ordersDetailModal #ordersDetailTable td:nth-child(11),
+        #ordersDetailModal #ordersDetailTable th:nth-child(12),
+        #ordersDetailModal #ordersDetailTable td:nth-child(12) {
+            min-width: 0 !important;
+        }
+
+        /* Distribución de columnas (100% total) */
+        #ordersDetailModal #ordersDetailTable th:nth-child(1),
+        #ordersDetailModal #ordersDetailTable td:nth-child(1) {
+            width: 6% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(2),
+        #ordersDetailModal #ordersDetailTable td:nth-child(2) {
+            width: 8% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(3),
+        #ordersDetailModal #ordersDetailTable td:nth-child(3) {
+            width: 22% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(4),
+        #ordersDetailModal #ordersDetailTable td:nth-child(4) {
+            width: 8% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(5),
+        #ordersDetailModal #ordersDetailTable td:nth-child(5) {
+            width: 5% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(6),
+        #ordersDetailModal #ordersDetailTable td:nth-child(6) {
+            width: 7% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(7),
+        #ordersDetailModal #ordersDetailTable td:nth-child(7) {
+            width: 8% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(8),
+        #ordersDetailModal #ordersDetailTable td:nth-child(8) {
+            width: 8% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(9),
+        #ordersDetailModal #ordersDetailTable td:nth-child(9) {
+            width: 8% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(10),
+        #ordersDetailModal #ordersDetailTable td:nth-child(10) {
+            width: 7% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(11),
+        #ordersDetailModal #ordersDetailTable td:nth-child(11) {
+            width: 5% !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable th:nth-child(12),
+        #ordersDetailModal #ordersDetailTable td:nth-child(12) {
+            width: 8% !important;
+        }
+    }
+
+    /* Orders Detail Modal (Orders per Customer):
+       - Evitar que Days/Notes se "aplasten" (texto en vertical).
+       - Preferir scroll horizontal cuando el viewport es chico. */
+    #ordersDetailModal #ordersDetailModalContent {
+        overflow-x: auto;
+    }
+
+    #ordersDetailModal #ordersDetailTable {
+        table-layout: auto !important;
+        width: max-content !important;
+        min-width: 100% !important;
+    }
+
+    /* Quitar el reparto por % (DataTables + table-layout fixed) y usar mínimos por columna */
+    #ordersDetailModal #ordersDetailTable th,
+    #ordersDetailModal #ordersDetailTable td {
+        width: auto !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: auto;
+    }
+
+    #ordersDetailModal #ordersDetailTable th:nth-child(1),
+    #ordersDetailModal #ordersDetailTable td:nth-child(1) { min-width: 70px !important; white-space: nowrap; }
+    #ordersDetailModal #ordersDetailTable th:nth-child(2),
+    #ordersDetailModal #ordersDetailTable td:nth-child(2) { min-width: 120px !important; white-space: nowrap; }
+    #ordersDetailModal #ordersDetailTable th:nth-child(3),
+    #ordersDetailModal #ordersDetailTable td:nth-child(3) { min-width: 420px !important; }
+    #ordersDetailModal #ordersDetailTable th:nth-child(4),
+    #ordersDetailModal #ordersDetailTable td:nth-child(4) { min-width: 160px !important; white-space: nowrap; }
+    #ordersDetailModal #ordersDetailTable th:nth-child(5),
+    #ordersDetailModal #ordersDetailTable td:nth-child(5) { min-width: 70px !important; white-space: nowrap; }
+    #ordersDetailModal #ordersDetailTable th:nth-child(6),
+    #ordersDetailModal #ordersDetailTable td:nth-child(6) { min-width: 110px !important; white-space: nowrap; }
+
+    #ordersDetailModal #ordersDetailTable th:nth-child(7),
+    #ordersDetailModal #ordersDetailTable td:nth-child(7),
+    #ordersDetailModal #ordersDetailTable th:nth-child(8),
+    #ordersDetailModal #ordersDetailTable td:nth-child(8),
+    #ordersDetailModal #ordersDetailTable th:nth-child(9),
+    #ordersDetailModal #ordersDetailTable td:nth-child(9) { min-width: 110px !important; white-space: nowrap; }
+
+    #ordersDetailModal #ordersDetailTable th:nth-child(10),
+    #ordersDetailModal #ordersDetailTable td:nth-child(10) { min-width: 120px !important; white-space: nowrap; }
+    #ordersDetailModal #ordersDetailTable th:nth-child(11),
+    #ordersDetailModal #ordersDetailTable td:nth-child(11) { min-width: 90px !important; white-space: nowrap; }
+
+    /* Notes: no dejar que se reduzca tanto como para romper palabras letra-por-letra */
+    #ordersDetailModal #ordersDetailTable th:nth-child(12),
+    #ordersDetailModal #ordersDetailTable td:nth-child(12) {
+        min-width: 240px !important;
+        overflow-wrap: break-word;
+    }
+
+    /* En pantallas grandes: forzar layout "fit" (sin scroll); el scroll queda solo para pantallas más chicas. */
+    @media (min-width: 1400px) {
+        #ordersDetailModal #ordersDetailModalContent {
+            overflow-x: hidden !important;
+        }
+
+        #ordersDetailModal #ordersDetailTable {
+            table-layout: fixed !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        /* Reset de mínimos para que el layout pueda ajustarse */
+        #ordersDetailModal #ordersDetailTable th,
+        #ordersDetailModal #ordersDetailTable td {
+            min-width: 0 !important;
+        }
+
+        /* Restaurar distribución por columnas (evita que 'width:auto' rompa el layout) */
+        #ordersDetailModal #ordersDetailTable th:nth-child(1),
+        #ordersDetailModal #ordersDetailTable td:nth-child(1) { width: 6% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(2),
+        #ordersDetailModal #ordersDetailTable td:nth-child(2) { width: 8% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(3),
+        #ordersDetailModal #ordersDetailTable td:nth-child(3) { width: 22% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(4),
+        #ordersDetailModal #ordersDetailTable td:nth-child(4) { width: 8% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(5),
+        #ordersDetailModal #ordersDetailTable td:nth-child(5) { width: 5% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(6),
+        #ordersDetailModal #ordersDetailTable td:nth-child(6) { width: 7% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(7),
+        #ordersDetailModal #ordersDetailTable td:nth-child(7) { width: 8% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(8),
+        #ordersDetailModal #ordersDetailTable td:nth-child(8) { width: 8% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(9),
+        #ordersDetailModal #ordersDetailTable td:nth-child(9) { width: 8% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(10),
+        #ordersDetailModal #ordersDetailTable td:nth-child(10) { width: 7% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(11),
+        #ordersDetailModal #ordersDetailTable td:nth-child(11) { width: 5% !important; }
+        #ordersDetailModal #ordersDetailTable th:nth-child(12),
+        #ordersDetailModal #ordersDetailTable td:nth-child(12) { width: 8% !important; }
+    }
+
     #onTimeDetailTable tbody tr:nth-child(odd) {
         background: #f8fafc;
     }
@@ -3069,6 +3580,12 @@
                         $host.append(dt.buttons().container());
                     }
                     populateOrdersModalCustomers(params.customer || '');
+                    bindOrdersDetailStats(dt);
+                    setTimeout(() => {
+                        try {
+                            dt.columns.adjust();
+                        } catch (e) {}
+                    }, 0);
                 }
                 $('#ordersDetailModal').modal('show');
             })
@@ -3076,6 +3593,272 @@
                 ordersModalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
                 $('#ordersDetailModal').modal('show');
             });
+    }
+
+    let ordersDetailStatsSearchFn = null;
+
+    function bindOrdersDetailStats(dt) {
+        if (!dt) return;
+
+        if (ordersDetailStatsSearchFn) {
+            const idx = $.fn.dataTable.ext.search.indexOf(ordersDetailStatsSearchFn);
+            if (idx > -1) $.fn.dataTable.ext.search.splice(idx, 1);
+            ordersDetailStatsSearchFn = null;
+        }
+
+        ordersDetailState.statsFilter = '';
+        ordersDetailState.pnFilter = '';
+        ordersDetailState.pnFilterState = null;
+
+        function captureOrdersDetailSearchState(table) {
+            const state = {
+                global: '',
+                columns: {}
+            };
+            try {
+                state.global = table.search() || '';
+                table.columns().every(function() {
+                    const idx = this.index();
+                    state.columns[idx] = this.search() || '';
+                });
+            } catch (e) {}
+            return state;
+        }
+
+        function restoreOrdersDetailSearchState(table) {
+            const state = ordersDetailState.pnFilterState;
+            if (!state) return;
+            try {
+                table.search(state.global || '');
+                table.columns().every(function() {
+                    const idx = this.index();
+                    const val = state.columns && Object.prototype.hasOwnProperty.call(state.columns, idx) ? state.columns[idx] : '';
+                    this.search(val || '');
+                });
+            } catch (e) {}
+        }
+
+        function refreshOrdersDetailReport() {
+            const $root = $('#ordersDetailModalContent').find('[data-report-root="1"]').first();
+            if (!$root.length) return;
+
+            const nodes = dt.rows({
+                filter: 'applied'
+            }).nodes().toArray();
+
+            const totals = {
+                total: 0,
+                early: 0,
+                ontime: 0,
+                late: 0,
+                notesOrders: 0
+            };
+
+            const notesMap = new Map(); // key => {pn, note}
+
+            nodes.forEach(tr => {
+                totals.total += 1;
+                const delta = (tr.getAttribute('data-delta') || '').trim();
+                if (delta === 'early') totals.early += 1;
+                else if (delta === 'late') totals.late += 1;
+                else totals.ontime += 1;
+
+                const hasNote = (tr.getAttribute('data-has-note') || '') === '1';
+                if (hasNote) totals.notesOrders += 1;
+
+                // Notes list: PN + note (solo si hay note)
+                if (hasNote) {
+                    const tds = tr.querySelectorAll('td');
+                    const pn = (tds[1]?.textContent || '').trim();
+                    const note = (tds[11]?.textContent || '').trim();
+                    if (pn && note) {
+                        const key = `${pn}||${note}`;
+                        if (!notesMap.has(key)) notesMap.set(key, {
+                            pn,
+                            note
+                        });
+                    }
+                }
+            });
+
+            const pct = (count) => {
+                if (!totals.total) return '0%';
+                return `${Math.round((count / totals.total) * 100)}%`;
+            };
+
+            $root.find('[data-report-total]').text(totals.total);
+            $root.find('[data-report-count="early"]').text(totals.early);
+            $root.find('[data-report-count="ontime"]').text(totals.ontime);
+            $root.find('[data-report-count="late"]').text(totals.late);
+            $root.find('[data-report-pct="early"]').text(pct(totals.early));
+            $root.find('[data-report-pct="ontime"]').text(pct(totals.ontime));
+            $root.find('[data-report-pct="late"]').text(pct(totals.late));
+
+            $root.find('[data-report-notes-count]').text(totals.notesOrders);
+            $root.find('[data-report-notes-pct]').text(pct(totals.notesOrders));
+
+            const $notesList = $root.find('[data-report-notes-list]');
+            const $notesEmpty = $root.find('[data-report-notes-empty]');
+
+            if ($notesList.length) {
+                $notesList.empty();
+                const items = Array.from(notesMap.values())
+                    .sort((a, b) => a.pn.localeCompare(b.pn) || a.note.localeCompare(b.note));
+
+                if (items.length) {
+                    items.forEach(item => {
+                        const $row = $(`<div class="erp-orders-note-item" data-pn="${escapeHtml(item.pn)}" title="${escapeHtml(item.note)}">
+                            <span class="erp-orders-note-id">${escapeHtml(item.pn)}</span>
+                            <span class="erp-orders-note-text">${escapeHtml(item.note)}</span>
+                        </div>`);
+                        if (ordersDetailState.pnFilter && ordersDetailState.pnFilter === item.pn) {
+                            $row.addClass('is-active');
+                        }
+                        $notesList.append($row);
+                    });
+                    if ($notesEmpty.length) $notesEmpty.addClass('d-none');
+                } else {
+                    if ($notesEmpty.length) {
+                        $notesEmpty.removeClass('d-none').text('No notes for this selection');
+                    }
+                }
+            }
+        }
+
+        // helpers para escape al reconstruir notes
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[ch]));
+        }
+
+        ordersDetailStatsSearchFn = function(settings, data, dataIndex) {
+            if (!settings || settings.nTable?.id !== 'ordersDetailTable') return true;
+            const filter = (ordersDetailState.statsFilter || '').toString();
+            if (!filter) return true;
+
+            const rowNode = dt.row(dataIndex).node();
+            if (!rowNode) return true;
+
+            if (filter === 'notes') {
+                return (rowNode.getAttribute('data-has-note') || '') === '1';
+            }
+            return (rowNode.getAttribute('data-delta') || '') === filter;
+        };
+
+        $.fn.dataTable.ext.search.push(ordersDetailStatsSearchFn);
+
+        const $host = $('#ordersDetailModalContent');
+        $host.off('click.ordersDetailStats', '.js-orders-detail-filter');
+        $host.on('click.ordersDetailStats', '.js-orders-detail-filter', function() {
+            // Si hay filtro por PN, limpiarlo cuando se cambie de "box"
+            if (ordersDetailState.pnFilter) {
+                try {
+                    if (ordersDetailState.pnFilterState) {
+                        restoreOrdersDetailSearchState(dt);
+                    } else {
+                        dt.column(1).search('', false, false);
+                    }
+                } catch (e) {}
+                ordersDetailState.pnFilter = '';
+                ordersDetailState.pnFilterState = null;
+                $host.find('.erp-orders-note-item').removeClass('is-active');
+            }
+
+            const filter = ($(this).data('filter') || '').toString().trim();
+            const current = (ordersDetailState.statsFilter || '').toString();
+            const next = (filter && filter === current) ? '' : filter;
+            ordersDetailState.statsFilter = next;
+
+            $host.find('.js-orders-detail-filter').removeClass('is-active');
+            if (next) {
+                $host.find(`.js-orders-detail-filter[data-filter="${next}"]`).addClass('is-active');
+            }
+
+            dt.draw();
+        });
+
+        // Click en una nota (PN) => filtrar solo esa orden
+        $host.off('click.ordersDetailNote', '.erp-orders-note-item');
+        $host.on('click.ordersDetailNote', '.erp-orders-note-item', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const pn = ($(this).data('pn') || '').toString().trim();
+            if (!pn) return;
+
+            const currentPn = (ordersDetailState.pnFilter || '').toString();
+            const nextPn = (pn === currentPn) ? '' : pn;
+            ordersDetailState.pnFilter = nextPn;
+
+            // Limpiar filtro de cajas para evitar confusión
+            ordersDetailState.statsFilter = '';
+            $host.find('.js-orders-detail-filter').removeClass('is-active');
+            $host.find('.erp-orders-note-item').removeClass('is-active');
+            if (nextPn) {
+                $(this).addClass('is-active');
+            }
+
+            try {
+                if (!nextPn) {
+                    if (ordersDetailState.pnFilterState) {
+                        restoreOrdersDetailSearchState(dt);
+                    } else {
+                        dt.column(1).search('', false, false);
+                    }
+                    ordersDetailState.pnFilterState = null;
+                } else {
+                    if (!ordersDetailState.pnFilterState) {
+                        ordersDetailState.pnFilterState = captureOrdersDetailSearchState(dt);
+                    }
+                    dt.column(1).search(`^${escapeRegex(nextPn)}$`, true, false);
+                }
+            } catch (err) {
+                // fallback: búsqueda normal
+                if (nextPn) {
+                    if (!ordersDetailState.pnFilterState) {
+                        ordersDetailState.pnFilterState = captureOrdersDetailSearchState(dt);
+                    }
+                    dt.search(nextPn || '').draw();
+                } else {
+                    restoreOrdersDetailSearchState(dt);
+                    ordersDetailState.pnFilterState = null;
+                    dt.draw();
+                }
+                return;
+            }
+
+            dt.draw();
+        });
+
+        // Mantener reporte sincronizado al filtrar/paginar
+        if (!dt.__ordersDetailReportBound) {
+            dt.__ordersDetailReportBound = true;
+            dt.on('draw.ordersDetailReport', function() {
+                refreshOrdersDetailReport();
+            });
+        }
+        refreshOrdersDetailReport();
+
+        $host.off('keydown.ordersDetailStats', '.js-orders-detail-filter');
+        $host.on('keydown.ordersDetailStats', '.js-orders-detail-filter', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $(this).trigger('click');
+            }
+        });
+
+        $host.off('keydown.ordersDetailNote', '.erp-orders-note-item');
+        $host.on('keydown.ordersDetailNote', '.erp-orders-note-item', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $(this).trigger('click');
+            }
+        });
     }
 
     // Filtro de customer dentro del modal de Orders
@@ -3529,6 +4312,92 @@
         printWindow.document.close();
     }
 
+    function monthNameFromKey(monthKey) {
+        const value = (monthKey || '').trim();
+        if (!value) return '';
+        const parts = value.split('-');
+        if (parts.length !== 2) return value;
+        const year = parts[0];
+        const month = parts[1];
+        const date = new Date(`${year}-${month}-01T00:00:00`);
+        if (Number.isNaN(date.getTime())) return value;
+        const monthName = date.toLocaleString('en-US', { month: 'long' });
+        return `${value} (${monthName})`;
+    }
+
+    function buildSubtitle(lines) {
+        return (lines || []).filter(Boolean).join('<br>');
+    }
+
+    function printOrdersChart() {
+        const filterType = document.getElementById('filterType');
+        const yearInput = document.getElementById('yearInput');
+        const monthInput = document.getElementById('monthInput');
+        const weekInput = document.getElementById('weekInput');
+        const customerFilter = document.getElementById('customerFilter');
+
+        const type = (filterType?.value || '').trim();
+        const customer = (customerFilter?.value || '').trim();
+
+        let dateLine = '';
+        if (type === 'year') {
+            const year = (yearInput?.value || '').trim();
+            if (year) dateLine = `Year: ${year}`;
+        } else if (type === 'month') {
+            const monthKey = (monthInput?.value || '').trim();
+            if (monthKey) dateLine = `Month: ${monthNameFromKey(monthKey)}`;
+        } else if (type === 'week') {
+            const week = (weekInput?.value || '').trim();
+            if (week) dateLine = `Week: ${week}`;
+        }
+
+        const subtitle = buildSubtitle([
+            dateLine,
+            customer ? `Customer: ${customer}` : ''
+        ]);
+        printChart('ordersChart', 'TOTAL ORDERS', subtitle);
+    }
+
+    function printByCustomerChart() {
+        const filterType = document.getElementById('filterTypeCustomer');
+        const yearInput = document.getElementById('yearInputCustomer');
+        const monthInput = document.getElementById('monthInputCustomer');
+        const weekInput = document.getElementById('weekInputCustomer');
+
+        const type = (filterType?.value || '').trim();
+        let dateLine = '';
+        if (type === 'year') {
+            const year = (yearInput?.value || '').trim();
+            if (year) dateLine = `Year: ${year}`;
+        } else if (type === 'month') {
+            const monthKey = (monthInput?.value || '').trim();
+            if (monthKey) dateLine = `Month: ${monthNameFromKey(monthKey)}`;
+        } else if (type === 'week') {
+            const week = (weekInput?.value || '').trim();
+            if (week) dateLine = `Week: ${week}`;
+        }
+
+        const subtitle = buildSubtitle([dateLine]);
+        printChart('byCustomerChart', 'ORDERS PER CUSTOMER', subtitle);
+    }
+
+    function printOnTimeVsLateChart() {
+        const monthFilter = document.getElementById('monthFilter');
+        const yearFilter = document.getElementById('yearFilter');
+        const customerFilter = document.getElementById('customerFilterOnTime');
+
+        const monthKey = (monthFilter?.value || '').trim();
+        const year = (yearFilter?.value || '').trim();
+        const customer = (customerFilter?.value || '').trim();
+
+        const subtitle = buildSubtitle([
+            year ? `Year: ${year}` : '',
+            monthKey ? `Month: ${monthNameFromKey(monthKey)}` : '',
+            customer ? `Customer: ${customer}` : ''
+        ]);
+        printChart('onTimeChart', 'ON TIME VS LATE', subtitle);
+    }
+
     function loadChartElements() {
         const filterType = document.getElementById('filterType');
         const yearInput = document.getElementById('yearInput');
@@ -3581,31 +4450,91 @@
                         data: {
                             labels,
                             datasets: [{
-                                label: `ORDERS (Total: ${totalOrders})`,
+                                label: 'Total Orders',
                                 data,
-                                backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1
+                                backgroundColor: 'rgba(14, 165, 233, 0.65)',
+                                borderColor: 'rgba(2, 132, 199, 0.95)',
+                                borderWidth: 1,
+                                borderRadius: 8
                             }]
                         },
                         options: {
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            layout: {
+                                padding: {
+                                    top: 6,
+                                    left: 8,
+                                    right: 22,
+                                    bottom: 0
+                                }
+                            },
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
                             plugins: {
-                                datalabels: {
-                                    anchor: 'end',
-                                    align: 'start',
-                                    color: '#000',
+                                title: {
+                                    display: true,
+                                    text: `Orders: ${totalOrders}`,
                                     font: {
-                                        weight: 'bold',
-                                        size: 12
+                                        size: 12,
+                                        weight: '700'
                                     },
-                                    formatter: value => value
+                                    color: '#334155',
+                                    padding: {
+                                        top: 2,
+                                        bottom: 6
+                                    }
+                                },
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    padding: 10
+                                },
+                                datalabels: {
+                                    color: '#0f172a',
+                                    anchor: 'end',
+                                    align: 'end',
+                                    offset: 2,
+                                    font: {
+                                        weight: '800',
+                                        size: 11
+                                    },
+                                    formatter: (value) => Number(value) || 0
                                 }
                             },
                             scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: '#334155',
+                                        font: {
+                                            size: 11,
+                                            weight: '600'
+                                        },
+                                        maxRotation: 0,
+                                        autoSkip: true
+                                    }
+                                },
                                 y: {
                                     beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(148, 163, 184, 0.22)'
+                                    },
                                     ticks: {
-                                        stepSize: 1
+                                        stepSize: 1,
+                                        color: '#334155',
+                                        font: {
+                                            size: 11,
+                                            weight: '600'
+                                        }
                                     }
                                 }
                             }
@@ -3719,43 +4648,173 @@
                 }) => {
                     if (chartRef.chart) chartRef.chart.destroy();
 
+                    const fullCustomerLabels = Array.isArray(labels) ? labels.slice() : [];
+                    const compactCustomerLabels = fullCustomerLabels.map(l => {
+                        const t = String(l ?? '').trim();
+                        if (t.length <= 18) return t;
+                        return `${t.slice(0, 18)}…`;
+                    });
+
                     chartRef.chart = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels,
+                            labels: compactCustomerLabels,
                             datasets: [{
-                                label: `ORDERS PER CUSTOMER (Total: ${totalAll})`,
+                                label: 'Orders per Customer',
                                 data: totals,
-                                backgroundColor: 'rgba(153, 102, 255, 0.7)',
-                                borderColor: 'rgba(153, 102, 255, 1)',
+                                backgroundColor: 'rgba(99, 102, 241, 0.60)',
+                                borderColor: 'rgba(79, 70, 229, 0.95)',
                                 borderWidth: 1,
-                                yAxisID: 'y',
+                                borderRadius: 8
                             }]
                         },
                         options: {
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: {
+                                    top: 6,
+                                    left: 8,
+                                    right: 22,
+                                    bottom: 0
+                                }
+                            },
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
                             plugins: {
-                                datalabels: {
-                                    anchor: 'end',
-                                    align: 'start',
-                                    color: '#000',
+                                title: {
+                                    display: true,
+                                    text: `Orders: ${Number(totalAll) || 0}`,
                                     font: {
-                                        weight: 'bold',
-                                        size: 12
+                                        size: 12,
+                                        weight: '700'
                                     },
-                                    formatter: value => value
+                                    color: '#334155',
+                                    padding: {
+                                        top: 2,
+                                        bottom: 6
+                                    }
+                                },
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    padding: 10,
+                                    callbacks: {
+                                        title: function(items) {
+                                            const idx = items?.[0]?.dataIndex ?? 0;
+                                            return fullCustomerLabels[idx] || '';
+                                        }
+                                    }
+                                },
+                                datalabels: {
+                                    color: '#0f172a',
+                                    anchor: 'center',
+                                    align: 'center',
+                                    offset: 0,
+                                    clamp: true,
+                                    clip: false,
+                                    display: (context) => {
+                                        const value = Number(context.dataset.data?.[context.dataIndex]) || 0;
+                                        return value > 0;
+                                    },
+                                    textStrokeWidth: 0,
+                                    font: {
+                                        weight: '800',
+                                        size: 11
+                                    },
+                                    formatter: (value) => Number(value) || 0
                                 }
                             },
                             scales: {
-                                y: {
+                                x: {
                                     beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(148, 163, 184, 0.22)'
+                                    },
                                     ticks: {
+                                        color: '#334155',
+                                        font: {
+                                            size: 11,
+                                            weight: '600'
+                                        },
                                         stepSize: 1
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: '#334155',
+                                        font: {
+                                            size: 10,
+                                            weight: '600'
+                                        },
+                                        autoSkip: false,
+                                        padding: 6
                                     }
                                 }
                             }
                         },
                         plugins: [ChartDataLabels]
                     });
+
+                    // Click para ver detalle: solo órdenes del cliente seleccionado
+                    chartRef.chart.canvas.style.cursor = 'pointer';
+                    chartRef.chart.canvas.onclick = function(evt) {
+                        const points = chartRef.chart.getElementsAtEventForMode(evt, 'nearest', {
+                            intersect: true
+                        }, false);
+                        if (!points.length) return;
+
+                        const idx = points[0].index;
+                        const customerName = (fullCustomerLabels[idx] || '').toString().trim();
+                        if (!customerName) return;
+
+                        const selectedType = (filterType?.value || 'year').toString().trim();
+                        const currentYear = String(new Date().getFullYear());
+                        const yearValue = (yearInput?.value || '').toString().trim() || currentYear;
+
+                        const params = {
+                            customer: customerName
+                        };
+
+                        let effectiveType = selectedType;
+
+                        if (selectedType === 'month') {
+                            const monthKey = (monthInput?.value || '').toString().trim();
+                            const match = /^(\d{4})-(\d{2})$/.exec(monthKey);
+                            if (match) {
+                                params.type = 'month';
+                                params.year = match[1];
+                                params.month = match[2];
+                            } else {
+                                effectiveType = 'year';
+                            }
+                        } else if (selectedType === 'week') {
+                            const weekKey = (weekInput?.value || '').toString().trim();
+                            const match = /^(\d{4})-W(\d{1,2})$/.exec(weekKey);
+                            if (match) {
+                                params.type = 'week';
+                                params.year = match[1];
+                                params.week = match[2];
+                            } else {
+                                effectiveType = 'year';
+                            }
+                        }
+
+                        if (effectiveType === 'year') {
+                            params.type = 'year';
+                            params.year = yearValue;
+                        }
+
+                        openOrdersDetailModal(params, `Orders - ${customerName}`);
+                    };
                 });
         }
 

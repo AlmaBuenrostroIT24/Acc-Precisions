@@ -2128,19 +2128,26 @@ class Order_ScheduleController extends Controller
 
         $q = OrderSchedule::query()->where('status_order', 'active');
         if ($customer) {
-            $q->where('costumer', $customer);
+            $normalizedCustomer = trim(strtolower($customer));
+            $q->whereRaw('TRIM(LOWER(costumer)) = ?', [$normalizedCustomer]);
         }
 
         if ($type === 'year') {
+            if (!$year) {
+                return response('<div class="text-danger p-3">Missing year</div>', 400);
+            }
+            $q->whereYear('created_at', $year);
+            if ($month) {
+                $q->whereMonth('created_at', $month);
+            }
+        } elseif ($type === 'month') {
             if (!$year || !$month) {
                 return response('<div class="text-danger p-3">Missing year/month</div>', 400);
             }
             $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
-        } elseif ($type === 'month') {
-            if (!$year || !$month || !$day) {
-                return response('<div class="text-danger p-3">Missing year/month/day</div>', 400);
+            if ($day) {
+                $q->whereDay('created_at', $day);
             }
-            $q->whereYear('created_at', $year)->whereMonth('created_at', $month)->whereDay('created_at', $day);
         } else { // week
             if (!$year || !$week) {
                 return response('<div class="text-danger p-3">Missing year/week</div>', 400);
@@ -2159,9 +2166,11 @@ class Order_ScheduleController extends Controller
             'costumer',
             'qty',
             'status',
+            'sent_at',
             'due_date',
             'created_at',
             DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(created_at, '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(created_at, '%b-%d-%Y'),2)) as created_fmt"),
+            DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(DATE(sent_at), '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(DATE(sent_at), '%b-%d-%Y'),2)) as sent_fmt"),
             DB::raw("CONCAT(UCASE(LEFT(DATE_FORMAT(DATE(due_date), '%b-%d-%Y'),1)), SUBSTRING(DATE_FORMAT(DATE(due_date), '%b-%d-%Y'),2)) as due_fmt"),
             'notes'
         ])
@@ -2174,9 +2183,121 @@ class Order_ScheduleController extends Controller
             return '<div class="text-center text-muted py-4">No orders found for this selection</div>';
         }
 
+        $today = now()->startOfDay();
+        $earlyCount = 0;
+        $onTimeCount = 0;
+        $lateCount = 0;
+        $notesItems = [];
+        $notesSeen = [];
+
+        foreach ($rows as $r) {
+            $due = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->startOfDay() : null;
+            if (!$due) {
+                continue;
+            }
+
+            $effective = $today;
+            if (($r->status ?? '') === 'sent' && !empty($r->sent_at)) {
+                $effective = \Carbon\Carbon::parse($r->sent_at)->startOfDay();
+            }
+
+            if ($effective->lt($due)) {
+                $earlyCount++;
+            } elseif ($effective->gt($due)) {
+                $lateCount++;
+            } else {
+                $onTimeCount++;
+            }
+
+            $noteText = trim((string) ($r->notes ?? ''));
+            if ($noteText !== '') {
+                $pnOrWork = trim((string) ($r->PN ?? ''));
+                if ($pnOrWork === '') {
+                    $pnOrWork = (string) ($r->work_id ?? '');
+                }
+                $key = $pnOrWork . '||' . $noteText;
+                if (!isset($notesSeen[$key])) {
+                    $notesSeen[$key] = true;
+                    $notesItems[] = [
+                        'pn' => $pnOrWork,
+                        'note' => $noteText,
+                    ];
+                }
+            }
+        }
+
+        $totalCount = $rows->count();
+        $pct = function (int $count) use ($totalCount): string {
+            if ($totalCount <= 0) {
+                return '0%';
+            }
+            return number_format(($count / $totalCount) * 100, 0) . '%';
+        };
+
+        $notesCount = count($notesItems);
+
+        $statsHtml = '<div class="erp-orders-stats mb-2" data-report-root="1">'
+            . '<div class="erp-orders-stats-header">'
+            . '<div class="erp-orders-stats-header-title">Report</div>'
+            . '<div class="erp-orders-stats-header-total">Total: <span class="erp-orders-stats-header-badge" data-report-total>' . e($totalCount) . '</span></div>'
+            . '</div>'
+            . '<div class="row g-2">';
+
+        // Notes primero (antes de Early/On time/Late)
+        $statsHtml .= '<div class="col-12 col-lg-4">'
+            . '<div class="erp-orders-notes js-orders-detail-filter" role="button" tabindex="0" data-filter="notes" aria-label="Filter orders with notes">'
+            . '<div class="erp-orders-notes-top"><span class="erp-orders-notes-title">Notes</span><span class="erp-orders-notes-badge" data-report-notes-count>' . e($notesCount) . '</span></div>'
+            . '<div class="erp-orders-stat-meta"><span data-report-notes-pct>' . e($pct($notesCount)) . '</span> of total</div>'
+            . '<div class="erp-orders-notes-list" aria-label="Notes list" data-report-notes-list>';
+        if (!empty($notesItems)) {
+            foreach ($notesItems as $item) {
+                $statsHtml .= '<div class="erp-orders-note-item" data-pn="' . e($item['pn']) . '" title="' . e($item['note']) . '">'
+                    . '<span class="erp-orders-note-id">' . e($item['pn']) . '</span>'
+                    . '<span class="erp-orders-note-text">' . e($item['note']) . '</span>'
+                    . '</div>';
+            }
+        }
+        $statsHtml .= '</div>'
+            . '<div class="text-muted small mt-1' . (!empty($notesItems) ? ' d-none' : '') . '" data-report-notes-empty>No notes</div>'
+            . '</div>'
+            . '</div>';
+
+        // Stats (Early/On time/Late) después
+        $statsHtml .= '<div class="col-12 col-lg-8">'
+            . '<div class="erp-orders-stats-grid">'
+            . '<div class="erp-orders-stat erp-orders-stat--early js-orders-detail-filter" role="button" tabindex="0" data-filter="early" aria-label="Filter Early orders">'
+            . '<div class="erp-orders-stat-top"><span class="erp-orders-stat-title">Early</span><span class="erp-orders-stat-badge" data-report-count="early">' . e($earlyCount) . '</span></div>'
+            . '<div class="erp-orders-stat-meta"><span data-report-pct="early">' . e($pct($earlyCount)) . '</span> of total</div>'
+            . '</div>'
+            . '<div class="erp-orders-stat erp-orders-stat--ontime js-orders-detail-filter" role="button" tabindex="0" data-filter="ontime" aria-label="Filter On time orders">'
+            . '<div class="erp-orders-stat-top"><span class="erp-orders-stat-title">On time</span><span class="erp-orders-stat-badge" data-report-count="ontime">' . e($onTimeCount) . '</span></div>'
+            . '<div class="erp-orders-stat-meta"><span data-report-pct="ontime">' . e($pct($onTimeCount)) . '</span> of total</div>'
+            . '</div>'
+            . '<div class="erp-orders-stat erp-orders-stat--late js-orders-detail-filter" role="button" tabindex="0" data-filter="late" aria-label="Filter Late orders">'
+            . '<div class="erp-orders-stat-top"><span class="erp-orders-stat-title">Late</span><span class="erp-orders-stat-badge" data-report-count="late">' . e($lateCount) . '</span></div>'
+            . '<div class="erp-orders-stat-meta"><span data-report-pct="late">' . e($pct($lateCount)) . '</span> of total</div>'
+            . '</div>'
+            . '</div>'
+            . '</div>'
+            . '</div>'
+            . '</div>';
+
         $html = '<table id="ordersDetailTable" class="table table-sm table-striped table-hover mb-0"><thead class="thead-light"><tr>'
-            . '<th>W.ID</th><th>PN</th><th>Description</th><th>Customer</th><th class="text-center">Qty</th><th class="text-center">Status</th><th class="text-center">Uploaded</th><th class="text-center">Due</th><th class="text-center">Days</th><th>Notes</th>'
+            . '<th>W.ID</th>'
+            . '<th>PN</th>'
+            . '<th>Description</th>'
+            . '<th>Customer</th>'
+            . '<th class="text-center">Qty</th>'
+            . '<th class="text-center">Status</th>'
+            . '<th class="text-center">Uploaded</th>'
+            . '<th class="text-center">Due</th>'
+            . '<th class="text-center">Sent At</th>'
+            . '<th class="text-center">Performance</th>'
+            . '<th class="text-center">Days</th>'
+            . '<th>Notes</th>'
             . '</tr></thead><tbody>';
+
+        $html = $statsHtml . $html;
 
         foreach ($rows as $r) {
             $created = \Carbon\Carbon::parse($r->created_at);
@@ -2188,7 +2309,28 @@ class Order_ScheduleController extends Controller
             $dueOrder = $due->format('Y-m-d');
             $createdOrder = $created->format('Y-m-d');
 
-            $html .= '<tr>'
+            $effective = now()->startOfDay();
+            if (($r->status ?? '') === 'sent' && !empty($r->sent_at)) {
+                $effective = \Carbon\Carbon::parse($r->sent_at)->startOfDay();
+            }
+
+            $delta = 'ontime';
+            if ($effective->lt($due->copy()->startOfDay())) {
+                $delta = 'early';
+            } elseif ($effective->gt($due->copy()->startOfDay())) {
+                $delta = 'late';
+            }
+
+            $hasNote = trim((string) ($r->notes ?? '')) !== '' ? '1' : '0';
+
+            $sentAt = !empty($r->sent_at) ? \Carbon\Carbon::parse($r->sent_at) : null;
+            $sentOrder = $sentAt ? $sentAt->format('Y-m-d') : '';
+            $sentFmt = !empty($r->sent_fmt) ? $r->sent_fmt : '-';
+
+            $perfLabel = $delta === 'early' ? 'Early' : ($delta === 'late' ? 'Late' : 'On time');
+            $perfClass = $delta === 'early' ? 'erp-perf-badge--early' : ($delta === 'late' ? 'erp-perf-badge--late' : 'erp-perf-badge--ontime');
+
+            $html .= '<tr data-delta="' . e($delta) . '" data-has-note="' . e($hasNote) . '">' 
                 . '<td>' . e($r->work_id) . '</td>'
                 . '<td>' . e($r->PN) . '</td>'
                 . '<td style="white-space:normal;">' . e($r->Part_description) . '</td>'
@@ -2197,6 +2339,8 @@ class Order_ScheduleController extends Controller
                 . '<td class="text-center">' . e($r->status) . '</td>'
                 . '<td class="text-center" data-order="' . e($createdOrder) . '">' . e($r->created_fmt) . '</td>'
                 . '<td class="text-center" data-order="' . e($dueOrder) . '">' . e($r->due_fmt) . '</td>'
+                . '<td class="text-center" data-order="' . e($sentOrder) . '">' . e($sentFmt) . '</td>'
+                . '<td class="text-center"><span class="badge erp-perf-badge ' . e($perfClass) . '">' . e($perfLabel) . '</span></td>'
                 . '<td class="text-center">' . e($businessDays) . '</td>'
                 . '<td style="white-space:normal;">' . e($r->notes) . '</td>'
                 . '</tr>';
