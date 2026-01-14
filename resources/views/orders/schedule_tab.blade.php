@@ -1,4 +1,51 @@
 {{-- Tabs (ERP) --}}
+@push('css')
+<style>
+    .erp-tabs-bar {
+        position: sticky;
+        top: var(--erp-tabs-sticky-top, 0px);
+        z-index: 1020;
+        background: #fff;
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .erp-tabs-bar .nav-tabs {
+        margin-bottom: 0;
+        background: transparent;
+    }
+</style>
+@endpush
+
+@push('js')
+<script>
+    (function() {
+        if (window.__erpTabsStickyInit) return;
+        window.__erpTabsStickyInit = true;
+
+        function computeStickyTop() {
+            const header = document.querySelector('.main-header');
+            if (!header) return 0;
+            const pos = window.getComputedStyle(header).position;
+            if (pos === 'fixed' || pos === 'sticky') {
+                return Math.round(header.getBoundingClientRect().height || 0);
+            }
+            return 0;
+        }
+
+        function setStickyTop() {
+            const top = computeStickyTop();
+            document.documentElement.style.setProperty('--erp-tabs-sticky-top', `${top}px`);
+        }
+
+        window.addEventListener('resize', setStickyTop, { passive: true });
+        document.addEventListener('DOMContentLoaded', setStickyTop);
+        setStickyTop();
+    })();
+</script>
+@endpush
+
 <div class="erp-tabs-bar mb-3">
 <ul class="nav nav-tabs erp-schedule-tabs" id="scheduleTabs" role="tablist">
     @can('schedule/general')

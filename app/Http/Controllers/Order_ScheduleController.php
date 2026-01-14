@@ -972,6 +972,8 @@ class Order_ScheduleController extends Controller
         $hasYear  = $request->filled('year') && preg_match('/^\d{4}$/', (string) $request->year);
         $hasMonth = $request->filled('month') && preg_match('/^\d{1,2}$/', (string) $request->month);
 
+        $appliedYear = null;
+
         if ($hasDay) {
             // Día exacto
             try {
@@ -982,7 +984,12 @@ class Order_ScheduleController extends Controller
             }
         } else {
             if ($hasYear) {
-                $query->whereYear($dateField, (int) $request->year);
+                $appliedYear = (int) $request->year;
+                $query->whereYear($dateField, $appliedYear);
+            } else if (!$hasMonth) {
+                // Default inicial: solo registros del aA±o actual
+                $appliedYear = (int) now()->year;
+                $query->whereYear($dateField, $appliedYear);
             }
             if ($hasMonth) {
                 $query->whereMonth($dateField, (int) $request->month);
@@ -1007,7 +1014,7 @@ class Order_ScheduleController extends Controller
                 $order->machining_date
             );
         }
-        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers'));
+        return view('orders.schedule_finished', compact('orders', 'locations', 'statuses', 'customers', 'appliedYear'));
     }
 
     /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
