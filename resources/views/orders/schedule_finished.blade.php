@@ -216,12 +216,14 @@
                                 <th>CUSTOMER</th>
                                 <th style="width: 55px; ">CO QTY</th>
                                 <th style="width: 55px; ">WO QTY</th>
-                                <th class="text-center align-middle">REPORT</th>
-                                <th class="text-center align-middle">OUT/SRC</th>
+                                <th class="text-center align-middle">REP</th>
+                                <th class="text-center align-middle">OUT</th>
                                 <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
                                 <th style="width: 130px;">END DATE</th>
                                 <th class="text-center align-middle">TARGET</th>
                                 <th class="text-center align-middle">NOTES</th>
+                                <th class="text-center align-middle" style="width: 70px;">ORD ID</th>
+                                <th class="text-center align-middle" style="width: 90px;">CUST PO</th>
                                 <th class="text-center align-middle">STATUS</th>
                             </tr>
                         </thead>
@@ -229,10 +231,10 @@
                             @foreach($orders as $order)
                             <tr data-status="{{ $order->status }}">
                                 <td data-last-location="{{ $order->last_location }}">
-                                    <span style="color: black; font-weight: bold;">{{ $order->location }}</span>
+                                    <span class="d-block erp-location-text" style="color: black;">{{ $order->location }}</span>
 
                                     @if ($order->last_location === 'Yarnell')
-                                    <span class="erp-pill erp-pill--warn">
+                                    <span class="erp-pill erp-pill--warn erp-pill--sm d-inline-block mt-1">
                                         <i class="fas fa-map-marker-alt mr-1"></i> Yarnell
                                     </span>
                                     @endif
@@ -280,11 +282,11 @@
                                 </td>
                                 <td class="text-center">
                                     @if ($order->target_date < 0)
-                                        <span class="erp-pill erp-pill--danger">{{ $order->target_date }} Late</span>
+                                        <span class="erp-pill erp-target-pill erp-pill--danger">{{ $order->target_date }} Late</span>
                                         @elseif ($order->target_date == 0)
-                                        <span class="erp-pill erp-pill--success">{{ $order->target_date }} On time</span>
+                                        <span class="erp-pill erp-target-pill erp-pill--success">{{ $order->target_date }} On time</span>
                                         @elseif ($order->target_date > 0)
-                                        <span class="erp-pill erp-pill--info">{{ $order->target_date }} Early</span>
+                                        <span class="erp-pill erp-target-pill erp-pill--info">{{ $order->target_date }} Early</span>
                                         @else
                                         <span>-</span> {{-- En caso de que target_date sea null --}}
                                         @endif
@@ -295,6 +297,8 @@
                                         {{ Str::limit($order->notes, 130) }}
                                     </span>
                                 </td>
+                                <td class="text-center">{{ $order->co }}</td>
+                                <td class="text-center">{{ $order->cust_po }}</td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
 
@@ -386,6 +390,11 @@
 
     .modified-end-date {
         color: #007bff !important;
+        font-weight: 600;
+    }
+
+    .erp-location-text {
+        font-size: 0.85rem;
         font-weight: 600;
     }
 
@@ -593,6 +602,18 @@
         font-size: 0.85rem;
         line-height: 1;
         white-space: nowrap;
+    }
+
+    #orders_endscheduleTable.erp-table .erp-pill--sm {
+        height: 22px;
+        padding: 2px 8px;
+        font-size: 0.78rem;
+    }
+
+    #orders_endscheduleTable.erp-table .erp-target-pill {
+        min-width: 80px;
+        justify-content: center;
+        text-align: center;
     }
 
     #orders_endscheduleTable.erp-table .erp-pill--warn {
@@ -1161,7 +1182,7 @@
 
                     // ----- 2) Actualizar TARGET DATE (columna 11) -----
                     // 0=LOCATION, 1=WORKID, 2=PN, 3=DESC, 4=CUSTOMER, 5=CO QTY,
-                    // 6=WO QTY, 7=REPORT, 8=OUT/SRC, 9=DUE, 10=END, 11=TARGET, 12=NOTES, 13=STATUS
+                    // 6=WO QTY, 7=REPORT, 8=OUT/SRC, 9=DUE, 10=END, 11=TARGET, 12=NOTES, 13=ORD ID, 14=CUST PO, 15=STATUS
                     const $row = $td.closest('tr');
                     const $targetTd = $row.find('td').eq(11); // TARGET
 
@@ -1171,11 +1192,11 @@
                         const tdVal = Number(res.target_date);
 
                         if (tdVal < 0) {
-                            targetHtml = `<span class="erp-pill erp-pill--danger">${tdVal} Late</span>`;
+                            targetHtml = `<span class="erp-pill erp-target-pill erp-pill--danger">${tdVal} Late</span>`;
                         } else if (tdVal === 0) {
-                            targetHtml = `<span class="erp-pill erp-pill--success">${tdVal} On time</span>`;
+                            targetHtml = `<span class="erp-pill erp-target-pill erp-pill--success">${tdVal} On time</span>`;
                         } else if (tdVal > 0) {
-                            targetHtml = `<span class="erp-pill erp-pill--info">${tdVal} Early</span>`;
+                            targetHtml = `<span class="erp-pill erp-target-pill erp-pill--info">${tdVal} Early</span>`;
                         }
                     }
 
