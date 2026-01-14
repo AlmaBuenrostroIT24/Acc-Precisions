@@ -191,7 +191,7 @@
         {{-- Card: ordenes agregadas esta semana --}}
         <div class="col-12 col-xl-4 d-flex">
             <div class="card shadow-sm border-0 rounded-3 h-100 w-100">
-                @if ($resumen['all_shipping'])
+                <?php if (($resumen['all_shipping'] ?? false)): ?>
                 <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
                     <div class="d-flex align-items-center">
                         <span class="erp-card-icon mr-2">
@@ -208,7 +208,7 @@
                                     <div class="erp-summary-label text-dark">
                                         <i class="fas fa-list-alt"></i> Total
                                     </div>
-                                    <div class="erp-summary-value">{{ $resumen['total'] }}</div>
+                                    <div class="erp-summary-value">{{ $resumen['total'] ?? 0 }}</div>
                                 </div>
 
                                 <div class="erp-summary-pair">
@@ -222,7 +222,7 @@
                                     <div class="erp-summary-label text-dark">
                                         <i class="fas fa-paper-plane text-success"></i> Sent
                                     </div>
-                                    <div class="erp-summary-value text-success">{{ $resumen['send'] }}</div>
+                                    <div class="erp-summary-value text-success">{{ $resumen['send'] ?? 0 }}</div>
                                 </div>
                             </div>
 
@@ -278,43 +278,50 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($lateOrdersMini as $order)
+                                    <?php
+                                        $lateOrdersMiniRows = ($lateOrdersMini ?? collect());
+                                        $lateOrdersMiniIdx = 0;
+                                    ?>
+                                    <?php foreach ($lateOrdersMiniRows as $order): ?>
+                                        <?php
+                                            $lateOrdersMiniIdx++;
+                                            $dueDate = !empty($order->due_date) ? \Carbon\Carbon::parse($order->due_date) : null;
+                                            $lastLocLower = strtolower(trim($order->last_location ?? ''));
+                                        ?>
                                         <tr>
-                                            <td class="text-center">{{ $loop->iteration }}</td>
-                                            <td class="text-nowrap">{{ $order->work_id ?? 'N/A' }}</td>
-                                            <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
+                                            <td class="text-center"><?php echo e($lateOrdersMiniIdx); ?></td>
+                                            <td class="text-nowrap"><?php echo e($order->work_id ?? 'N/A'); ?></td>
+                                            <td class="erp-cell-wrap"><?php echo e($order->PN ?? 'N/A'); ?></td>
                                             <td class="text-center">
                                                 <span class="badge text-truncate d-inline-block px-1 py-0"
                                                     style="max-width: 90px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.14); border: 1px solid rgba(220, 53, 69, 0.30); color: #b91c1c;"
-                                                    title="{{ $order->status }}">
-                                                    {{ ucfirst($order->status ?? '') }}
+                                                    title="<?php echo e($order->status); ?>">
+                                                    <?php echo e(ucfirst($order->status ?? '')); ?>
                                                 </span>
                                             </td>
                                             <td class="erp-cell-wrap">
-                                                @php
-                                                    $lastLocLower = strtolower(trim($order->last_location ?? ''));
-                                                @endphp
-                                                {{ $order->location ?? 'N/A' }}
-                                                @if($lastLocLower === 'yarnell')
-                                                    <span class="d-block text-muted small">{{ $order->last_location }}</span>
-                                                @endif
+                                                <?php echo e($order->location ?? 'N/A'); ?>
+                                                <?php if ($lastLocLower === 'yarnell'): ?>
+                                                    <span class="d-block text-muted small"><?php echo e($order->last_location); ?></span>
+                                                <?php endif; ?>
                                             </td>
-                                            <td class="text-center text-nowrap">{{ optional($order->due_date)->format('d/m/Y') }}</td>
+                                            <td class="text-center text-nowrap"><?php echo e($dueDate ? $dueDate->format('d/m/Y') : 'N/A'); ?></td>
                                             <td class="text-center">
-                                                <span class="badge bg-danger">{{ optional($order->due_date)->diffInDays(now()) }}</span>
+                                                <span class="badge bg-danger"><?php echo e($dueDate ? $dueDate->diffInDays(now()) : '-'); ?></span>
                                             </td>
                                         </tr>
-                                    @empty
+                                    <?php endforeach; ?>
+                                    <?php if ($lateOrdersMiniIdx === 0): ?>
                                         <tr>
                                             <td colspan="7" class="text-center text-muted py-3">No late orders</td>
                                         </tr>
-                                    @endforelse
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-                @else
+                <?php else: ?>
                 <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
                     <div class="d-flex align-items-center">
                         <span class="erp-card-icon erp-card-icon--warning mr-2">
@@ -323,15 +330,15 @@
                         <div class="erp-card-title">Pending Orders This Week</div>
                     </div>
                     <div class="erp-card-meta ml-auto">
-                        Pending: <strong class="text-warning"> {{ $resumen['pendients'] }}</strong> /
-                        <strong>{{ $resumen['total'] }}</strong>
+                        Pending: <strong class="text-warning"> {{ $resumen['pendients'] ?? 0 }}</strong> /
+                        <strong>{{ $resumen['total'] ?? 0 }}</strong>
                     </div>
                 </div>
                 <div class="card-body py-2">
-                    @php
-                    $pendingWeeklyOrders = $weeklyOrders->where('status', '!=', 'sent');
-                    $lateOrdersMini = ($ordenesAtrasadas ?? collect())->take(20);
-                    @endphp
+                    <?php
+                        $pendingWeeklyOrders = $weeklyOrders->where('status', '!=', 'sent');
+                        $lateOrdersMini = ($ordenesAtrasadas ?? collect())->take(20);
+                    ?>
                     <div class="row g-2">
                         {{-- Columna izquierda: resumen + pendientes --}}
                         <div class="col-12">
@@ -342,21 +349,21 @@
                                             <div class="erp-summary-label text-dark">
                                                 <i class="fas fa-list-alt"></i> Total
                                             </div>
-                                            <div class="erp-summary-value">{{ $resumen['total'] }}</div>
+                                            <div class="erp-summary-value">{{ $resumen['total'] ?? 0 }}</div>
                                         </div>
 
                                         <div class="erp-summary-pair">
                                             <div class="erp-summary-label text-dark">
                                                 <i class="fas fa-clock text-warning"></i> Pending
                                             </div>
-                                            <div class="erp-summary-value text-warning">{{ $resumen['pendients'] }}</div>
+                                            <div class="erp-summary-value text-warning">{{ $resumen['pendients'] ?? 0 }}</div>
                                         </div>
 
                                         <div class="erp-summary-pair">
                                             <div class="erp-summary-label text-dark">
                                                 <i class="fas fa-paper-plane text-success"></i> Sent
                                             </div>
-                                            <div class="erp-summary-value text-success">{{ $resumen['send'] }}</div>
+                                            <div class="erp-summary-value text-success">{{ $resumen['send'] ?? 0 }}</div>
                                         </div>
                                     </div>
 
@@ -395,18 +402,27 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($pendingWeeklyOrders as $order)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td class="text-nowrap">{{ $order->work_id ?? 'N/A' }}</td>
-                                            <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
-                                            <td class="text-nowrap">{{ \Carbon\Carbon::parse($order->due_date)->format('d/m/Y') }}</td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-3">No pending orders</td>
-                                        </tr>
-                                        @endforelse
+                                        <?php
+                                            $pendingWeeklyRows = ($pendingWeeklyOrders ?? collect());
+                                            $pendingWeeklyIdx = 0;
+                                        ?>
+                                        <?php foreach ($pendingWeeklyRows as $order): ?>
+                                            <?php
+                                                $pendingWeeklyIdx++;
+                                                $pendingDueDate = !empty($order->due_date) ? \Carbon\Carbon::parse($order->due_date) : null;
+                                            ?>
+                                            <tr>
+                                                <td><?php echo e($pendingWeeklyIdx); ?></td>
+                                                <td class="text-nowrap"><?php echo e($order->work_id ?? 'N/A'); ?></td>
+                                                <td class="erp-cell-wrap"><?php echo e($order->PN ?? 'N/A'); ?></td>
+                                                <td class="text-nowrap"><?php echo e($pendingDueDate ? $pendingDueDate->format('d/m/Y') : 'N/A'); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        <?php if ($pendingWeeklyIdx === 0): ?>
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">No pending orders</td>
+                                            </tr>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -446,44 +462,51 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($lateOrdersMini as $order)
-                                        <tr>
-                                            <td class="text-center">{{ $loop->iteration }}</td>
-                                            <td class="text-nowrap">{{ $order->work_id ?? 'N/A' }}</td>
-                                            <td class="erp-cell-wrap">{{ $order->PN ?? 'N/A' }}</td>
-                                            <td class="text-center">
-                                                <span class="badge text-truncate d-inline-block px-1 py-0"
-                                                    style="max-width: 90px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.14); border: 1px solid rgba(220, 53, 69, 0.30); color: #b91c1c;"
-                                                    title="{{ $order->status }}">
-                                                    {{ ucfirst($order->status ?? '') }}
-                                                </span>
-                                            </td>
-                                            <td class="erp-cell-wrap">
-                                                @php
+                                        <?php
+                                            $lateOrdersMiniRows = ($lateOrdersMini ?? collect());
+                                            $lateOrdersMiniIdx = 0;
+                                        ?>
+                                        <?php foreach ($lateOrdersMiniRows as $order): ?>
+                                            <?php
+                                                $lateOrdersMiniIdx++;
+                                                $dueDate = !empty($order->due_date) ? \Carbon\Carbon::parse($order->due_date) : null;
                                                 $lastLocLower = strtolower(trim($order->last_location ?? ''));
-                                                @endphp
-                                                {{ $order->location ?? 'N/A' }}
-                                                @if($lastLocLower === 'yarnell')
-                                                <span class="d-block text-muted small">{{ $order->last_location }}</span>
-                                                @endif
-                                            </td>
-                                            <td class="text-center text-nowrap">{{ optional($order->due_date)->format('d/m/Y') }}</td>
-                                            <td class="text-center">
-                                                <span class="badge bg-danger">{{ optional($order->due_date)->diffInDays(now()) }}</span>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted py-3">No late orders</td>
-                                        </tr>
-                                        @endforelse
+                                            ?>
+                                            <tr>
+                                                <td class="text-center"><?php echo e($lateOrdersMiniIdx); ?></td>
+                                                <td class="text-nowrap"><?php echo e($order->work_id ?? 'N/A'); ?></td>
+                                                <td class="erp-cell-wrap"><?php echo e($order->PN ?? 'N/A'); ?></td>
+                                                <td class="text-center">
+                                                    <span class="badge text-truncate d-inline-block px-1 py-0"
+                                                        style="max-width: 90px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.14); border: 1px solid rgba(220, 53, 69, 0.30); color: #b91c1c;"
+                                                        title="<?php echo e($order->status); ?>">
+                                                        <?php echo e(ucfirst($order->status ?? '')); ?>
+                                                    </span>
+                                                </td>
+                                                <td class="erp-cell-wrap">
+                                                    <?php echo e($order->location ?? 'N/A'); ?>
+                                                    <?php if ($lastLocLower === 'yarnell'): ?>
+                                                        <span class="d-block text-muted small"><?php echo e($order->last_location); ?></span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-center text-nowrap"><?php echo e($dueDate ? $dueDate->format('d/m/Y') : 'N/A'); ?></td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-danger"><?php echo e($dueDate ? $dueDate->diffInDays(now()) : '-'); ?></span>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        <?php if ($lateOrdersMiniIdx === 0): ?>
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-3">No late orders</td>
+                                            </tr>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -502,7 +525,7 @@
                                 </span>
                                 <div class="erp-card-title">Next Orders and Deliveries</div>
                             </div>
-                          Missing year/month
+                            {{-- filtros de mes/año (ver controles a la derecha) --}}
                         </div>
                         <div class="card-body p-2">
                             <div class="row g-0">
@@ -538,15 +561,16 @@
                                             <input type="month" id="monthFilter" class="form-control form-control-sm erp-filter-control" style="flex: 0 0 128px; max-width: 128px;" title="Filter by Month">
                                             <select id="yearFilter" class="form-control form-control-sm erp-filter-control" style="flex: 0 0 92px; max-width: 92px;" title="Filter by Year">
                                                 <option value="">-- Year --</option>
-                                                @for ($y = now()->year; $y >= 2025; $y--)
-                                                <option value="{{ $y }}" @selected($y==now()->year)>{{ $y }}</option>
-                                                @endfor
+                                                <?php $currentYear = now()->year; ?>
+                                                <?php for ($y = $currentYear; $y >= 2025; $y--): ?>
+                                                    <option value="<?php echo e($y); ?>" <?php echo $y === $currentYear ? 'selected' : ''; ?>><?php echo e($y); ?></option>
+                                                <?php endfor; ?>
                                             </select>
                                             <select id="customerFilterOnTime" class="form-control form-control-sm erp-filter-control" style="flex: 1 1 auto; min-width: 0;" title="Filter by Customer">
                                                 <option value="">-- All --</option>
-                                                @foreach ($customers as $customer)
-                                                <option value="{{ $customer }}">{{ $customer }}</option>
-                                                @endforeach
+                                                <?php foreach ($customers as $customer): ?>
+                                                    <option value="<?php echo e($customer); ?>"><?php echo e($customer); ?></option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                         <div class="d-flex flex-column align-items-center">
@@ -572,53 +596,53 @@
                                 <div class="erp-card-title">Customers with Orders</div>
                             </div>
                             <div class="erp-card-meta ml-auto">
-                                Customers: <strong> {{ $ordenesPorCliente->count() }}</strong>
+                                Customers: <strong><?php echo e($ordenesPorCliente->count()); ?></strong>
                             </div>
                         </div>
                         <div class="card-body px-2 py-2 erp-scroll-pane erp-scroll-pane--customers">
-                            @if ($ordenesPorCliente->isNotEmpty())
-                            <div class="row g-2">
-                                @foreach ($ordenesPorCliente->sortByDesc('total') as $grupo)
-                                @php
-                                if ($grupo->total > 10) {
-                                $circleClass = 'bg-success text-white';
-                                } elseif ($grupo->total >= 5 && $grupo->total <= 10) {
-                                    $circleClass='bg-warning text-dark' ;
-                                    } else {
-                                    $circleClass='bg-secondary text-white' ;
-                                    }
-                                    @endphp
+                            <?php if ($ordenesPorCliente->isNotEmpty()): ?>
+                                <div class="row g-2">
+                                    <?php foreach ($ordenesPorCliente->sortByDesc('total') as $grupo): ?>
+                                        <?php
+                                            if ($grupo->total > 10) {
+                                                $circleClass = 'bg-success text-white';
+                                            } elseif ($grupo->total >= 5 && $grupo->total <= 10) {
+                                                $circleClass = 'bg-warning text-dark';
+                                            } else {
+                                                $circleClass = 'bg-secondary text-white';
+                                            }
+                                        ?>
 
-                                    <div class="col-12 col-sm-6">
-                                    <div class="erp-customer-tile h-100 js-open-customer-orders" role="button" tabindex="0"
-                                        data-customer="{{ $grupo->costumer }}"
-                                        aria-label="Open orders for {{ ucfirst($grupo->costumer) }}">
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div class="d-flex align-items-center min-w-0">
-                                                <div class="rounded-circle d-flex justify-content-center align-items-center {{ $circleClass }} erp-customer-count">
-                                                    {{ $grupo->total }}
-                                                </div>
-                                                <div class="ml-2 text-truncate font-weight-bold text-dark" title="{{ ucfirst($grupo->costumer) }}">
-                                                    {{ ucfirst($grupo->costumer) }}
+                                        <div class="col-12 col-sm-6">
+                                            <div class="erp-customer-tile h-100 js-open-customer-orders" role="button" tabindex="0"
+                                                data-customer="<?php echo e($grupo->costumer); ?>"
+                                                aria-label="Open orders for <?php echo e(ucfirst($grupo->costumer)); ?>">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="d-flex align-items-center min-w-0">
+                                                        <div class="rounded-circle d-flex justify-content-center align-items-center <?php echo e($circleClass); ?> erp-customer-count">
+                                                            <?php echo e($grupo->total); ?>
+                                                        </div>
+                                                        <div class="ml-2 text-truncate font-weight-bold text-dark" title="<?php echo e(ucfirst($grupo->costumer)); ?>">
+                                                            <?php echo e(ucfirst($grupo->costumer)); ?>
+                                                        </div>
+                                                    </div>
+
+                                                    <?php if (($grupo->onhold_total ?? 0) > 0): ?>
+                                                        <span class="badge bg-warning text-dark erp-customer-onhold">
+                                                            Onhold: <?php echo e($grupo->onhold_total); ?>
+                                                        </span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
-
-                                            @if(($grupo->onhold_total ?? 0) > 0)
-                                            <span class="badge bg-warning text-dark erp-customer-onhold">
-                                                Onhold: {{ $grupo->onhold_total }}
-                                            </span>
-                                            @endif
                                         </div>
-                                    </div>
-                            </div>
-                            @endforeach
-                        </div>
-                        @else
-                        <div class="text-center text-muted small py-5">
-                            <i class="bi bi-info-circle fs-2 mb-2"></i>
-                            No orders registered
-                        </div>
-                        @endif
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-center text-muted small py-5">
+                                    <i class="bi bi-info-circle fs-2 mb-2"></i>
+                                    No orders registered
+                                </div>
+                            <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -3612,6 +3636,78 @@
 
     Chart.register(ChartDataLabels);
 
+    function fetchJsonWithRetry(url, { timeoutMs = 15000, retries = 2 } = {}) {
+        const doFetch = async () => {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    signal: controller.signal,
+                });
+
+                const text = await res.text();
+                let data = null;
+                try {
+                    data = text ? JSON.parse(text) : null;
+                } catch (_) {
+                    data = null;
+                }
+
+                if (!res.ok) {
+                    const msg = data?.message || data?.error || text || `HTTP ${res.status}`;
+                    const err = new Error(String(msg));
+                    err.httpStatus = res.status;
+                    err.responseText = text;
+                    err.isAuthError = res.status === 401 || res.status === 419;
+                    throw err;
+                }
+
+                return data;
+            } finally {
+                clearTimeout(timeout);
+            }
+        };
+
+        const handleAuthError = (err) => {
+            if (!err?.isAuthError) return false;
+            // Sesión expirada / no autenticado: recargar suele llevar al login (auth middleware).
+            try { window.location.reload(); } catch (e) {}
+            return true;
+        };
+
+        return (async () => {
+            let lastErr;
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                try {
+                    return await doFetch();
+                } catch (err) {
+                    lastErr = err;
+                    if (handleAuthError(err)) return null;
+                    const status = err?.httpStatus;
+                    const retryable =
+                        err?.name === 'AbortError' ||
+                        status === 408 ||
+                        status === 429 ||
+                        (typeof status === 'number' && status >= 500);
+
+                    if (attempt < retries && retryable) {
+                        const delay = 400 * Math.pow(2, attempt);
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+                    throw err;
+                }
+            }
+            throw lastErr;
+        })();
+    }
+
     // Modal de detalle para gráfico "Total Orders"
     const ordersModalEl = document.getElementById('ordersDetailModal');
     const ordersModalContentEl = document.getElementById('ordersDetailModalContent');
@@ -3653,8 +3749,15 @@
             ordersModalFiltersEl.textContent = txt.length ? txt.join(' | ') : '';
         }
         const searchParams = new URLSearchParams(params);
-        fetch(`/orders/summary/detail?${searchParams.toString()}`)
-            .then(res => res.text())
+        fetch(`/orders/summary/detail?${searchParams.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.text();
+            })
             .then(html => {
                 ordersModalContentEl.innerHTML = html || '<div class="text-center text-muted py-4">No data</div>';
                 const $table = $('#ordersDetailTable');
@@ -3752,6 +3855,10 @@
             .catch(() => {
                 ordersModalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading data</div>';
                 $('#ordersDetailModal').modal('show');
+            })
+            .catch((err) => {
+                console.error('orders/summary/detail error:', err);
+                ordersModalContentEl.innerHTML = '<div class="text-center text-danger py-4">Error loading detail</div>';
             });
     }
 
@@ -4334,7 +4441,26 @@
         const opts = options || {};
         const useErpButtons = opts.buttonStyle === 'erp';
         const showLength = opts.showLength !== false;
+
+        // 2026-01-13: evita "Cannot reinitialise DataTable" cuando una tabla ya fue inicializada
+        // (por ejemplo, modales que se abren/cargan sin filas inicialmente).
+        const $tableEl = $(selector);
+        if (!$tableEl.length) return null;
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable($tableEl[0])) {
+            const existing = $tableEl.DataTable();
+            if (opts.buttonsHost && existing.buttons && existing.buttons().container) {
+                const $host = $(opts.buttonsHost);
+                if ($host.length) {
+                    $host.empty();
+                    existing.buttons().container().appendTo($host);
+                }
+            }
+            return existing;
+        }
+
         const dtConfig = {
+            // 2026-01-13: si por alguna razón se llama init dos veces, reutiliza la instancia (evita warning tn/3)
+            retrieve: !!opts.retrieve,
             deferRender: true,
             autoWidth: false,
             pageLength: 14,
@@ -4420,7 +4546,7 @@
             dtConfig.language = opts.language;
         }
 
-        const dt = $(selector).DataTable(dtConfig);
+        const dt = $tableEl.DataTable(dtConfig);
 
         if (opts.buttonsHost && dt.buttons && dt.buttons().container) {
             const $host = $(opts.buttonsHost);
@@ -4618,15 +4744,17 @@
                 currentFilterText += `<br>Customer: ${customerFilter.value}`;
             }
 
-            fetch(url)
-                .then(res => res.json())
-                .then(({
-                    labels,
-                    data
-                }) => {
+            fetchJsonWithRetry(url)
+                .then((payload) => {
+                    if (!payload || payload.error) throw new Error(payload?.message || 'Invalid response');
+                    const {
+                        labels,
+                        data
+                    } = payload;
                     if (chartRef.chart) chartRef.chart.destroy();
 
-                    const totalOrders = data.reduce((acc, val) => acc + val, 0);
+                    const safeData = Array.isArray(data) ? data : [];
+                    const totalOrders = safeData.reduce((acc, val) => acc + (Number(val) || 0), 0);
 
                     chartRef.chart = new Chart(ctx, {
                         type: 'bar',
@@ -4634,7 +4762,7 @@
                             labels,
                             datasets: [{
                                 label: 'Total Orders',
-                                data,
+                                data: safeData,
                                 backgroundColor: 'rgba(14, 165, 233, 0.65)',
                                 borderColor: 'rgba(2, 132, 199, 0.95)',
                                 borderWidth: 1,
@@ -4775,6 +4903,14 @@
 
                         openOrdersDetailModal(params, `Orders - ${labelText}`);
                     };
+                })
+                .catch((err) => {
+                    if (err?.isAuthError) return;
+                    console.error('orders/summary chart error:', err);
+                    if (chartRef.chart) {
+                        try { chartRef.chart.destroy(); } catch (e) {}
+                        chartRef.chart = null;
+                    }
                 });
         }
 
@@ -4822,13 +4958,10 @@
                 url += `/week/${year}/${week}`;
             }
 
-            fetch(url)
-                .then(res => res.json())
-                .then(({
-                    labels,
-                    totals,
-                    totalAll
-                }) => {
+            fetchJsonWithRetry(url)
+                .then((payload) => {
+                    if (!payload || payload.error) throw new Error(payload?.message || 'Invalid response');
+                    const { labels, totals, totalAll } = payload;
                     if (chartRef.chart) chartRef.chart.destroy();
 
                     const fullCustomerLabels = Array.isArray(labels) ? labels.slice() : [];
@@ -4844,7 +4977,7 @@
                             labels: compactCustomerLabels,
                             datasets: [{
                                 label: 'Orders per Customer',
-                                data: totals,
+                                data: Array.isArray(totals) ? totals : [],
                                 backgroundColor: 'rgba(99, 102, 241, 0.60)',
                                 borderColor: 'rgba(79, 70, 229, 0.95)',
                                 borderWidth: 1,
@@ -4998,6 +5131,14 @@
 
                         openOrdersDetailModal(params, `Orders - ${customerName}`);
                     };
+                })
+                .catch((err) => {
+                    if (err?.isAuthError) return;
+                    console.error('orders/summary/by-customer chart error:', err);
+                    if (chartRef.chart) {
+                        try { chartRef.chart.destroy(); } catch (e) {}
+                        chartRef.chart = null;
+                    }
                 });
         }
 
@@ -5028,27 +5169,97 @@
 
         if (!ctx) return;
 
-        fetch('/orders/summary/next-weeks/8')
-            .then(res => res.json())
-            .then(({
-                labels,
-                total,
-                sent
-            }) => {
-                const totalOrders = total.reduce((acc, val) => acc + val, 0);
+        const escapeHtmlLocal = (str) =>
+            String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+            }[ch]));
+
+        const renderNextWeeksError = (message) => {
+            const canvas = document.getElementById('nextWeeksChart');
+            if (!canvas) return;
+            const host = canvas.closest('.erp-canvas-wrap') || canvas.parentElement;
+            if (!host) return;
+            host.innerHTML = `<div class="text-center text-muted small py-4">${escapeHtmlLocal(message)}</div>`;
+        };
+
+        const fetchJsonWithRetry = async (url, { timeoutMs = 15000, retries = 2 } = {}) => {
+            let lastError;
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const res = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        signal: controller.signal,
+                    });
+
+                    const text = await res.text();
+                    let data = null;
+                    try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
+
+                    if (!res.ok) {
+                        const msg = data?.message || data?.error || text || `HTTP ${res.status}`;
+                        const err = new Error(String(msg));
+                        err.httpStatus = res.status;
+                        throw err;
+                    }
+
+                    return data;
+                } catch (err) {
+                    lastError = err;
+                    const status = err?.httpStatus;
+                    const retryable =
+                        err?.name === 'AbortError' ||
+                        status === 408 ||
+                        status === 429 ||
+                        (typeof status === 'number' && status >= 500);
+
+                    if (attempt < retries && retryable) {
+                        const delay = 400 * Math.pow(2, attempt);
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+
+                    throw err;
+                } finally {
+                    clearTimeout(timeout);
+                }
+            }
+            throw lastError;
+        };
+
+        const weeks = 8;
+        const url = `/orders/summary/next-weeks/${encodeURIComponent(String(weeks))}`;
+
+        (async () => {
+            try {
+                const data = await fetchJsonWithRetry(url, { retries: 2, timeoutMs: 15000 });
+                if (!data || data.error) {
+                    throw new Error(data?.message || 'Unable to load next-weeks summary');
+                }
+
+                const { labels, total, sent } = data;
+                const totalOrders = (Array.isArray(total) ? total : []).reduce((acc, val) => acc + (Number(val) || 0), 0);
                 const fullLabels = Array.isArray(labels) ? labels.slice() : [];
                 const compactWeekLabel = (raw) => {
                     const label = String(raw ?? '').trim();
                     if (!label) return label;
 
-                    const weekMatch = label.match(/week\s*0*(\d+)/i);
+                    const weekMatch = label.match(/week\\s*0*(\\d+)/i);
                     const weekNum = weekMatch ? String(weekMatch[1]).padStart(2, '0') : '';
-                    const weekPart = weekNum ? `W${weekNum}` : label.replace(/^week\s*/i, 'W');
+                    const weekPart = weekNum ? `W${weekNum}` : label.replace(/^week\\s*/i, 'W');
 
-                    const metaMatch = label.match(/\(([^)]+)\)/);
-                    let meta = metaMatch ? String(metaMatch[1]).replace(/\s+/g, '') : '';
+                    const metaMatch = label.match(/\\(([^)]+)\\)/);
+                    let meta = metaMatch ? String(metaMatch[1]).replace(/\\s+/g, '') : '';
                     if (meta) {
-                        meta = meta.replace(/^([a-z]{3,})(\d+)/i, (_, m, d) => `${m.slice(0, 3)}${d}`);
+                        meta = meta.replace(/^([a-z]{3,})(\\d+)/i, (_, m, d) => `${m.slice(0, 3)}${d}`);
                         meta = meta.charAt(0).toUpperCase() + meta.slice(1);
                     }
 
@@ -5162,7 +5373,11 @@
                     },
                     plugins: [ChartDataLabels]
                 });
-            })
+            } catch (err) {
+                console.error('Next weeks summary error:', err);
+                renderNextWeeksError('Unable to load “Next 8 Weeks” summary. Please try again or check server configuration.');
+            }
+        })();
 
         /**
          * ===================================================================================
@@ -5349,15 +5564,10 @@
             if (params.toString()) url += `?${params.toString()}`;
             //console.log('≡ƒöù URL:', url);
 
-            fetch(url)
-                .then(res => res.json())
-                .then(({
-                    labels,
-                    data,
-                    total,
-                    selectedCustomer,
-                    selectedYear
-                }) => {
+            fetchJsonWithRetry(url)
+                .then((payload) => {
+                    if (!payload || payload.error) throw new Error(payload?.message || 'Invalid response');
+                    const { labels, data, total, selectedCustomer, selectedYear } = payload;
                     // ≡ƒöó Asegurar NUM├ëRICOS
                     const numericData = (data || []).map(v => Number(v) || 0);
 
@@ -5495,8 +5705,13 @@
                         openOnTimeModal(status, filters);
                     };
                 })
-                .catch(err => {
+                .catch((err) => {
+                    if (err?.isAuthError) return;
                     console.error('Error cargando On Time chart:', err);
+                    if (onTimeChartRef.chart) {
+                        try { onTimeChartRef.chart.destroy(); } catch (e) {}
+                        onTimeChartRef.chart = null;
+                    }
                 });
         }
 
@@ -6075,6 +6290,11 @@
             newOrdersWeekDt = initDataTable(tableSelector, 'NEW ORDERS THIS WEEK', {
                 buttonsHost: '#newOrdersWeekModalButtons',
                 buttonStyle: 'erp',
+                retrieve: true,
+                language: {
+                    emptyTable: 'No orders found.',
+                    zeroRecords: 'No matching records found.'
+                },
                 order: [
                     [6, 'asc']
                 ],

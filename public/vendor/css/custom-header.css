@@ -1,23 +1,23 @@
 /* 2025-12-17: Header más angosto (AdminLTE navbar) */
 .main-header.navbar {
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
-    min-height: 38px;
+    padding-top: 0.05rem;
+    padding-bottom: 0.05rem;
+    min-height: 34px;
 }
 
 .main-header.navbar .nav-link,
 .main-header.navbar .navbar-nav .nav-link {
-    padding-top: 0.15rem;
-    padding-bottom: 0.15rem;
-    line-height: 1.2;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    line-height: 1.1;
     display: flex;
     align-items: center;
 }
 
 .main-header.navbar .navbar-brand {
-    padding-top: 0.15rem;
-    padding-bottom: 0.15rem;
-    line-height: 1.2;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    line-height: 1.1;
     display: flex;
     align-items: center;
 }
@@ -25,9 +25,9 @@
 /* Ajusta el input del buscador del header para que encaje */
 .main-header.navbar .form-control-navbar,
 .main-header.navbar .navbar-search-block .form-control {
-    height: 26px;
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
+    height: 24px;
+    padding-top: 0.05rem;
+    padding-bottom: 0.05rem;
 }
 
 /* 2025-12-17: centrar iconos del header */
@@ -45,10 +45,105 @@
 .main-header.navbar .navbar-content-header {
     display: inline-flex;
     align-items: center;
-    padding: 0.15rem 0.5rem;
+    padding: 0.1rem 0.45rem;
     border-radius: 999px;
     background: rgba(0, 0, 0, 0.06);
     font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1.2;
+    font-size: 0.9rem;
+    line-height: 1.1;
+}
+
+/* 2026-01-12: ERP schedule tabs */
+.erp-tabs-bar {
+    border: 1px solid #d1d5db;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+    border-radius: 14px;
+    padding: .35rem .45rem .25rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+}
+
+.erp-schedule-tabs {
+    border: 0;
+    background: transparent;
+    border-bottom: 0 !important; /* override .nav-tabs default line */
+    border-radius: 0;
+    padding: 0;
+    gap: .35rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.erp-schedule-tabs .nav-link {
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    padding: .45rem .85rem;
+    min-height: 38px;
+    font-weight: 750;
+    font-size: .92rem;
+    color: #475569;
+    background: transparent;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, color .15s ease;
+    white-space: nowrap;
+    margin-bottom: -1px; /* conecta con el borde del contenedor */
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.erp-schedule-tabs .nav-link:hover {
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.erp-schedule-tabs .nav-link.active {
+    color: #0f172a;
+    background: #ffffff;
+    border-color: #c5c9d2;
+    border-bottom-color: #ffffff;
+    box-shadow:
+        0 -2px 0 rgba(59, 130, 246, 0.28) inset,
+        0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.erp-schedule-tabs .nav-link i {
+    opacity: 0.9;
+    font-size: 1rem;
+    margin-right: .45rem;
+}
+
+.erp-schedule-tabs::-webkit-scrollbar {
+    height: 7px;
+}
+
+.erp-schedule-tabs::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.6);
+    border-radius: 999px;
+}
+
+.erp-schedule-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.erp-schedule-tabs .nav-link:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+    .erp-schedule-tabs .nav-link {
+        width: 100%;
+        margin-bottom: .35rem;
+        border-radius: 12px;
+        border-bottom: 1px solid transparent;
+    }
+
+    .erp-schedule-tabs {
+        flex-wrap: wrap;
+        border-bottom: 0;
+    }
 }

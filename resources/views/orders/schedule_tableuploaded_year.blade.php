@@ -68,8 +68,5 @@
     <td style="max-width:240px; white-space:normal;">{{ $order->notes }}</td>
 </tr>
 @empty
-<tr>
-    <td colspan="12" class="text-center text-muted py-3">No orders found.</td>
-</tr>
+{{-- DataTables: dejar tbody vacío para evitar warning tn/4 con colspan --}}
 @endforelse
-

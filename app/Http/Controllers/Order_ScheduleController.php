@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\OrderScheduleImport;
 use App\Services\OrderScheduleImportService;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrdMachiningDateLog;
 use Illuminate\Support\Facades\Auth;
@@ -1756,6 +1757,12 @@ class Order_ScheduleController extends Controller
     // 🟨============== 1. FILTERS  For "Year"===================================== 
     public function summaryByYear(Request $request, $year)
     {
+        try {
+            $year = (int) $year;
+            if ($year < 2000 || $year > 2100) {
+                return response()->json(['error' => true, 'message' => 'Invalid year'], 422);
+            }
+
         $query = OrderSchedule::query()
             ->whereYear('created_at', $year)
             ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
@@ -1780,10 +1787,29 @@ class Order_ScheduleController extends Controller
             'labels' => $labels,
             'data' => $values,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('summaryByYear error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            return response()->json(['error' => true, 'message' => $publicMessage], $status);
+        }
     }
     // 🟨============== 2. FILTERS  For "Month"===================================== 
     public function summaryByMonth(Request $request, $year, $month)
     {
+        try {
+            $year = (int) $year;
+            $month = (int) $month;
+            if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+                return response()->json(['error' => true, 'message' => 'Invalid year/month'], 422);
+            }
+
         $query = OrderSchedule::query()
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
@@ -1809,11 +1835,30 @@ class Order_ScheduleController extends Controller
             'labels' => $labels,
             'data' => $values,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('summaryByMonth error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            return response()->json(['error' => true, 'message' => $publicMessage], $status);
+        }
     }
 
     // 🟨============== 3. FILTERS  For "Week"===================================== 
     public function summaryByWeek(Request $request, $year, $week)
     {
+        try {
+            $year = (int) $year;
+            $week = (int) $week;
+            if ($year < 2000 || $year > 2100 || $week < 1 || $week > 53) {
+                return response()->json(['error' => true, 'message' => 'Invalid year/week'], 422);
+            }
+
         $query = OrderSchedule::query()
             ->where('status_order', 'active'); // ⬅️ Solo órdenes activas;
 
@@ -1822,7 +1867,7 @@ class Order_ScheduleController extends Controller
         }
 
         // Filtrar por semana usando YEARWEEK MySQL (o puedes usar Carbon para fechas)
-        $weekString = $year . str_pad($week, 2, '0', STR_PAD_LEFT); // ej: "202523"
+        $weekString = (string) $year . str_pad((string) $week, 2, '0', STR_PAD_LEFT); // ej: "202523"
 
         $data = $query
             ->select(DB::raw('DAYOFWEEK(created_at) as weekday'), DB::raw('COUNT(*) as total'))
@@ -1843,6 +1888,18 @@ class Order_ScheduleController extends Controller
             'labels' => $labels,
             'data' => $values,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('summaryByWeek error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            return response()->json(['error' => true, 'message' => $publicMessage], $status);
+        }
     }
 
     /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1865,6 +1922,12 @@ class Order_ScheduleController extends Controller
     // 🟨============== 2. FILTERS  For Customer "Year"===================================== 
     public function summaryByCustomerYear($year)
     {
+        try {
+            $year = (int) $year;
+            if ($year < 2000 || $year > 2100) {
+                return response()->json(['error' => true, 'message' => 'Invalid year'], 422);
+            }
+
         $query = DB::table('orders_schedule')
             ->select('costumer', DB::raw('count(*) as total'))
             ->whereYear('created_at', $year)
@@ -1886,11 +1949,30 @@ class Order_ScheduleController extends Controller
             'percentages' => $dataWithPercentage->pluck('percentage'),
             'totalAll' => $totalAll,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('summaryByCustomerYear error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            return response()->json(['error' => true, 'message' => $publicMessage], $status);
+        }
     }
 
     // 🟨============== 3. FILTERS  For Customer "Month===================================== 
     public function summaryByCustomerMonth($year, $month)
     {
+        try {
+            $year = (int) $year;
+            $month = (int) $month;
+            if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+                return response()->json(['error' => true, 'message' => 'Invalid year/month'], 422);
+            }
+
         $query = DB::table('orders_schedule')
             ->select('costumer', DB::raw('count(*) as total'))
             ->whereYear('created_at', $year)
@@ -1920,14 +2002,34 @@ class Order_ScheduleController extends Controller
             'percentages' => $percentages,
             'totalAll' => $totalAll,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('summaryByCustomerMonth error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            return response()->json(['error' => true, 'message' => $publicMessage], $status);
+        }
     }
 
     // 🟨============== 4. FILTERS  For Customer "Week"=====================================
     public function summaryByCustomerWeek($year, $week)
     {
+        try {
+            $year = (int) $year;
+            $week = (int) $week;
+            if ($year < 2000 || $year > 2100 || $week < 1 || $week > 53) {
+                return response()->json(['error' => true, 'message' => 'Invalid year/week'], 422);
+            }
+
+        $weekPadded = str_pad((string) $week, 2, '0', STR_PAD_LEFT);
         $query = DB::table('orders_schedule')
             ->select('costumer', DB::raw('count(*) as total'))
-            ->whereRaw('YEARWEEK(created_at, 1) = ?', ["{$year}{$week}"])
+            ->whereRaw('YEARWEEK(created_at, 1) = ?', ["{$year}{$weekPadded}"])
             ->groupBy('costumer')
             ->where('status_order', 'active')
             ->orderBy('total', 'desc');
@@ -1946,6 +2048,18 @@ class Order_ScheduleController extends Controller
             'percentages' => $dataWithPercentage->pluck('percentage'),
             'totalAll' => $totalAll,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('summaryByCustomerWeek error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            return response()->json(['error' => true, 'message' => $publicMessage], $status);
+        }
     }
 
     /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1958,6 +2072,15 @@ class Order_ScheduleController extends Controller
         try {
 
             $weeks = (int) $weeks;
+            if ($weeks < 1) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Weeks must be >= 1',
+                ], 422);
+            }
+            if ($weeks > 52) {
+                $weeks = 52;
+            }
 
             // Lunes de esta semana (00:00)
             $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
@@ -1968,18 +2091,28 @@ class Order_ScheduleController extends Controller
                 ->whereBetween('due_date', [$startOfWeek, $endDate])
                 ->whereNotNull('due_date')
                 ->where('status_order', 'active')
-                ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
+                ->whereRaw("COALESCE(LOWER(TRIM(status)),'') != 'onhold'")
                 ->get(['due_date', 'status']);
 
-            $ordersByWeek = $rows->groupBy(function ($row) {
-                $d = Carbon::parse($row->due_date);
-                return sprintf('%04d-%02d', $d->isoWeekYear, $d->isoWeek);
-            })->map(function ($group) {
-                $total = $group->count();
-                $sent  = $group->where('status', 'sent')->count();
-                // clave y valores ya agregados
-                return (object) ['total' => $total, 'sent_count' => $sent];
-            });
+            $ordersByWeek = [];
+            foreach ($rows as $row) {
+                try {
+                    $d = Carbon::parse($row->due_date);
+                } catch (\Throwable $e) {
+                    continue;
+                }
+
+                $key = sprintf('%04d-%02d', $d->isoWeekYear, $d->isoWeek);
+
+                if (!isset($ordersByWeek[$key])) {
+                    $ordersByWeek[$key] = ['total' => 0, 'sent_count' => 0];
+                }
+
+                $ordersByWeek[$key]['total']++;
+                if (strtolower(trim((string) ($row->status ?? ''))) === 'sent') {
+                    $ordersByWeek[$key]['sent_count']++;
+                }
+            }
 
             $labels    = [];
             $totalData = [];
@@ -1992,11 +2125,11 @@ class Order_ScheduleController extends Controller
                 $week      = (int) $weekStart->isoWeek;
 
                 $key = $year . '-' . str_pad($week, 2, '0', STR_PAD_LEFT);
-                $row = $ordersByWeek->get($key);
+                $row = $ordersByWeek[$key] ?? null;
 
                 $labels[]    = 'Week ' . str_pad($week, 2, '0', STR_PAD_LEFT) . "\n(" . $weekStart->format('M d') . ')';
-                $totalData[] = $row->total      ?? 0;
-                $sentData[]  = $row->sent_count ?? 0;
+                $totalData[] = $row['total'] ?? 0;
+                $sentData[]  = $row['sent_count'] ?? 0;
             }
 
             return response()->json([
@@ -2013,11 +2146,14 @@ class Order_ScheduleController extends Controller
                 'file'    => $e->getFile(),
             ]);
 
-            // Mostrar el error directo al frontend
+            $status = $e instanceof QueryException ? 503 : 500;
+            $publicMessage = config('app.debug') ? $e->getMessage() : 'Unable to load summary right now.';
+
+            // Mostrar el error al frontend (sin filtrar detalles en prod)
             return response()->json([
                 'error'   => true,
-                'message' => $e->getMessage(),
-            ], 500);
+                'message' => $publicMessage,
+            ], $status);
         }
     }
 
