@@ -1455,21 +1455,44 @@ class Order_ScheduleController extends Controller
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
+        $currentYear = Carbon::now()->year;
+
+        // Minimizar payload: solo columnas usadas en la vista/partials de statistics
+        $statsSelect = [
+            'id',
+            'work_id',
+            'PN',
+            'Part_description',
+            'costumer',
+            'qty',
+            'status',
+            'location',
+            'last_location',
+            'due_date',
+            'sent_at',
+            'created_at',
+            'notes',
+        ];
 
         /** 🟢 VERIFIED: Table-> Orders This Week */
-        $ordenesSemana = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
+        $ordenesSemana = OrderSchedule::query()
+            ->select($statsSelect)
+            ->whereBetween('due_date', [$startOfWeek, $endOfWeek])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
             ->get();
 
         /** 🟢 VERIFIED: Table-> Late Orders */
-        $ordenesAtrasadas = OrderSchedule::where('due_date', '<', $today)
+        $lateOrdersBase = OrderSchedule::query()
+            ->select($statsSelect)
+            ->where('due_date', '<', $today)
             ->where('status', '!=', 'sent')
             ->where('status', '!=', 'onhold')
             ->where('status_order', '!=', 'inactive')
-            ->get();
+            ->orderBy('due_date', 'asc');
 
-        $cantidadAtrasadas = $ordenesAtrasadas->count();
+        $cantidadAtrasadas = (clone $lateOrdersBase)->count();
+        $ordenesAtrasadasMini = (clone $lateOrdersBase)->limit(20)->get();
 
         // 👉 Semana pasada: lunes a domingo
         $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
@@ -1487,13 +1510,9 @@ class Order_ScheduleController extends Controller
             ->where('status_order', '!=', 'inactive')
             ->count();
 
-        $activeOrdersList = OrderSchedule::where('status', '!=', 'sent')
-            ->where('status_order', '!=', 'inactive')
-            ->orderBy('due_date', 'asc')
-            ->get();
+        // Active Orders list se carga on-demand (modal AJAX) para acelerar el primer render
 
         /** 🟢 VERIFIED: Box text-> total Hearst */
-        $currentYear = Carbon::now()->year;
         $completedOrdersYear = OrderSchedule::where('status', 'sent')
             ->where('status_order', '!=', 'inactive')
             ->where(function ($query) use ($currentYear) {
@@ -1505,26 +1524,13 @@ class Order_ScheduleController extends Controller
             })
             ->count();
 
-        $completedOrdersListYear = OrderSchedule::where('status', 'sent')
-            ->where('status_order', '!=', 'inactive')
-            ->where(function ($query) use ($currentYear) {
-                $query->whereYear('sent_at', $currentYear)
-                    ->orWhere(function ($innerQuery) use ($currentYear) {
-                        $innerQuery->whereNull('sent_at')
-                            ->whereYear('due_date', $currentYear);
-                    });
-            })
-            ->orderByRaw('COALESCE(sent_at, due_date) asc')
-            ->get();
+        // Completed Orders list se carga on-demand (modal AJAX) para acelerar el primer render
 
         $uploadedOrdersYear = OrderSchedule::where('status_order', '!=', 'inactive')
             ->whereYear('created_at', $currentYear)
             ->count();
 
-        $uploadedOrdersListYear = OrderSchedule::where('status_order', '!=', 'inactive')
-            ->whereYear('created_at', $currentYear)
-            ->orderBy('created_at', 'asc')
-            ->get();
+        // Uploaded Orders list se carga on-demand (modal AJAX) para acelerar el primer render
 
         $cantidadHearst = OrderSchedule::where('location', 'hearst')
             ->where('status', '!=', 'sent')
@@ -1557,13 +1563,11 @@ class Order_ScheduleController extends Controller
             ->groupBy('costumer')
             ->get();
 
-        // Órdenes creadas esta semana
-        $ordenesAgregadasSemana = OrderSchedule::whereBetween('created_at', [$startOfWeek, $endOfWeek])
+        // Órdenes creadas esta semana (solo count; el modal carga rows via AJAX)
+        $totalAgregadasSemana = (int) OrderSchedule::query()
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
             ->where('status_order', '!=', 'inactive')
-            ->get();
-
-        // Cantidad total de esas órdenes
-        $totalAgregadasSemana = $ordenesAgregadasSemana->count();
+            ->count();
 
         $customers = OrderSchedule::select('costumer')
             ->whereNotNull('costumer')
@@ -1572,9 +1576,9 @@ class Order_ScheduleController extends Controller
             ->pluck('costumer');
         //-------------------------------------------------------------------------------------------
         //Utiliza whereBetween con la fecha de due_date o target_date según tu sistema para obtener solo las órdenes de esta semana:
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek = Carbon::now()->endOfWeek();
-        $weeklyOrders = OrderSchedule::whereBetween('due_date', [$startOfWeek, $endOfWeek])
+        $weeklyOrders = OrderSchedule::query()
+            ->select(['id', 'work_id', 'PN', 'status', 'due_date', 'location', 'last_location'])
+            ->whereBetween('due_date', [$startOfWeek, $endOfWeek])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
             ->whereRaw("LOWER(TRIM(status)) != 'onhold'")
             ->orderBy('due_date', 'asc')
@@ -1616,13 +1620,11 @@ class Order_ScheduleController extends Controller
 
         //2. 65% de las semanas cumplieron con todas las órdenes a tiempo
         $totalWeeks = DB::table('orders_schedule')
-            ->selectRaw('YEARWEEK(due_date, 1) as week')
             ->whereRaw('YEARWEEK(due_date, 1) <= YEARWEEK(CURDATE(), 1)')
             ->whereRaw('FLOOR(YEARWEEK(due_date, 1) / 100) = ?', [$weeklyYear])
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
-            ->groupBy('week')
-            ->get()
-            ->count();
+            ->distinct()
+            ->count(DB::raw('YEARWEEK(due_date, 1)'));
 
         $weeksOnTime = DB::table('orders_schedule')
             ->selectRaw('YEARWEEK(due_date, 1) as week')
@@ -1642,21 +1644,17 @@ class Order_ScheduleController extends Controller
         // 👇 Asegúrate de enviar $locations y $statuses a la vista
         return view('orders.schedule_statistics', compact(
             'ordenesSemana',
-            'ordenesAtrasadas',
             'cantidadAtrasadasSemanaPasada',
             'cantidadAtrasadas',
+            'ordenesAtrasadasMini',
             'cantidadHearst',
             'cantidadYarnell',
             'cantidadFloor',
             'cantidadStandby',
             'totalOrdenes',
-            'activeOrdersList',
             'completedOrdersYear',
-            'completedOrdersListYear',
             'uploadedOrdersYear',
-            'uploadedOrdersListYear',
             'ordenesPorCliente',
-            'ordenesAgregadasSemana',
             'totalAgregadasSemana',
             'customers',
             'resumen',
@@ -1754,6 +1752,165 @@ class Order_ScheduleController extends Controller
             'percentageOnTime' => $percentageOnTime,
             'weeksCount' => $orders->count(),
             'weeklyYear' => $weeklyYear,
+        ]);
+    }
+
+    /**
+     * AJAX: Rows para modales de Order Statistics (evita render pesado inicial)
+     */
+    public function statisticsLateOrdersRows(Request $request)
+    {
+        $today = Carbon::today();
+
+        $q = OrderSchedule::query()
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'qty',
+                'status',
+                'due_date',
+                'notes',
+            ])
+            ->where('due_date', '<', $today)
+            ->where('status', '!=', 'sent')
+            ->where('status', '!=', 'onhold')
+            ->where('status_order', '!=', 'inactive')
+            ->orderBy('due_date', 'asc');
+
+        $orders = $q->get();
+
+        return response()->json([
+            'count' => $orders->count(),
+            'html' => view('orders.partials.statistics_late_orders_rows', compact('orders'))->render(),
+        ]);
+    }
+
+    public function statisticsNewOrdersWeekRows(Request $request)
+    {
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        $q = OrderSchedule::query()
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'qty',
+                'status',
+                'created_at',
+                'due_date',
+                'sent_at',
+                'notes',
+            ])
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->where('status_order', '!=', 'inactive')
+            ->orderBy('created_at', 'asc');
+
+        $orders = $q->get();
+
+        return response()->json([
+            'count' => $orders->count(),
+            'html' => view('orders.schedule_tableneworders_week', compact('orders'))->render(),
+        ]);
+    }
+
+    public function statisticsActiveOrdersRows(Request $request)
+    {
+        $q = OrderSchedule::query()
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'qty',
+                'status',
+                'location',
+                'created_at',
+                'due_date',
+                'notes',
+            ])
+            ->where('status', '!=', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->orderBy('due_date', 'asc');
+
+        $orders = $q->get();
+
+        return response()->json([
+            'count' => $orders->count(),
+            'html' => view('orders.schedule_tableactive_orders', compact('orders'))->render(),
+        ]);
+    }
+
+    public function statisticsUploadedOrdersYearRows(Request $request)
+    {
+        $currentYear = Carbon::now()->year;
+
+        $q = OrderSchedule::query()
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'qty',
+                'status',
+                'created_at',
+                'due_date',
+                'sent_at',
+                'notes',
+            ])
+            ->where('status_order', '!=', 'inactive')
+            ->whereYear('created_at', $currentYear)
+            ->orderBy('created_at', 'asc');
+
+        $orders = $q->get();
+
+        return response()->json([
+            'count' => $orders->count(),
+            'html' => view('orders.schedule_tableuploaded_year', compact('orders'))->render(),
+        ]);
+    }
+
+    public function statisticsCompletedOrdersYearRows(Request $request)
+    {
+        $currentYear = Carbon::now()->year;
+
+        $q = OrderSchedule::query()
+            ->select([
+                'id',
+                'work_id',
+                'PN',
+                'Part_description',
+                'costumer',
+                'qty',
+                'status',
+                'created_at',
+                'due_date',
+                'sent_at',
+                'notes',
+            ])
+            ->where('status', 'sent')
+            ->where('status_order', '!=', 'inactive')
+            ->where(function ($query) use ($currentYear) {
+                $query->whereYear('sent_at', $currentYear)
+                    ->orWhere(function ($innerQuery) use ($currentYear) {
+                        $innerQuery->whereNull('sent_at')
+                            ->whereYear('due_date', $currentYear);
+                    });
+            })
+            ->orderByRaw('COALESCE(sent_at, due_date) asc');
+
+        $orders = $q->get();
+
+        return response()->json([
+            'count' => $orders->count(),
+            'html' => view('orders.schedule_tablecompleted_year', compact('orders'))->render(),
         ]);
     }
 

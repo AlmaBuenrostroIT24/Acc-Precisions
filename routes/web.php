@@ -135,6 +135,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/summary/on-time-filtered', [Order_ScheduleController::class, 'summaryOnTimeFiltered']);
     Route::get('/orders/summary/on-time-filtered-detail', [Order_ScheduleController::class, 'summaryOnTimeFilteredDetail']);
     Route::get('/orders/summary/detail', [Order_ScheduleController::class, 'summaryOrdersDetail']);
+
+    // Order Statistics: cargar rows de modales on-demand (evita HTML pesado inicial)
+    Route::get('/orders/statistics/modal/late-orders', [Order_ScheduleController::class, 'statisticsLateOrdersRows'])->name('orders.statistics.modal.late');
+    Route::get('/orders/statistics/modal/new-orders-week', [Order_ScheduleController::class, 'statisticsNewOrdersWeekRows'])->name('orders.statistics.modal.new_orders_week');
+    Route::get('/orders/statistics/modal/active-orders', [Order_ScheduleController::class, 'statisticsActiveOrdersRows'])->name('orders.statistics.modal.active');
+    Route::get('/orders/statistics/modal/uploaded-orders-year', [Order_ScheduleController::class, 'statisticsUploadedOrdersYearRows'])->name('orders.statistics.modal.uploaded_year');
+    Route::get('/orders/statistics/modal/completed-orders-year', [Order_ScheduleController::class, 'statisticsCompletedOrdersYearRows'])->name('orders.statistics.modal.completed_year');
 });
 Route::get('/orders/weekly-orders/ajax', [Order_ScheduleController::class, 'weeklyOrdersAjax'])->name('orders.weeklyOrders.ajax')->middleware('auth');
 

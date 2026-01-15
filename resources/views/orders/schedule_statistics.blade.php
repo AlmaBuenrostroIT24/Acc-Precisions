@@ -240,7 +240,7 @@
                     </div>
 
                     @php
-                        $lateOrdersMini = ($ordenesAtrasadas ?? collect())->take(20);
+                        $lateOrdersMini = ($ordenesAtrasadasMini ?? collect());
                     @endphp
                     <div class="mt-3">
                         <div class="d-flex align-items-center justify-content-between mb-1">
@@ -251,7 +251,7 @@
                                 </span>
                                 <div class="small font-weight-bold text-dark">Late</div>
                             </div>
-                            <span class="badge bg-danger text-white">{{ ($ordenesAtrasadas ?? collect())->count() }}</span>
+                            <span class="badge bg-danger text-white">{{ $cantidadAtrasadas }}</span>
                         </div>
                         <div class="table-responsive erp-scroll-pane erp-scroll-pane--late">
                             <table class="table table-sm table-striped mb-0 erp-mini-table erp-mini-table--fixed">
@@ -335,7 +335,7 @@
                 <div class="card-body py-2">
                     <?php
                         $pendingWeeklyOrders = $weeklyOrders->where('status', '!=', 'sent');
-                        $lateOrdersMini = ($ordenesAtrasadas ?? collect())->take(20);
+                        $lateOrdersMini = ($ordenesAtrasadasMini ?? collect());
                     ?>
                     <div class="row g-2">
                         {{-- Columna izquierda: resumen + pendientes --}}
@@ -435,7 +435,7 @@
                                     </span>
                                     <div class="small font-weight-bold text-dark">Late</div>
                                 </div>
-                                <span class="badge bg-danger text-white">{{ ($ordenesAtrasadas ?? collect())->count() }}</span>
+                                <span class="badge bg-danger text-white">{{ $cantidadAtrasadas }}</span>
                             </div>
                             <div class="table-responsive erp-scroll-pane erp-scroll-pane--late">
                                 <table class="table table-sm table-striped mb-0 erp-mini-table erp-mini-table--fixed">
@@ -978,8 +978,8 @@
                     <span
                         id="lateOrdersModalCount"
                         class="badge bg-light text-dark border"
-                        data-default="Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}"
-                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $ordenesAtrasadas->count() }} / {{ $ordenesAtrasadas->count() }}</span>
+                        data-default="Total: {{ $cantidadAtrasadas }} / {{ $cantidadAtrasadas }}"
+                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $cantidadAtrasadas }} / {{ $cantidadAtrasadas }}</span>
                     <div id="lateOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                 </div>
                 <div id="lateOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -998,34 +998,7 @@
                                 <th style="width: 80px;">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @forelse ($ordenesAtrasadas as $order)
-                            <tr>
-                                <td>{{ $order->work_id }}</td>
-                                <td>{{ $order->PN }}</td>
-                                <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                                    {{ $order->Part_description }}
-                                </td>
-                                <td>{{ ucfirst($order->costumer) }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>
-                                    <span class="badge bg-warning text-dark text-truncate d-inline-block" style="max-width: 70px;" title="{{ $order->status }}">
-                                        {{ $order->status }}
-                                    </span>
-                                </td>
-                                <td><span class="text-danger fw-semibold">{{ $order->due_date->format('M/d/Y') }}</span></td>
-                                <td>
-                                    <span class="badge bg-danger">
-                                        {{ $order->due_date->diffInDays(now()) }}
-                                    </span>
-                                </td>
-                                <td style="white-space: normal !important; font-size: 12px !important; word-break: break-word;" title="{{ $order->notes }}">
-                                    {{ $order->notes}}
-                                </td>
-                            </tr>
-                            @empty
-                            @endforelse
-                        </tbody>
+                        <tbody id="lateOrdersModalTbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1113,8 +1086,8 @@
                     <span
                         id="newOrdersWeekModalCount"
                         class="badge bg-light text-dark border"
-                        data-default="Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}"
-                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $ordenesAgregadasSemana->count() }} / {{ $ordenesAgregadasSemana->count() }}</span>
+                        data-default="Total: {{ $totalAgregadasSemana }} / {{ $totalAgregadasSemana }}"
+                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $totalAgregadasSemana }} / {{ $totalAgregadasSemana }}</span>
                     <div id="newOrdersWeekModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                 </div>
                 <div id="newOrdersWeekModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1136,9 +1109,7 @@
                                 <th style="width: 180px;">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @include('orders.schedule_tableneworders_week', ['orders' => $ordenesAgregadasSemana])
-                        </tbody>
+                        <tbody id="newOrdersWeekModalTbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1178,8 +1149,8 @@
                     <span
                         id="activeOrdersModalCount"
                         class="badge bg-light text-dark border"
-                        data-default="Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}"
-                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $activeOrdersList->count() }} / {{ $activeOrdersList->count() }}</span>
+                        data-default="Total: {{ $totalOrdenes }} / {{ $totalOrdenes }}"
+                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $totalOrdenes }} / {{ $totalOrdenes }}</span>
                     <div id="activeOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                 </div>
                 <div id="activeOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1201,9 +1172,7 @@
                                 <th>NOTES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @include('orders.schedule_tableactive_orders', ['orders' => $activeOrdersList])
-                        </tbody>
+                        <tbody id="activeOrdersModalTbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1240,8 +1209,8 @@
                     <span
                         id="uploadedOrdersModalCount"
                         class="badge bg-light text-dark border"
-                        data-default="Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}"
-                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $uploadedOrdersListYear->count() }} / {{ $uploadedOrdersListYear->count() }}</span>
+                        data-default="Total: {{ $uploadedOrdersYear }} / {{ $uploadedOrdersYear }}"
+                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $uploadedOrdersYear }} / {{ $uploadedOrdersYear }}</span>
                     <div id="uploadedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                 </div>
                 <div id="uploadedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1263,9 +1232,7 @@
                                 <th style="width: 180px;">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @include('orders.schedule_tableuploaded_year', ['orders' => $uploadedOrdersListYear])
-                        </tbody>
+                        <tbody id="uploadedOrdersModalTbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1299,8 +1266,8 @@
                     <span
                         id="completedOrdersModalCount"
                         class="badge bg-light text-dark border"
-                        data-default="Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}"
-                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $completedOrdersListYear->count() }} / {{ $completedOrdersListYear->count() }}</span>
+                        data-default="Total: {{ $completedOrdersYear }} / {{ $completedOrdersYear }}"
+                        style="font-size: 0.85rem; min-width: 110px; padding: 6px 10px; border-radius: 8px; margin-left: 6px; height: 34px; line-height: 22px;">Total: {{ $completedOrdersYear }} / {{ $completedOrdersYear }}</span>
                     <div id="completedOrdersModalButtons" class="d-flex align-items-center gap-2 ml-auto flex-wrap"></div>
                 </div>
                 <div id="completedOrdersModalLoading" class="text-center text-muted py-3 d-none">Loading...</div>
@@ -1322,9 +1289,7 @@
                                 <th style="width: 180px;">NOTES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @include('orders.schedule_tablecompleted_year', ['orders' => $completedOrdersListYear])
-                        </tbody>
+                        <tbody id="completedOrdersModalTbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -5841,12 +5806,7 @@
         });
 
         // Pre-inicializa el DataTable del modal en segundo plano (abre casi instantáneo)
-        setTimeout(() => {
-            try {
-                ensureWeekOrdersDtInitialized();
-                syncWeekOrdersDtFromCache();
-            } catch (e) {}
-        }, 150);
+        // (removed) do not pre-initialize week orders DataTable
 
         // Late Orders KPI -> modal detail (similar UX to OnTimeModal)
         const $lateOrdersModal = $('#lateOrdersModal');
@@ -5869,6 +5829,58 @@
                 search: 'applied'
             }).count();
             $el.text(`Total: ${filtered} / ${total}`);
+        }
+
+        function loadModalRowsOnce($modal, opts) {
+            const d = $.Deferred();
+            if (!$modal || !$modal.length) {
+                d.resolve(null);
+                return d.promise();
+            }
+            if ($modal.data('rowsLoaded')) {
+                d.resolve(null);
+                return d.promise();
+            }
+            $modal.data('rowsLoaded', true);
+
+            const $loading = opts && opts.$loading ? opts.$loading : $();
+            const $count = opts && opts.$count ? opts.$count : $();
+            const tbodySelector = (opts && opts.tbodySelector) ? opts.tbodySelector : null;
+            const url = (opts && opts.url) ? opts.url : null;
+
+            if (!url || !tbodySelector) {
+                $modal.data('rowsLoaded', false);
+                d.resolve(null);
+                return d.promise();
+            }
+
+            $modal.addClass('is-loading');
+            if ($loading && $loading.length) $loading.removeClass('d-none');
+
+            $.get(url)
+                .done(function(res) {
+                    const html = res && typeof res.html === 'string' ? res.html : '';
+                    $(tbodySelector).html(html);
+
+                    const count = (res && typeof res.count === 'number') ? res.count : null;
+                    if (count !== null && $count && $count.length) {
+                        const label = `Total: ${count} / ${count}`;
+                        $count.data('default', label);
+                        $count.text(label);
+                    }
+                    d.resolve(res);
+                })
+                .fail(function() {
+                    $modal.data('rowsLoaded', false);
+                    $(tbodySelector).html('<tr><td colspan="99" class="text-center text-muted py-3">Error loading data</td></tr>');
+                    d.resolve(null);
+                })
+                .always(function() {
+                    $modal.removeClass('is-loading');
+                    if ($loading && $loading.length) $loading.addClass('d-none');
+                });
+
+            return d.promise();
         }
 
         function populateLateOrdersFilters(dt) {
@@ -5936,7 +5948,8 @@
             applyModalTheme($lateOrdersModal, $lateOrdersTrigger);
             const lateDefaultText = ($lateOrdersCount.data('default') || '').toString();
             if (lateDefaultText) $lateOrdersCount.text(lateDefaultText);
-            const isReady = !!(lateOrdersDt && lateOrdersDt.__isSized && lateOrdersDt.__lastW === window.innerWidth);
+            const hasRows = !!$lateOrdersModal.data('rowsLoaded');
+            const isReady = !!(hasRows && lateOrdersDt && lateOrdersDt.__isSized && lateOrdersDt.__lastW === window.innerWidth);
             if (!isReady) {
                 $lateOrdersModal.addClass('is-loading');
                 $lateOrdersLoading.removeClass('d-none');
@@ -5956,24 +5969,31 @@
         });
 
         $lateOrdersModal.on('shown.bs.modal', function() {
-            const dt = ensureLateOrdersDtInitialized();
-            requestAnimationFrame(() => {
-                try {
-                    dt.columns.adjust().draw(false);
-                } catch (e) {}
-                dt.__isSized = true;
-                dt.__lastW = window.innerWidth;
-                $lateOrdersModal.removeClass('is-loading');
-                $lateOrdersLoading.addClass('d-none');
-            });
-            if (!dt.__countBound) {
-                dt.__countBound = true;
-                dt.on('draw', function() {
-                    updateFilteredCount(dt, $lateOrdersCount);
+            loadModalRowsOnce($lateOrdersModal, {
+                url: '{{ route('orders.statistics.modal.late') }}',
+                tbodySelector: '#lateOrdersModalTbody',
+                $loading: $lateOrdersLoading,
+                $count: $lateOrdersCount
+            }).always(function() {
+                const dt = ensureLateOrdersDtInitialized();
+                requestAnimationFrame(() => {
+                    try {
+                        dt.columns.adjust().draw(false);
+                    } catch (e) {}
+                    dt.__isSized = true;
+                    dt.__lastW = window.innerWidth;
+                    $lateOrdersModal.removeClass('is-loading');
+                    $lateOrdersLoading.addClass('d-none');
                 });
-            }
-            populateLateOrdersFilters(dt);
-            updateFilteredCount(dt, $lateOrdersCount);
+                if (!dt.__countBound) {
+                    dt.__countBound = true;
+                    dt.on('draw', function() {
+                        updateFilteredCount(dt, $lateOrdersCount);
+                    });
+                }
+                populateLateOrdersFilters(dt);
+                updateFilteredCount(dt, $lateOrdersCount);
+            });
         });
 
         function applyLateOrdersFilters() {
@@ -6320,7 +6340,9 @@
             applyModalTheme($newOrdersWeekModal, $newOrdersWeekTrigger);
             const newDefaultText = ($newOrdersWeekCount.data('default') || '').toString();
             if (newDefaultText) $newOrdersWeekCount.text(newDefaultText);
-            if (!newOrdersWeekDt) {
+            const hasRows = !!$newOrdersWeekModal.data('rowsLoaded');
+            const isReady = !!(hasRows && newOrdersWeekDt && newOrdersWeekDt.__isSized && newOrdersWeekDt.__lastW === window.innerWidth);
+            if (!isReady) {
                 $newOrdersWeekModal.addClass('is-loading');
                 $newOrdersWeekLoading.removeClass('d-none');
             } else {
@@ -6339,25 +6361,31 @@
         });
 
         $newOrdersWeekModal.on('shown.bs.modal', function() {
-            const dt = ensureNewOrdersWeekDtInitialized();
-            if (!newOrdersWeekDidAdjust) {
-                newOrdersWeekDidAdjust = true;
-                setTimeout(() => {
+            loadModalRowsOnce($newOrdersWeekModal, {
+                url: '{{ route('orders.statistics.modal.new_orders_week') }}',
+                tbodySelector: '#newOrdersWeekModalTbody',
+                $loading: $newOrdersWeekLoading,
+                $count: $newOrdersWeekCount
+            }).always(function() {
+                const dt = ensureNewOrdersWeekDtInitialized();
+                requestAnimationFrame(() => {
                     try {
-                        dt.columns.adjust();
+                        dt.columns.adjust().draw(false);
                     } catch (e) {}
-                }, 0);
-            }
-            if (!dt.__countBound) {
-                dt.__countBound = true;
-                dt.on('draw', function() {
-                    updateFilteredCount(dt, $newOrdersWeekCount);
+                    dt.__isSized = true;
+                    dt.__lastW = window.innerWidth;
+                    $newOrdersWeekModal.removeClass('is-loading');
+                    $newOrdersWeekLoading.addClass('d-none');
                 });
-            }
-            populateNewOrdersWeekFilters(dt);
-            updateFilteredCount(dt, $newOrdersWeekCount);
-            $newOrdersWeekModal.removeClass('is-loading');
-            $newOrdersWeekLoading.addClass('d-none');
+                if (!dt.__countBound) {
+                    dt.__countBound = true;
+                    dt.on('draw', function() {
+                        updateFilteredCount(dt, $newOrdersWeekCount);
+                    });
+                }
+                populateNewOrdersWeekFilters(dt);
+                updateFilteredCount(dt, $newOrdersWeekCount);
+            });
         });
 
         $newOrdersWeekModal.on('hidden.bs.modal', function() {
@@ -6370,11 +6398,7 @@
             $newOrdersWeekTrigger.removeClass('is-active');
         });
 
-        setTimeout(() => {
-            try {
-                ensureNewOrdersWeekDtInitialized();
-            } catch (e) {}
-        }, 220);
+        // Nota: no pre-inicializar (evita construir DataTables ocultos)
 
         // Orders Uploaded KPI -> modal detail (Orders Uploaded - current year)
         const $uploadedOrdersModal = $('#uploadedOrdersModal');
@@ -6568,7 +6592,9 @@
             applyModalTheme($uploadedOrdersModal, $uploadedOrdersTrigger);
             const upDefaultText = ($uploadedOrdersCount.data('default') || '').toString();
             if (upDefaultText) $uploadedOrdersCount.text(upDefaultText);
-            if (!uploadedOrdersDt) {
+            const hasRows = !!$uploadedOrdersModal.data('rowsLoaded');
+            const isReady = !!(hasRows && uploadedOrdersDt && uploadedOrdersDt.__isSized && uploadedOrdersDt.__lastW === window.innerWidth);
+            if (!isReady) {
                 $uploadedOrdersModal.addClass('is-loading');
                 $uploadedOrdersLoading.removeClass('d-none');
             } else {
@@ -6587,25 +6613,31 @@
         });
 
         $uploadedOrdersModal.on('shown.bs.modal', function() {
-            const dt = ensureUploadedOrdersDtInitialized();
-            if (!uploadedOrdersDidAdjust) {
-                uploadedOrdersDidAdjust = true;
-                setTimeout(() => {
+            loadModalRowsOnce($uploadedOrdersModal, {
+                url: '{{ route('orders.statistics.modal.uploaded_year') }}',
+                tbodySelector: '#uploadedOrdersModalTbody',
+                $loading: $uploadedOrdersLoading,
+                $count: $uploadedOrdersCount
+            }).always(function() {
+                const dt = ensureUploadedOrdersDtInitialized();
+                requestAnimationFrame(() => {
                     try {
-                        dt.columns.adjust();
+                        dt.columns.adjust().draw(false);
                     } catch (e) {}
-                }, 0);
-            }
-            if (!dt.__countBound) {
-                dt.__countBound = true;
-                dt.on('draw', function() {
-                    updateFilteredCount(dt, $uploadedOrdersCount);
+                    dt.__isSized = true;
+                    dt.__lastW = window.innerWidth;
+                    $uploadedOrdersModal.removeClass('is-loading');
+                    $uploadedOrdersLoading.addClass('d-none');
                 });
-            }
-            populateUploadedOrdersFilters(dt);
-            updateFilteredCount(dt, $uploadedOrdersCount);
-            $uploadedOrdersModal.removeClass('is-loading');
-            $uploadedOrdersLoading.addClass('d-none');
+                if (!dt.__countBound) {
+                    dt.__countBound = true;
+                    dt.on('draw', function() {
+                        updateFilteredCount(dt, $uploadedOrdersCount);
+                    });
+                }
+                populateUploadedOrdersFilters(dt);
+                updateFilteredCount(dt, $uploadedOrdersCount);
+            });
         });
 
         $uploadedOrdersModal.on('hidden.bs.modal', function() {
@@ -6619,11 +6651,19 @@
             $uploadedOrdersTrigger.removeClass('is-active');
         });
 
-        setTimeout(() => {
+        function runWhenIdle(fn, timeoutMs = 1200) {
             try {
-                ensureUploadedOrdersDtInitialized();
-            } catch (e) {}
-        }, 260);
+                if ('requestIdleCallback' in window) {
+                    window.requestIdleCallback(fn, { timeout: timeoutMs });
+                } else {
+                    setTimeout(fn, timeoutMs);
+                }
+            } catch (e) {
+                setTimeout(fn, timeoutMs);
+            }
+        }
+
+        // Nota: NO pre-inicializamos DataTables de modales para no bloquear el primer render.
 
         // Active Orders KPI -> modal detail
         const $activeOrdersModal = $('#activeOrdersModal');
@@ -6849,7 +6889,9 @@
                         applyModalTheme($activeOrdersModal, $triggerForTheme);
 
                         // Mostrar loader solo si DataTables aún no está inicializado
-                        const forceLoading = !activeOrdersDt;
+                        const hasRows = !!$activeOrdersModal.data('rowsLoaded');
+                        const isReady = !!(hasRows && activeOrdersDt && activeOrdersDt.__isSized && activeOrdersDt.__lastW === window.innerWidth);
+                        const forceLoading = !isReady;
                         if (forceLoading) {
                             $activeOrdersModal.addClass('is-loading');
                             $activeOrdersLoading.removeClass('d-none');
@@ -6869,6 +6911,12 @@
         });
 
                     $activeOrdersModal.on('shown.bs.modal', function() {
+                        loadModalRowsOnce($activeOrdersModal, {
+                            url: '{{ route('orders.statistics.modal.active') }}',
+                            tbodySelector: '#activeOrdersModalTbody',
+                            $loading: $activeOrdersLoading,
+                            $count: $activeOrdersCount
+                        }).always(function() {
                         const dt = ensureActiveOrdersDtInitialized();
                         // Inicializa ya visible para evitar "brinco" (estilo onTimeModal)
                         setTimeout(() => {
@@ -6890,6 +6938,8 @@
                                     updateActiveOrdersCount(dt);
                                 }
                             } catch (e) {}
+                            dt.__isSized = true;
+                            dt.__lastW = window.innerWidth;
                             // Ya establecimos el total correcto; permitir updates normales desde aquí
                             activeOrdersSuppressCount = false;
                             $activeOrdersModal.removeClass('is-loading');
@@ -6908,6 +6958,7 @@
                             $activeOrdersCustomer.prop('disabled', true);
                         }
                         updateActiveOrdersCount(dt);
+                        });
                     });
 
         $activeOrdersModal.on('hidden.bs.modal', function() {
@@ -6959,9 +7010,11 @@
                             $activeOrdersCustomer.prop('disabled', true);
                             activeOrdersCustomerLocked = true;
 
-                            const domCount = countActiveOrdersForCustomerFromDom(activeOrdersPrefillCustomer);
-                            if (domCount > 0) {
-                                $activeOrdersCount.text(`Total: ${domCount} / ${domCount}`);
+                            if ($activeOrdersModal.data('rowsLoaded')) {
+                                const domCount = countActiveOrdersForCustomerFromDom(activeOrdersPrefillCustomer);
+                                if (domCount > 0) {
+                                    $activeOrdersCount.text(`Total: ${domCount} / ${domCount}`);
+                                }
                             }
 
                             if ($.fn.DataTable.isDataTable('#activeOrdersModalTable')) {
@@ -6986,12 +7039,7 @@
             }
         });
 
-        // Pre-inicializar para evitar "brinco" y loader en la primera apertura
-        setTimeout(() => {
-            try {
-                ensureActiveOrdersDtInitialized();
-            } catch (e) {}
-        }, 50);
+        // Nota: NO pre-inicializamos DataTables de modales para no bloquear el primer render.
 
         // Completed Orders KPI -> modal detail (Completed Orders - current year)
         const $completedOrdersModal = $('#completedOrdersModal');
@@ -7192,7 +7240,9 @@
             applyModalTheme($completedOrdersModal, $completedOrdersTrigger);
             const compDefaultText = ($completedOrdersCount.data('default') || '').toString();
             if (compDefaultText) $completedOrdersCount.text(compDefaultText);
-            if (!completedOrdersDt) {
+            const hasRows = !!$completedOrdersModal.data('rowsLoaded');
+            const isReady = !!(hasRows && completedOrdersDt && completedOrdersDt.__isSized && completedOrdersDt.__lastW === window.innerWidth);
+            if (!isReady) {
                 $completedOrdersModal.addClass('is-loading');
                 $completedOrdersLoading.removeClass('d-none');
             } else {
@@ -7211,25 +7261,31 @@
         });
 
         $completedOrdersModal.on('shown.bs.modal', function() {
-            const dt = ensureCompletedOrdersDtInitialized();
-            if (!completedOrdersDidAdjust) {
-                completedOrdersDidAdjust = true;
-                setTimeout(() => {
+            loadModalRowsOnce($completedOrdersModal, {
+                url: '{{ route('orders.statistics.modal.completed_year') }}',
+                tbodySelector: '#completedOrdersModalTbody',
+                $loading: $completedOrdersLoading,
+                $count: $completedOrdersCount
+            }).always(function() {
+                const dt = ensureCompletedOrdersDtInitialized();
+                requestAnimationFrame(() => {
                     try {
-                        dt.columns.adjust();
+                        dt.columns.adjust().draw(false);
                     } catch (e) {}
-                }, 0);
-            }
-            if (!dt.__countBound) {
-                dt.__countBound = true;
-                dt.on('draw', function() {
-                    updateFilteredCount(dt, $completedOrdersCount);
+                    dt.__isSized = true;
+                    dt.__lastW = window.innerWidth;
+                    $completedOrdersModal.removeClass('is-loading');
+                    $completedOrdersLoading.addClass('d-none');
                 });
-            }
-            populateCompletedOrdersFilters(dt);
-            updateFilteredCount(dt, $completedOrdersCount);
-            $completedOrdersModal.removeClass('is-loading');
-            $completedOrdersLoading.addClass('d-none');
+                if (!dt.__countBound) {
+                    dt.__countBound = true;
+                    dt.on('draw', function() {
+                        updateFilteredCount(dt, $completedOrdersCount);
+                    });
+                }
+                populateCompletedOrdersFilters(dt);
+                updateFilteredCount(dt, $completedOrdersCount);
+            });
         });
 
         $completedOrdersModal.on('hidden.bs.modal', function() {
@@ -7242,11 +7298,7 @@
             $completedOrdersTrigger.removeClass('is-active');
         });
 
-        setTimeout(() => {
-            try {
-                ensureCompletedOrdersDtInitialized();
-            } catch (e) {}
-        }, 280);
+        // Nota: NO pre-inicializamos DataTables de modales para no bloquear el primer render.
 
         const weekFilter = document.getElementById('week-filter');
 
@@ -7365,7 +7417,11 @@
                 weekFilter.value = value;
 
                 // 💥 Disparar manualmente el evento change
-                weekFilter.dispatchEvent(new Event('change'));
+                runWhenIdle(() => {
+                    try {
+                        weekFilter.dispatchEvent(new Event('change'));
+                    } catch (e) {}
+                }, 900);
             }
         }
     });
