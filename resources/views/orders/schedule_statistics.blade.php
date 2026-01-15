@@ -1340,6 +1340,75 @@
         --kpi-teal: #17a2b8;
     }
 
+    /* KPI icon style like "tool" screenshot: light background + colored icon */
+    .kpi-erp .info-box {
+        --kpi-icon-bg: rgba(108, 117, 125, 0.14);
+        --kpi-icon-fg: #6c757d;
+    }
+
+    .kpi-erp .info-box .info-box-icon {
+        background: var(--kpi-icon-bg) !important;
+        background-color: var(--kpi-icon-bg) !important;
+        color: var(--kpi-icon-fg) !important;
+    }
+    .kpi-erp .info-box .info-box-icon i {
+        color: inherit !important;
+    }
+
+    /* Si usas bg-* en el span, también aplica el estilo (por si no quieres depender de fai-theme-*) */
+    .kpi-erp .info-box .info-box-icon.bg-primary { --kpi-icon-bg: rgba(0, 123, 255, 0.12); --kpi-icon-fg: #007bff; }
+    .kpi-erp .info-box .info-box-icon.bg-info { --kpi-icon-bg: rgba(23, 162, 184, 0.12); --kpi-icon-fg: #17a2b8; }
+    .kpi-erp .info-box .info-box-icon.bg-success { --kpi-icon-bg: rgba(40, 167, 69, 0.12); --kpi-icon-fg: #28a745; }
+    .kpi-erp .info-box .info-box-icon.bg-warning { --kpi-icon-bg: rgba(255, 193, 7, 0.14); --kpi-icon-fg: #d39e00; }
+    .kpi-erp .info-box .info-box-icon.bg-danger { --kpi-icon-bg: rgba(220, 53, 69, 0.12); --kpi-icon-fg: #dc3545; }
+    .kpi-erp .info-box .info-box-icon.bg-secondary { --kpi-icon-bg: rgba(108, 117, 125, 0.12); --kpi-icon-fg: #6c757d; }
+    .kpi-erp .info-box .info-box-icon.bg-dark { --kpi-icon-bg: rgba(52, 58, 64, 0.12); --kpi-icon-fg: #343a40; }
+
+    /* Override directo de Bootstrap bg-* (por si gana el !important de .bg-danger) */
+    .kpi-erp .info-box .info-box-icon.bg-primary { background-color: rgba(0, 123, 255, 0.12) !important; color: #007bff !important; }
+    .kpi-erp .info-box .info-box-icon.bg-info { background-color: rgba(23, 162, 184, 0.12) !important; color: #17a2b8 !important; }
+    .kpi-erp .info-box .info-box-icon.bg-success { background-color: rgba(40, 167, 69, 0.12) !important; color: #28a745 !important; }
+    .kpi-erp .info-box .info-box-icon.bg-warning { background-color: rgba(255, 193, 7, 0.14) !important; color: #d39e00 !important; }
+    .kpi-erp .info-box .info-box-icon.bg-danger { background-color: rgba(220, 53, 69, 0.12) !important; color: #dc3545 !important; }
+    .kpi-erp .info-box .info-box-icon.bg-secondary { background-color: rgba(108, 117, 125, 0.12) !important; color: #6c757d !important; }
+    .kpi-erp .info-box .info-box-icon.bg-dark { background-color: rgba(52, 58, 64, 0.12) !important; color: #343a40 !important; }
+
+    .kpi-erp .info-box.fai-theme-primary {
+        --kpi-icon-bg: rgba(0, 123, 255, 0.14);
+        --kpi-icon-fg: #007bff;
+    }
+
+    .kpi-erp .info-box.fai-theme-info {
+        --kpi-icon-bg: rgba(23, 162, 184, 0.14);
+        --kpi-icon-fg: #17a2b8;
+    }
+
+    .kpi-erp .info-box.fai-theme-success {
+        --kpi-icon-bg: rgba(40, 167, 69, 0.14);
+        --kpi-icon-fg: #28a745;
+    }
+
+    .kpi-erp .info-box.fai-theme-warning {
+        --kpi-icon-bg: rgba(255, 193, 7, 0.18);
+        --kpi-icon-fg: #d39e00;
+    }
+
+    .kpi-erp .info-box.fai-theme-danger {
+        --kpi-icon-bg: rgba(220, 53, 69, 0.14);
+        --kpi-icon-fg: #dc3545;
+    }
+
+    .kpi-erp .info-box.fai-theme-secondary {
+        --kpi-icon-bg: rgba(108, 117, 125, 0.14);
+        --kpi-icon-fg: #6c757d;
+    }
+
+    /* Optional: purple like screenshot */
+    .kpi-erp .info-box.fai-theme-purple {
+        --kpi-icon-bg: rgba(111, 66, 193, 0.14);
+        --kpi-icon-fg: #6f42c1;
+    }
+
     /* Theme vars (igual a FAI tabs) */
     .kpi-erp .fai-theme-info {
         --fai-hover-border: rgba(23, 162, 184, 0.25);
@@ -1608,7 +1677,9 @@
         font-size: 22px;
         line-height: 54px;
         border-radius: 8px;
-        background: #f2f4f7 !important;
+        background: var(--kpi-icon-bg) !important;
+        background-color: var(--kpi-icon-bg) !important;
+        color: var(--kpi-icon-fg) !important;
         box-shadow: none !important;
         display: flex;
         align-items: center;
@@ -1617,32 +1688,10 @@
         z-index: 1;
     }
 
-    .kpi-erp .info-box-icon.bg-success {
-        color: #198754 !important;
-    }
-
-    .kpi-erp .info-box-icon.bg-danger {
-        color: #dc3545 !important;
-    }
-
-    .kpi-erp .info-box-icon.bg-primary {
-        color: #0d6efd !important;
-    }
-
-    .kpi-erp .info-box-icon.bg-warning {
-        color: #f59e0b !important;
-    }
-
-    .kpi-erp .info-box-icon.bg-info {
-        color: #0d6efd !important;
-    }
-
-    .kpi-erp .info-box-icon.bg-info-teal {
-        color: var(--kpi-teal) !important;
-    }
-
-    .kpi-erp .info-box-icon.bg-secondary {
-        color: #6b7280 !important;
+    /* compat: si el span usa bg-* en lugar de fai-theme-* */
+    .kpi-erp .info-box .info-box-icon.bg-info-teal {
+        background-color: rgba(23, 162, 184, 0.12) !important;
+        color: #17a2b8 !important;
     }
 
     .kpi-erp .info-box .info-box-text {
