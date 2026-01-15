@@ -13,153 +13,146 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card mb-4 shadow-sm">
-            {{-- Filtros dinámicos --}}
-            <div class="card-body">
-                <form method="GET" action="{{ route('schedule.finished') }}" id="filterForm" class="mb-2 erp-finished-filters">
+           <form method="GET" action="{{ route('schedule.finished') }}" id="filterForm" class="mb-2 erp-finished-filters">
                     <div class="erp-filters-layout d-flex align-items-end justify-content-between flex-wrap" style="gap:.5rem">
                         <div class="erp-filters-fields d-flex flex-wrap align-items-end erp-inline-filters" style="gap:.5rem">
 
-                        {{-- 🔹 Location --}}
-                        <div class="form-group mb-0">
-                            <label for="locationFilter" class="mb-1 sr-only">Location</label>
-                            <div class="input-group input-group" style="min-width:180px">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-map-marker-alt text-danger"></i>
-                                    </span>
+                            {{-- 🔹 Location --}}
+                            <div class="form-group mb-0">
+                                <label for="locationFilter" class="mb-1 sr-only">Location</label>
+                                <div class="input-group input-group" style="min-width:180px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-map-marker-alt text-danger"></i>
+                                        </span>
+                                    </div>
+                                    <select name="location" id="locationFilter" class="form-control form-control-sm erp-filter-control auto-submit">
+                                        <option value="">— All —</option>
+                                        @foreach($locations ?? [] as $loc)
+                                        <option value="{{ strtolower($loc) }}" {{ strtolower(request('location')) == strtolower($loc) ? 'selected' : '' }}>
+                                            {{ $loc }}
+                                        </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <select name="location" id="locationFilter" class="form-control form-control-sm erp-filter-control auto-submit">
-                                    <option value="">— All —</option>
-                                    @foreach($locations ?? [] as $loc)
-                                    <option value="{{ strtolower($loc) }}" {{ strtolower(request('location')) == strtolower($loc) ? 'selected' : '' }}>
-                                        {{ $loc }}
-                                    </option>
-                                    @endforeach
-                                </select>
                             </div>
-                        </div>
 
-                        {{-- 🔹 Customer --}}
-                        <div class="form-group mb-0">
-                            <label for="customerFilter" class="mb-1 sr-only">Customer</label>
-                            <div class="input-group input-group" style="min-width:200px">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-user-tag text-primary"></i>
-                                    </span>
+                            {{-- 🔹 Customer --}}
+                            <div class="form-group mb-0">
+                                <label for="customerFilter" class="mb-1 sr-only">Customer</label>
+                                <div class="input-group input-group" style="min-width:200px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-user-tag text-primary"></i>
+                                        </span>
+                                    </div>
+                                    <select id="customerFilter" class="form-control form-control-sm erp-filter-control dt-filter">
+                                        <option value="">— All —</option>
+                                    </select>
                                 </div>
-                                <select id="customerFilter" class="form-control form-control-sm erp-filter-control dt-filter">
-                                    <option value="">— All —</option>
-                                </select>
                             </div>
-                        </div>
 
-                        {{-- 🔹 Year --}}
-                        <div class="form-group mb-0">
-                            <label for="year" class="mb-1 sr-only">Year</label>
+                            {{-- 🔹 Year --}}
+                            <div class="form-group mb-0">
+                                <label for="year" class="mb-1 sr-only">Year</label>
                                 <div class="input-group input-group date" id="yearPickerWrapper"
                                     data-target-input="nearest"
-                                data-initial-year="{{ request('year') ?? ($appliedYear ?? '') }}"
+                                    data-initial-year="{{ request('year') ?? ($appliedYear ?? '') }}"
                                     style="min-width:160px">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-calendar-alt text-success"></i>
-                                    </span>
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-alt text-success"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="year" name="year"
+                                        class="form-control form-control-sm datetimepicker-input erp-filter-control"
+                                        data-toggle="datetimepicker" data-target="#yearPickerWrapper"
+                                        value="{{ request('year') ?? ($appliedYear ?? '') }}" placeholder="Year" autocomplete="off">
                                 </div>
-                                <input type="text" id="year" name="year"
-                                    class="form-control form-control-sm datetimepicker-input erp-filter-control"
-                                    data-toggle="datetimepicker" data-target="#yearPickerWrapper"
-                                    value="{{ request('year') ?? ($appliedYear ?? '') }}" placeholder="Year" autocomplete="off">
                             </div>
-                        </div>
 
-                        {{-- 🔹 Month (display + hidden) --}}
-                        <div class="form-group mb-0">
-                            <label for="monthDisplay" class="mb-1 sr-only">Month</label>
-                            <div class="input-group input-group date" id="monthPickerWrapper"
-                                data-target-input="nearest" style="min-width:160px">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-calendar-alt text-danger"></i>
-                                    </span>
+                            {{-- 🔹 Month (display + hidden) --}}
+                            <div class="form-group mb-0">
+                                <label for="monthDisplay" class="mb-1 sr-only">Month</label>
+                                <div class="input-group input-group date" id="monthPickerWrapper"
+                                    data-target-input="nearest" style="min-width:160px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-alt text-danger"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="monthDisplay"
+                                        class="form-control form-control-sm datetimepicker-input erp-filter-control"
+                                        data-toggle="datetimepicker" data-target="#monthPickerWrapper"
+                                        placeholder="Month" autocomplete="off">
                                 </div>
-                                <input type="text" id="monthDisplay"
-                                    class="form-control form-control-sm datetimepicker-input erp-filter-control"
-                                    data-toggle="datetimepicker" data-target="#monthPickerWrapper"
-                                    placeholder="Month" autocomplete="off">
+                                <input type="hidden" id="month" name="month" value="{{ request('month') }}">
                             </div>
-                            <input type="hidden" id="month" name="month" value="{{ request('month') }}">
-                        </div>
 
-                        {{-- 🔹 Day --}}
-                        <div class="form-group mb-0">
-                            <label for="day" class="mb-1 sr-only">Day</label>
-                            <div class="input-group input-group date" id="dayPickerWrapper"
-                                data-target-input="nearest" style="min-width:180px">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-calendar-day text-warning"></i>
-                                    </span>
+                            {{-- 🔹 Day --}}
+                            <div class="form-group mb-0">
+                                <label for="day" class="mb-1 sr-only">Day</label>
+                                <div class="input-group input-group date" id="dayPickerWrapper"
+                                    data-target-input="nearest" style="min-width:180px">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-calendar-day text-warning"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="day" name="day"
+                                        class="form-control form-control-sm datetimepicker-input erp-filter-control"
+                                        data-toggle="datetimepicker" data-target="#dayPickerWrapper"
+                                        value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
+                                        placeholder="Day" autocomplete="off">
                                 </div>
-                                <input type="text" id="day" name="day"
-                                    class="form-control form-control-sm datetimepicker-input erp-filter-control"
-                                    data-toggle="datetimepicker" data-target="#dayPickerWrapper"
-                                    value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
-                                    placeholder="Day" autocomplete="off">
                             </div>
-                        </div>
 
-                        {{-- 🔹 Clean --}}
+                            {{-- 🔹 Clean --}}
 
                         </div>
 
                         <div class="erp-filters-actions d-flex flex-wrap align-items-end justify-content-end" style="gap:.5rem">
 
-                        <a href="{{ route('schedule.finished') }}"
-                            class="btn btn-erp-danger btn-sm erp-chart-btn flex-shrink-0"
-                            title="Clean">
-                            <i class="fas fa-eraser"></i>
-                        </a>
-
-
-                        {{-- 🔹 Quick actions (right aligned) --}}
-                        <div class="btn-group btn-group">
-                            <a class="btn btn-erp-primary btn-sm erp-chart-btn"
-                                href="{{ route('schedule.finished', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
-                                <i class="fas fa-bolt mr-1"></i> Today
+                            <a href="{{ route('schedule.finished') }}"
+                                class="btn btn-erp-danger btn-sm erp-chart-btn flex-shrink-0"
+                                title="Clean">
+                                <i class="fas fa-eraser"></i>
                             </a>
-                            <a class="btn btn-erp-primary btn-sm erp-chart-btn"
-                                href="{{ route('schedule.finished', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
-                                <i class="far fa-calendar-alt mr-1"></i> This Month
-                            </a>
-                            <a class="btn btn-erp-primary btn-sm erp-chart-btn"
-                                href="{{ route('schedule.finished', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
-                                <i class="far fa-calendar mr-1"></i> This Year
-                            </a>
-                        </div>
-
-                        {{-- 🔹 Counter --}}
 
 
-                        <span class="btn erp-chip erp-chip--purple align-self-center flex-shrink-0" style="pointer-events:none;">
-                            Total <span class="erp-chip-count" id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
-                        </span>
+                            {{-- 🔹 Quick actions (right aligned) --}}
+                            <div class="btn-group btn-group">
+                                <a class="btn btn-erp-primary btn-sm erp-chart-btn"
+                                    href="{{ route('schedule.finished', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                    <i class="fas fa-bolt mr-1"></i> Today
+                                </a>
+                                <a class="btn btn-erp-primary btn-sm erp-chart-btn"
+                                    href="{{ route('schedule.finished', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                    <i class="far fa-calendar-alt mr-1"></i> This Month
+                                </a>
+                                <a class="btn btn-erp-primary btn-sm erp-chart-btn"
+                                    href="{{ route('schedule.finished', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                    <i class="far fa-calendar mr-1"></i> This Year
+                                </a>
+                            </div>
+
+                            {{-- 🔹 Counter --}}
+
+
+                            <span class="btn erp-chip erp-chip--purple align-self-center flex-shrink-0" style="pointer-events:none;">
+                                Total <span class="erp-chip-count" id="badgeFinished">{{ isset($orders) ? count($orders) : 0 }}</span>
+                            </span>
                         </div>
                     </div>
                 </form>
+        <div class="card mb-4 shadow-sm">
+            {{-- Filtros dinámicos --}}
+             
+            <div class="card-body">
+            
 
-                <div id="finishedErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-2">
+                <div id="finishedErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-0">
                     <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
-                        <div class="input-group input-group-sm erp-toolbar-search" style="width: 260px;">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                            </div>
-                            <input id="finishedGlobalSearch" type="text" class="form-control erp-filter-control" placeholder="Search..." autocomplete="off">
-                        </div>
-
                         <div class="input-group input-group-sm" style="width: 130px;">
                             <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">Rows</span>
@@ -172,10 +165,16 @@
                             </select>
                         </div>
 
-                        <div class="erp-chip-group d-flex align-items-center flex-wrap" style="gap:.35rem">
-                            <button type="button" class="btn erp-chip" data-target-filter="all">
-                                All <span class="erp-chip-count" id="chipAll">0</span>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-erp-primary btn-sm erp-chart-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-columns mr-1"></i> Columns
                             </button>
+                            <div class="dropdown-menu dropdown-menu-right p-2" id="finishedColumnsMenu" style="min-width: 170px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
+                        <div class="erp-chip-group d-flex align-items-center flex-wrap" style="gap:.35rem">
                             <button type="button" class="btn erp-chip erp-chip--danger" data-target-filter="late">
                                 Late <span class="erp-chip-count" id="chipLate">0</span>
                             </button>
@@ -186,19 +185,9 @@
                                 Early <span class="erp-chip-count" id="chipEarly">0</span>
                             </button>
                         </div>
-                    </div>
-
-                    <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-erp-primary btn-sm erp-chart-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-columns mr-1"></i> Columns
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right p-2" id="finishedColumnsMenu" style="min-width: 220px;"></div>
+                        <div class="erp-toolbar-search" style="width: 260px;">
+                            <input id="finishedGlobalSearch" type="search" class="form-control erp-stats-search" placeholder="Search..." autocomplete="off">
                         </div>
-
-                        <button type="button" class="btn btn-erp-primary btn-sm erp-chart-btn" id="finishedExportCsv">
-                            <i class="fas fa-file-csv mr-1"></i> Export CSV
-                        </button>
 
                     </div>
                 </div>
@@ -206,25 +195,25 @@
                 <div class="table-responsive d-none" id="finishedTableWrapper">
                     {{-- Tabla --}}
 
-                    <table id="orders_endscheduleTable" class="table table-bordered table-sm table-hover erp-table">
+                    <table id="orders_endscheduleTable" class="table table-bordered table-sm table-hover erp-table" style="table-layout: fixed; width: 100%;">
                         <thead class="table-light thead-custom">
                             <tr class="text-center align-middle">
-                                <th class="text-center align-middle">LOCATION</th>
-                                <th class="text-center align-middle">WORKID</th>
-                                <th>PN</th>
-                                <th style="width: 220px; ">DESCRIPTION</th>
-                                <th>CUSTOMER</th>
-                                <th style="width: 55px; ">CO QTY</th>
-                                <th style="width: 55px; ">WO QTY</th>
-                                <th class="text-center align-middle">REP</th>
-                                <th class="text-center align-middle">OUT</th>
-                                <th style="width: 70px; " class="text-center align-middle">DUE DATE</th>
-                                <th style="width: 130px;">END DATE</th>
-                                <th class="text-center align-middle">TARGET</th>
-                                <th class="text-center align-middle">NOTES</th>
-                                <th class="text-center align-middle" style="width: 70px;">ORD ID</th>
-                                <th class="text-center align-middle" style="width: 90px;">CUST PO</th>
-                                <th class="text-center align-middle">STATUS</th>
+                                <th class="text-center align-middle" style="width: 65px;">LOC</th>
+                                <th class="text-center align-middle" style="width: 80px;">WORKID</th>
+                                <th style="width: 90px;">PN</th>
+                                <th class="text-center align-middle" style="width: 60px;">ORD</th>
+                                <th class="text-center align-middle" style="width: 95px;">PO</th>
+                                <th style="width: 250px;">DESCRIPTION</th>
+                                <th style="width: 100px;">CUSTOMER</th>
+                                <th style="width: 40px;">CO</th>
+                                <th style="width: 40px;">WO</th>
+                                <th class="text-center align-middle" style="width: 30px;">REP</th>
+                                <th class="text-center align-middle" style="width: 30px;">OUT</th>
+                                <th style="width: 70px;" class="text-center align-middle">DUE</th>
+                                <th style="width: 125px;">SENT</th>
+                                <th class="text-center align-middle" style="width: 95px;">TARGET</th>
+                                <th class="text-center align-middle" style="width: 160px;">NOTES</th>
+                                <th class="text-center align-middle" style="width: 80px;">STATUS</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
@@ -232,7 +221,6 @@
                             <tr data-status="{{ $order->status }}">
                                 <td data-last-location="{{ $order->last_location }}">
                                     <span class="d-block erp-location-text" style="color: black;">{{ $order->location }}</span>
-
                                     @if ($order->last_location === 'Yarnell')
                                     <span class="erp-pill erp-pill--warn erp-pill--sm d-inline-block mt-1">
                                         <i class="fas fa-map-marker-alt mr-1"></i> Yarnell
@@ -241,6 +229,8 @@
                                 </td>
                                 <td>{{ $order->work_id }}</td>
                                 <td>{{ $order->PN }}</td>
+                                <td class="text-center">{{ $order->co }}</td>
+                                <td class="text-center">{{ $order->cust_po }}</td>
                                 <td style="font-size: 12px;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td class="text-center">{{ $order->qty }}</td>
@@ -297,8 +287,6 @@
                                         {{ Str::limit($order->notes, 130) }}
                                     </span>
                                 </td>
-                                <td class="text-center">{{ $order->co }}</td>
-                                <td class="text-center">{{ $order->cust_po }}</td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
 
@@ -311,13 +299,13 @@
                                         </button>
 
                                         {{-- 🔹 Nuevo botón: PDF --}}
-                                         @can('sched.down.pdf.log')
-                                         <a href="{{ route('schedule.finished.pdf', $order->id) }}"
-                                             class="btn btn-sm btn-erp-danger erp-table-btn"
-                                             title="Download PDF"
-                                             target="_blank">
-                                             <i class="fas fa-file-pdf"></i>
-                                         </a>
+                                        @can('sched.down.pdf.log')
+                                        <a href="{{ route('schedule.finished.pdf', $order->id) }}"
+                                            class="btn btn-sm btn-erp-danger erp-table-btn"
+                                            title="Download PDF"
+                                            target="_blank">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
                                         @endcan
                                     </div>
                                 </td>
@@ -493,6 +481,83 @@
         outline: none;
     }
 
+    .erp-table-toolbar .erp-chart-btn {
+        height: 34px;
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-weight: 800;
+    }
+
+    .erp-table-toolbar .btn-erp-primary {
+        background: #f8fafc;
+        border: 1px solid #d5d8dd;
+        color: #1f2937;
+        box-shadow: none;
+    }
+
+    .erp-table-toolbar .btn-erp-primary i {
+        color: #0b5ed7;
+    }
+
+    /* Dropdown Columns estilo ERP */
+    #finishedColumnsMenu {
+        border-radius: 12px;
+        border: 1px solid #d5d8dd;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+        padding: 5px 6px;
+        max-height: 320px;
+        overflow: auto;
+    }
+
+    #finishedColumnsMenu .custom-control {
+        padding: 4px 6px 4px 1.85rem;
+        margin: 0;
+        border-radius: 9px;
+    }
+
+    #finishedColumnsMenu .custom-control:hover {
+        background: #f1f5f9;
+    }
+
+    #finishedColumnsMenu .custom-control-label {
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 0.78rem;
+        cursor: pointer;
+    }
+
+    #finishedColumnsMenu .custom-control-label::before {
+        border-radius: 7px;
+        border: 1px solid #d5d8dd;
+        background: #f8fafc;
+        box-shadow: none;
+    }
+
+    #finishedColumnsMenu .custom-control-input:checked~.custom-control-label::before {
+        background: #0b5ed7;
+        border-color: #0b5ed7;
+    }
+
+    /* Search similar a Order Statistics */
+    .erp-table-toolbar .erp-stats-search {
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid #d5d8dd;
+        padding: 6px 10px;
+        background: #fff;
+        box-shadow: none;
+        color: #0f172a;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .erp-table-toolbar .erp-stats-search:focus {
+        border-color: #94a3b8;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+        outline: none;
+    }
+
     .erp-chip {
         height: 34px;
         border-radius: 999px;
@@ -553,9 +618,9 @@
     /* Tabla estilo ERP */
     #finishedTableWrapper {
         border-radius: 12px;
-        border: 1.5px solid rgba(15, 23, 42, 0.14);
+        border: none;
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.94));
-        padding: 10px;
+        padding: 2px 10px 0;
     }
 
     /* Min-widths por columna para evitar "distorción" */
@@ -565,6 +630,15 @@
         border-radius: 10px;
         overflow: hidden;
         margin-bottom: 0;
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    /* Solo forzar scroll en pantallas chicas */
+    @media (max-width: 1200px) {
+        #orders_endscheduleTable.erp-table {
+            min-width: 1250px;
+        }
     }
 
     #orders_endscheduleTable.erp-table thead th {
@@ -576,12 +650,16 @@
         text-transform: uppercase;
         border-bottom: 1px solid #d5d8dd !important;
         vertical-align: middle;
+        padding: 6px 8px;
     }
 
     #orders_endscheduleTable.erp-table tbody td {
-        font-size: 0.96rem;
+        font-size: 0.92rem;
         color: #111827;
         vertical-align: middle;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 6px 8px;
     }
 
     #orders_endscheduleTable.erp-table tbody tr:hover {
@@ -727,6 +805,14 @@
     #orders_endscheduleTable_wrapper .dataTables_info {
         color: #475569;
         font-weight: 600;
+        font-size: 0.80rem;
+        line-height: 1.1;
+    }
+
+    #orders_endscheduleTable_wrapper .erp-dt-footer {
+        margin-top: 2px;
+        /* pegarlo a la tabla */
+        padding: 0 0 8px;
     }
 
     #orders_endscheduleTable_wrapper .pagination .page-link {
@@ -765,7 +851,7 @@
 
         // ---------------------- 1. INICIALIZAR DATATABLE ----------------------
         const table = $tableElement.DataTable({
-            dom: "rt<'d-flex align-items-center justify-content-between mt-2 flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
+            dom: "rt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
             scrollX: false,
             autoWidth: false,
             pageLength: 25,
@@ -787,7 +873,7 @@
                 [10, 'desc']
             ],
             columnDefs: [{
-                targets: [6, 7, 11],
+                targets: [9, 10, 15],
                 orderable: false
             }],
             deferRender: true, // 👈 opcional, ayuda a que cargue más suave/rápido
@@ -801,7 +887,7 @@
 
         // ---------------------- 2. POBLAR SELECTS DE FILTRO ----------------------
         populateFilterFromColumn(0, '#locationFilter'); // columna 0: location
-        populateFilterFromColumn(4, '#customerFilter'); // columna 4: customer
+        populateFilterFromColumn(6, '#customerFilter'); // columna 6: customer
 
         // ---------------------- 3. APLICAR FILTROS COMBINADOS (client-side) ----------------------
         $('#locationFilter, #customerFilter').on("change", function() {
@@ -827,7 +913,7 @@
             const locationMatch = !locationVal || combinedLocation.toLowerCase() === locationVal.toLowerCase();
 
             // ------------ CUSTOMER (columna 4) ------------
-            const customerCell = $(row).find('td').eq(4);
+            const customerCell = $(row).find('td').eq(6);
             const customerText = customerCell.text().trim().toLowerCase();
             const customerMatch = !customerVal || customerText === customerVal.toLowerCase();
 
@@ -923,7 +1009,7 @@
             $badge.text(filtered);
         }
 
-        let targetChipFilter = 'all';
+        let targetChipFilter = null;
 
         function getTargetCategoryFromCell(cellHtml) {
             const html = (cellHtml || '').toString().toLowerCase();
@@ -941,24 +1027,22 @@
             let late = 0;
             let onTime = 0;
             let early = 0;
-            let all = 0;
-
             for (let i = 0; i < rows.length; i++) {
-                all++;
-                const targetCell = rows[i][11]; // TARGET column
+                const targetCell = rows[i][13]; // TARGET column
                 const category = getTargetCategoryFromCell(targetCell);
                 if (category === 'late') late++;
                 if (category === 'on-time') onTime++;
                 if (category === 'early') early++;
             }
 
-            $('#chipAll').text(all);
             $('#chipLate').text(late);
             $('#chipOnTime').text(onTime);
             $('#chipEarly').text(early);
 
             $('#finishedErpToolbar .erp-chip').removeClass('is-active');
-            $(`#finishedErpToolbar .erp-chip[data-target-filter="${targetChipFilter}"]`).addClass('is-active');
+            if (targetChipFilter) {
+                $(`#finishedErpToolbar .erp-chip[data-target-filter="${targetChipFilter}"]`).addClass('is-active');
+            }
         }
 
         // Inicial
@@ -1002,22 +1086,30 @@
         // Chip filter for TARGET column
         $.fn.dataTable.ext.search.push(function(settings, data) {
             if (settings.nTable && settings.nTable.id !== 'orders_endscheduleTable') return true;
-            if (!targetChipFilter || targetChipFilter === 'all') return true;
+            if (!targetChipFilter) return true;
 
-            const targetHtml = (data[11] || '').toString().toLowerCase();
+            const targetHtml = (data[13] || '').toString().toLowerCase();
             if (targetChipFilter === 'late') return targetHtml.includes('late');
             if (targetChipFilter === 'on-time') return targetHtml.includes('on time');
             if (targetChipFilter === 'early') return targetHtml.includes('early');
             return true;
         });
 
+        // Click: aplica filtro; si vuelves a hacer clic en el mismo chip, lo quita (como "Total")
         $('#finishedErpToolbar').on('click', '.erp-chip', function() {
-            targetChipFilter = $(this).data('target-filter') || 'all';
+            const clicked = $(this).data('target-filter') || null;
+            targetChipFilter = (targetChipFilter === clicked) ? null : clicked;
             table.draw();
         });
 
         // Columns menu
         const $columnsMenu = $('#finishedColumnsMenu');
+
+        // Permite seleccionar mÃ¡s de una columna sin que el dropdown se cierre en cada click
+        $columnsMenu.on('mousedown click', function(e) {
+            e.stopPropagation();
+        });
+
         table.columns().every(function(idx) {
             const headerText = $(this.header()).text().trim();
             if (!headerText) return;
@@ -1035,47 +1127,6 @@
             const colIdx = Number($(this).data('col'));
             const visible = $(this).is(':checked');
             table.column(colIdx).visible(visible);
-        });
-
-        // Export CSV (visible columns, filtered rows)
-        $('#finishedExportCsv').on('click', function() {
-            const visibleCols = [];
-            table.columns().every(function(idx) {
-                if (this.visible()) visibleCols.push(idx);
-            });
-
-            const headers = visibleCols.map(i => $(table.column(i).header()).text().trim());
-            const rows = table.rows({
-                search: 'applied'
-            }).data();
-
-            const csvEscape = (value) => {
-                const s = (value ?? '').toString()
-                    .replace(/<[^>]*>/g, ' ')
-                    .replace(/\\s+/g, ' ')
-                    .trim()
-                    .replace(/\"/g, '\"\"');
-                return `\"${s}\"`;
-            };
-
-            const lines = [];
-            lines.push(headers.map(csvEscape).join(','));
-            for (let r = 0; r < rows.length; r++) {
-                const line = visibleCols.map(i => csvEscape(rows[r][i])).join(',');
-                lines.push(line);
-            }
-
-            const blob = new Blob([lines.join('\\n')], {
-                type: 'text/csv;charset=utf-8;'
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `completed-orders-${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         });
 
         // Hotkey: "/" focus search
@@ -1181,10 +1232,9 @@
                     $td.attr('data-order', res.sent_at_order || '');
 
                     // ----- 2) Actualizar TARGET DATE (columna 11) -----
-                    // 0=LOCATION, 1=WORKID, 2=PN, 3=DESC, 4=CUSTOMER, 5=CO QTY,
-                    // 6=WO QTY, 7=REPORT, 8=OUT/SRC, 9=DUE, 10=END, 11=TARGET, 12=NOTES, 13=ORD ID, 14=CUST PO, 15=STATUS
+                    // 0=LOC, 1=WORKID, 2=PN, 3=ORD, 4=PO, 5=DESC, 6=CUSTOMER, 7=CO, 8=WO, 9=REP, 10=OUT, 11=DUE, 12=END, 13=TARGET, 14=NOTES, 15=STATUS
                     const $row = $td.closest('tr');
-                    const $targetTd = $row.find('td').eq(11); // TARGET
+                    const $targetTd = $row.find('td').eq(13); // TARGET
 
                     let targetHtml = '<span>-</span>';
 
