@@ -24,8 +24,6 @@
 
 @section('content')
 
-{{-- Tabs --}}
-@include('orders.schedule_tab')
 
 {{-- Tab: By Active Schedules --}}
 <div class="row">

@@ -20,9 +20,15 @@
         if ($navbarTitle === '') {
             $navbarTitle = trim($__env->yieldContent('content_header_title'));
         }
+
+        $isScheduleRoute = request()->routeIs('schedule.*');
     @endphp
 
-    @if($navbarTitle !== '')
-        <span class="navbar-content-header ms-2">{{ $navbarTitle }}</span>
+    @if($isScheduleRoute)
+        <div class="ms-3 d-flex align-items-center erp-navbar-tabs-wrap" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">
+            @include('orders.schedule_tab_navbar')
+        </div>
+    @elseif($navbarTitle !== '')
+        <span class="navbar-content-header ms-3" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">{{ $navbarTitle }}</span>
     @endif
 </li>

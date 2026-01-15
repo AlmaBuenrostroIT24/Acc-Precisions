@@ -22,6 +22,38 @@
     align-items: center;
 }
 
+/* Ajuste para layout_fixed_navbar: el AdminLTE asume 3.5rem, pero aquÃ­ el navbar es mÃ¡s bajo */
+:root {
+    --ap-navbar-height: 34px;
+    --ap-navbar-border: 1px;
+    --ap-content-top-padding: 0.75rem;
+}
+
+/* Evita "franja blanca" arriba cuando el content-wrapper tiene margin-top */
+body {
+    background-color: #f4f6f9;
+}
+
+.content-wrapper > .content {
+    padding-top: var(--ap-content-top-padding);
+}
+
+.layout-navbar-fixed .wrapper .content-wrapper,
+.layout-navbar-fixed .wrapper .main-header.border-bottom-0 ~ .content-wrapper,
+.layout-navbar-fixed .wrapper .main-header.text-sm ~ .content-wrapper,
+.layout-navbar-fixed.text-sm .wrapper .content-wrapper,
+body.layout-navbar-fixed .wrapper .content-wrapper,
+body.layout-navbar-fixed .wrapper .main-header.border-bottom-0 ~ .content-wrapper,
+body.layout-navbar-fixed .wrapper .main-header.text-sm ~ .content-wrapper,
+body.layout-navbar-fixed.text-sm .wrapper .content-wrapper {
+    margin-top: calc(var(--ap-navbar-height) + var(--ap-navbar-border)) !important;
+}
+
+.layout-navbar-fixed .wrapper .main-sidebar,
+body.layout-navbar-fixed .wrapper .main-sidebar {
+    margin-top: calc(var(--ap-navbar-height) + var(--ap-navbar-border)) !important;
+}
+
 /* Ajusta el input del buscador del header para que encaje */
 .main-header.navbar .form-control-navbar,
 .main-header.navbar .navbar-search-block .form-control {

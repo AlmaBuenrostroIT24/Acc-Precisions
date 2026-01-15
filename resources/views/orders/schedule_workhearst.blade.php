@@ -9,8 +9,6 @@
 
 @section('content')
 
-{{-- Tabs --}}
-@include('orders.schedule_tab')
 
 <div class="row">
     {{-- Tarjeta 1 --}}

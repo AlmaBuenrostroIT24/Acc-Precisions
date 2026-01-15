@@ -9,8 +9,6 @@
 
 @section('content')
 
-{{-- Tabs --}}
-@include('orders.schedule_tab')
 
 {{-- MeTRICAS PRINCIPALES COMPACTAS & ATRACTIVAS --}}
 <div class="container-fluid pt-0 pb-4">
@@ -1373,7 +1371,7 @@
 <style>
     /* KPIs estilo ERP (solo para la fila superior) */
     .kpi-erp {
-        margin-top: -10px;
+        margin-top: 0;
         --kpi-teal: #17a2b8;
     }
 
