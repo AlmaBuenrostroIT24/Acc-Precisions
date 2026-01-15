@@ -26,12 +26,6 @@
 
 @section('content')
 
-
-
-{{-- Tabs --}}
-@include('qa.faisummary.faisummary_tab')
-
-
 <div class="card shadow">
     <div class="card-header  d-flex align-items-center">
         <strong><i class="fas fa-exclamation-triangle mr-2"></i>Rejected FAI Orders</strong>

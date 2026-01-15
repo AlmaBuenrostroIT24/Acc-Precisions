@@ -22,11 +22,16 @@
         }
 
         $isScheduleRoute = request()->routeIs('schedule.*');
+        $isFaiSummaryRoute = request()->routeIs('faisummary.*') || request()->routeIs('qa.faisummary.*');
     @endphp
 
     @if($isScheduleRoute)
-        <div class="ms-3 d-flex align-items-center erp-navbar-tabs-wrap" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">
+        <div class="ms-3 d-flex align-items-center navbar-tabs-wrap" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">
             @include('orders.schedule_tab_navbar')
+        </div>
+    @elseif($isFaiSummaryRoute)
+        <div class="ms-3 d-flex align-items-center navbar-tabs-wrap" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">
+            @include('qa.faisummary.faisummary_tab_navbar')
         </div>
     @elseif($navbarTitle !== '')
         <span class="navbar-content-header ms-3" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">{{ $navbarTitle }}</span>

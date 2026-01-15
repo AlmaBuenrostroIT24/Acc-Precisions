@@ -27,10 +27,6 @@
 
 @section('content')
 
-
-{{-- Tabs --}}
-@include('qa.faisummary.faisummary_tab')
-
 <div class="card-body">
     {{-- Filtros + KPIs --}}
     <div class="row mb-3 align-items-center">

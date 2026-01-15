@@ -34,6 +34,33 @@ body {
     background-color: #f4f6f9;
 }
 
+.navbar-tabs-wrap {
+    max-width: min(72vw, 900px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.navbar-tabs-wrap::-webkit-scrollbar {
+    height: 6px;
+}
+
+.navbar-tabs-wrap::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.18);
+    border-radius: 999px;
+}
+
+.navbar-tabs-wrap .nav-link.active,
+.navbar-tabs-wrap .nav-item.show > .nav-link {
+    font-weight: 900;
+}
+
+.navbar-tabs-wrap .nav-link.active {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+    border-radius: 999px;
+}
+
 .content-wrapper > .content {
     padding-top: var(--ap-content-top-padding);
 }
@@ -51,6 +78,22 @@ body.layout-navbar-fixed.text-sm .wrapper .content-wrapper {
 
 .layout-navbar-fixed .wrapper .main-sidebar,
 body.layout-navbar-fixed .wrapper .main-sidebar {
+    margin-top: 0 !important;
+}
+
+/* Sidebar: evitar "doble margen" y alinear con navbar bajo */
+.layout-navbar-fixed .wrapper .brand-link {
+    height: calc(var(--ap-navbar-height) + var(--ap-navbar-border));
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.layout-navbar-fixed .wrapper .main-sidebar .sidebar,
+body.layout-navbar-fixed .wrapper .main-sidebar .sidebar,
+.layout-navbar-fixed.layout-fixed .wrapper .sidebar,
+.layout-navbar-fixed.layout-fixed.text-sm .wrapper .sidebar {
     margin-top: calc(var(--ap-navbar-height) + var(--ap-navbar-border)) !important;
 }
 

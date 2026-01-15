@@ -26,13 +26,6 @@
 
 @section('content')
 
-
-
-{{-- Tabs --}}
-@include('qa.faisummary.faisummary_tab')
-
-{{-- Tab: By Active Schedules --}}
-
 <div class="row">
     {{-- === Columna izquierda: TABLA === --}}
     <div class="col-md-10">
