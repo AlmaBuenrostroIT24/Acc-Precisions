@@ -2,10 +2,22 @@
 // Requiere jQuery, moment y tempusdominus-bootstrap-4 ya cargados
 
 (function () {
+  function setWrapperSkipNextChange($wrapper) {
+    if (!$wrapper || !$wrapper.length) return;
+    $wrapper.data('df-skip-next-change', true);
+    // fallback: limpiar aunque no dispare change
+    setTimeout(() => {
+      try {
+        $wrapper.data('df-skip-next-change', false);
+      } catch (e) {}
+    }, 0);
+  }
+
   function setMonthViewToYear($monthWrapper, year) {
     if (!year || !/^\d{4}$/.test(String(year))) return;
     const view = moment({ year: parseInt(year, 10), month: 0, day: 1 });
     if ($monthWrapper && $monthWrapper.length) {
+      setWrapperSkipNextChange($monthWrapper);
       $monthWrapper.datetimepicker('viewDate', view);
     }
   }
@@ -153,6 +165,10 @@
       });
 
       $monthW.on('change.datetimepicker', function (e) {
+        if ($(this).data('df-skip-next-change')) {
+          $(this).data('df-skip-next-change', false);
+          return;
+        }
         if (settingMonth) return;
 
         if (e.date) {
