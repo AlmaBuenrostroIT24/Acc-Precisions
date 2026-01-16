@@ -106,7 +106,7 @@
         <div class="col-12 col-xl-8 d-flex">
             <div class="card shadow-sm border-0 rounded-3 h-100 w-100">
                 <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
-                    {{-- T├¡tulo a la izquierda --}}
+                    {{-- Titulo a la izquierda --}}
                     <div class="d-flex align-items-center">
                         <span class="erp-card-icon erp-card-icon--success mr-2">
                             <i class="fas fa-calendar-week"></i>
@@ -195,48 +195,70 @@
                         <span class="erp-card-icon mr-2">
                             <i class="fas fa-box"></i>
                         </span>
-                        <div class="erp-card-title">Pending & Late Orders This Week</div>
+                        <div class="font-weight-bold text-dark" style="font-size:.95rem;">Pending &amp; Late Orders This Week</div>
                     </div>
                 </div>
                 <div class="card-body py-2">
-                    <div class="text-start small mb-2">
-                        <div class="erp-summary-grid">
-                            <div class="erp-summary-left">
-                                <div class="erp-summary-pair">
-                                    <div class="erp-summary-label text-dark">
-                                        <i class="fas fa-list-alt"></i> Total
-                                    </div>
-                                    <div class="erp-summary-value">{{ $resumen['total'] ?? 0 }}</div>
-                                </div>
-
-                                <div class="erp-summary-pair">
-                                    <div class="erp-summary-label text-dark">
-                                        <i class="fas fa-check-circle text-success"></i> Pending
-                                    </div>
-                                    <div class="erp-summary-value text-success">0</div>
-                                </div>
-
-                                <div class="erp-summary-pair">
-                                    <div class="erp-summary-label text-dark">
-                                        <i class="fas fa-paper-plane text-success"></i> Sent
-                                    </div>
-                                    <div class="erp-summary-value text-success">{{ $resumen['send'] ?? 0 }}</div>
-                                </div>
+                    @php
+                        $pendingWeeklyOrders = ($weeklyOrders ?? collect())->where('status', '!=', 'sent');
+                    @endphp
+                    <div class="mt-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center">
+                                <span class="erp-card-icon mr-2"
+                                    style="width: 26px; height: 26px; border-radius: 9px;
+                                        background: {{ $pendingWeeklyOrders->count() === 0 ? 'rgba(40, 167, 69, 0.12)' : 'rgba(245, 158, 11, 0.14)' }};
+                                        border: 1px solid {{ $pendingWeeklyOrders->count() === 0 ? 'rgba(40, 167, 69, 0.35)' : 'rgba(245, 158, 11, 0.30)' }};
+                                        color: {{ $pendingWeeklyOrders->count() === 0 ? '#15803d' : '#b45309' }};">
+                                    <i class="fas {{ $pendingWeeklyOrders->count() === 0 ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                                </span>
+                                <div class="small font-weight-bold text-dark">Pending</div>
+                                @if ($pendingWeeklyOrders->count() === 0)
+                                    <span class="ml-2 px-2 py-0 small font-weight-bold"
+                                        style="border: 1px solid rgba(40, 167, 69, 0.35); background: rgba(40, 167, 69, 0.12); border-radius: 999px; color: #0f172a;">
+                                        Everything shipped this week
+                                    </span>
+                                @endif
                             </div>
-
-                            <div class="erp-summary-alert"
-                                style="border: 1px solid rgba(40, 167, 69, 0.35); background: rgba(40, 167, 69, 0.12);">
-                                <i class="fas fa-check-circle text-success"></i>
-                                <span class="small font-weight-bold">Everything shipped this week.</span>
-                            </div>
+                            <span
+                                class="badge {{ $pendingWeeklyOrders->count() === 0 ? 'bg-success text-white' : 'bg-warning text-dark' }}">{{ $pendingWeeklyOrders->count() }}</span>
                         </div>
                     </div>
 
-                    <div class="text-center mt-2">
-                        <div class="erp-icon-box erp-icon-box--success mb-2">
-                            <i class="fas fa-box-open text-success fa-lg"></i>
+                    <div class="text-start small mt-2 mb-2">
+                        <div class="erp-summary-grid">
+                            <div class="erp-summary-left">
+                                <div class="erp-summary-stats">
+                                    <div class="erp-summary-stat">
+                                        <div class="erp-summary-stat-label">
+                                            <i class="fas fa-list-alt"></i> Total
+                                        </div>
+                                        <div class="erp-summary-stat-value">{{ $resumen['total'] ?? 0 }}</div>
+                                    </div>
+
+                                    <div class="erp-summary-stat">
+                                        <div class="erp-summary-stat-label">
+                                            <i class="fas fa-check-circle text-success"></i> Pending
+                                        </div>
+                                        <div class="erp-summary-stat-value text-success">0</div>
+                                    </div>
+
+                                    <div class="erp-summary-stat">
+                                        <div class="erp-summary-stat-label">
+                                            <i class="fas fa-paper-plane text-success"></i> Sent
+                                        </div>
+                                        <div class="erp-summary-stat-value text-success">{{ $resumen['send'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <div class="erp-icon-box erp-icon-box--success mb-1">
+                                    <i class="fas fa-box-open text-success fa-lg"></i>
+                                </div>
+                              
+                            </div>
                         </div>
-                        <div class="text-muted font-weight-bold">No pending orders.</div>
                     </div>
 
                     @php
@@ -322,14 +344,10 @@
                 <?php else: ?>
                 <div class="card-header erp-card-header d-flex align-items-center flex-wrap">
                     <div class="d-flex align-items-center">
-                        <span class="erp-card-icon erp-card-icon--warning mr-2">
-                            <i class="fas fa-exclamation-circle"></i>
+                        <span class="erp-card-icon mr-2">
+                            <i class="fas fa-box"></i>
                         </span>
-                        <div class="erp-card-title">Pending Orders This Week</div>
-                    </div>
-                    <div class="erp-card-meta ml-auto">
-                        Pending: <strong class="text-warning"> {{ $resumen['pendients'] ?? 0 }}</strong> /
-                        <strong>{{ $resumen['total'] ?? 0 }}</strong>
+                        <div class="font-weight-bold text-dark" style="font-size:.95rem;">Pending &amp; Late Orders This Week</div>
                     </div>
                 </div>
                 <div class="card-body py-2">
@@ -340,42 +358,13 @@
                     <div class="row g-2">
                         {{-- Columna izquierda: resumen + pendientes --}}
                         <div class="col-12">
-                            <div class="text-start small mb-2">
-                                <div class="erp-summary-grid">
-                                    <div class="erp-summary-left">
-                                        <div class="erp-summary-pair">
-                                            <div class="erp-summary-label text-dark">
-                                                <i class="fas fa-list-alt"></i> Total
-                                            </div>
-                                            <div class="erp-summary-value">{{ $resumen['total'] ?? 0 }}</div>
-                                        </div>
-
-                                        <div class="erp-summary-pair">
-                                            <div class="erp-summary-label text-dark">
-                                                <i class="fas fa-clock text-warning"></i> Pending
-                                            </div>
-                                            <div class="erp-summary-value text-warning">{{ $resumen['pendients'] ?? 0 }}</div>
-                                        </div>
-
-                                        <div class="erp-summary-pair">
-                                            <div class="erp-summary-label text-dark">
-                                                <i class="fas fa-paper-plane text-success"></i> Sent
-                                            </div>
-                                            <div class="erp-summary-value text-success">{{ $resumen['send'] ?? 0 }}</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="erp-summary-alert">
-                                        <i class="fas fa-exclamation-triangle text-warning"></i>
-                                        <span class="small font-weight-bold">There are still orders to be sent.</span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <div class="d-flex align-items-center">
-                                    <span class="erp-card-icon mr-2 {{ $pendingWeeklyOrders->count() === 0 ? 'erp-card-icon--success' : 'erp-card-icon--warning' }}"
-                                        style="width: 26px; height: 26px; border-radius: 9px;">
+                                    <span class="erp-card-icon mr-2"
+                                        style="width: 26px; height: 26px; border-radius: 9px;
+                                            background: {{ $pendingWeeklyOrders->count() === 0 ? 'rgba(40, 167, 69, 0.12)' : 'rgba(245, 158, 11, 0.14)' }};
+                                            border: 1px solid {{ $pendingWeeklyOrders->count() === 0 ? 'rgba(40, 167, 69, 0.35)' : 'rgba(245, 158, 11, 0.30)' }};
+                                            color: {{ $pendingWeeklyOrders->count() === 0 ? '#15803d' : '#b45309' }};">
                                         <i class="fas {{ $pendingWeeklyOrders->count() === 0 ? 'fa-check-circle' : 'fa-clock' }}"></i>
                                     </span>
                                     <div class="small font-weight-bold text-dark">Pending</div>
@@ -388,6 +377,40 @@
                                 </div>
                                 <span
                                     class="badge {{ $pendingWeeklyOrders->count() === 0 ? 'bg-success text-white' : 'bg-warning text-dark' }}">{{ $pendingWeeklyOrders->count() }}</span>
+                            </div>
+
+                            <div class="text-start small mt-2 mb-2">
+                                <div class="erp-summary-grid">
+                                    <div class="erp-summary-left">
+                                        <div class="erp-summary-stats">
+                                            <div class="erp-summary-stat">
+                                                <div class="erp-summary-stat-label">
+                                                    <i class="fas fa-list-alt"></i> Total
+                                                </div>
+                                                <div class="erp-summary-stat-value">{{ $resumen['total'] ?? 0 }}</div>
+                                            </div>
+
+                                            <div class="erp-summary-stat">
+                                                <div class="erp-summary-stat-label">
+                                                    <i class="fas fa-clock text-warning"></i> Pending
+                                                </div>
+                                                <div class="erp-summary-stat-value text-warning">{{ $resumen['pendients'] ?? 0 }}</div>
+                                            </div>
+
+                                            <div class="erp-summary-stat">
+                                                <div class="erp-summary-stat-label">
+                                                    <i class="fas fa-paper-plane text-success"></i> Sent
+                                                </div>
+                                                <div class="erp-summary-stat-value text-success">{{ $resumen['send'] ?? 0 }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="erp-summary-alert">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        <span class="small font-weight-bold">There are still orders to be sent.</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="table-responsive erp-scroll-pane erp-scroll-pane--pending">
                                 <table class="table table-sm table-striped mb-0 erp-mini-table">
@@ -1934,18 +1957,49 @@
     }
 
     .erp-summary-left {
-        display: inline-flex;
-        flex-wrap: wrap;
-        gap: 8px 16px;
-        align-items: center;
+        width: 100%;
+    }
+
+    .erp-summary-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(92px, 1fr));
+        gap: 8px;
+        width: 100%;
         font-size: 0.95rem;
     }
 
-    .erp-summary-pair {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+    .erp-summary-stat {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 10px;
+        padding: .35rem .5rem;
+        min-width: 0;
+        line-height: 1.1;
+    }
+
+    .erp-summary-stat-label {
+        font-size: .70rem;
+        font-weight: 800;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        color: #64748b;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .erp-summary-stat-value {
+        margin-top: 2px;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 575.98px) {
+        .erp-summary-stats {
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+        }
     }
 
     .erp-summary-alert {
