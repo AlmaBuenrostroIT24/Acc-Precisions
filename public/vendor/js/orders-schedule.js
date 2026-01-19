@@ -7,9 +7,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableElement = $("#orders_scheduleTable"); // jQuery, ok si no existe
     const csrfToken = $('meta[name="csrf-token"]').attr("content");
     const loadingMsg = qs("loading-message");
+    const loadingOverlay = qs("loading-overlay");
     const uploadForm = qs("upload-form");
     const inputCsv = qs("csv_file");
     const labelCsv = qs("csv_file_label");
+    const btnUpload = qs("btn-upload");
     //------Agregar funcionalidad para cerrar el mensaje---------------
 
     // ------ Cerrar mensajes (si existen) ------
@@ -47,10 +49,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-    // ------ Mostrar mensaje de carga al enviar form (si existe) ------
-    if (uploadForm && loadingMsg) {
+    // ------ Mostrar mensaje/overlay de carga al enviar form (si existe) ------
+    if (uploadForm) {
         uploadForm.addEventListener("submit", () => {
-            loadingMsg.style.display = "block";
+            if (loadingMsg) loadingMsg.style.display = "block";
+            if (loadingOverlay) loadingOverlay.classList.remove("d-none");
+            if (btnUpload) btnUpload.disabled = true;
+            // No deshabilitar el input file antes de enviar: un control disabled no se incluye en el POST,
+            // y Laravel lo interpreta como "csv_file is required".
         });
     }
 
@@ -221,8 +227,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 { targets: 2, visible: false, searchable: true }, // StatusText
                 { targets: 12, visible: false, searchable: false }, // DueDateText
             ],
-            // Habilita zona para botones (B)
-            dom: "Bfrtip",
+            // ERP footer (match Orders Completed): table + footer (info/pagination). Buttons hidden via JS.
+            dom: "Brt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
 
             //  Botones (se ocultaran visualmente y los dispararemos desde el <select>)
             buttons: [
@@ -440,6 +446,21 @@ document.addEventListener("DOMContentLoaded", () => {
         //  Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
 
+        // Search compacto en la cabecera (si existe). Si no existe, se mantiene el search nativo.
+        const topSearch = qs("scheduleGlobalSearch");
+        if (topSearch && window.table) {
+            const dtFilterEl = document.getElementById(
+                "orders_scheduleTable_filter"
+            );
+            if (dtFilterEl) dtFilterEl.style.display = "none";
+            try {
+                topSearch.value = window.table.search() || "";
+            } catch (e) {}
+            topSearch.addEventListener("input", () => {
+                window.table.search(topSearch.value || "").draw();
+            });
+        }
+
         // Oculta los botones nativos (opcional)
         setTimeout(() => $(".dt-buttons").hide(), 0); // por si el DOM se pinta despues
 
@@ -631,8 +652,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         `#alerta-${orderId} .progress-bar`
                     );
                     if (alertaDiv && mData.alertColor) {
+                        // Mantener clase ERP del alert (para que no cambie el estilo al refrescar)
+                        const keepErp = alertaDiv.classList.contains("erp-alert-bar") ||
+                            !!alertaDiv.closest(".erp-alert");
                         alertaDiv.className =
-                            "progress-bar " + mData.alertColor;
+                            "progress-bar " +
+                            (keepErp ? "erp-alert-bar " : "") +
+                            mData.alertColor;
                         alertaDiv.textContent =
                             mData.alertLabel || alertaDiv.textContent;
                     }
@@ -909,11 +935,18 @@ ${error && error.message ? error.message : error}`);
             return;
         }
 
+        const isPriority = String(row.dataset.priority || "").toLowerCase() === "yes";
+
         if (dias < 0) {
             row.classList.add("row-late");
-        } else if (statusVal) {
+            if (isPriority) row.classList.add("row-priority");
+            return;
+        }
+
+        if (statusVal) {
             row.classList.add(`bg-status-${statusVal}`);
         }
+        if (isPriority) row.classList.add("row-priority");
     }
 
     //-------------------------------------------------START---------------------------------------------------------------
@@ -1131,8 +1164,12 @@ ${error && error.message ? error.message : error}`);
                                 `#alerta-${orderId} .progress-bar`
                             );
                             if (alertaDiv) {
+                                const keepErp = alertaDiv.classList.contains("erp-alert-bar") ||
+                                    !!alertaDiv.closest(".erp-alert");
                                 alertaDiv.className =
-                                    "progress-bar " + data.alertColor;
+                                    "progress-bar " +
+                                    (keepErp ? "erp-alert-bar " : "") +
+                                    data.alertColor;
                                 alertaDiv.textContent = data.alertLabel;
                             }
                         }
@@ -1494,14 +1531,23 @@ ${error && error.message ? error.message : error}`);
                                 `#alerta-${orderId} .progress-bar`
                             );
                             if (alertaDiv) {
+                                const keepErp = alertaDiv.classList.contains("erp-alert-bar") ||
+                                    !!alertaDiv.closest(".erp-alert");
                                 alertaDiv.className =
-                                    "progress-bar " + data.alertColor;
+                                    "progress-bar " +
+                                    (keepErp ? "erp-alert-bar " : "") +
+                                    data.alertColor;
                                 alertaDiv.textContent = data.alertLabel;
                             }
                         }
 
                         //  Actualiza el valor de referencia para futuros cambios
                         select.data("old-status", newStatus);
+
+                        // Asegurar que el color de fila respete "Late" primero (vs. status)
+                        if (typeof applyRowLateStyle === "function") {
+                            applyRowLateStyle(orderId, data.dias_restantes, data.status);
+                        }
                     } else {
                         alert("Hubo un problema al actualizar el estado.");
                     }
@@ -2151,8 +2197,12 @@ ${error && error.message ? error.message : error}`);
                                 `#alerta-${orderId} .progress-bar`
                             );
                             if (alertaDiv) {
+                                const keepErp = alertaDiv.classList.contains("erp-alert-bar") ||
+                                    !!alertaDiv.closest(".erp-alert");
                                 alertaDiv.className =
-                                    "progress-bar " + data.alertColor;
+                                    "progress-bar " +
+                                    (keepErp ? "erp-alert-bar " : "") +
+                                    data.alertColor;
                                 alertaDiv.textContent = data.alertLabel;
                             }
                         }

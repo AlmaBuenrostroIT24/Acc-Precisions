@@ -1,101 +1,126 @@
-.bg-status-pending {
-    background-color: #fcf4dd !important; /* Amarillo pastel */
+
+.bg-status-pending,
+.bg-status-pending td {
+    background-color: rgba(245, 158, 11, 0.09) !important;
 }
 
-.bg-status-waitingformaterial {
-    background-color: #e5e7e9 !important; /* Gris claro pastel */
+.bg-status-waitingformaterial,
+.bg-status-waitingformaterial td {
+    background-color: rgba(100, 116, 139, 0.08) !important;
 }
 
-.bg-status-cutmaterial {
-    background-color: #e6d3c3 !important;
+.bg-status-cutmaterial,
+.bg-status-cutmaterial td {
+    background-color: rgba(180, 83, 9, 0.08) !important;
 }
 
-.bg-status-grinding {
-    background-color: #e8daef !important;
+.bg-status-grinding,
+.bg-status-grinding td {
+    background-color: rgba(168, 85, 247, 0.08) !important;
 }
 
-.bg-status-onrack {
-    background-color: #d7dbdd !important; /* Gris pastel */
+.bg-status-onrack,
+.bg-status-onrack td {
+    background-color: rgba(71, 85, 105, 0.07) !important;
 }
 
-.bg-status-programming {
-    background-color: #d1f2eb !important; /* Verde agua pastel */
+.bg-status-programming,
+.bg-status-programming td {
+    background-color: rgba(6, 182, 212, 0.09) !important;
 }
 
-.bg-status-setup {
-    background-color: #d5f5e3 !important; /* Verde menta suave */
+.bg-status-setup,
+.bg-status-setup td {
+    background-color: rgba(35, 194, 175, 0.09) !important;
 }
 
-.bg-status-machining {
-    background-color: #abebc6 !important; /* Verde claro pastel */
+.bg-status-machining,
+.bg-status-machining td {
+    background-color: rgba(34, 197, 94, 0.09) !important;
 }
 
-.bg-status-marking {
-    background-color: #fcf3cf !important; /* Amarillo claro pastel */
+.bg-status-marking,
+.bg-status-marking td {
+    background-color: rgba(234, 179, 8, 0.08) !important;
 }
 
-.bg-status-deburring {
-    background-color: #d6eaf8 !important; /* Azul pastel */ 
+.bg-status-deburring,
+.bg-status-deburring td {
+    background-color: rgba(59, 130, 246, 0.09) !important;
 }
 
-.bg-status-qa {
-    background-color: #aed6f1 !important; /* Azul cielo pastel */
+.bg-status-qa,
+.bg-status-qa td {
+    background-color: rgba(99, 102, 241, 0.08) !important;
 }
 
-.bg-status-outsource {
-    background-color: #d2b4de !important; /* Lila pastel */
+.bg-status-outsource,
+.bg-status-outsource td {
+    background-color: rgba(236, 72, 153, 0.08) !important;
 }
 
-.bg-status-assembly {
-    background-color: #f9e79f !important; /* Amarillo vainilla pastel */
+.bg-status-assembly,
+.bg-status-assembly td {
+    background-color: rgba(249, 115, 22, 0.08) !important;
 }
 
-.bg-status-shipping {
-    background-color: #85c1e9 !important; /* Azul cielo más intenso pastel */
+.bg-status-shipping,
+.bg-status-shipping td {
+    background-color: rgba(14, 165, 233, 0.09) !important;
 }
 
-.bg-status-onhold {
-    background-color: #fcfcfc !important; /* Rosa pastel */
+.bg-status-onhold,
+.bg-status-onhold td {
+    background-color: rgba(255, 255, 255, 0.85) !important;
 }
 
-.row-late {
-    background-color: #f8d7da !important; /* Rojo claro para atraso */
+.row-late,
+.row-late td {
+    background-color: rgba(239, 68, 68, 0.10) !important;
 }
 
-.row-priority {
+.row-priority,
+.row-priority td {
     font-weight: bold;
-    background-color: #a662f9 !important; /* optional: light gold */
+    background-color: rgba(147, 51, 234, 0.10) !important;
 }
 
 .bg-status-ready {
-    background-color: #c8f7c5 !important;
-    border-left: 5px solid #27ae60 !important;
+    background-color: rgba(20, 184, 166, 0.14) !important;
+    border-left: 5px solid #14b8a6 !important;
     font-weight: bold !important;
-    box-shadow: 0 0 8px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 0 6px rgba(20, 184, 166, 0.16);
     transition: all 0.3s ease-in-out;
 }
 
+.bg-status-ready td {
+    background-color: rgba(20, 184, 166, 0.14) !important;
+}
+
 .select-status.bg-status-ready {
-    background-color: #c8f7c5 !important;
-    color: #145a32 !important;
+    background-color: rgba(20, 184, 166, 0.12) !important;
+    color: #115e59 !important;
     font-weight: bold;
-    border-left: 4px solid #27ae60;
+    border-left: 4px solid #14b8a6;
 }
 
-   table td {
-        color: black !important;
-        font-size: 14px !important;
-       
-    }
-
-    table th {
-    color: black !important;
-    font-size: 14px !important;
-   
+/* Scoped table typography (avoid affecting other pages) */
+#orders_scheduleTable td {
+    color: #000 !important;
+    font-size: 14px;
+    white-space: normal;
+    word-wrap: break-word;
+    padding: 6px 8px;
+    vertical-align: middle;
 }
 
-table tr {
-    height: 20px; /* o el valor que prefieras */
+#orders_scheduleTable th {
+    color: #000 !important;
+    font-size: 0.78rem !important;
+}
+
+#orders_scheduleTable tbody tr {
+    height: auto;
 }
 
 .select-bold {
@@ -115,12 +140,11 @@ table tr {
 }
 
 .thead-custom th {
-    font-size: 14px;
     text-align: center;
     vertical-align: middle;
     white-space: nowrap;
 }
-#orders_scheduleTable td {
+#orders_scheduleTable td.__legacy {
     font-size: clamp(10px, 0.9vw, 13px);
     white-space: normal;      /* permite salto de línea */
     word-wrap: break-word;    /* corta palabras largas si es necesario */
@@ -128,3 +152,157 @@ table tr {
     vertical-align: middle;
 }
 
+/* =====================
+   ERP Table (General Schedule)
+   ===================== */
+.erp-table-shell {
+    margin-top: 2px;
+}
+
+.erp-table-wrap {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 16px;
+    background: #fff;
+    overflow: hidden;
+}
+
+#orders_scheduleTable.erp-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+}
+
+#orders_scheduleTable.erp-table thead th {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+    border-bottom: 1px solid #d5d8dd !important;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+}
+
+#orders_scheduleTable.erp-table tbody td {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+#orders_scheduleTable.erp-table tbody tr:nth-child(even) td {
+    background: rgba(248, 250, 252, 0.55);
+}
+
+#orders_scheduleTable.erp-table tbody tr:hover td {
+    background: rgba(2, 6, 23, 0.04);
+}
+
+/* Inputs/selects inside the table */
+#orders_scheduleTable .location-select,
+#orders_scheduleTable .status-select,
+#orders_scheduleTable .wo-qty-input {
+    background: #fff !important;
+    border: 1px solid #d5d8dd !important;
+    border-radius: 10px;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+    height: 32px;
+    padding: 4px 8px;
+    font-weight: 700;
+}
+
+#orders_scheduleTable .location-select:focus,
+#orders_scheduleTable .status-select:focus,
+#orders_scheduleTable .wo-qty-input:focus {
+    outline: none;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25) !important;
+}
+
+#orders_scheduleTable .location-select:disabled,
+#orders_scheduleTable .status-select:disabled,
+#orders_scheduleTable .wo-qty-input:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background: rgba(241, 245, 249, 0.75) !important;
+}
+
+/* ALERT (ERP pill) */
+#orders_scheduleTable .erp-alert {
+    width: 86px;
+    height: 28px;
+    border-radius: 10px;
+    border: 0;
+    overflow: hidden;
+    box-shadow: none;
+    margin: 0 auto;
+}
+
+#orders_scheduleTable .erp-alert .erp-alert-bar,
+#orders_scheduleTable .erp-alert .progress-bar {
+    height: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    white-space: nowrap;
+    font-family: inherit;
+    letter-spacing: 0;
+    border: 0;
+}
+
+#orders_scheduleTable .erp-alert .progress-bar.bg-danger {
+    border: 0 !important;
+    background: #dc3545 !important;
+    color: #fff;
+}
+
+#orders_scheduleTable .erp-alert .progress-bar.bg-warning {
+    border: 0 !important;
+    background: #facc15 !important;
+    color: #000;
+}
+
+#orders_scheduleTable .erp-alert .progress-bar.bg-success {
+    border: 0 !important;
+    background: #0f8f3ece !important;
+    color: #fff;
+}
+
+/* DataTables footer (pagination/info) — match Orders Completed */
+#orders_scheduleTable_wrapper .erp-dt-footer {
+    margin-top: 2px;
+    padding: 0 0 8px;
+}
+
+#orders_scheduleTable_wrapper .dataTables_info {
+    color: #475569 !important;
+    font-weight: 600;
+    font-size: 0.80rem;
+    line-height: 1.1;
+}
+
+#orders_scheduleTable_wrapper .pagination .page-link {
+    border-radius: 8px;
+    margin: 0 2px;
+    border: 1px solid #d5d8dd;
+    background: #f8fafc;
+    color: #1f2937;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+#orders_scheduleTable_wrapper .pagination .page-item.active .page-link {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
+    color: #fff;
+}
+
+#orders_scheduleTable_wrapper .pagination .page-item.disabled .page-link {
+    opacity: .6;
+}
+
+#orders_scheduleTable_wrapper .dataTables_length,
+#orders_scheduleTable_wrapper .dataTables_filter {
+    display: none !important;
+}

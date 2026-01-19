@@ -318,6 +318,34 @@
         line-height: 1.2;
     }
 
+    .erp-yarnell-filters .input-group-text {
+        height: 34px;
+        border: 1px solid #c5c9d2;
+        border-right: 0;
+        border-radius: 10px 0 0 10px;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%) !important;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+        color: #0f172a;
+    }
+
+    .erp-yarnell-filters .input-group > .erp-filter-control {
+        border-left: 0;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .erp-yarnell-filters select.erp-filter-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        padding-right: 34px;
+        background-image:
+            linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23475569' d='M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 0 0, right 10px center;
+        background-size: auto, 14px 14px;
+    }
+
     .erp-yarnell-filters .erp-filter-control:focus {
         border-color: #94a3b8;
         box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
@@ -370,6 +398,38 @@
         font-weight: 600;
         height: 34px;
         line-height: 1.2;
+    }
+
+    .erp-table-toolbar .input-group-text {
+        height: 34px;
+        border: 1px solid #c5c9d2;
+        border-right: 0;
+        border-radius: 10px 0 0 10px;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%) !important;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 0.78rem;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+    }
+
+    .erp-table-toolbar .input-group > .erp-filter-control {
+        border-left: 0;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .erp-table-toolbar select.erp-filter-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        padding-right: 34px;
+        background-image:
+            linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23475569' d='M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 0 0, right 10px center;
+        background-size: auto, 14px 14px;
     }
 
     .erp-table-toolbar .erp-stats-search {

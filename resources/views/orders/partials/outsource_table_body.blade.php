@@ -21,22 +21,27 @@
   'onhold' => 'bg-status-onhold',
   default => '',
   };
+
+  $locKey = strtolower(trim((string) ($order->location ?? '')));
+  $locKey = preg_replace('/[^a-z0-9]+/', '', $locKey);
   @endphp
-  <tr class="{{ $statusClass }} text-nowrap align-middle small">
+  <tr class="{{ $statusClass }} text-nowrap align-middle small" data-status="{{ strtolower((string) $order->status) }}">
       <td>
-          @if ($order->last_location === 'Yarnell')
-          <span class="fw-bold text-dark d-block">Yarnell</span>
-          @endif
-          <span class="badge bg-warning text-dark d-block mt-1">
-              <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
+          <span class="erp-location-pill erp-location-pill--{{ $locKey ?: 'hearst' }}">
+              <i class="fas fa-map-marker-alt"></i>{{ $order->location }}
           </span>
+          @if ($order->last_location === 'Yarnell')
+              <span class="erp-location-note">Yarnell</span>
+          @endif
       </td>
-      <td>{{ $order->work_id }}</td>
+      <td>
+          <span class="erp-ellipsis-1" title="{{ $order->work_id }}">{{ $order->work_id }}</span>
+      </td>
       <td style="font-size: 12px !important;">
-          {{ $order->PN }}
+          <span class="erp-ellipsis-1" title="{{ $order->PN }}">{{ $order->PN }}</span>
       </td>
       <td style="font-size: 10px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-          {{ $order->Part_description }}
+          <span class="erp-ellipsis-2" title="{{ $order->Part_description }}">{{ $order->Part_description }}</span>
       </td>
       <td>{{ $order->costumer }}</td>
       <td>{{ $order->qty }}</td>
@@ -68,8 +73,8 @@
           <span style="display: none">{{ \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') }}</span>
           {{ \Carbon\Carbon::parse($order->due_date)->format('m/d/Y') }}
       </td>
-      <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-          {{ $order->notes}}
-      </td>
-  </tr>
-  @endforeach
+       <td style="font-size: 12px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+           <span class="erp-ellipsis-2" title="{{ $order->notes }}">{{ $order->notes }}</span>
+       </td>
+   </tr>
+   @endforeach

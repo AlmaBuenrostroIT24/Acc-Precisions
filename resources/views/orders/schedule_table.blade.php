@@ -1,30 +1,30 @@
-<div id="table-wrapper" style="display: none;">
-    <div class="table-responsive">
-        <table id="orders_scheduleTable" class="table table-bordered  table-hover {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
+<div id="table-wrapper" class="erp-table-shell" style="display: none;">
+    <div class="table-responsive erp-table-wrap">
+        <table id="orders_scheduleTable" class="table table-bordered table-hover erp-table {{ request()->is('scheduleh') ? 'letra-grande' : '' }}" style="table-layout: fixed; width: 100%;">
             <thead class="table-light thead-custom">
                 <tr>
                     <th>Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                    <th style="width: 70px;">LOCATION</th>
+                    <th style="width: 60px;">LOCATION</th>
                     <th style="width: 55px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
-                    <th style="width: 150px;">PART/DESCRIPTION</th>
+                    <th style="width: 170px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
                     <th style="width: 30px;">COQTY</th>
                     <th style="width: 40px;">WOQTY</th>
                     <th style="width: 100px;">STATUS</th>
-                    <th style="width: 80px;">MAC. DATE</th>
+                    <th style="width: 70px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
-                    <th style="width: 80px;">DUE DATE</th>
-                    <th style="width: 30px;">DAYS</th>
-                    <th style="width: 50px;">ALERT</th>
+                    <th style="width: 70px;">DUE DATE</th>
+                    <th style="width: 40px;">DAYS</th>
+                    <th style="width: 60px;">ALERT</th>
                     <th style="width: 20px;">REP.</th>
                     <th style="width: 20px;">OUT</th>
                     <th style="width: 30px;">STATION</th>
                     <th style="width: 65px;">NOTES</th>
-                    <th style="width: 40px;">ORD ID</th>
-                    <th style="width: 60px;">CUST PO</th>
+                    <th style="width: 40px;">CO</th>
+                    <th style="width: 65px;">PO</th>
                 </tr>
             </thead>
             <tbody>
@@ -267,9 +267,8 @@
                             {{ $dias }} days
                         </td>
                         <td class="text-center">
-                            <div id="alerta-{{ $order->id }}" class="progress" style="width: 80px; height: 30px;">
-                                <div class="progress-bar {{ $alertColor }}" role="progressbar"
-                                    style="width: 100%; height: 30px; line-height: 30px; font-size: 18px; font-weight: bold;">
+                            <div id="alerta-{{ $order->id }}" class="progress erp-alert">
+                                <div class="progress-bar {{ $alertColor }} erp-alert-bar" role="progressbar" style="width: 100%;">
                                     {{ $alertLabel }}
                                 </div>
                             </div>

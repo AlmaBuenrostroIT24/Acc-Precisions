@@ -22,22 +22,29 @@
                'onhold' => 'bg-status-onhold',
                default => '',
                };
+
+               $locKey = strtolower(trim((string) ($order->location ?? '')));
+               $locKey = preg_replace('/[^a-z0-9]+/', '', $locKey);
                @endphp
-               <tr class="{{ $statusClass }}" data-status="{{ $order->status }}">
-                   <td>
-                       @if ($order->last_location === 'Yarnell')
-                       <span class="fw-bold text-dark">Yarnell</span>
-                       @endif
-                       <span class="badge bg-warning text-dark">
-                           <i class="fas fa-map-marker-alt mr-1"></i>{{ $order->location }}
-                       </span>
-                   </td>
-                   <td>{{ $order->work_id }}</td>
-                   <td style="min-width: 120px;">{{ $order->PN }}</td>
-                   <td style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
-                       {{ $order->Part_description }}
-                   </td>
-                   <td>{{ $order->costumer }}</td>
+                <tr class="{{ $statusClass }}" data-status="{{ strtolower((string) $order->status) }}">
+                    <td>
+                        <span class="erp-location-pill erp-location-pill--{{ $locKey ?: 'hearst' }}">
+                            <i class="fas fa-map-marker-alt"></i>{{ $order->location }}
+                        </span>
+                        @if ($order->last_location === 'Yarnell')
+                            <span class="erp-location-note">Yarnell</span>
+                        @endif
+                    </td>
+                    <td>
+                        <span class="erp-ellipsis-1" title="{{ $order->work_id }}">{{ $order->work_id }}</span>
+                    </td>
+                    <td style="min-width: 120px;">
+                        <span class="erp-ellipsis-1" title="{{ $order->PN }}">{{ $order->PN }}</span>
+                    </td>
+                    <td style="font-size: 14px !important; line-height: 1.1; white-space: normal; word-break: break-word;">
+                        <span class="erp-ellipsis-2" title="{{ $order->Part_description }}">{{ $order->Part_description }}</span>
+                    </td>
+                    <td>{{ $order->costumer }}</td>
                    <td>{{ $order->qty }}</td>
                    <td>{{ $order->wo_qty }}</td>
                    <td style="min-width: 120px;">
@@ -62,27 +69,27 @@
                            <option value="ready" {{ strtolower($order->status) === 'ready' ? 'selected' : '' }}>Ready</option>
                        </select>
                    </td>
-                   <td>
-                       <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                           data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}"
-                           style="cursor: default; pointer-events: none;">
-                           <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                       </button>
-                   </td>
-                   <td>
-                       <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                           data-id="{{ $order->id }}" data-value="{{ $order->our_source }}"
-                           style="cursor: default; pointer-events: none;">
-                           <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                       </button>
-                   </td>
+                    <td class="erp-icon-cell">
+                        <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
+                            data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}"
+                            style="cursor: default; pointer-events: none;">
+                            <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                        </button>
+                    </td>
+                    <td class="erp-icon-cell">
+                        <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
+                            data-id="{{ $order->id }}" data-value="{{ $order->our_source }}"
+                            style="cursor: default; pointer-events: none;">
+                            <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                        </button>
+                    </td>
                    <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
                    <td>
                        <span style="display: none">{{ \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') }}</span>
                        {{ \Carbon\Carbon::parse($order->due_date)->format('m/d/Y') }}
                    </td>
-                   <td style="white-space: normal !important; word-break: break-word;" title="{{ $order->notes }}">
-                       {{ $order->notes}}
-                   </td>
-               </tr>
-               @endforeach
+                    <td style="white-space: normal !important; word-break: break-word;" title="{{ $order->notes }}">
+                       <span class="erp-ellipsis-2" title="{{ $order->notes }}">{{ $order->notes }}</span>
+                    </td>
+                </tr>
+                @endforeach

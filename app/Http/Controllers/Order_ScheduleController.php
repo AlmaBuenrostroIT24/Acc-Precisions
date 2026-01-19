@@ -767,8 +767,13 @@ class Order_ScheduleController extends Controller
 
     public function workhearst(Request $request)
     {
+        $activeOrNull = function ($q) {
+            $q->whereNull('status_order')->orWhere('status_order', 'active');
+        };
+
         $orders = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->whereIn('status', [
                 'pending',
                 'waitingformaterial',
@@ -784,26 +789,25 @@ class Order_ScheduleController extends Controller
 
         $ordersReady = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->where('status', 'ready')
             ->get();
 
         $ordersDeburring = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->where('status', 'deburring')
-            ->get();
-
-        $ordersReady = OrderSchedule::latest()
-            ->where('location', 'Hearst')
-            ->where('status', 'ready')
             ->get();
 
         $ordersOutsource = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->where('status', 'outsource')
             ->get();
 
         $ordersProcessend = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->whereIn('status', [
                 'assembly',
                 'shipping',
@@ -818,8 +822,13 @@ class Order_ScheduleController extends Controller
 
     public function partialDeburring()
     {
+        $activeOrNull = function ($q) {
+            $q->whereNull('status_order')->orWhere('status_order', 'active');
+        };
+
         $ordersDeburring = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->where('status', 'deburring')
             ->get();
         return view('orders.partials.deburring_table_body', compact('ordersDeburring'));
@@ -827,8 +836,13 @@ class Order_ScheduleController extends Controller
 
     public function partialReady()
     {
+        $activeOrNull = function ($q) {
+            $q->whereNull('status_order')->orWhere('status_order', 'active');
+        };
+
         $ordersReady = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->where('status', 'ready')
             ->get();
         return view('orders.partials.ready_table_body', compact('ordersReady'));
@@ -836,8 +850,13 @@ class Order_ScheduleController extends Controller
 
     public function partialOutsource()
     {
+        $activeOrNull = function ($q) {
+            $q->whereNull('status_order')->orWhere('status_order', 'active');
+        };
+
         $ordersOutsource = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->where('status', 'outsource')
             ->get();
         return view('orders.partials.outsource_table_body', compact('ordersOutsource'));
@@ -845,8 +864,13 @@ class Order_ScheduleController extends Controller
 
     public function partialProcessend()
     {
+        $activeOrNull = function ($q) {
+            $q->whereNull('status_order')->orWhere('status_order', 'active');
+        };
+
         $ordersProcessend = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->whereIn('status', ['assembly', 'shipping', 'onhold'])
             ->get();
         return view('orders.partials.processend_table_body', compact('ordersProcessend'));
@@ -854,8 +878,13 @@ class Order_ScheduleController extends Controller
 
     public function partialWorkhearst()
     {
+        $activeOrNull = function ($q) {
+            $q->whereNull('status_order')->orWhere('status_order', 'active');
+        };
+
         $orders = OrderSchedule::latest()
             ->where('location', 'Hearst')
+            ->where($activeOrNull)
             ->whereIn('status', [
                 'pending',
                 'waitingformaterial',
