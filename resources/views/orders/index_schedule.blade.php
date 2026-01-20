@@ -276,6 +276,17 @@
         margin: 0;
     }
 
+    /* Cuando el contenido se hace m\u00e1s angosto (ej. al abrir/cerrar el men\u00fa hamburguesa),
+       mantener todo en una sola fila y compactar en lugar de "romperse". */
+    @media (min-width: 992px) {
+        .erp-schedule-row {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 2px;
+        }
+    }
+
     .erp-schedule-split {
         border-right: 0;
         padding-right: 14px;
@@ -308,8 +319,8 @@
     .erp-filter-search {
         order: 3;
         margin: 0 0 0 auto;
-        flex: 0 0 320px;
-        min-width: 320px;
+        flex: 0 1 260px;
+        min-width: 220px;
         align-self: flex-end;
         display: flex;
         flex-direction: column;
@@ -317,7 +328,7 @@
     }
 
     .erp-filter-search .erp-input-group {
-        width: 320px;
+        width: 100%;
         max-width: 100%;
     }
 
@@ -341,11 +352,13 @@
         flex-wrap: wrap;
         align-items: flex-end;
         gap: 8px;
+        min-width: 0;
     }
 
     #filterForm.form-row > .form-group {
         padding: 0;
         margin: 0;
+        min-width: 0;
     }
 
     #filterForm.form-row > .form-group > label {
@@ -354,17 +367,27 @@
     }
 
     #filterForm.form-row > .form-group.col-md-2 {
-        flex: 0 0 155px;
+        flex: 1 1 155px;
+        min-width: 150px;
         max-width: none;
     }
 
     #filterForm.form-row > .form-group.col-md-3 {
-        flex: 0 0 195px;
+        flex: 1 1 195px;
+        min-width: 170px;
         max-width: none;
     }
 
     #filterForm.form-row > .form-group.erp-filter-status {
-        flex-basis: 235px;
+        flex: 1 1 210px;
+        min-width: 190px;
+    }
+
+    @media (min-width: 992px) {
+        #filterForm.form-row {
+            flex-wrap: nowrap;
+            gap: 6px;
+        }
     }
 
     .erp-label {
@@ -427,6 +450,26 @@
         background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
         box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
         color: #0f172a;
+    }
+
+    /* Compatibilidad BS4/BS5: mantener icono "prepend" dentro del input-group */
+    .erp-input-group {
+        flex-wrap: nowrap;
+    }
+
+    .erp-input-group .input-group-prepend,
+    .erp-input-group .input-group-append {
+        display: flex;
+        flex: 0 0 auto;
+    }
+
+    .erp-input-group .dropdown {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .erp-input-group .dropdown > .erp-filter-control {
+        width: 100%;
     }
 
     .erp-input-group > .erp-filter-control,
