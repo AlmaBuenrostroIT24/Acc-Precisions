@@ -9,20 +9,20 @@
                     <th style="width: 60px;">LOCATION</th>
                     <th style="width: 55px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
-                    <th style="width: 170px;">PART/DESCRIPTION</th>
+                    <th style="width: 180px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
                     <th style="width: 30px;">COQTY</th>
                     <th style="width: 40px;">WOQTY</th>
                     <th style="width: 100px;">STATUS</th>
-                    <th style="width: 70px;">MAC. DATE</th>
+                    <th style="width: 85px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
-                    <th style="width: 70px;">DUE DATE</th>
+                    <th style="width: 85px;">DUE DATE</th>
                     <th style="width: 40px;">DAYS</th>
-                    <th style="width: 60px;">ALERT</th>
+                    <th style="width: 80px;">ALERT</th>
                     <th style="width: 20px;">REP.</th>
                     <th style="width: 20px;">OUT</th>
-                    <th style="width: 30px;">STATION</th>
-                    <th style="width: 65px;">NOTES</th>
+                    <th style="width: 40px;">STATION</th>
+                    <th style="width: 85px;">NOTES</th>
                     <th style="width: 40px;">CO</th>
                     <th style="width: 65px;">PO</th>
                 </tr>
@@ -129,7 +129,7 @@
                             @endif
                         </td>
                         <td class="texsty" style="min-width: 120px;">{{ $order->PN }}</td>
-                        <td style="font-size: 11px;">{{ $order->Part_description }}</td>
+                        <td>{{ $order->Part_description }}</td>
                         <td class="texsty">{{ $order->costumer }}</td>
                         <td class="texsty">{{ $order->qty }}</td>
                         <td>
@@ -158,7 +158,7 @@
                                 </div> --}}
                             @endif
                         </td>
-                        <td style="min-width: 120px;">
+                        <td style="width: 120px;">
                             <select
                                 class="form-control form-control-sm status-select"
                                 style="font-weight: bold; color: black;"
@@ -263,7 +263,7 @@
                             </div>
                             @endif
                         </td>
-                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}" style="font-size: 16px ">
+                        <td id="dias-restantes-{{ $order->id }}" class="{{ $color }}">
                             {{ $dias }} days
                         </td>
                         <td class="text-center">
@@ -273,26 +273,40 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-center">
-                            <button
-                                class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                                data-id="{{ $order->id }}"
-                                data-value="{{ $order->report ? 1 : 0 }}"
-                                @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
-                                >
-                                <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                            </button>
+                        <td class="text-center erp-icon-cell">
+                            <span class="d-inline-block"
+                                title="Report: {{ $order->report ? 'Yes' : 'No' }}"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top">
+                                <button
+                                    class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
+                                    data-id="{{ $order->id }}"
+                                    data-value="{{ $order->report ? 1 : 0 }}"
+                                    @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
+                                    >
+                                    <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                                </button>
+                            </span>
                         </td>
 
-                        <td class="text-center">
-                            <button
-                                class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                                data-id="{{ $order->id }}"
-                                data-value="{{ $order->our_source }}"
-                                @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
-                                >
-                                <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                            </button>
+                        <td class="text-center erp-icon-cell">
+                            <span class="d-inline-block"
+                                title="Outsource: {{ $order->our_source ? 'Yes' : 'No' }}"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top">
+                                <button
+                                    class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
+                                    data-id="{{ $order->id }}"
+                                    data-value="{{ $order->our_source }}"
+                                    @if(auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping'])) disabled @endif
+                                    >
+                                    <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                                </button>
+                            </span>
                         </td>
                         <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
                             @php
@@ -305,7 +319,7 @@
                                 {{ $order->station ?? 'N/A' }}
                             </span>
                         </td>
-                        <td style="font-size: 12px;" class="notes-cell" data-id="{{ $order->id }}">
+                        <td class="notes-cell" data-id="{{ $order->id }}">
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             @endphp
@@ -316,6 +330,8 @@
                                 data-id="{{ $order->id }}"
                                 data-notes="{{ $order->notes }}"
                                 title="{{ $order->notes }}"
+                                data-toggle="tooltip"
+                                data-placement="left"
                                 data-bs-toggle="tooltip"
                                 data-bs-placement="left">
                                 {{ \Illuminate\Support\Str::limit($order->notes, 30) }}
@@ -325,6 +341,8 @@
                                 @unless($isRestricted) class="open-notes-modal text-muted fst-italic" style="cursor:pointer;" @else class="text-muted fst-italic" @endunless
                                 data-id="{{ $order->id }}"
                                 data-notes=""
+                                data-toggle="tooltip"
+                                data-placement="left"
                                 data-bs-toggle="tooltip"
                                 data-bs-placement="left">
                                 <i class="fas fa-plus-circle me-1"></i>

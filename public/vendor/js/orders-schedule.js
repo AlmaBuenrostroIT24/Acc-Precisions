@@ -446,6 +446,11 @@ document.addEventListener("DOMContentLoaded", () => {
         //  Inicializar tabla
         window.table = initOrdersTable(tableElement, config);
 
+        // Re-inicializar tooltips en cada redraw (DataTables recrea nodos)
+        tableElement.on("draw.dt", function () {
+            if (typeof initTooltips === "function") initTooltips();
+        });
+
         // Search compacto en la cabecera (si existe). Si no existe, se mantiene el search nativo.
         const topSearch = qs("scheduleGlobalSearch");
         if (topSearch && window.table) {
@@ -962,6 +967,45 @@ ${error && error.message ? error.message : error}`);
             alert("Estas activando 'our_source' para esta orden.");
         }
     }
+
+    function setTooltipText(el, text) {
+        if (!el) return;
+        try {
+            el.setAttribute("title", text);
+            // Bootstrap 4 caches title in data-original-title
+            el.setAttribute("data-original-title", text);
+            // Bootstrap 5 caches title in data-bs-original-title
+            el.setAttribute("data-bs-original-title", text);
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    function disposeTooltip(el) {
+        if (!el) return;
+        try {
+            const inst = window.bootstrap?.Tooltip?.getInstance?.(el);
+            if (inst) {
+                try {
+                    inst.hide?.();
+                } catch (e) {
+                    // ignore
+                }
+                inst.dispose();
+            }
+        } catch (e) {
+            // ignore
+        }
+        try {
+            if (window.jQuery?.fn?.tooltip) {
+                window.jQuery(el).tooltip("hide");
+                window.jQuery(el).tooltip("dispose");
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+
     // 2. Evita duplicar logica de clases e iconos con una funcion
     function updateToggleButton(button, newValue) {
         button.data("value", newValue);
@@ -973,6 +1017,25 @@ ${error && error.message ? error.message : error}`);
                 "class",
                 `fas ${newValue === 1 ? "fa-check-circle" : "fa-times-circle"}`
             );
+    }
+
+    function updateToggleTooltip(button, isReport, newValue) {
+        const tooltipEl = button
+            .closest('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]')
+            .get(0);
+        if (!tooltipEl) return;
+
+        const label = isReport ? "Report" : "Outsource";
+        const valueText = newValue === 1 ? "Yes" : "No";
+        setTooltipText(tooltipEl, `${label}: ${valueText}`);
+
+        // Re-init so tooltip uses the updated title without requiring a page refresh
+        disposeTooltip(tooltipEl);
+        try {
+            initTooltips();
+        } catch (e) {
+            // ignore
+        }
     }
     // 3. Extrae funcion para activar edicion de fecha
     function triggerEditableMachiningDate(orderId) {
@@ -1059,6 +1122,7 @@ ${error && error.message ? error.message : error}`);
                         );
 
                         updateToggleButton(button, newValue);
+                        updateToggleTooltip(button, isReport, newValue);
 
                         if (!isReport && newValue === 1) {
                             triggerEditableMachiningDate(orderId);
@@ -2249,11 +2313,68 @@ ${error && error.message ? error.message : error}`);
     // ===================================================================================================
 
     // Tooltips
-    const initTooltips = () => {
-        document
-            .querySelectorAll("[title]")
-            .forEach((el) => new bootstrap.Tooltip(el));
-    };
+    function initTooltips() {
+        const nodes = document.querySelectorAll(
+            '[data-bs-toggle="tooltip"], [data-toggle="tooltip"]'
+        );
+
+        const erpTemplate =
+            '<div class="tooltip erp-tooltip" role="tooltip">' +
+            '<div class="arrow"></div>' +
+            '<div class="tooltip-inner"></div>' +
+            "</div>";
+
+        nodes.forEach((el) => {
+            try {
+                const requestedClass =
+                    el.getAttribute("data-bs-custom-class") ||
+                    el.getAttribute("data-custom-class") ||
+                    "";
+                const wantsErp = requestedClass
+                    .split(/\s+/)
+                    .includes("erp-tooltip");
+
+                const baseOptions = {
+                    container: "body",
+                    boundary: "window",
+                };
+
+                // Bootstrap 5 (or any build exposing window.bootstrap.Tooltip)
+                if (window.bootstrap?.Tooltip) {
+                    const supportsGetOrCreate =
+                        typeof window.bootstrap.Tooltip.getOrCreateInstance ===
+                        "function";
+
+                    const options = { ...baseOptions };
+                    if (wantsErp && supportsGetOrCreate) {
+                        options.customClass = "erp-tooltip";
+                    }
+                    if (wantsErp && !supportsGetOrCreate) {
+                        options.template = erpTemplate;
+                    }
+
+                    if (supportsGetOrCreate) {
+                        window.bootstrap.Tooltip.getOrCreateInstance(
+                            el,
+                            options
+                        );
+                    } else {
+                        new window.bootstrap.Tooltip(el, options);
+                    }
+                    return;
+                }
+
+                // Bootstrap 4 (AdminLTE) fallback via jQuery plugin
+                if (window.jQuery?.fn?.tooltip) {
+                    const options = { ...baseOptions };
+                    if (wantsErp) options.template = erpTemplate;
+                    window.jQuery(el).tooltip(options);
+                }
+            } catch (e) {
+                // ignore
+            }
+        });
+    }
     initTooltips();
 
     // ===================================================================================================
