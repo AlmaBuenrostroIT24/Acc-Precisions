@@ -9,11 +9,11 @@
                     <th style="width: 75px;">LOCATION</th>
                     <th style="width: 70px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
-                    <th style="width: 180px;">PART/DESCRIPTION</th>
+                    <th style="width: 210px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
                     <th style="width: 45px;">COQTY</th>
                     <th style="width: 50px;">WOQTY</th>
-                    <th style="width: 105px;">STATUS</th>
+                    <th style="width: 110px;">STATUS</th>
                     <th style="width: 85px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
                     <th style="width: 85px;">DUE DATE</th>
