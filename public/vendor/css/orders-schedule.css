@@ -319,10 +319,10 @@
 
 #orders_scheduleTable .toggle-report-btn,
 #orders_scheduleTable .toggle-source-btn {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0 !important;
-    border-radius: 10px !important;
+    border-radius: 9px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -334,7 +334,7 @@
 
 #orders_scheduleTable .toggle-report-btn i,
 #orders_scheduleTable .toggle-source-btn i {
-    font-size: 1.05rem;
+    font-size: 1rem;
     color: inherit;
 }
 

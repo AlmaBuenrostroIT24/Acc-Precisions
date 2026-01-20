@@ -6,7 +6,7 @@
                     <th>Id</th>
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
-                    <th style="width: 60px;">LOCATION</th>
+                    <th style="width: 75px;">LOCATION</th>
                     <th style="width: 55px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
                     <th style="width: 180px;">PART/DESCRIPTION</th>
@@ -23,8 +23,9 @@
                     <th style="width: 20px;">OUT</th>
                     <th style="width: 40px;">STATION</th>
                     <th style="width: 85px;">NOTES</th>
-                    <th style="width: 40px;">CO</th>
+                    <th style="width: 50px;">CO</th>
                     <th style="width: 65px;">PO</th>
+                    <th style="display:none;">PriorityText</th>
                 </tr>
             </thead>
             <tbody>
@@ -352,6 +353,7 @@
                         </td>
                         <td class="texsty">{{ $order->co}}</td>
                         <td class="texsty">{{ $order->cust_po}}</td>
+                        <td style="display:none;">{{ $order->priority === 'yes' ? 1 : 0 }}</td>
                         </tr>
                         @empty
                         <tr>

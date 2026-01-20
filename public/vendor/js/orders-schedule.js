@@ -218,7 +218,10 @@ document.addEventListener("DOMContentLoaded", () => {
             pageLength: 15,
             lengthChange: false,
             searching: true,
-            order: [[12, "asc"]], // 2025-12-15: ordenar por due_date (col oculta 12)
+            order: [
+                [22, "desc"], // PriorityText (1/0) al inicio
+                [12, "asc"], // 2025-12-15: ordenar por due_date (col oculta 12)
+            ],
             info: true,
             autoWidth: false,
             columnDefs: [
@@ -226,6 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 { targets: 1, visible: false, searchable: true }, // LocationText
                 { targets: 2, visible: false, searchable: true }, // StatusText
                 { targets: 12, visible: false, searchable: false }, // DueDateText
+                { targets: 22, visible: false, searchable: false }, // PriorityText
             ],
             // ERP footer (match Orders Completed): table + footer (info/pagination). Buttons hidden via JS.
             dom: "Brt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
@@ -418,8 +422,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const path = window.location.pathname;
 
         const tableConfigs = {
-            "/scheduley": { pageLength: 40, searching: false, order: [] },
-            "/scheduleh": { pageLength: 40, searching: false, order: [] },
+            "/scheduley": {
+                pageLength: 40,
+                searching: false,
+                order: [
+                    [22, "desc"],
+                    [12, "asc"],
+                ],
+            },
+            "/scheduleh": {
+                pageLength: 40,
+                searching: false,
+                order: [
+                    [22, "desc"],
+                    [12, "asc"],
+                ],
+            },
             "/schedule/workhearst": {
                 pageLength: 10,
                 lengthChange: true,
