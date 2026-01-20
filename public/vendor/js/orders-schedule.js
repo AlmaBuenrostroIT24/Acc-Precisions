@@ -876,6 +876,7 @@ ${error && error.message ? error.message : error}`);
     let lastLocations = {};
 
     tableElement.on("focus", ".location-select", function () {
+        if ($(this).closest("tr").hasClass("kit-new-row")) return;
         const select = $(this);
         const orderId = select.data("id");
         lastLocations[orderId] = select.val(); // Guardamos la última antes del cambio
@@ -883,6 +884,7 @@ ${error && error.message ? error.message : error}`);
 
     // Actualizar Location
     tableElement.on("change", ".location-select", function () {
+        if ($(this).closest("tr").hasClass("kit-new-row")) return;
         const scrollTopBefore = $(window).scrollTop(); // 🧠 guarda scroll para que no de el error que al actualizar se vaya hacia arriba
 
         const select = $(this);
@@ -1081,6 +1083,7 @@ ${error && error.message ? error.message : error}`);
     // 2. Evita duplicar logica de clases e iconos con una funcion
     function updateToggleButton(button, newValue) {
         button.data("value", newValue);
+        button.attr("data-value", newValue);
         button.toggleClass("btn-primary", newValue === 1);
         button.toggleClass("btn-secondary", newValue === 0);
         button
@@ -1164,6 +1167,14 @@ ${error && error.message ? error.message : error}`);
         ".toggle-report-btn, .toggle-source-btn",
         function () {
             const button = $(this);
+            if (button.closest("tr").hasClass("kit-new-row")) {
+                const currentValue = parseInt(button.data("value"));
+                const newValue = currentValue === 1 ? 0 : 1;
+                const isReport = button.hasClass("toggle-report-btn");
+                updateToggleButton(button, newValue);
+                updateToggleTooltip(button, isReport, newValue);
+                return;
+            }
             const orderId = button.data("id");
             const currentValue = parseInt(button.data("value"));
             const newValue = currentValue === 1 ? 0 : 1;
@@ -1458,6 +1469,7 @@ ${error && error.message ? error.message : error}`);
 
     // Captura dinamica del estado anterior. Se agrega este bloque antes del "change" para asegurar que data-old-status siempre tenga el valor actual:
     tableElement.on("focus", ".status-select", function () {
+        if ($(this).closest("tr").hasClass("kit-new-row")) return;
         const currentVal = ($(this).val() || "").toLowerCase(); // .toLowerCase() Normalizar el oldStatus a minúsculas
         $(this).data("old-status", currentVal);
         // Al abrir el dropdown, evitar que se vea "verde" mientras seleccionas otro status
@@ -1465,12 +1477,14 @@ ${error && error.message ? error.message : error}`);
     });
 
     tableElement.on("blur", ".status-select", function () {
+        if ($(this).closest("tr").hasClass("kit-new-row")) return;
         const cur = ($(this).val() || "").toLowerCase();
         $(this).toggleClass("erp-status-select--ready", cur === "ready");
     });
 
     // Actualizar Status con confirmacion SweetAlert
     tableElement.on("change", ".status-select", function () {
+        if ($(this).closest("tr").hasClass("kit-new-row")) return;
         const scrollTopBefore = $(window).scrollTop();
         const select = $(this);
         const orderId = select.data("id");
@@ -2677,22 +2691,24 @@ ${error && error.message ? error.message : error}`);
                         : safeText($row.find("td.wo-qty-cell").first());
 
                 newRow.find("td.qty-cell").html(
-                    `<input type="number" min="0" step="1" name="col_text_5" class="form-control form-control-sm" value="${coQtyOrig}">`
+                    `<input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" name="col_text_5" class="form-control form-control-sm" value="${coQtyOrig}">`
                 );
                 newRow.find("td.wo-qty-cell").html(
-                    `<input type="number" min="0" step="1" name="col_text_6" class="form-control form-control-sm" value="${woQtyOrigRaw}">`
+                    `<input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" name="col_text_6" class="form-control form-control-sm kit-wo-qty-input" value="${woQtyOrigRaw}">`
                 );
 
                 // Desactivar controles que podrían disparar updates a la orden original
                 newRow
                     .find(".location-select, .status-select")
-                    .prop("disabled", true)
+                    .prop("disabled", false)
                     .removeAttr("data-id")
-                    .removeAttr("data-old");
+                    .removeAttr("data-old")
+                    .removeAttr("data-old-status");
                 newRow
                     .find(".toggle-report-btn, .toggle-source-btn")
-                    .prop("disabled", true)
-                    .css({ "pointer-events": "none", opacity: 0.6 });
+                    .removeAttr("data-id")
+                    .prop("disabled", false)
+                    .css({ "pointer-events": "", opacity: "" });
                 newRow
                     .find(
                         ".editable-work-id, .editable-station, .editable-machining-date, .editable-due-date, .open-notes-modal"
@@ -2776,8 +2792,10 @@ ${error && error.message ? error.message : error}`);
 
                 function safeBtnValue($el) {
                     if (!$el || !$el.length) return "0";
-                    const v = $el.attr("data-value");
-                    return v == null ? "0" : String(v).trim();
+                    const vData = $el.data("value");
+                    if (vData != null && vData !== "") return String(vData).trim();
+                    const vAttr = $el.attr("data-value");
+                    return vAttr == null ? "0" : String(vAttr).trim();
                 }
 
                 function checkInputsAndSend() {
@@ -2799,20 +2817,20 @@ ${error && error.message ? error.message : error}`);
                     const dataToSend = {
                         id: nextId,
                         original_id: originalId,
-                        col_text_0: String($row.find("select.location-select").val() || "").trim(),
+                        col_text_0: String(newRow.find("select.location-select").val() || "").trim(),
                         col_text_1: String(workIdInput.val() || "").trim(),
                         col_text_2: safeText($row.find("td.pn-cell").first()),
                         col_text_3: String(newRow.find('input[name="col_text_3"]').val() || "").trim(),
                         col_text_4: safeText($row.find("td.customer-cell").first()),
                         col_text_5: String(coQtyInput.val() || "").trim(),
                         col_text_6: String(woQtyInput.val() || "").trim(),
-                        col_text_7: String($row.find("select.status-select").val() || "").trim(),
+                        col_text_7: String(newRow.find("select.status-select").val() || "").trim(),
                         col_text_8: safeData($row.find(".editable-machining-date").first(), "value"),
                         col_text_9: safeData($row.find(".editable-due-date").first(), "value"),
                         col_text_10: "",
                         col_text_11: "",
-                        col_text_12: safeBtnValue($row.find("button.toggle-report-btn").first()),
-                        col_text_13: safeBtnValue($row.find("button.toggle-source-btn").first()),
+                        col_text_12: safeBtnValue(newRow.find("button.toggle-report-btn").first()),
+                        col_text_13: safeBtnValue(newRow.find("button.toggle-source-btn").first()),
                         col_text_14: stationTxt === "N/A" ? "" : stationTxt,
                         col_text_15: notesVal,
                     };

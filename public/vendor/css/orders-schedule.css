@@ -210,7 +210,11 @@
 /* Inputs/selects inside the table */
 #orders_scheduleTable .location-select,
 #orders_scheduleTable .status-select,
-#orders_scheduleTable .wo-qty-input {
+#orders_scheduleTable .wo-qty-input,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_1"],
+#orders_scheduleTable tr.kit-new-row input[name="col_text_3"],
+#orders_scheduleTable tr.kit-new-row input[name="col_text_5"],
+#orders_scheduleTable tr.kit-new-row input[name="col_text_6"] {
     background: #fff !important;
     border: 1px solid #d5d8dd !important;
     border-radius: 10px;
@@ -225,7 +229,11 @@
 
 #orders_scheduleTable .location-select:focus,
 #orders_scheduleTable .status-select:focus,
-#orders_scheduleTable .wo-qty-input:focus {
+#orders_scheduleTable .wo-qty-input:focus,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_1"]:focus,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_3"]:focus,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_5"]:focus,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_6"]:focus {
     outline: none;
     border-color: #94a3b8 !important;
     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25) !important;
@@ -233,10 +241,34 @@
 
 #orders_scheduleTable .location-select:disabled,
 #orders_scheduleTable .status-select:disabled,
-#orders_scheduleTable .wo-qty-input:disabled {
+#orders_scheduleTable .wo-qty-input:disabled,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_1"]:disabled,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_3"]:disabled,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_5"]:disabled,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_6"]:disabled {
     opacity: 0.65;
     cursor: not-allowed;
     background: rgba(241, 245, 249, 0.75) !important;
+}
+
+/* KIT: QTY inputs without spinner arrows */
+#orders_scheduleTable tr.kit-new-row input[name="col_text_5"],
+#orders_scheduleTable tr.kit-new-row input[name="col_text_6"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+#orders_scheduleTable tr.kit-new-row input.kit-wo-qty-input {
+    font-weight: 800 !important;
+    color: #000 !important;
+}
+
+#orders_scheduleTable tr.kit-new-row input[name="col_text_5"]::-webkit-outer-spin-button,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_5"]::-webkit-inner-spin-button,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_6"]::-webkit-outer-spin-button,
+#orders_scheduleTable tr.kit-new-row input[name="col_text_6"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 /* ALERT (ERP pill) */

@@ -7,7 +7,7 @@
                     <th style="display:none;">LocationText</th> <!-- índice 1 -->
                     <th style="display:none;">StatusText</th> <!-- índice 2 -->
                     <th style="width: 75px;">LOCATION</th>
-                    <th style="width: 55px;">WORK ID</th>
+                    <th style="width: 70px;">WORK ID</th>
                     <th style="width: 60px;">PN</th>
                     <th style="width: 180px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
