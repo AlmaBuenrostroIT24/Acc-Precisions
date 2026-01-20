@@ -12,8 +12,8 @@
                     <th style="width: 180px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
                     <th style="width: 30px;">COQTY</th>
-                    <th style="width: 40px;">WOQTY</th>
-                    <th style="width: 100px;">STATUS</th>
+                    <th style="width: 45px;">WOQTY</th>
+                    <th style="width: 105px;">STATUS</th>
                     <th style="width: 85px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
                     <th style="width: 85px;">DUE DATE</th>
@@ -24,7 +24,7 @@
                     <th style="width: 40px;">STATION</th>
                     <th style="width: 85px;">NOTES</th>
                     <th style="width: 50px;">CO</th>
-                    <th style="width: 65px;">PO</th>
+                    <th style="width: 75px;">PO</th>
                     <th style="display:none;">PriorityText</th>
                 </tr>
             </thead>
@@ -161,7 +161,7 @@
                         </td>
                         <td style="width: 120px;">
                             <select
-                                class="form-control form-control-sm status-select"
+                                class="form-control form-control-sm status-select {{ strtolower((string) $order->status) === 'ready' ? 'erp-status-select--ready' : '' }}"
                                 style="font-weight: bold; color: black;"
                                 data-id="{{ $order->id }}"
                                 data-location="{{ $order->location }}"

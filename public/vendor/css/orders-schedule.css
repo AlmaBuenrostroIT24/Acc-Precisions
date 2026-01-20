@@ -88,19 +88,23 @@
 .bg-status-ready {
     background-color: rgba(20, 184, 166, 0.14) !important;
     border-left: 5px solid #14b8a6 !important;
-    font-weight: bold !important;
+    font-weight: normal !important;
+    font-style: italic !important;
     box-shadow: 0 0 6px rgba(20, 184, 166, 0.16);
     transition: all 0.3s ease-in-out;
 }
 
 .bg-status-ready td {
     background-color: rgba(20, 184, 166, 0.14) !important;
+    font-weight: normal !important;
+    font-style: italic !important;
 }
 
 .select-status.bg-status-ready {
     background-color: rgba(20, 184, 166, 0.12) !important;
     color: #115e59 !important;
-    font-weight: bold;
+    font-weight: normal;
+    font-style: italic;
     border-left: 4px solid #14b8a6;
 }
 
@@ -356,6 +360,29 @@
 #orders_scheduleTable .toggle-source-btn:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+}
+
+#orders_scheduleTable .status-select.erp-status-select--ready {
+    background-color: #14b8a6 !important;
+    border-color: rgba(20, 184, 166, 0.85) !important;
+    color: #fff !important;
+    font-style: italic !important;
+    font-weight: 700 !important;
+    padding-left: 30px !important;
+    background-repeat: no-repeat !important;
+    background-position: 10px center !important;
+    background-size: 14px 14px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%23ffffff' d='M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 48c110.5 0 200 89.5 200 200s-89.5 200-200 200S56 366.5 56 256 145.5 56 256 56zm140.2 130.9L215.6 367.5c-4.5 4.5-10.6 7-17 7s-12.5-2.5-17-7l-75.8-75.8c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l58.8 58.8 163.7-163.7c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z'/%3E%3C/svg%3E") !important;
+}
+
+/* Al abrir/desplegar el select, volver al estilo normal */
+#orders_scheduleTable .status-select.erp-status-select--ready:focus {
+    background-color: #fff !important;
+    border-color: #d5d8dd !important;
+    color: #111827 !important;
+    font-style: normal !important;
+    background-image: none !important;
+    padding-left: 10px !important;
 }
 
 #orders_scheduleTable_wrapper .dataTables_info {

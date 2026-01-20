@@ -1406,6 +1406,13 @@ ${error && error.message ? error.message : error}`);
     tableElement.on("focus", ".status-select", function () {
         const currentVal = ($(this).val() || "").toLowerCase(); // .toLowerCase() Normalizar el oldStatus a minúsculas
         $(this).data("old-status", currentVal);
+        // Al abrir el dropdown, evitar que se vea "verde" mientras seleccionas otro status
+        $(this).removeClass("erp-status-select--ready");
+    });
+
+    tableElement.on("blur", ".status-select", function () {
+        const cur = ($(this).val() || "").toLowerCase();
+        $(this).toggleClass("erp-status-select--ready", cur === "ready");
     });
 
     // Actualizar Status con confirmacion SweetAlert
@@ -1625,6 +1632,10 @@ ${error && error.message ? error.message : error}`);
 
                         //  Actualiza el valor de referencia para futuros cambios
                         select.data("old-status", newStatus);
+                        select.toggleClass(
+                            "erp-status-select--ready",
+                            newStatus === "ready"
+                        );
 
                         // Asegurar que el color de fila respete "Late" primero (vs. status)
                         if (typeof applyRowLateStyle === "function") {
