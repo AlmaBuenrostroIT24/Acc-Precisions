@@ -380,6 +380,16 @@
         padding: 6px 10px;
     }
 
+    /* Filtros (selects): sin bold */
+    select.erp-filter-control {
+        font-weight: 400;
+    }
+
+    /* Dropdowns de Priority/Delete/Export: sin bold */
+    button.erp-filter-control {
+        font-weight: 400;
+    }
+
     .erp-filter-control:focus {
         border-color: #94a3b8;
         box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
@@ -411,7 +421,7 @@
         border-radius: 10px 0 0 10px;
         border: 1px solid #d5d8dd;
         background: #fff;
-        font-weight: 700;
+        font-weight: 400;
         color: #0f172a;
         padding-top: 7px;
     }
@@ -457,7 +467,7 @@
         background: rgba(248, 250, 252, 0.95);
         padding: 9px 10px;
         color: #0f172a;
-        font-weight: 800;
+        font-weight: 400;
         font-size: 0.9rem;
         cursor: pointer;
         text-align: left;
@@ -480,6 +490,33 @@
         background: rgba(148, 163, 184, 0.14);
         color: #334155;
         flex: 0 0 auto;
+    }
+
+    /* Modal header icon (Priority/Delete) */
+    .erp-pane-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: rgba(248, 250, 252, 0.95);
+        color: #334155;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        flex: 0 0 auto;
+    }
+
+    .erp-pane-icon--priority {
+        border-color: rgba(147, 51, 234, 0.30);
+        background: rgba(147, 51, 234, 0.12);
+        color: #6d28d9;
+    }
+
+    .erp-pane-icon--danger {
+        border-color: rgba(220, 53, 69, 0.30);
+        background: rgba(220, 53, 69, 0.12);
+        color: #b91c1c;
     }
 
     .erp-menu-item--priority .erp-menu-icon {
@@ -553,7 +590,7 @@
 
     .erp-modal-table thead th {
         background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
-        color: #0f172a;
+        color: #000 !important;
         font-weight: 900;
         font-size: 0.78rem;
         letter-spacing: .04em;
