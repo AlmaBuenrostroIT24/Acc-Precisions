@@ -11,8 +11,8 @@
                     <th style="width: 60px;">PN</th>
                     <th style="width: 180px;">PART/DESCRIPTION</th>
                     <th style="width: 70px;">CUSTOMER</th>
-                    <th style="width: 30px;">COQTY</th>
-                    <th style="width: 45px;">WOQTY</th>
+                    <th style="width: 45px;">COQTY</th>
+                    <th style="width: 50px;">WOQTY</th>
                     <th style="width: 105px;">STATUS</th>
                     <th style="width: 85px;">MAC. DATE</th>
                     <th style="display:none;">DueDateText</th> <!-- índice 2 -->
@@ -45,7 +45,6 @@
                     }
                     }
 
-
                     $status = strtolower($order->status);
                     $rowClass = match($status) {
                     'pending' => 'bg-status-pending',
@@ -66,7 +65,6 @@
                     'onhold' => 'bg-status-onhold',
                     default => '',
                     };
-
 
                     $dias = $order->dias_restantes;
                     $color = $dias < 0 ? 'text-danger fw-bold' : ($dias <=2 ? 'text-warning fw-bold' : 'text-success fw-bold' );
@@ -106,7 +104,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td style="white-space: nowrap; width: 100px;" class="texsty">
+                        <td style="white-space: nowrap; width: 100px;" class="texsty work-id-cell">
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             $hasWorkId = isset($order->work_id) && trim($order->work_id) !== '';
@@ -129,11 +127,11 @@
                             </span>
                             @endif
                         </td>
-                        <td class="texsty" style="min-width: 120px;">{{ $order->PN }}</td>
-                        <td>{{ $order->Part_description }}</td>
-                        <td class="texsty">{{ $order->costumer }}</td>
-                        <td class="texsty">{{ $order->qty }}</td>
-                        <td>
+                        <td class="texsty pn-cell" style="min-width: 120px;">{{ $order->PN }}</td>
+                        <td class="part-desc-cell">{{ $order->Part_description }}</td>
+                        <td class="texsty customer-cell">{{ $order->costumer }}</td>
+                        <td class="texsty qty-cell">{{ $order->qty }}</td>
+                        <td class="wo-qty-cell">
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             $hasValue = !is_null($order->wo_qty) && (string)$order->wo_qty !== '' && (int)$order->wo_qty !== 0;
@@ -309,7 +307,7 @@
                                 </button>
                             </span>
                         </td>
-                        <td class="texsty" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
+                        <td class="texsty station-cell" style="white-space: nowrap; width: 100px;" data-location="{{ $order->location }}">
                             @php
                             $isRestricted = auth()->check() && auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
                             @endphp

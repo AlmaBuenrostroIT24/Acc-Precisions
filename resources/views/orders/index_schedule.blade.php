@@ -308,11 +308,29 @@
     .erp-filter-search {
         order: 3;
         margin: 0 0 0 auto;
-        flex: 0 1 320px;
+        flex: 0 0 320px;
+        min-width: 320px;
         align-self: flex-end;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
+    }
+
+    .erp-filter-search .erp-input-group {
+        width: 320px;
+        max-width: 100%;
+    }
+
+    @media (max-width: 576px) {
+        .erp-filter-search {
+            flex: 1 1 100%;
+            min-width: 0;
+            align-items: stretch;
+        }
+
+        .erp-filter-search .erp-input-group {
+            width: 100%;
+        }
     }
 
     #filterForm.form-row {
@@ -638,6 +656,38 @@
         background: rgba(2, 6, 23, 0.04);
     }
 
+    /* SweetAlert2 (ERP style) */
+    .swal2-popup.erp-swal {
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+    }
+
+    .swal2-title.erp-swal-title {
+        color: #0f172a;
+        font-weight: 900;
+        letter-spacing: 0.01em;
+    }
+
+    .swal2-html-container.erp-swal-text {
+        color: #334155;
+        font-weight: 600;
+    }
+
+    .swal2-icon.erp-swal-icon {
+        box-shadow: none;
+    }
+
+    .swal2-icon.erp-swal-icon.swal2-success {
+        border-color: rgba(34, 197, 94, 0.35) !important;
+        color: #15803d !important;
+    }
+
+    .swal2-icon.erp-swal-icon.swal2-error {
+        border-color: rgba(220, 53, 69, 0.30) !important;
+        color: #b91c1c !important;
+    }
+
     .erp-modal-table td:nth-child(1),
     .erp-modal-table td:nth-child(2),
     .erp-modal-table td:nth-child(4),
@@ -894,8 +944,15 @@
             icon: 'success',
             title: '¡Success!',
             text: "{{ session('success') }}",
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'erp-swal',
+                title: 'erp-swal-title',
+                htmlContainer: 'erp-swal-text',
+                icon: 'erp-swal-icon',
+                confirmButton: 'btn btn-erp-primary px-4'
+            }
         });
     });
 </script>
@@ -907,8 +964,15 @@
             icon: 'error',
             title: 'Error',
             text: "{{ session('error') }}",
-            confirmButtonColor: '#b91c1c',
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'erp-swal',
+                title: 'erp-swal-title',
+                htmlContainer: 'erp-swal-text',
+                icon: 'erp-swal-icon',
+                confirmButton: 'btn btn-danger px-4'
+            }
         });
     });
 </script>
@@ -923,8 +987,15 @@
             icon: 'error',
             title: 'Upload Failed',
             text: first,
-            confirmButtonColor: '#b91c1c',
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'erp-swal',
+                title: 'erp-swal-title',
+                htmlContainer: 'erp-swal-text',
+                icon: 'erp-swal-icon',
+                confirmButton: 'btn btn-danger px-4'
+            }
         });
     });
 </script>

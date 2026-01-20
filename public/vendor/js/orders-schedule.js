@@ -3,6 +3,60 @@ document.addEventListener("DOMContentLoaded", () => {
     // Helpers
     const qs = (id) => document.getElementById(id);
 
+    function erpSwalFire(opts) {
+        const SwalRef = window.Swal;
+        if (!SwalRef || typeof SwalRef.fire !== "function") {
+            const msg =
+                typeof opts === "string"
+                    ? opts
+                    : (opts && (opts.text || opts.title)) || "OK";
+            alert(String(msg));
+            return Promise.resolve({ isConfirmed: true });
+        }
+
+        const base = {
+            buttonsStyling: false,
+            customClass: {
+                popup: "erp-swal",
+                title: "erp-swal-title",
+                htmlContainer: "erp-swal-text",
+                icon: "erp-swal-icon",
+                confirmButton: "btn btn-erp-primary px-4",
+                cancelButton: "btn btn-light px-4",
+            },
+        };
+
+        const merged = typeof opts === "string" ? { title: opts } : opts || {};
+
+        return SwalRef.fire({
+            ...base,
+            ...merged,
+            customClass: {
+                ...base.customClass,
+                ...(merged.customClass || {}),
+            },
+        });
+    }
+
+    function getJson(url) {
+        return fetch(url, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+        }).then(async (res) => {
+            const rawText = await res.text();
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${rawText || res.statusText}`);
+            }
+            try {
+                return JSON.parse(rawText);
+            } catch (err) {
+                throw new Error(
+                    `Respuesta no JSON valida: ${rawText.slice(0, 200)}`
+                );
+            }
+        });
+    }
+
     // Cache de elementos (pueden NO existir según el rol)
     const tableElement = $("#orders_scheduleTable"); // jQuery, ok si no existe
     const csrfToken = $('meta[name="csrf-token"]').attr("content");
@@ -1666,7 +1720,7 @@ ${error && error.message ? error.message : error}`);
 
             // 3) Validar
             if (!Number.isFinite(woQtyNum) || woQtyNum < 0) {
-                Swal.fire({
+                erpSwalFire({
                     icon: "warning",
                     title: "WO_QTY required",
                     text: "Before selecting as 'sent', you must capture a valid value in WO_QTY.",
@@ -1679,7 +1733,7 @@ ${error && error.message ? error.message : error}`);
             }
 
             // 4) Confirmar envio
-            Swal.fire({
+            erpSwalFire({
                 title: "¿Are you sure?",
                 text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
                 icon: "warning",
@@ -1800,7 +1854,7 @@ ${error && error.message ? error.message : error}`);
           <small class="text-muted d-block mt-2">
             If you continue, <b>Inspection</b> will be marked as <b>COMPLETED</b>.
           </small>`;
-                        return Swal.fire({
+                        return erpSwalFire({
                             title: "Inspection not at 100%",
                             html,
                             icon: "warning",
@@ -1844,7 +1898,7 @@ ${error && error.message ? error.message : error}`);
 
                     //  Nota SOLO si 0%
                     if (progress === 0) {
-                        return Swal.fire({
+                        return erpSwalFire({
                             title: "Inspection note",
                             input: "textarea",
                             inputLabel:
@@ -1886,7 +1940,7 @@ ${error && error.message ? error.message : error}`);
           <p class="text-muted d-block mt-2" style="font-size: 1.05rem;">
             Changing status to <b>${newStatus}</b> will also move the location to <b>HEARST</b>.
           </p>`;
-                        Swal.fire({
+                        erpSwalFire({
                             title: "¿Are you sure?",
                             html,
                             icon: "warning",
@@ -1927,7 +1981,7 @@ ${error && error.message ? error.message : error}`);
                         reason !== "note-not-provided"
                     ) {
                         select.val(oldStatus).trigger("change.select2");
-                        Swal.fire({
+                        erpSwalFire({
                             title: "Error",
                             text: "Couldn't fetch operation/progress.",
                             icon: "error",
@@ -1987,7 +2041,7 @@ ${error && error.message ? error.message : error}`);
                         }
 
                         if (progress === 0) {
-                            return Swal.fire({
+                            return erpSwalFire({
                                 title: "Inspection note",
                                 input: "textarea",
                                 inputLabel:
@@ -2040,7 +2094,7 @@ ${error && error.message ? error.message : error}`);
           <small class="text-muted d-block mt-2">
             If you continue, <b>Inspection</b> will be marked as <b>COMPLETED</b>.
           </small>`;
-                        return Swal.fire({
+                        return erpSwalFire({
                             title: "Inspection not at 100%",
                             html,
                             icon: "warning",
@@ -2072,7 +2126,7 @@ ${error && error.message ? error.message : error}`);
                 })
                 .fail(function () {
                     select.val(oldStatus).trigger("change.select2");
-                    Swal.fire({
+                    erpSwalFire({
                         title: "Error",
                         text: "Couldn't fetch order meta.",
                         icon: "error",
@@ -2485,7 +2539,12 @@ ${error && error.message ? error.message : error}`);
         }
         const qty = parseInt(newVal, 10);
         if (isNaN(qty) || qty < 0) {
-            Swal.fire(" Invalid quantity", "Enter a valid number", "warning");
+            erpSwalFire({
+                title: "Invalid quantity",
+                text: "Enter a valid number",
+                icon: "warning",
+                confirmButtonText: "OK",
+            });
             return;
         }
         if (String(original) === String(qty)) return;
@@ -2537,7 +2596,9 @@ ${error && error.message ? error.message : error}`);
 
     function agregarBotonesKit() {
         tableElement.find("tbody tr").each(function (index) {
-            const partDescCell = $(this).find("td").eq(3); // columna PART/DESCRIPTION
+            if ($(this).hasClass("kit-new-row")) return;
+            const partDescCell = $(this).find("td.part-desc-cell"); // columna PART/DESCRIPTION
+            if (!partDescCell.length) return;
             partDescCell.css("position", "relative"); // para posicionar el boton dentro
 
             const texto = partDescCell.text().toLowerCase();
@@ -2564,8 +2625,9 @@ ${error && error.message ? error.message : error}`);
                                 font-size: 1em;
                                 position: absolute; 
                                 right: 0.25em; 
-                                top: 70%; 
+                                top: 50%; 
                                 transform: translateY(-50%);
+                                z-index: 2;
                             ">
                             <i class="fas fa-plus" style="line-height: 1.6em;"></i>
                         </button>`
@@ -2586,22 +2648,263 @@ ${error && error.message ? error.message : error}`);
         agregarBotonesKit();
     });
 
+    function handleAddKitOriginal(btn, row, originalId) {
+        btn.prop("disabled", true);
+        getJson("/orders/next-id")
+            .then((data) => {
+                const nextId = data && data.next_id;
+                if (!nextId) throw new Error("Missing next_id");
+
+                const $row = $(row);
+                const newRow = $row.clone(false);
+                copySelectAndInputValues($row, newRow);
+                newRow.addClass("kit-new-row");
+                newRow.find(".btn-add-kit").remove();
+
+                // Inputs en posiciones fijas (mapping del backend), NO por índice de columna visual
+                newRow.find("td.work-id-cell").html(
+                    `<input type="text" name="col_text_1" class="form-control form-control-sm" value="">`
+                );
+                newRow.find("td.part-desc-cell").html(
+                    `<input type="text" name="col_text_3" class="form-control form-control-sm" value="">`
+                );
+
+                // Copiar COQTY/WOQTY a inputs (ahi se edita/guarda)
+                const coQtyOrig = safeText($row.find("td.qty-cell").first());
+                const woQtyOrigRaw =
+                    $row.find(".wo-qty-input").length
+                        ? String($row.find(".wo-qty-input").val() || "").trim()
+                        : safeText($row.find("td.wo-qty-cell").first());
+
+                newRow.find("td.qty-cell").html(
+                    `<input type="number" min="0" step="1" name="col_text_5" class="form-control form-control-sm" value="${coQtyOrig}">`
+                );
+                newRow.find("td.wo-qty-cell").html(
+                    `<input type="number" min="0" step="1" name="col_text_6" class="form-control form-control-sm" value="${woQtyOrigRaw}">`
+                );
+
+                // Desactivar controles que podrían disparar updates a la orden original
+                newRow
+                    .find(".location-select, .status-select")
+                    .prop("disabled", true)
+                    .removeAttr("data-id")
+                    .removeAttr("data-old");
+                newRow
+                    .find(".toggle-report-btn, .toggle-source-btn")
+                    .prop("disabled", true)
+                    .css({ "pointer-events": "none", opacity: 0.6 });
+                newRow
+                    .find(
+                        ".editable-work-id, .editable-station, .editable-machining-date, .editable-due-date, .open-notes-modal"
+                    )
+                    .removeClass(
+                        "editable-work-id editable-station editable-machining-date editable-due-date open-notes-modal text-decoration-underline"
+                    )
+                    .removeAttr("data-id")
+                    .removeAttr("data-value")
+                    .removeAttr("data-enabled")
+                    .removeAttr("data-notes");
+
+                $row.after(newRow);
+                const workIdInput = newRow.find('input[name="col_text_1"]');
+                const coQtyInput = newRow.find('input[name="col_text_5"]');
+                const woQtyInput = newRow.find('input[name="col_text_6"]');
+                if (workIdInput.length) setTimeout(() => workIdInput.trigger("focus"), 0);
+
+                let guardado = false;
+
+                function tryConfirmSave(e) {
+                    if (e.key !== "Enter" || guardado) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const coNum = Number(String(coQtyInput.val() || "").trim());
+                    const woNum = Number(String(woQtyInput.val() || "").trim());
+
+                    const validInt = (n) =>
+                        Number.isFinite(n) && Number.isInteger(n) && n >= 0;
+
+                    if (!validInt(coNum)) {
+                        erpSwalFire({
+                            title: "Required CO QTY",
+                            text: "Enter a valid CO QTY (0 or more).",
+                            icon: "warning",
+                            confirmButtonText: "OK",
+                        });
+                        coQtyInput.trigger("focus");
+                        return;
+                    }
+
+                    if (!validInt(woNum)) {
+                        erpSwalFire({
+                            title: "Required WO QTY",
+                            text: "Enter a valid WO QTY (0 or more).",
+                            icon: "warning",
+                            confirmButtonText: "OK",
+                        });
+                        woQtyInput.trigger("focus");
+                        return;
+                    }
+
+                    erpSwalFire({
+                        title: "Save Order?",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, Save",
+                        cancelButtonText: "Cancel",
+                        reverseButtons: true,
+                    }).then((result) => {
+                        if (!result.isConfirmed) return;
+                        guardado = true;
+                        checkInputsAndSend();
+                    });
+                }
+
+                coQtyInput.on("keydown", tryConfirmSave);
+                woQtyInput.on("keydown", tryConfirmSave);
+
+                function safeText($el) {
+                    const t = ($el && $el.text ? $el.text() : "") || "";
+                    return String(t).trim();
+                }
+
+                function safeData($el, key) {
+                    if (!$el || !$el.length) return "";
+                    const v = $el.data(key);
+                    return v == null ? "" : String(v).trim();
+                }
+
+                function safeBtnValue($el) {
+                    if (!$el || !$el.length) return "0";
+                    const v = $el.attr("data-value");
+                    return v == null ? "0" : String(v).trim();
+                }
+
+                function checkInputsAndSend() {
+                    const coNum = Number(String(coQtyInput.val() || "").trim());
+                    const woNum = Number(String(woQtyInput.val() || "").trim());
+                    if (
+                        !Number.isFinite(coNum) ||
+                        !Number.isInteger(coNum) ||
+                        coNum < 0 ||
+                        !Number.isFinite(woNum) ||
+                        !Number.isInteger(woNum) ||
+                        woNum < 0
+                    )
+                        return;
+
+                    const notesVal = safeData($row.find(".open-notes-modal").first(), "notes");
+                    const stationTxt = safeText($row.find("td.station-cell").first());
+
+                    const dataToSend = {
+                        id: nextId,
+                        original_id: originalId,
+                        col_text_0: String($row.find("select.location-select").val() || "").trim(),
+                        col_text_1: String(workIdInput.val() || "").trim(),
+                        col_text_2: safeText($row.find("td.pn-cell").first()),
+                        col_text_3: String(newRow.find('input[name="col_text_3"]').val() || "").trim(),
+                        col_text_4: safeText($row.find("td.customer-cell").first()),
+                        col_text_5: String(coQtyInput.val() || "").trim(),
+                        col_text_6: String(woQtyInput.val() || "").trim(),
+                        col_text_7: String($row.find("select.status-select").val() || "").trim(),
+                        col_text_8: safeData($row.find(".editable-machining-date").first(), "value"),
+                        col_text_9: safeData($row.find(".editable-due-date").first(), "value"),
+                        col_text_10: "",
+                        col_text_11: "",
+                        col_text_12: safeBtnValue($row.find("button.toggle-report-btn").first()),
+                        col_text_13: safeBtnValue($row.find("button.toggle-source-btn").first()),
+                        col_text_14: stationTxt === "N/A" ? "" : stationTxt,
+                        col_text_15: notesVal,
+                    };
+
+                    handlePostJsonWithAlerts(
+                        "/orders",
+                        dataToSend,
+                        () => location.reload(),
+                        "Error al guardar el registro"
+                    );
+                }
+            })
+            .catch((err) => {
+                console.error("KIT error", err);
+                erpSwalFire({
+                    title: "Error",
+                    text: "No se pudo crear la fila kit.",
+                    icon: "error",
+                    confirmButtonText: "OK",
+                });
+            })
+            .finally(() => {
+                btn.prop("disabled", false);
+            });
+    }
+
     // Manejar el click en botones 'Agregar' dinamicos
-    tableElement.on("click", ".btn-add-kit", function () {
+    tableElement.on("click", ".btn-add-kit", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         const btn = $(this);
         const row = btn.closest("tr");
 
         //    usa data-id en el <tr data-id="123"> y deja este fallback a la col 0
-        const originalId = row.data("orderId");
+        const originalId =
+            row.data("orderId") ||
+            row.attr("data-order-id") ||
+            row.attr("data-orderid") ||
+            null;
+        if (!originalId) {
+            erpSwalFire({
+                title: "Error",
+                text: "Couldn't read original order id.",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+            return;
+        }
+
+        // Usa la lógica "original" (crear fila debajo y guardar con Enter en WO QTY)
+        handleAddKitOriginal(btn, row, originalId);
+        return;
 
         // Obtener proximo ID antes de hacer cualquier cosa
-        fetch("/orders/next-id")
-            .then((res) => res.json())
+        btn.prop("disabled", true);
+        getJson("/orders/next-id")
             .then((data) => {
-                const nextId = data.next_id;
+                const nextId = data && data.next_id;
+                if (!nextId) {
+                    throw new Error("Missing next_id");
+                }
 
                 // Clonar la fila original (sin eventos)
                 const newRow = row.clone(false);
+
+                // Evitar IDs duplicados / handlers que afecten la orden original
+                newRow.removeAttr("id");
+                newRow.removeAttr("data-order-id");
+                newRow.removeAttr("data-priority");
+                newRow.addClass("kit-new-row");
+                newRow.find("[id]").removeAttr("id");
+
+                // Quitar acciones/ediciones en la fila clonada (evita updates a la orden original)
+                newRow
+                    .find(
+                        ".open-notes-modal, .editable-station, .editable-work-id, .editable-machining-date, .editable-due-date"
+                    )
+                    .each(function () {
+                        $(this)
+                            .removeClass(
+                                "open-notes-modal editable-station editable-work-id editable-machining-date editable-due-date text-decoration-underline"
+                            )
+                            .removeAttr("data-id")
+                            .removeAttr("data-notes")
+                            .removeAttr("data-value")
+                            .removeAttr("data-enabled")
+                            .removeAttr("title")
+                            .removeAttr("data-toggle")
+                            .removeAttr("data-placement")
+                            .removeAttr("data-bs-toggle")
+                            .removeAttr("data-bs-placement");
+                    });
 
                 copySelectAndInputValues(row, newRow);
                 // console.log("✔ Location clonada: ",newRow.find('select[name="location"]').val());
@@ -2616,31 +2919,85 @@ ${error && error.message ? error.message : error}`);
                 //   `<input type="hidden" name="id" value="${nextId}">`
                 //  );
 
-                // En las columnas 2, 4 y 6 ponemos inputs vacios
-                [1, 3, 5].forEach((index) => {
-                    const cell = newRow.find(`td:eq(${index})`);
-                    cell.html(
-                        `<input type="text" name="col_text_${index}" class="form-control form-control-sm" value="">`
+                // Desactivar selects para que no disparen handlers (y aun asi se puedan leer sus valores)
+                newRow.find(".location-select").each(function () {
+                    $(this)
+                        .removeClass("location-select")
+                        .removeAttr("data-id")
+                        .prop("disabled", true);
+                });
+                newRow.find(".status-select").each(function () {
+                    $(this)
+                        .removeClass("status-select")
+                        .removeAttr("data-id")
+                        .removeAttr("data-old")
+                        .prop("disabled", true);
+                });
+
+                // Deshabilitar toggles para que no intenten actualizar nada
+                newRow
+                    .find(".toggle-report-btn, .toggle-source-btn")
+                    .prop("disabled", true)
+                    .css({ "pointer-events": "none", opacity: 0.6 });
+
+                // Reemplazar campos para "Kit": Work ID / Part Description / WO QTY
+                const workIdCell = newRow
+                    .find("td")
+                    .has(".editable-work-id")
+                    .first();
+                const workIdCellFinal = workIdCell.length
+                    ? workIdCell
+                    : newRow.find("td").eq(4); // fallback: columna WORK ID
+                workIdCellFinal.html(
+                    `<input type="text" class="form-control form-control-sm kit-work-id-input" value="">`
+                );
+
+                const partCell = newRow.find("td.part-desc-cell").first();
+                if (partCell.length) {
+                    partCell.html(
+                        `<input type="text" class="form-control form-control-sm kit-part-desc-input" value="">`
+                    );
+                }
+
+                const woQtyCell = newRow.find("td").has(".wo-qty-input").first();
+                if (woQtyCell.length) {
+                    woQtyCell.html(
+                        `<input type="number" min="0" step="1" class="form-control form-control-sm kit-wo-qty-input" value="">`
+                    );
+                }
+
+                // Notas: dejar texto simple (sin modal)
+                newRow.find("td.notes-cell").each(function () {
+                    $(this).html(
+                        '<span class="text-muted fst-italic">Note</span>'
                     );
                 });
 
                 // Insertar la nueva fila justo debajo de la actual
                 row.after(newRow);
+                setTimeout(() => {
+                    newRow.find("input.kit-work-id-input").trigger("focus");
+                }, 0);
 
                 let guardado = false;
 
                 // Guardar solo al presionar Enter en input col_text_6
                 newRow
-                    .find('input[name="col_text_5"]')
+                    .find("input.kit-wo-qty-input")
                     .on("keydown", function (e) {
                         if (e.key === "Enter" && !guardado) {
                             e.preventDefault(); // Evita que el Enter dispare el submit
                             e.stopPropagation(); // Evita burbujas
 
-                            const val6 = $(this).val().trim();
-                            if (val6) {
-                                Swal.fire({
-                                    title: "¿Save Order?",
+                            const val6 = String($(this).val() || "").trim();
+                            const qtyNum = Number(val6);
+                            const isValidQty =
+                                Number.isFinite(qtyNum) &&
+                                Number.isInteger(qtyNum) &&
+                                qtyNum >= 0;
+                            if (isValidQty) {
+                                erpSwalFire({
+                                    title: "Save Order?",
                                     icon: "question",
                                     showCancelButton: true,
                                     confirmButtonText: "Yes, Save",
@@ -2653,24 +3010,26 @@ ${error && error.message ? error.message : error}`);
                                     }
                                 });
                             } else {
-                                Swal.fire({
+                                erpSwalFire({
                                     title: "Required WO QTY",
-                                    text: "You must capture at least the WO QTY",
+                                    text: "Enter a valid WO QTY (0 or more).",
                                     icon: "warning",
-                                    confirmButtonText: "Ok",
+                                    confirmButtonText: "OK",
                                 });
                             }
                         }
                     });
 
                 function checkInputsAndSend() {
-                    const val6 = newRow
-                        .find('input[name="col_text_5"]')
-                        .val()
-                        .trim();
-
-                    if (!val6) {
-                        //  alert( "Debes capturar al menos el campo de Cantidad (columna 6).");
+                    const qtyVal = String(
+                        newRow.find("input.kit-wo-qty-input").val() || ""
+                    ).trim();
+                    const qtyNum = Number(qtyVal);
+                    if (
+                        !Number.isFinite(qtyNum) ||
+                        !Number.isInteger(qtyNum) ||
+                        qtyNum < 0
+                    ) {
                         return;
                     }
 
@@ -2719,8 +3078,6 @@ ${error && error.message ? error.message : error}`);
                                     .end()
                                     .text()
                                     .trim();
-                                if (index === 15 && finalText === "Note")
-                                    finalText = "";
                             }
 
                             dataToSend[`col_text_${index}`] = finalText;
@@ -2783,39 +3140,34 @@ ${error && error.message ? error.message : error}`);
                 }
             })
             .catch((err) => {
-                //console.error("Error obteniendo proximo ID:", err);
-                //alert("No se pudo obtener el proximo ID");
+                console.error("KIT: next-id error", err);
+                erpSwalFire({
+                    title: "Error",
+                    text: "No se pudo generar el siguiente ID. Verifica tu sesión y vuelve a intentar.",
+                    icon: "error",
+                    confirmButtonText: "OK",
+                });
+            })
+            .finally(() => {
+                btn.prop("disabled", false);
             });
     });
 
     //-----------------------------------------
 
     function copySelectAndInputValues(originalRow, clonedRow) {
-        originalRow.find("select").each(function (i) {
-            const value = $(this).val();
-            const className = $(this).attr("class");
-            const name = $(this).attr("name");
+        const $orig = $(originalRow);
+        const $clone = $(clonedRow);
 
-            // Encuentra el select correspondiente en la fila clonada
-            const cloned = clonedRow
-                .find(`select.${className.split(" ").join(".")}`)
-                .eq(i);
-            if (cloned.length) {
-                cloned.val(value); // asigna el valor seleccionado real
-            }
+        // Copiar por orden de aparición para evitar selectores inválidos por clases con espacios al final
+        $orig.find("select").each(function (i) {
+            const $dest = $clone.find("select").eq(i);
+            if ($dest.length) $dest.val($(this).val());
         });
 
-        originalRow.find("input").each(function (i) {
-            const value = $(this).val();
-            const name = $(this).attr("name");
-            const className = $(this).attr("class");
-
-            const cloned = clonedRow
-                .find(`input.${className.split(" ").join(".")}`)
-                .eq(i);
-            if (cloned.length) {
-                cloned.val(value);
-            }
+        $orig.find("input").each(function (i) {
+            const $dest = $clone.find("input").eq(i);
+            if ($dest.length) $dest.val($(this).val());
         });
     }
 });
