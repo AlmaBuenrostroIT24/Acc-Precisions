@@ -665,10 +665,14 @@
         font-size: 1rem;
     }
 
+    #orders_endscheduleTable.erp-table .erp-icon-pill i {
+        color: inherit;
+    }
+
     #orders_endscheduleTable.erp-table .erp-icon-pill--on {
-        border-color: rgba(11, 94, 215, 0.45);
-        background: rgba(11, 94, 215, 0.10);
-        color: #0b5ed7;
+        border-color: rgba(11, 94, 215, 0.55);
+        background: #0b5ed7;
+        color: #fff;
     }
 
     #orders_endscheduleTable.erp-table .erp-icon-pill--off {
