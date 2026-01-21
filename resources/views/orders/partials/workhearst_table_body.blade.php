@@ -70,18 +70,34 @@
                        </select>
                    </td>
                     <td class="erp-icon-cell">
-                        <button class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
-                            data-id="{{ $order->id }}" data-value="{{ $order->report ? 1 : 0 }}"
-                            style="cursor: default; pointer-events: none;">
-                            <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                        </button>
+                        <span class="d-inline-block"
+                            title="Report: {{ $order->report ? 'Yes' : 'No' }}"
+                            data-toggle="tooltip"
+                            data-custom-class="erp-tooltip"
+                            data-placement="top">
+                            <button type="button"
+                                class="btn btn-sm toggle-report-btn {{ $order->report ? 'btn-primary' : 'btn-secondary' }}"
+                                data-id="{{ $order->id }}"
+                                data-value="{{ $order->report ? 1 : 0 }}"
+                                style="cursor: default; pointer-events: none;">
+                                <i class="fas {{ $order->report ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                            </button>
+                        </span>
                     </td>
                     <td class="erp-icon-cell">
-                        <button class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
-                            data-id="{{ $order->id }}" data-value="{{ $order->our_source }}"
-                            style="cursor: default; pointer-events: none;">
-                            <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
-                        </button>
+                        <span class="d-inline-block"
+                            title="Outsource: {{ $order->our_source ? 'Yes' : 'No' }}"
+                            data-toggle="tooltip"
+                            data-custom-class="erp-tooltip"
+                            data-placement="top">
+                            <button type="button"
+                                class="btn btn-sm toggle-source-btn {{ $order->our_source ? 'btn-primary' : 'btn-secondary' }}"
+                                data-id="{{ $order->id }}"
+                                data-value="{{ $order->our_source ? 1 : 0 }}"
+                                style="cursor: default; pointer-events: none;">
+                                <i class="fas {{ $order->our_source ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                            </button>
+                        </span>
                     </td>
                    <td>{{ optional($order->machining_date)->format('M-d-y') }}</td>
                    <td>

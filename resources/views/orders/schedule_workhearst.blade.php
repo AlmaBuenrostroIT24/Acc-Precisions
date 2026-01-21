@@ -443,22 +443,10 @@
         font-size: 0.90rem;
     }
 
-    /* Row hover (status accent, no heavy background) */
-    .erp-table tbody tr.erp-row--info:hover td,
-    .erp-table tbody tr.erp-row--success:hover td,
-    .erp-table tbody tr.erp-row--warn:hover td,
-    .erp-table tbody tr.erp-row--danger:hover td {
-        box-shadow: inset 0 1px 0 var(--erp-row-accent, rgba(148, 163, 184, 0.55)),
-            inset 0 -1px 0 var(--erp-row-accent, rgba(148, 163, 184, 0.55));
-    }
-
-    .erp-table tbody tr.erp-row--info:hover td:first-child,
-    .erp-table tbody tr.erp-row--success:hover td:first-child,
-    .erp-table tbody tr.erp-row--warn:hover td:first-child,
-    .erp-table tbody tr.erp-row--danger:hover td:first-child {
-        box-shadow: inset 4px 0 0 var(--erp-row-accent, rgba(148, 163, 184, 0.55)),
-            inset 0 1px 0 var(--erp-row-accent, rgba(148, 163, 184, 0.55)),
-            inset 0 -1px 0 var(--erp-row-accent, rgba(148, 163, 184, 0.55));
+    /* Row hover: sin borde/sombra */
+    .erp-table tbody tr:hover td,
+    .erp-table tbody tr:hover td:first-child {
+        box-shadow: none !important;
     }
 
     .erp-table tbody tr.erp-row--info { --erp-row-accent: rgba(14, 165, 233, 0.65); }
@@ -545,10 +533,10 @@
     /* Botones REPORT / OUT tipo ERP */
     .erp-table .toggle-report-btn,
     .erp-table .toggle-source-btn {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
         padding: 0 !important;
-        border-radius: 10px !important;
+        border-radius: 9px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -560,14 +548,15 @@
 
     .erp-table .toggle-report-btn i,
     .erp-table .toggle-source-btn i {
-        font-size: 1.05rem;
+        font-size: 1rem;
+        color: inherit;
     }
 
     .erp-table .toggle-report-btn.btn-primary,
     .erp-table .toggle-source-btn.btn-primary {
         border-color: rgba(11, 94, 215, 0.55) !important;
-        background: #f8fafc !important;
-        color: #0b5ed7 !important;
+        background: #0b5ed7 !important;
+        color: #fff !important;
     }
 
     .erp-table .toggle-report-btn.btn-secondary,
