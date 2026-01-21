@@ -1246,7 +1246,7 @@ ${error && error.message ? error.message : error}`);
 
         input.on("blur", function () {
             const newDate = input.val();
-            if (!newDate || newDate === currentValue) {
+            if (!newDate) {
                 input.replaceWith(span);
                 return;
             }

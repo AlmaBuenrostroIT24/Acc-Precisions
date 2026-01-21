@@ -158,11 +158,11 @@
                 <div class="card-body">
                     <div id="endyarnellErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-0">
                         <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
-                            <div class="input-group input-group-sm" style="width: 130px;">
+                            <div class="input-group input-group-sm erp-page-length-group" style="width: 130px;">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text bg-light">Rows</span>
+                                    <span class="input-group-text bg-light erp-rows-addon">Rows</span>
                                 </div>
-                                <select id="endyarnellPageLength" class="form-control erp-filter-control">
+                                <select id="endyarnellPageLength" class="form-control form-control-sm erp-filter-control">
                                     <option value="10">10</option>
                                     <option value="25" selected>25</option>
                                     <option value="50">50</option>
@@ -194,33 +194,39 @@
                     </div>
 
                     <div class="table-responsive d-none" id="endyarnellTableWrapper">
-                        <table id="orders_endscheduleTable" class="table table-bordered table-sm table-hover erp-table" style="table-layout: fixed; width: 100%;">
+                        <table id="orders_endscheduleTable" class="table table-bordered table-sm table-striped table-hover erp-table" style="table-layout: fixed; width: 100%;">
                             <thead class="table-light thead-custom">
                                 <tr class="text-center align-middle">
-                                    <th class="text-center align-middle" style="width:65px">LOC</th>
+                                    <th class="text-center align-middle" style="width:120px">LOC</th>
                                     <th class="text-center align-middle" style="width:80px">WORK ID</th>
                                     <th style="width:90px">PN</th>
                                     <th style="width:250px">DESCRIPTION</th>
-                                    <th style="width:100px">CUSTOMER</th>
-                                    <th style="width:110px" class="text-center">STATUS</th>
+                                    <th style="width:95px">CUSTOMER</th>
+                                    <th style="width:100px" class="text-center">STATUS</th>
                                     <th style="width:60px" class="text-center">QTY</th>
                                     <th style="width:70px" class="text-center">WO QTY</th>
                                     <th style="width:30px" class="text-center">REP</th>
                                     <th style="width:30px" class="text-center">OUT</th>
                                     <th style="width:70px" class="text-center">DUE</th>
                                     <th style="width:90px" class="text-center">MACH</th>
-                                    <th style="width:125px" class="text-center">END MACH</th>
+                                    <th style="width:120px" class="text-center">END MACH</th>
                                     <th style="width:95px" class="text-center">TARGET</th>
-                                    <th style="width:220px">NOTES</th>
+                                    <th style="width:190px">NOTES</th>
                                 </tr>
                             </thead>
                             <tbody id="statusTable">
                                 @foreach($orders as $order)
-                                    <tr data-status="{{ $order->status }}">
+                                    @php
+                                        // Mostrar el status guardado en el momento que se seteó endate_mach
+                                        $displayStatus = ($order->endate_mach && !empty($order->status_at_endate_mach))
+                                            ? $order->status_at_endate_mach
+                                            : ($order->status ?? '');
+                                    @endphp
+                                    <tr data-status="{{ $displayStatus }}">
                                         <td data-last-location="{{ $order->last_location }}">
-                                            <span class="d-block erp-location-text" style="color:#0f172a;">{{ $order->location }}</span>
+                                            <span class="d-inline-block erp-location-text" style="color:#0f172a;">{{ $order->location }}</span>
                                             @if (($order->last_location ?? '') === 'Yarnell')
-                                                <span class="erp-pill erp-pill--warn erp-pill--sm d-inline-block mt-1">
+                                                <span class="erp-pill erp-pill--off erp-pill--sm erp-pill--xs d-inline-block ml-2">
                                                     <i class="fas fa-map-marker-alt mr-1"></i> Yarnell
                                                 </span>
                                             @endif
@@ -231,15 +237,15 @@
                                         <td class="erp-cell-wrap">{{ $order->costumer }}</td>
                                         <td class="text-center">
                                             @php
-                                                $st = strtolower(trim((string) ($order->status ?? '')));
+                                                $st = strtolower(trim((string) ($displayStatus ?? '')));
                                                 $statusClass = 'erp-pill--info';
                                                 if ($st === 'shipping') $statusClass = 'erp-pill--info';
                                                 else if (in_array($st, ['sent', 'ready'], true)) $statusClass = 'erp-pill--success';
                                                 else if (in_array($st, ['onhold', 'late', 'overdue'], true)) $statusClass = 'erp-pill--danger';
                                                 else if (in_array($st, ['pending', 'waitingformaterial', 'deburring', 'qa', 'assembly'], true)) $statusClass = 'erp-pill--warn';
                                             @endphp
-                                            <span class="erp-pill erp-pill--sm {{ $statusClass }}" title="{{ $order->status }}">
-                                                {{ ucfirst($order->status ?? '-') }}
+                                            <span class="erp-pill erp-pill--sm {{ $statusClass }}" title="{{ $displayStatus }}">
+                                                {{ ucfirst($st ?: '-') }}
                                             </span>
                                         </td>
                                         <td class="text-center">{{ $order->qty }}</td>
@@ -295,7 +301,7 @@
 @section('css')
 <style>
     .erp-location-text {
-        font-size: 0.85rem;
+        font-size: 0.80rem;
         font-weight: 600;
     }
 
@@ -412,6 +418,37 @@
         font-size: 0.78rem;
         letter-spacing: .03em;
         text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        line-height: 1;
+        padding: 0 10px;
+    }
+
+    /* "Rows" addon: un poco más pequeño que el resto */
+    .erp-table-toolbar .input-group-text.erp-rows-addon {
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0;
+        text-transform: none;
+        padding: 0 8px;
+    }
+
+    /* Igualar tamaño visual al botón dropdown (Columns) */
+    .erp-table-toolbar .erp-page-length-group .input-group-text,
+    .erp-table-toolbar .erp-page-length-group select {
+        height: 34px !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+    }
+
+    .erp-table-toolbar .erp-page-length-group .input-group-text {
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+    }
+
+    .erp-table-toolbar .input-group-sm {
+        align-items: stretch;
     }
 
     .erp-table-toolbar .input-group > .erp-filter-control {
@@ -563,6 +600,7 @@
         margin-bottom: 0;
         table-layout: fixed;
         width: 100%;
+        font-size: 14px;
     }
 
     @media (max-width: 1200px) {
@@ -575,7 +613,7 @@
         background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
         color: #0f172a;
         font-weight: 800;
-        font-size: 0.86rem;
+        font-size: 14px;
         letter-spacing: .04em;
         text-transform: uppercase;
         border-bottom: 1px solid #d5d8dd !important;
@@ -584,7 +622,7 @@
     }
 
     #orders_endscheduleTable.erp-table tbody td {
-        font-size: 0.92rem;
+        font-size: 14px;
         color: #111827;
         vertical-align: middle;
         overflow: hidden;
@@ -622,6 +660,17 @@
         font-size: 0.78rem;
     }
 
+    #orders_endscheduleTable.erp-table .erp-pill--xs {
+        height: 18px;
+        padding: 1px 6px;
+        font-size: 0.70rem;
+        border-radius: 7px;
+    }
+
+    #orders_endscheduleTable.erp-table .erp-pill--xs i {
+        font-size: 0.72rem;
+    }
+
     #orders_endscheduleTable.erp-table .erp-target-pill {
         min-width: 80px;
         justify-content: center;
@@ -650,6 +699,12 @@
         border-color: rgba(14, 165, 233, 0.45);
         background: rgba(14, 165, 233, 0.12);
         color: #0c4a6e;
+    }
+
+    #orders_endscheduleTable.erp-table .erp-pill--off {
+        border-color: rgba(148, 163, 184, 0.55);
+        background: rgba(148, 163, 184, 0.12);
+        color: #475569;
     }
 
     #orders_endscheduleTable.erp-table .erp-icon-pill {
@@ -693,11 +748,28 @@
 <script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
     $(document).ready(function() {
+        // Si el usuario hace "refresh" (F5 / recargar), regresar la vista al estado inicial
+        // (sin query params), igual que cuando navegas a la página desde el menú.
+        try {
+            const nav = (performance.getEntriesByType && performance.getEntriesByType('navigation') || [])[0];
+            const isReload = nav && nav.type === 'reload';
+            if (isReload && window.location.search) {
+                window.location.replace(window.location.origin + window.location.pathname);
+                return;
+            }
+        } catch (e) {}
+
         const tableSelector = '#orders_endscheduleTable';
         const CUSTOMER_COL = 4;
         const STATUS_COL = 5;
         const $badge = $('#badgeEndyarnell');
         const $columnsMenu = $('#endyarnellColumnsMenu');
+
+        // Mantener abierto el dropdown de Columns hasta que el usuario haga clic afuera (Bootstrap 4)
+        // (evita que se cierre al hacer clic dentro del menú)
+        $(document).on('click', '#endyarnellColumnsMenu', function(e) {
+            e.stopPropagation();
+        });
 
         function extractText(x) {
             const raw = (x ?? '').toString();
@@ -715,7 +787,8 @@
             if (!sel || !dt) return;
 
             const colData = dt
-                .column(CUSTOMER_COL, { search: 'applied' })
+                // Mostrar siempre TODOS los customers aunque la tabla esté filtrada
+                .column(CUSTOMER_COL)
                 .data()
                 .toArray()
                 .map(extractText)
@@ -742,7 +815,8 @@
             if (!sel || !dt) return;
 
             const rowStatuses = dt
-                .rows({ search: 'applied' })
+                // Mostrar siempre TODOS los status aunque la tabla esté filtrada
+                .rows()
                 .nodes()
                 .toArray()
                 .map(tr => (tr?.getAttribute?.('data-status') || '').toString().trim())
@@ -837,6 +911,32 @@
             if ($wrapper.length) {
                 $wrapper.removeClass('d-none');
             }
+
+            // Al abrir/cerrar el menú hamburguesa (sidebar), el ancho del contenido cambia pero
+            // no siempre dispara un resize. Forzar recalculo de columnas para evitar scroll innecesario.
+            function adjustDtLayout() {
+                try {
+                    dt.columns.adjust();
+                    if (dt.responsive && typeof dt.responsive.recalc === 'function') {
+                        dt.responsive.recalc();
+                    }
+                } catch (e) {}
+            }
+
+            // AdminLTE / Bootstrap sidebar toggle (pushmenu)
+            $(document).on('click', '[data-widget="pushmenu"]', function() {
+                setTimeout(adjustDtLayout, 50);
+                setTimeout(adjustDtLayout, 350); // esperar transición
+            });
+            // Eventos de AdminLTE si existen
+            $(document).on('collapsed.lte.pushmenu shown.lte.pushmenu', function() {
+                setTimeout(adjustDtLayout, 50);
+                setTimeout(adjustDtLayout, 350);
+            });
+            // También en resize normal
+            $(window).on('resize', function() {
+                setTimeout(adjustDtLayout, 50);
+            });
 
             if (!dt.__statusFilterAdded) {
                 dt.__statusFilterAdded = true;

@@ -465,7 +465,14 @@ class Order_ScheduleController extends Controller
             ) {
                 $order->last_location = $order->location; // Guardar ubicación anterior
                 $order->location = 'Hearst';
-                $order->endate_mach = now(); // Guardar fecha y hora del cambio en endate_mach
+                // Guardar fecha y hora del cambio en endate_mach (solo la primera vez)
+                if (empty($order->endate_mach)) {
+                    $order->endate_mach = now();
+                }
+                // Guardar el status vigente al momento de setear endate_mach
+                if (empty($order->status_at_endate_mach)) {
+                    $order->status_at_endate_mach = $newStatus;
+                }
             }
 
             // Guardar la fecha cuando cambia a "sent"
@@ -1272,16 +1279,24 @@ class Order_ScheduleController extends Controller
 
             $newDate = $request->machining_date;
 
+            $dateChanged = ($order->machining_date !== $newDate);
+            $missingStatusSnapshot = empty($order->status_at_machining_date);
+
             // Guardar log solo si la fecha cambia
-            if ($order->machining_date !== $newDate) {
+            if ($dateChanged) {
                 OrdMachiningDateLog::create([
                     'order_schedule_id' => $order->id,
                     'previous_date' => $order->machining_date,
                     'new_date' => $newDate,
                     'changed_by' => Auth::user()?->name ?? 'System',
                 ]);
+            }
 
+            // Guardar si cambia la fecha o si falta el snapshot de status (ej. campo agregado después)
+            if ($dateChanged || $missingStatusSnapshot) {
                 $order->machining_date = $newDate;
+                // Guardar el status vigente al momento de guardar la machining_date
+                $order->status_at_machining_date = $order->status;
                 $order->save();
             }
 
@@ -1296,6 +1311,7 @@ class Order_ScheduleController extends Controller
             return response()->json([
                 'success' => true,
                 'machining_date' => $order->machining_date,
+                'status_at_machining_date' => $order->status_at_machining_date,
                 'dias_restantes' => $dias,
                 'alertColor' => $alertColor,
                 'alertLabel' => $alertLabel,
