@@ -24,7 +24,7 @@
                                             <i class="fas fa-map-marker-alt text-danger"></i>
                                         </span>
                                     </div>
-                                    <select name="location" id="locationFilter" class="form-control form-control-sm erp-filter-control auto-submit">
+                                    <select id="locationFilter" class="form-control form-control-sm erp-filter-control">
                                         <option value="">— All —</option>
                                         @foreach($locations ?? [] as $loc)
                                         <option value="{{ strtolower($loc) }}" {{ strtolower(request('location')) == strtolower($loc) ? 'selected' : '' }}>
@@ -146,16 +146,16 @@
         <div class="card mb-4 shadow-sm">
             {{-- Filtros dinámicos --}}
              
-            <div class="card-body">
+            <div class="card-body p-0">
             
 
-                <div id="finishedErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-0">
+                <div id="finishedErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-0 px-3 pt-3 pb-2">
                     <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
-                        <div class="input-group input-group-sm" style="width: 130px;">
+                        <div class="input-group input-group-sm erp-page-length-group" style="width: 130px;">
                             <div class="input-group-prepend">
-                                <span class="input-group-text bg-light">Rows</span>
+                                <span class="input-group-text bg-light erp-rows-addon">Rows</span>
                             </div>
-                            <select id="finishedPageLength" class="form-control erp-filter-control">
+                            <select id="finishedPageLength" class="form-control form-control-sm erp-filter-control">
                                 <option value="10">10</option>
                                 <option value="25" selected>25</option>
                                 <option value="50">50</option>
@@ -193,7 +193,7 @@
                 <div class="table-responsive d-none" id="finishedTableWrapper">
                     {{-- Tabla --}}
 
-                    <table id="orders_endscheduleTable" class="table table-bordered table-sm table-hover erp-table" style="table-layout: fixed; width: 100%;">
+                    <table id="orders_endscheduleTable" class="table table-bordered table-sm table-striped table-hover erp-table" style="table-layout: fixed; width: 100%;">
                         <thead class="table-light thead-custom">
                             <tr class="text-center align-middle">
                                 <th class="text-center align-middle" style="width: 65px;">LOC</th>
@@ -201,7 +201,7 @@
                                 <th style="width: 90px;">PN</th>
                                 <th class="text-center align-middle" style="width: 60px;">ORD</th>
                                 <th class="text-center align-middle" style="width: 95px;">PO</th>
-                                <th style="width: 250px;">DESCRIPTION</th>
+                                <th style="width: 260px;">DESCRIPTION</th>
                                 <th style="width: 100px;">CUSTOMER</th>
                                 <th style="width: 40px;">CO</th>
                                 <th style="width: 40px;">WO</th>
@@ -210,7 +210,7 @@
                                 <th style="width: 70px;" class="text-center align-middle">DUE</th>
                                 <th style="width: 125px;">SENT</th>
                                 <th class="text-center align-middle" style="width: 95px;">TARGET</th>
-                                <th class="text-center align-middle" style="width: 160px;">NOTES</th>
+                                <th class="text-center align-middle" style="width: 150px;">NOTES</th>
                                 <th class="text-center align-middle" style="width: 80px;">STATUS</th>
                             </tr>
                         </thead>
@@ -229,7 +229,7 @@
                                 <td>{{ $order->PN }}</td>
                                 <td class="text-center">{{ $order->co }}</td>
                                 <td class="text-center">{{ $order->cust_po }}</td>
-                                <td style="font-size: 12px;">{{ $order->Part_description }}</td>
+                                <td style="font-size: 14px;">{{ $order->Part_description }}</td>
                                 <td>{{ $order->costumer }}</td>
                                 <td class="text-center">{{ $order->qty }}</td>
                                 <td class="text-center">{{ $order->wo_qty }}</td>
@@ -279,7 +279,7 @@
                                         <span>-</span> {{-- En caso de que target_date sea null --}}
                                         @endif
                                 </td>
-                                <td style="font-size: 12px;">
+                                <td style="font-size: 14px;">
                                     <span class="open-notes-modal" data-id="{{ $order->id }}"
                                         data-notes="{{ e($order->notes) }}" title="{{ e($order->notes) }}">
                                         {{ Str::limit($order->notes, 130) }}
@@ -473,6 +473,69 @@
         line-height: 1.2;
     }
 
+    .erp-table-toolbar .input-group-text {
+        height: 34px;
+        border: 1px solid #c5c9d2;
+        border-right: 0;
+        border-radius: 10px 0 0 10px;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%) !important;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 0.78rem;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        line-height: 1;
+        padding: 0 10px;
+    }
+
+    .erp-table-toolbar .input-group-sm {
+        align-items: stretch;
+    }
+
+    .erp-table-toolbar .input-group > .erp-filter-control {
+        border-left: 0;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .erp-table-toolbar select.erp-filter-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        padding-right: 34px;
+        background-image:
+            linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23475569' d='M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 0 0, right 10px center;
+        background-size: auto, 14px 14px;
+    }
+
+    /* "Rows" addon: un poco más pequeño que el resto */
+    .erp-table-toolbar .input-group-text.erp-rows-addon {
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0;
+        text-transform: none;
+        padding: 0 8px;
+    }
+
+    /* Igualar tamaño visual al botón dropdown (Columns) */
+    .erp-table-toolbar .erp-page-length-group .input-group-text,
+    .erp-table-toolbar .erp-page-length-group select {
+        height: 34px !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+    }
+
+    .erp-table-toolbar .erp-page-length-group .input-group-text {
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+    }
+
     .erp-table-toolbar .erp-filter-control:focus {
         border-color: #94a3b8;
         box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
@@ -618,7 +681,7 @@
         border-radius: 12px;
         border: none;
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.94));
-        padding: 2px 10px 0;
+        padding: 2px 6px 6px;
     }
 
     /* Min-widths por columna para evitar "distorción" */
@@ -630,6 +693,7 @@
         margin-bottom: 0;
         table-layout: fixed;
         width: 100%;
+        font-size: 14px;
     }
 
     /* Solo forzar scroll en pantallas chicas */
@@ -643,7 +707,7 @@
         background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
         color: #0f172a;
         font-weight: 800;
-        font-size: 0.86rem;
+        font-size: 14px;
         letter-spacing: .04em;
         text-transform: uppercase;
         border-bottom: 1px solid #d5d8dd !important;
@@ -652,7 +716,7 @@
     }
 
     #orders_endscheduleTable.erp-table tbody td {
-        font-size: 0.92rem;
+        font-size: 14px;
         color: #111827;
         vertical-align: middle;
         overflow: hidden;
@@ -729,10 +793,14 @@
         font-size: 1rem;
     }
 
+    #orders_endscheduleTable.erp-table .erp-icon-pill i {
+        color: inherit;
+    }
+
     #orders_endscheduleTable.erp-table .erp-icon-pill--on {
-        border-color: rgba(11, 94, 215, 0.45);
-        background: rgba(11, 94, 215, 0.10);
-        color: #0b5ed7;
+        border-color: rgba(11, 94, 215, 0.55);
+        background: #0b5ed7;
+        color: #fff;
     }
 
     #orders_endscheduleTable.erp-table .erp-icon-pill--off {
@@ -839,6 +907,61 @@
 <script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
     $(document).ready(function() {
+        // Si el usuario hace "refresh" (F5 / recargar), regresar la vista al estado inicial:
+        // - quitar query params (filtros servidor)
+        // - limpiar stateSave de DataTables (search/pageLength/orden)
+        const RESET_FLAG = 'finished_force_reset_v1';
+        const LAST_URL_KEY = 'finished_last_url_v1';
+        let shouldReset = false;
+
+        try {
+            let isReloadByLastUrl = false;
+            try {
+                const lastUrl = (sessionStorage.getItem(LAST_URL_KEY) || '').toString();
+                const currentUrl = (window.location && window.location.href) ? window.location.href.toString() : '';
+                isReloadByLastUrl = !!lastUrl && !!currentUrl && lastUrl === currentUrl;
+            } catch (e) {}
+
+            const navEntry = (performance.getEntriesByType && performance.getEntriesByType('navigation') || [])[0];
+            const isReload =
+                isReloadByLastUrl ||
+                (navEntry && navEntry.type === 'reload') ||
+                (performance && performance.navigation && performance.navigation.type === 1);
+
+            if (isReload) {
+                sessionStorage.setItem(RESET_FLAG, '1');
+            }
+
+            // Si hay filtros en la URL, limpiar la URL primero (evita que el server vuelva a pintar selected)
+            if (isReload && window.location.search) {
+                window.location.replace(window.location.origin + window.location.pathname);
+                return;
+            }
+        } catch (e) {}
+
+        try {
+            shouldReset = sessionStorage.getItem(RESET_FLAG) === '1';
+            if (shouldReset) sessionStorage.removeItem(RESET_FLAG);
+        } catch (e) {}
+
+        // Guardar la URL actual al salir para detectar refresh en el siguiente load.
+        try {
+            $(window).on('beforeunload', function() {
+                try {
+                    if (window.location && window.location.href) {
+                        sessionStorage.setItem(LAST_URL_KEY, window.location.href.toString());
+                    }
+                } catch (e) {}
+            });
+        } catch (e) {}
+
+        // Si fue refresh, borrar el estado persistido de DataTables (stateSaveCallback)
+        if (shouldReset) {
+            try {
+                localStorage.removeItem('scheduleFinishedTableState');
+            } catch (e) {}
+        }
+
         const $tableElement = $('#orders_endscheduleTable');
         if (!$tableElement.length) return;
 
@@ -883,9 +1006,113 @@
 
         window.table = table;
 
+        function extractTextFromHtml(x) {
+            const raw = (x ?? '').toString();
+            if (!raw) return '';
+            return $('<div>').html(raw).text().trim();
+        }
+
+        function getLocationMetaFromCellHtml(cellHtml) {
+            const $tmp = $('<div>').html((cellHtml ?? '').toString());
+            let baseLocation = ($tmp.find('span').first().text() || '').trim();
+            const fullText = ($tmp.text() || '').replace(/\s+/g, ' ').trim();
+            const hasYarnell = fullText.toLowerCase().includes('yarnell');
+
+            // Fallback: cuando DataTables nos da texto plano (sin spans) por `deferRender`
+            if (!baseLocation) {
+                if (hasYarnell) {
+                    baseLocation = fullText
+                        .replace(/yarnell/ig, '')
+                        .replace(/[-,]/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                } else {
+                    baseLocation = fullText;
+                }
+            }
+
+            return {
+                base: (baseLocation || '').replace(/\s+/g, ' ').trim(),
+                hasYarnell,
+            };
+        }
+
+        function getLocationOptionsFromCellHtml(cellHtml) {
+            const meta = getLocationMetaFromCellHtml(cellHtml);
+            const location = meta.base;
+            const hasYarnell = meta.hasYarnell;
+
+            const options = [];
+            if (location) options.push(location);
+            if (hasYarnell) options.push('Yarnell');
+            if (location && hasYarnell && location.toLowerCase() !== 'yarnell') {
+                options.push(`${location}-Yarnell`);
+            }
+            return [...new Set(options)].filter(Boolean);
+        }
+
+        function getLocationKeyFromCellHtml(cellHtml) {
+            const opts = getLocationOptionsFromCellHtml(cellHtml);
+            const combo = opts.find(v => v.includes('-Yarnell'));
+            if (combo) return combo;
+            return opts[0] || '';
+        }
+
+        function populateLocationFilterFromDT(dt) {
+            const sel = document.getElementById('locationFilter');
+            if (!sel || !dt) return;
+
+            // Importante: sacar TODAS las filas, aunque haya búsqueda/filtros activos
+            const raw = dt.column(0, { search: 'none' }).data().toArray();
+            const unique = new Set();
+            for (const html of raw) {
+                for (const opt of getLocationOptionsFromCellHtml(html)) unique.add(opt);
+            }
+
+            const current = (sel.value || '').toString();
+            while (sel.options.length > 1) sel.remove(1);
+            const frag = document.createDocumentFragment();
+            [...unique]
+                .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                .forEach(v => {
+                    const o = document.createElement('option');
+                    o.value = v;
+                    o.textContent = v;
+                    frag.appendChild(o);
+                });
+            sel.appendChild(frag);
+
+            if (current && [...unique].includes(current)) sel.value = current;
+        }
+
+        function populateCustomerFilterFromDT(dt) {
+            const sel = document.getElementById('customerFilter');
+            if (!sel || !dt) return;
+
+            // Importante: sacar TODAS las filas, aunque haya búsqueda/filtros activos
+            const raw = dt.column(6, { search: 'none' }).data().toArray();
+            const unique = [...new Set(raw.map(extractTextFromHtml).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+            const current = (sel.value || '').toString();
+            while (sel.options.length > 1) sel.remove(1);
+            const frag = document.createDocumentFragment();
+            for (const v of unique) {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                frag.appendChild(opt);
+            }
+            sel.appendChild(frag);
+
+            if (current && unique.includes(current)) sel.value = current;
+        }
+
         // ---------------------- 2. POBLAR SELECTS DE FILTRO ----------------------
-        populateFilterFromColumn(0, '#locationFilter'); // columna 0: location
-        populateFilterFromColumn(6, '#customerFilter'); // columna 6: customer
+        // Importante: NO leer del DOM (tbody tr) porque DataTables con `deferRender`
+        // solo mantiene en el DOM las filas visibles (25). Usamos el API de DataTables.
+        populateLocationFilterFromDT(table);
+        populateCustomerFilterFromDT(table);
 
         // ---------------------- 3. APLICAR FILTROS COMBINADOS (client-side) ----------------------
         $('#locationFilter, #customerFilter').on("change", function() {
@@ -893,26 +1120,34 @@
         });
 
         $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            const locationVal = $('#locationFilter').val();
-            const customerVal = $('#customerFilter').val();
+            if (settings.nTable && settings.nTable.id !== 'orders_endscheduleTable') return true;
 
-            const row = table.row(dataIndex).node();
+            const locationVal = ($('#locationFilter').val() || '').toString().trim();
+            const customerVal = ($('#customerFilter').val() || '').toString().trim();
 
-            // ------------ LOCATION (columna 0) ------------
-            const locationCell = $(row).find('td').eq(0);
-            const location = locationCell.find('span').first().text().trim();
-            const lastLocation = locationCell.data('last-location');
+            // Usar la data real del row (incluye HTML) aunque el <tr> no exista en el DOM por `deferRender`
+            const rowData = table.row(dataIndex).data() || data || [];
 
-            let combinedLocation = location;
-            if (lastLocation === 'Yarnell' && location !== 'Yarnell') {
-                combinedLocation = `${location}-Yarnell`;
+            let locationMatch = true;
+            if (locationVal) {
+                const selectedLc = locationVal.toLowerCase();
+                const meta = getLocationMetaFromCellHtml(rowData[0]);
+                const baseLc = (meta.base || '').toLowerCase();
+
+                if (selectedLc === 'yarnell') {
+                    // "Yarnell" = SOLO cuando la location base es Yarnell (no Hearst-Yarnell)
+                    locationMatch = baseLc === 'yarnell';
+                } else if (selectedLc.endsWith('-yarnell')) {
+                    // "Hearst-Yarnell" = SOLO cuando tiene Yarnell y el baseLocation es Hearst
+                    const wantedBase = selectedLc.replace(/-yarnell$/, '');
+                    locationMatch = !!meta.hasYarnell && baseLc === wantedBase;
+                } else {
+                    // "Hearst" = SOLO cuando baseLocation es Hearst y NO tiene Yarnell
+                    locationMatch = !meta.hasYarnell && baseLc === selectedLc;
+                }
             }
 
-            const locationMatch = !locationVal || combinedLocation.toLowerCase() === locationVal.toLowerCase();
-
-            // ------------ CUSTOMER (columna 4) ------------
-            const customerCell = $(row).find('td').eq(6);
-            const customerText = customerCell.text().trim().toLowerCase();
+            const customerText = extractTextFromHtml(rowData[6]).toLowerCase();
             const customerMatch = !customerVal || customerText === customerVal.toLowerCase();
 
             return locationMatch && customerMatch;
@@ -1070,14 +1305,42 @@
             table.page.len(Number(this.value) || 25).draw();
         });
 
+        // Reset completo al hacer refresh: limpia filtros + search + page length a defaults.
+        if (shouldReset) {
+            try {
+                // Global search
+                $search.val('');
+                table.search('');
+
+                // DT filter (customer)
+                $('#customerFilter').val('');
+
+                // Server-side select (location) y date inputs (por si el navegador los recuerda)
+                $('#locationFilter').val('');
+                $('#month').val('');
+                $('#monthDisplay').val('');
+                $('#day').val('');
+                const initialYear = (document.querySelector('#yearPickerWrapper')?.dataset?.initialYear || '').toString();
+                $('#year').val(initialYear);
+
+                // Page length default 25
+                $pageLen.val('25');
+                table.page.len(25);
+
+                table.draw();
+            } catch (e) {}
+        }
+
         // Restore saved page length + search (if available)
         try {
-            const state = table.state.loaded();
-            if (state && state.search && typeof state.search.search === 'string') {
-                $search.val(state.search.search);
-            }
-            if (state && state.length) {
-                $pageLen.val(String(state.length));
+            if (!shouldReset) {
+                const state = table.state.loaded();
+                if (state && state.search && typeof state.search.search === 'string') {
+                    $search.val(state.search.search);
+                }
+                if (state && state.length) {
+                    $pageLen.val(String(state.length));
+                }
             }
         } catch (e) {}
 

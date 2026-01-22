@@ -88,13 +88,7 @@ class Order_ScheduleController extends Controller
         $statuses  = OrderSchedule::select('status')->distinct()->pluck('status');
         $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
 
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
+        
 
         return view('orders.index_schedule', compact('orders', 'locations', 'statuses', 'customers'));
     }
@@ -922,20 +916,28 @@ class Order_ScheduleController extends Controller
         $month    = $request->integer('month');
         $day      = $request->input('day');
 
-        $query = OrderSchedule::latest()
+        $query = OrderSchedule::query()
             ->where('last_location', 'Yarnell')
             ->where('location', 'Hearst'); // solo órdenes que están en Hearst y vienen de Yarnell
 
         // 📅 Filtro de fechas (prioridad como en summary)
         // Cambia 'due_date' si tu campo de fecha principal es otro (p. ej., 'sent_at')
         if ($day) {
-            $query->whereDate('endate_mach', Carbon::parse($day)->toDateString());
+            // Sargable (aprovecha índices): evita whereDate()/whereYear()
+            $d = Carbon::parse($day);
+            $query->whereBetween('endate_mach', [$d->copy()->startOfDay(), $d->copy()->endOfDay()]);
         } elseif ($year && $month) {
-            $query->whereYear('endate_mach', $year)->whereMonth('endate_mach', $month);
+            $start = Carbon::create($year, $month, 1)->startOfMonth();
+            $end = $start->copy()->endOfMonth();
+            $query->whereBetween('endate_mach', [$start, $end]);
         } elseif ($year) {
-            $query->whereYear('endate_mach', $year);
+            $start = Carbon::create($year, 1, 1)->startOfYear();
+            $end = $start->copy()->endOfYear();
+            $query->whereBetween('endate_mach', [$start, $end]);
         } elseif ($month) {
-            $query->whereYear('endate_mach', now()->year)->whereMonth('endate_mach', $month);
+            $start = Carbon::create(now()->year, $month, 1)->startOfMonth();
+            $end = $start->copy()->endOfMonth();
+            $query->whereBetween('endate_mach', [$start, $end]);
         } else {
             // Por defecto: mes actual para no traer dataset enorme
             $query->whereBetween('endate_mach', [now()->startOfMonth(), now()->endOfMonth()]);
@@ -943,37 +945,14 @@ class Order_ScheduleController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        $orders = $query->get();
+        $orders = $query->orderByDesc('endate_mach')->get();
 
         // 👇 obtenemos los valores únicos
-        $statuses = OrderSchedule::select('status')->distinct()->pluck('status');
-        $customers = OrderSchedule::select('costumer')->distinct()->pluck('costumer');
+        
 
-        $currentYear = now()->year;
-        $years  = range($currentYear, $currentYear - 5);
-        $months = [
-            1 => 'Jan',
-            2 => 'Feb',
-            3 => 'Mar',
-            4 => 'Apr',
-            5 => 'May',
-            6 => 'Jun',
-            7 => 'Jul',
-            8 => 'Aug',
-            9 => 'Sep',
-            10 => 'Oct',
-            11 => 'Nov',
-            12 => 'Dec'
-        ];
-
-        foreach ($orders as $order) {
-            $order->dias_restantes = $this->calcularDiasInterno(
-                $order->status,
-                $order->due_date,
-                $order->machining_date
-            );
-        }
-        return view('orders.schedule_endyarnell', compact('orders', 'statuses', 'customers', 'years', 'months', 'year', 'month', 'day'));
+        
+        
+        return view('orders.schedule_endyarnell', compact('orders'));
     }
 
     /**
@@ -1013,22 +992,32 @@ class Order_ScheduleController extends Controller
         if ($hasDay) {
             // Día exacto
             try {
-                $day = Carbon::parse($request->day)->startOfDay();
-                $query->whereDate($dateField, $day->toDateString());
+                $d = Carbon::parse($request->day);
+                $query->whereBetween($dateField, [$d->copy()->startOfDay(), $d->copy()->endOfDay()]);
             } catch (\Throwable $e) {
                 // si el día no es válido, ignorar filtro
             }
         } else {
             if ($hasYear) {
                 $appliedYear = (int) $request->year;
-                $query->whereYear($dateField, $appliedYear);
+                
             } else if (!$hasMonth) {
                 // Default inicial: solo registros del aA±o actual
                 $appliedYear = (int) now()->year;
-                $query->whereYear($dateField, $appliedYear);
+                
             }
             if ($hasMonth) {
-                $query->whereMonth($dateField, (int) $request->month);
+                $appliedYear = $appliedYear ?: (int) now()->year;
+                $m = (int) $request->month;
+                $start = Carbon::create($appliedYear, $m, 1)->startOfMonth();
+                $end = $start->copy()->endOfMonth();
+                $query->whereBetween($dateField, [$start, $end]);
+            }
+            if (!$hasMonth) {
+                $appliedYear = $appliedYear ?: (int) now()->year;
+                $start = Carbon::create($appliedYear, 1, 1)->startOfYear();
+                $end = $start->copy()->endOfYear();
+                $query->whereBetween($dateField, [$start, $end]);
             }
         }
 

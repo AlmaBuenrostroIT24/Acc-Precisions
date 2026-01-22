@@ -155,8 +155,8 @@
             </form>
 
             <div class="card mb-4 shadow-sm border-0 rounded-3">
-                <div class="card-body">
-                    <div id="endyarnellErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-0">
+                <div class="card-body p-0">
+                    <div id="endyarnellErpToolbar" class="erp-table-toolbar d-flex align-items-center justify-content-between flex-wrap mb-0 px-3 pt-3 pb-2">
                         <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
                             <div class="input-group input-group-sm erp-page-length-group" style="width: 130px;">
                                 <div class="input-group-prepend">
@@ -538,7 +538,7 @@
         border-radius: 12px;
         border: none;
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.94));
-        padding: 2px 10px 0;
+        padding: 2px 6px 6px;
     }
 
     .erp-chip {
@@ -736,6 +736,40 @@
         color: #475569;
     }
 
+    /* Footer/paginación ERP (DataTables) */
+    #orders_endscheduleTable_wrapper .dataTables_info {
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.80rem;
+        line-height: 1.1;
+    }
+
+    #orders_endscheduleTable_wrapper .erp-dt-footer {
+        margin-top: 2px;
+        /* pegarlo a la tabla */
+        padding: 0 0 8px;
+    }
+
+    #orders_endscheduleTable_wrapper .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: 1px solid #d5d8dd;
+        background: #f8fafc;
+        color: #1f2937;
+        font-weight: 700;
+        box-shadow: none;
+    }
+
+    #orders_endscheduleTable_wrapper .pagination .page-item.active .page-link {
+        background: #0b5ed7;
+        border-color: #0b5ed7;
+        color: #fff;
+    }
+
+    #orders_endscheduleTable_wrapper .pagination .page-item.disabled .page-link {
+        opacity: .6;
+    }
+
     /* Hide default DT controls; use our toolbar */
     #orders_endscheduleTable_wrapper .dataTables_length,
     #orders_endscheduleTable_wrapper .dataTables_filter {
@@ -777,6 +811,10 @@
             return $('<div>').html(raw).text().trim();
         }
 
+        function getStatusKeyFromCellHtml(cellHtml) {
+            return extractText(cellHtml).toString().trim().toLowerCase();
+        }
+
         function refreshBadge(dt) {
             if (!$badge.length || !dt) return;
             $badge.text(dt.rows({ search: 'applied' }).count());
@@ -816,10 +854,10 @@
 
             const rowStatuses = dt
                 // Mostrar siempre TODOS los status aunque la tabla esté filtrada
-                .rows()
-                .nodes()
+                .column(STATUS_COL)
+                .data()
                 .toArray()
-                .map(tr => (tr?.getAttribute?.('data-status') || '').toString().trim())
+                .map(getStatusKeyFromCellHtml)
                 .filter(Boolean);
 
             const unique = [...new Set(rowStatuses)]
@@ -841,11 +879,11 @@
 
         function refreshStatusChips(dt, selectedStatus) {
             if (!dt) return;
-            const nodes = dt.rows({ search: 'applied' }).nodes().toArray();
             let shipping = 0;
             let deburring = 0;
-            for (const tr of nodes) {
-                const st = (tr?.getAttribute?.('data-status') || '').toString().trim().toLowerCase();
+            const rows = dt.rows({ search: 'applied' }).data().toArray();
+            for (const row of rows) {
+                const st = getStatusKeyFromCellHtml(row?.[STATUS_COL]);
                 if (st === 'shipping') shipping++;
                 if (st === 'deburring') deburring++;
             }
@@ -944,13 +982,8 @@
                     if (!settings || !settings.nTable || settings.nTable.id !== 'orders_endscheduleTable') return true;
                     const wanted = (selected.status || '').toString().trim().toLowerCase();
                     if (!wanted) return true;
-                    try {
-                        const node = dt.row(dataIndex).node();
-                        const rowStatus = (node?.getAttribute?.('data-status') || '').toString().trim().toLowerCase();
-                        return rowStatus === wanted;
-                    } catch (e) {
-                        return true;
-                    }
+                    const rowStatus = getStatusKeyFromCellHtml(data?.[STATUS_COL]);
+                    return rowStatus === wanted;
                 });
             }
 
