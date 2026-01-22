@@ -100,6 +100,7 @@ Route::post('/orders/{order}/update-station', [Order_ScheduleController::class, 
 Route::post('/orders/{order}/update-date-due', [Order_ScheduleController::class, 'updateDueDate'])->name('orders.update-date-due');
 Route::post('/orders/{order}/update-end-date', [Order_ScheduleController::class, 'updateEndDate'])->name('orders.updateEndDate');
 Route::get('/schedule/finished/{order}/pdf', [Order_ScheduleController::class, 'finishedOrderPdf'])->name('schedule.finished.pdf');  //Report logs
+Route::post('/schedule/finished/{order}/ncr', [Order_ScheduleController::class, 'storeFinishedNcr'])->name('schedule.finished.ncr')->middleware('auth');
 
 
 Route::post('/orders/{order}/return-previous', [Order_ScheduleController::class, 'returnPreviousStatus'])->name('orders.returnPreviousStatus');

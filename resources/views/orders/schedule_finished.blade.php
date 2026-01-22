@@ -211,7 +211,7 @@
                                 <th style="width: 125px;">SENT</th>
                                 <th class="text-center align-middle" style="width: 95px;">TARGET</th>
                                 <th class="text-center align-middle" style="width: 150px;">NOTES</th>
-                                <th class="text-center align-middle" style="width: 80px;">STATUS</th>
+                                <th class="text-center align-middle" style="width: 100px;">ACTION</th>
                             </tr>
                         </thead>
                         <tbody id="statusTable">
@@ -297,6 +297,16 @@
                                         </button>
 
                                         {{-- 🔹 Nuevo botón: PDF --}}
+                                        <button type="button"
+                                            class="btn btn-sm btn-erp-warning erp-table-btn btn-ncr {{ !empty($order->ncr_number) ? 'is-active' : '' }}"
+                                            title="{{ !empty($order->ncr_number) ? 'NCR: '.$order->ncr_number : 'Register NCR' }}"
+                                            data-id="{{ $order->id }}"
+                                            data-url="{{ route('schedule.finished.ncr', $order->id) }}"
+                                            data-ncr-number="{{ $order->ncr_number ?? '' }}"
+                                            data-ncr-notes="{{ e($order->ncr_notes ?? '') }}">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </button>
+
                                         @can('sched.down.pdf.log')
                                         <a href="{{ route('schedule.finished.pdf', $order->id) }}"
                                             class="btn btn-sm btn-erp-danger erp-table-btn"
@@ -353,6 +363,44 @@
                         <small class="text-muted d-block mt-1">
                             Leave blank to clear the date.
                         </small>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL: NCR --}}
+<div class="modal fade" id="ncrModal" tabindex="-1" role="dialog" aria-labelledby="ncrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <form id="ncrForm">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="ncrModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning mr-1"></i> NCR
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body py-2">
+                    <input type="hidden" id="ncrOrderId">
+                    <input type="hidden" id="ncrPostUrl">
+
+                    <div class="form-group mb-2">
+                        <label for="ncrNumber" class="mb-1">NCR Number</label>
+                        <input type="text" id="ncrNumber" class="form-control form-control-sm" maxlength="50" placeholder="e.g. NCR-1234">
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="ncrNotes" class="mb-1">Notes</label>
+                        <textarea id="ncrNotes" class="form-control form-control-sm" rows="3" maxlength="2000" placeholder="Details..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -820,7 +868,8 @@
     }
 
     #orders_endscheduleTable.erp-table .btn-erp-success,
-    #orders_endscheduleTable.erp-table .btn-erp-danger {
+    #orders_endscheduleTable.erp-table .btn-erp-danger,
+    #orders_endscheduleTable.erp-table .btn-erp-warning {
         background: #f8fafc;
         border: 1px solid #d5d8dd;
         color: #1f2937;
@@ -836,8 +885,23 @@
         color: #b91c1c;
     }
 
+    #orders_endscheduleTable.erp-table .btn-erp-warning i {
+        color: #f59e0b;
+    }
+
+    #orders_endscheduleTable.erp-table .btn-erp-warning.is-active {
+        background: #f59e0b;
+        border-color: #f59e0b;
+        color: #fff;
+    }
+
+    #orders_endscheduleTable.erp-table .btn-erp-warning.is-active i {
+        color: #fff;
+    }
+
     #orders_endscheduleTable.erp-table .btn-erp-success:hover,
-    #orders_endscheduleTable.erp-table .btn-erp-danger:hover {
+    #orders_endscheduleTable.erp-table .btn-erp-danger:hover,
+    #orders_endscheduleTable.erp-table .btn-erp-warning:hover {
         filter: brightness(0.97);
         color: #111827;
     }
@@ -1215,6 +1279,68 @@
                     .fail(() => {
                         Swal.fire('Error', 'Ocurrió un error al devolver la orden.', 'error');
                     });
+            });
+        });
+
+        // ---------------------- 5.1 BOTÓN: NCR (modal + guardar) ----------------------
+        $tableElement.on('click', '.btn-ncr', function() {
+            const $btn = $(this);
+            const orderId = ($btn.data('id') || '').toString();
+            const url = ($btn.data('url') || '').toString();
+
+            $('#ncrOrderId').val(orderId);
+            $('#ncrPostUrl').val(url);
+            $('#ncrNumber').val(($btn.data('ncr-number') || '').toString());
+            $('#ncrNotes').val(($btn.data('ncr-notes') || '').toString());
+
+            $('#ncrModal').data('btn', $btn);
+            $('#ncrModal').modal('show');
+        });
+
+        $('#ncrForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const url = ($('#ncrPostUrl').val() || '').toString();
+            if (!url) return;
+
+            const ncrNumber = ($('#ncrNumber').val() || '').toString().trim();
+            const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
+
+            $.ajax({
+                url,
+                method: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    ncr_number: ncrNumber,
+                    ncr_notes: ncrNotes,
+                }
+            }).done(function(res) {
+                if (!res || !res.success) {
+                    Swal.fire('Attention', (res && res.message) ? res.message : 'Could not save NCR.', 'warning');
+                    return;
+                }
+
+                const $btn = $('#ncrModal').data('btn');
+                if ($btn && $btn.length) {
+                    const savedNumber = (res.ncr_number || '').toString();
+                    const savedNotes = (res.ncr_notes || '').toString();
+                    $btn.data('ncr-number', savedNumber);
+                    $btn.data('ncr-notes', savedNotes);
+                    $btn.attr('data-ncr-number', savedNumber);
+                    $btn.attr('data-ncr-notes', savedNotes);
+
+                    $btn.toggleClass('is-active', !!savedNumber);
+                    $btn.attr('title', savedNumber ? ('NCR: ' + savedNumber) : 'Register NCR');
+                }
+
+                $('#ncrModal').modal('hide');
+                Swal.fire('Saved', 'NCR updated.', 'success');
+            }).fail(function(xhr) {
+                let msg = 'Error saving NCR.';
+                try {
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                } catch (e) {}
+                Swal.fire('Error', msg, 'error');
             });
         });
 

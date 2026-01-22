@@ -67,6 +67,8 @@ class OrderSchedule extends Model
         'group_wo_qty',
         'inspection_progress',
         'was_endsentat_modified',
+        'ncr_number',
+        'ncr_notes',
     ];
 
     // Casts para manejar tipos de datos correctamente

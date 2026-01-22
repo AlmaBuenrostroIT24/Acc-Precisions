@@ -77,6 +77,16 @@ class Order_ScheduleController extends Controller
 
         $orders = $base->get();
 
+        // Necesario para `resources/views/orders/schedule_table.blade.php` (General Schedule):
+        // esa vista usa `$order->dias_restantes` para pintar alertas/colores.
+        foreach ($orders as $order) {
+            $order->dias_restantes = $this->calcularDiasInterno(
+                $order->status,
+                $order->due_date,
+                $order->machining_date
+            );
+        }
+
         // Estos catálogos se obtienen aparte (no afectan la consulta principal)
         $locations = OrderSchedule::select('location')->distinct()->pluck('location');
         // 2025-12-15: asegurar opción Standby para onhold
@@ -274,7 +284,7 @@ class Order_ScheduleController extends Controller
     }
 
     /** ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     * 🔵IMPORT: Importar el archivo excel de ordenes en el tab Genera;l Shedule
+     * 🔵IMPORT: Importar el archivo excel de ordenes en el tab General Shedule
      * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
      */
 
@@ -2800,6 +2810,28 @@ class Order_ScheduleController extends Controller
         $cleanWorkId = preg_replace('/[\/\\\\]/', '_', $order->work_id);
 
         return $pdf->stream("order_{$cleanWorkId}_finished.pdf");
+    }
+
+    public function storeFinishedNcr(Request $request, OrderSchedule $order)
+    {
+        $data = $request->validate([
+            'ncr_number' => ['nullable', 'string', 'max:50'],
+            'ncr_notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $ncrNumber = trim((string) ($data['ncr_number'] ?? ''));
+        $ncrNotes = trim((string) ($data['ncr_notes'] ?? ''));
+
+        $order->ncr_number = $ncrNumber !== '' ? $ncrNumber : null;
+        $order->ncr_notes = $ncrNotes !== '' ? $ncrNotes : null;
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'order_id' => $order->id,
+            'ncr_number' => $order->ncr_number,
+            'ncr_notes' => $order->ncr_notes,
+        ]);
     }
 
 
