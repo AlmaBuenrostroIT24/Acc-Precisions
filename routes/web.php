@@ -90,6 +90,7 @@ Route::post('/schedule-orders', [Order_ScheduleController::class, 'import'])->na
 
 Route::post('/orders/{order}/update-status', [Order_ScheduleController::class, 'updateStatus']);
 Route::get('/orders/{order}/ops-meta', [Order_ScheduleController::class, 'getOpsMeta'])->name('orders.opsMeta');
+Route::get('/orders/{order}/inspection-family', [Order_ScheduleController::class, 'getInspectionFamily'])->name('orders.inspectionFamily');
 Route::post('/orders/{order}/update-report', [Order_ScheduleController::class, 'updateReport']);
 Route::post('/orders/{order}/update-source', [Order_ScheduleController::class, 'updateSource']);
 Route::post('/orders/{order}/update-location', [Order_ScheduleController::class, 'updateLocation'])->name('orders.updateLocation');

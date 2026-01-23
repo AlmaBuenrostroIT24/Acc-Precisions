@@ -302,6 +302,14 @@
                                             title="{{ !empty($order->ncr_number) ? 'NCR: '.$order->ncr_number : 'Register NCR' }}"
                                             data-id="{{ $order->id }}"
                                             data-url="{{ route('schedule.finished.ncr', $order->id) }}"
+                                            data-work-id="{{ $order->work_id }}"
+                                            data-co="{{ $order->co ?? '' }}"
+                                            data-cust-po="{{ e($order->cust_po ?? '') }}"
+                                            data-pn="{{ e($order->PN ?? '') }}"
+                                            data-part-description="{{ e($order->Part_description ?? '') }}"
+                                            data-customer="{{ e($order->costumer ?? '') }}"
+                                            data-qty="{{ $order->qty ?? '' }}"
+                                            data-wo-qty="{{ $order->wo_qty ?? '' }}"
                                             data-ncr-number="{{ $order->ncr_number ?? '' }}"
                                             data-ncr-notes="{{ e($order->ncr_notes ?? '') }}">
                                             <i class="fas fa-exclamation-triangle"></i>
@@ -378,35 +386,143 @@
 
 {{-- MODAL: NCR --}}
 <div class="modal fade" id="ncrModal" tabindex="-1" role="dialog" aria-labelledby="ncrModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
             <form id="ncrForm">
-                <div class="modal-header py-2">
-                    <h5 class="modal-title" id="ncrModalLabel">
-                        <i class="fas fa-exclamation-triangle text-warning mr-1"></i> NCR
-                    </h5>
+                <div class="modal-header py-2 erp-ncr-modal-header">
+                    <div class="d-flex align-items-center justify-content-between w-100" style="gap:.75rem;">
+                        <div class="d-flex align-items-center" style="gap:.6rem;">
+                            <span class="erp-ncr-title-icon" aria-hidden="true">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                            <div class="d-flex flex-column">
+                                <h5 class="modal-title mb-0" id="ncrModalLabel">Create Non-Conformance</h5>
+                                <small class="erp-ncr-subtitle">Register</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center flex-wrap justify-content-end" style="gap:.4rem;">
+                            <span class="erp-ncr-chip" title="Work ID">
+                                <i class="fas fa-hashtag mr-1 text-info"></i>
+                                <span id="ncrHeaderWorkId">—</span>
+                            </span>
+                            <span class="erp-ncr-chip" title="Customer">
+                                <i class="fas fa-user-tag mr-1 text-success"></i>
+                                <span id="ncrHeaderCustomer">—</span>
+                            </span>
+                        </div>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body py-2">
+                <div class="modal-body py-2 erp-ncr-modal-body">
                     <input type="hidden" id="ncrOrderId">
                     <input type="hidden" id="ncrPostUrl">
 
+                    <div class="erp-ncr-orderbox mb-2">
+                        <div class="erp-ncr-orderbox-title">Impact</div>
+
+                        <div class="form-row">
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrWorkId">Work ID</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-hashtag text-info"></i></span>
+                                    </div>
+                                    <input id="ncrWorkId" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrCo">CO</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-file-invoice text-primary"></i></span>
+                                    </div>
+                                    <input id="ncrCo" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrCustPo">Cust PO</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-receipt text-success"></i></span>
+                                    </div>
+                                    <input id="ncrCustPo" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrPn">PN</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-tag text-warning"></i></span>
+                                    </div>
+                                    <input id="ncrPn" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrCustomer">Customer</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-user-tag text-success"></i></span>
+                                    </div>
+                                    <input id="ncrCustomer" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6 col-md-3 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrQty">Qty</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-calculator text-secondary"></i></span>
+                                    </div>
+                                    <input id="ncrQty" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6 col-md-3 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrWoQty">WO Qty</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-cubes text-secondary"></i></span>
+                                    </div>
+                                    <input id="ncrWoQty" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="mb-1 erp-ncr-label" for="ncrDescription">Part Description</label>
+                            <textarea id="ncrDescription" class="form-control form-control-sm erp-ncr-control" rows="2" readonly></textarea>
+                        </div>
+                    </div>
+
                     <div class="form-group mb-2">
-                        <label for="ncrNumber" class="mb-1">NCR Number</label>
-                        <input type="text" id="ncrNumber" class="form-control form-control-sm" maxlength="50" placeholder="e.g. NCR-1234">
+                        <label for="ncrNumber" class="mb-1 erp-ncr-label">NCR Number</label>
+                        <div class="input-group input-group-sm erp-ncr-input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-clipboard-check text-warning"></i></span>
+                            </div>
+                            <input type="text" id="ncrNumber" class="form-control erp-ncr-control" maxlength="50" placeholder="e.g. NCR-1234">
+                        </div>
                     </div>
 
                     <div class="form-group mb-0">
-                        <label for="ncrNotes" class="mb-1">Notes</label>
-                        <textarea id="ncrNotes" class="form-control form-control-sm" rows="3" maxlength="2000" placeholder="Details..."></textarea>
+                        <label for="ncrNotes" class="mb-1 erp-ncr-label">Notes</label>
+                        <textarea id="ncrNotes" class="form-control form-control-sm erp-ncr-control" rows="3" maxlength="2000" placeholder="Details..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-save mr-1"></i> Save
+                <div class="modal-footer py-2 erp-ncr-modal-footer">
+                    <button type="button" class="btn btn-light btn-sm erp-ncr-btn" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm erp-ncr-btn" id="ncrSaveBtn">
+                        Create NCR
                     </button>
                 </div>
             </form>
@@ -425,6 +541,239 @@
     .modified-end-date {
         color: #007bff !important;
         font-weight: 600;
+    }
+
+    /* NCR modal (ERP style) */
+    #ncrModal .modal-content {
+        border-radius: 12px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+        overflow: hidden;
+    }
+
+    /* Más ancho que el modal-sm/MD; mantiene buena vista en pantallas pequeñas */
+    #ncrModal .modal-dialog {
+        max-width: 1120px;
+        width: calc(100% - 1rem);
+    }
+
+    #ncrModal .erp-ncr-modal-header {
+        background: linear-gradient(180deg, rgba(247, 249, 252, 0.98) 0%, rgba(237, 241, 246, 0.98) 100%);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    #ncrModal .erp-ncr-title-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(245, 158, 11, 0.40);
+        background: rgba(245, 158, 11, 0.12);
+        color: #b45309;
+    }
+
+    #ncrModal .erp-ncr-title-icon i {
+        font-size: 16px;
+    }
+
+    #ncrModal .erp-ncr-subtitle {
+        color: #475569;
+        font-weight: 600;
+        line-height: 1.1;
+    }
+
+    #ncrModal .erp-ncr-chip {
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: rgba(248, 250, 252, 0.85);
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 0.80rem;
+        white-space: nowrap;
+    }
+
+    #ncrModal .erp-ncr-modal-body {
+        background: #fff;
+        max-height: calc(100vh - 210px);
+        overflow: auto;
+    }
+
+    #ncrModal .erp-ncr-modal-footer {
+        background: rgba(248, 250, 252, 0.75);
+        border-top: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    #ncrModal .erp-ncr-label {
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 0.78rem;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+    }
+
+    #ncrModal .erp-ncr-input-group .input-group-text {
+        border: 1px solid #c5c9d2;
+        border-right: 0;
+        border-radius: 10px 0 0 10px;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%) !important;
+        color: #0f172a;
+        height: 34px;
+    }
+
+    #ncrModal .erp-ncr-control {
+        border: 1px solid #c5c9d2;
+        border-radius: 0 10px 10px 0;
+        padding: 6px 10px;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+        color: #0f172a;
+        font-weight: 700;
+        height: 34px;
+        line-height: 1.2;
+    }
+
+    #ncrModal .erp-ncr-control[readonly] {
+        cursor: default;
+        opacity: 1;
+    }
+
+    #ncrModal textarea.erp-ncr-control {
+        height: auto;
+        border-radius: 10px;
+    }
+
+    #ncrModal .erp-ncr-orderbox {
+        border-radius: 12px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: rgba(248, 250, 252, 0.55);
+        padding: 10px 10px 8px;
+    }
+
+    #ncrModal .erp-ncr-orderbox-title {
+        font-weight: 900;
+        color: #0f172a;
+        font-size: 0.78rem;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    #ncrModal .erp-ncr-btn {
+        border-radius: 10px;
+        font-weight: 800;
+        height: 34px;
+        padding: 6px 12px;
+    }
+
+    /* ===== NCR modal look (similar to ERP screenshot) ===== */
+    #ncrModal .erp-ncr-modal-header {
+        background: #fff !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+        padding: 14px 16px !important;
+    }
+
+    /* Mantener el header profesional pero con badge + subtítulo (como pediste) */
+    #ncrModal .erp-ncr-chip {
+        display: none !important;
+    }
+
+    #ncrModal .erp-ncr-title-icon {
+        display: inline-flex !important;
+    }
+
+    #ncrModal .erp-ncr-subtitle {
+        display: block !important;
+        margin-top: 2px;
+        font-size: 0.82rem;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    #ncrModal .erp-ncr-modal-body {
+        padding: 14px 16px !important;
+        max-height: calc(100vh - 190px) !important;
+    }
+
+    #ncrModal {
+        font-size: 14px;
+    }
+
+    #ncrModal .erp-ncr-modal-footer {
+        background: #fff !important;
+        border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+        padding: 14px 16px !important;
+    }
+
+    #ncrModal .erp-ncr-label {
+        display: block !important;
+        margin: 0 0 6px !important;
+        color: #6b7280 !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        letter-spacing: .02em !important;
+        text-transform: none !important;
+    }
+
+    #ncrModal .erp-ncr-input-group .input-group-text {
+        display: none !important;
+    }
+
+    #ncrModal .erp-ncr-control {
+        height: 46px !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+        background: #fff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        color: #111827 !important;
+        font-weight: 600 !important;
+        padding: 10px 12px !important;
+    }
+
+    #ncrModal .erp-ncr-control:focus {
+        border-color: rgba(59, 130, 246, 0.55) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+        outline: none !important;
+    }
+
+    #ncrModal .erp-ncr-control[readonly] {
+        background: rgba(241, 245, 249, 0.85) !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+    }
+
+    #ncrModal textarea.erp-ncr-control {
+        min-height: 86px !important;
+        resize: vertical;
+    }
+
+    #ncrModal .erp-ncr-orderbox {
+        background: #fff !important;
+        border: 1px solid rgba(15, 23, 42, 0.10) !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        border-radius: 10px !important;
+        padding: 12px 12px 10px !important;
+    }
+
+    #ncrModal .erp-ncr-orderbox-title {
+        font-weight: 700 !important;
+        color: #111827 !important;
+        font-size: 1.1rem !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+        margin-bottom: 10px !important;
+    }
+
+    #ncrModal .erp-ncr-btn {
+        height: 40px !important;
+        border-radius: 8px !important;
+        padding: 8px 14px !important;
+        font-weight: 700 !important;
     }
 
     .erp-location-text {
@@ -1288,10 +1637,36 @@
             const orderId = ($btn.data('id') || '').toString();
             const url = ($btn.data('url') || '').toString();
 
+            const decodeHtml = function(v) {
+                const raw = (v ?? '').toString();
+                if (!raw) return '';
+                try {
+                    return $('<div>').html(raw).text();
+                } catch (e) {
+                    return raw;
+                }
+            };
+
             $('#ncrOrderId').val(orderId);
             $('#ncrPostUrl').val(url);
-            $('#ncrNumber').val(($btn.data('ncr-number') || '').toString());
-            $('#ncrNotes').val(($btn.data('ncr-notes') || '').toString());
+            $('#ncrNumber').val(decodeHtml($btn.data('ncr-number')));
+            $('#ncrNotes').val(decodeHtml($btn.data('ncr-notes')));
+
+            // Info de la orden (desde orders_schedule)
+            const workId = decodeHtml($btn.data('work-id'));
+            const customer = decodeHtml($btn.data('customer'));
+
+            $('#ncrWorkId').val(workId);
+            $('#ncrCo').val(decodeHtml($btn.data('co')));
+            $('#ncrCustPo').val(decodeHtml($btn.data('cust-po')));
+            $('#ncrPn').val(decodeHtml($btn.data('pn')));
+            $('#ncrCustomer').val(customer);
+            $('#ncrQty').val(decodeHtml($btn.data('qty')));
+            $('#ncrWoQty').val(decodeHtml($btn.data('wo-qty')));
+            $('#ncrDescription').val(decodeHtml($btn.data('part-description')));
+
+            $('#ncrHeaderWorkId').text(workId || '—');
+            $('#ncrHeaderCustomer').text(customer || '—');
 
             $('#ncrModal').data('btn', $btn);
             $('#ncrModal').modal('show');
@@ -1305,6 +1680,9 @@
 
             const ncrNumber = ($('#ncrNumber').val() || '').toString().trim();
             const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
+
+            const $saveBtn = $('#ncrSaveBtn');
+            $saveBtn.prop('disabled', true);
 
             $.ajax({
                 url,
@@ -1335,6 +1713,8 @@
 
                 $('#ncrModal').modal('hide');
                 Swal.fire('Saved', 'NCR updated.', 'success');
+            }).always(function() {
+                $saveBtn.prop('disabled', false);
             }).fail(function(xhr) {
                 let msg = 'Error saving NCR.';
                 try {

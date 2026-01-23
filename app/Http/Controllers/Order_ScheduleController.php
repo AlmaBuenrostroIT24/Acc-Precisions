@@ -425,34 +425,41 @@ class Order_ScheduleController extends Controller
             $previousStatus = $order->status;
 
             // 1) Captura el estado de inspección previo ANTES de modificarlo
-            $prevInspection = $order->status_inspection;
+            $inspectionOrder = $order;
+            if (!empty($order->parent_id)) {
+                $parent = OrderSchedule::find($order->parent_id);
+                if ($parent) {
+                    $inspectionOrder = $parent;
+                }
+            }
+            $prevInspection = $inspectionOrder->status_inspection;
 
             $order->status = $newStatus;
 
             // guardar nota si vino
             if ($request->filled('inspection_note')) {
-                $order->inspection_note = $request->inspection_note;
+                $inspectionOrder->inspection_note = $request->inspection_note;
             }
 
             // 2) Si viene status_inspection, asigna y setea inspection_endate si pasa a completed
             if ($request->filled('status_inspection')) {
                 $newInspection = strtolower($request->status_inspection);
-                $order->status_inspection = $newInspection;
+                $inspectionOrder->status_inspection = $newInspection;
 
                 // Solo si ANTES no estaba completed y AHORA sí
                 if ($newInspection === 'completed' && $prevInspection !== 'completed') {
-                    if (empty($order->inspection_endate)) {
-                        $order->inspection_endate = now();
+                    if (empty($inspectionOrder->inspection_endate)) {
+                        $inspectionOrder->inspection_endate = now();
                     }
-                    if (empty($order->completed_by)) {
-                        $order->completed_by = Auth::id();
+                    if (empty($inspectionOrder->completed_by)) {
+                        $inspectionOrder->completed_by = Auth::id();
                     }
                 }
 
                 // (Opcional) Si quieres limpiar al revertir desde completed:
                 if (in_array($newInspection, ['pending', 'in_progress']) && $prevInspection === 'completed') {
-                    $order->inspection_endate = null;
-                    $order->completed_by = null;
+                    $inspectionOrder->inspection_endate = null;
+                    $inspectionOrder->completed_by = null;
                 }
             }
 
@@ -512,6 +519,9 @@ class Order_ScheduleController extends Controller
             }
 
             $order->save();
+            if (isset($inspectionOrder) && $inspectionOrder->id !== $order->id) {
+                $inspectionOrder->save();
+            }
 
             // Calcular días restantes
             $dias = $this->calcularDiasInterno($order->status, $order->due_date, $order->machining_date);
@@ -542,11 +552,71 @@ class Order_ScheduleController extends Controller
 
     public function getOpsMeta(\App\Models\OrderSchedule $order)
     {
+        $inspectionOrder = $order;
+        if (!empty($order->parent_id)) {
+            $parent = OrderSchedule::find($order->parent_id);
+            if ($parent) {
+                $inspectionOrder = $parent;
+            }
+        }
+
         return response()->json([
             'operation' => $order->operation ?? 0,
             'parent_id' => $order->parent_id, // null si no tiene padre
-            'status_inspection'  => strtolower((string) $order->status_inspection), // null|pending|in_progress|completed
-            'inspection_progress'  => (int) ($order->inspection_progress ?? 0),
+            'status_inspection'  => strtolower((string) $inspectionOrder->status_inspection), // null|pending|in_progress|completed
+            'inspection_progress'  => (int) ($inspectionOrder->inspection_progress ?? 0),
+        ]);
+    }
+
+    public function getInspectionFamily(\App\Models\OrderSchedule $order)
+    {
+        $parent = $order;
+        if (!empty($order->parent_id)) {
+            $p = OrderSchedule::find($order->parent_id);
+            if ($p) {
+                $parent = $p;
+            }
+        }
+
+        $cols = [
+            'id',
+            'parent_id',
+            'work_id',
+            'location',
+            'status',
+            'due_date',
+            'inspection_progress',
+            'status_inspection',
+        ];
+
+        $children = OrderSchedule::query()
+            ->select($cols)
+            ->where('parent_id', $parent->id)
+            ->orderBy('id')
+            ->get();
+
+        $parentRow = OrderSchedule::query()
+            ->select($cols)
+            ->where('id', $parent->id)
+            ->first();
+
+        $mapRow = function ($o) {
+            if (!$o) return null;
+            return [
+                'id' => (int) $o->id,
+                'parent_id' => $o->parent_id ? (int) $o->parent_id : null,
+                'work_id' => $o->work_id,
+                'location' => $o->location,
+                'status' => $o->status,
+                'due_date' => $o->due_date ? $o->due_date->format('Y-m-d') : null,
+                'inspection_progress' => (int) ($o->inspection_progress ?? 0),
+                'status_inspection' => strtolower((string) $o->status_inspection),
+            ];
+        };
+
+        return response()->json([
+            'parent' => $mapRow($parentRow),
+            'children' => $children->map($mapRow)->values(),
         ]);
     }
 

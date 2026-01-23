@@ -1843,6 +1843,130 @@ ${error && error.message ? error.message : error}`);
             });
         }
 
+        function fetchInspectionFamily(orderId) {
+            return $.getJSON(`/orders/${orderId}/inspection-family`);
+        }
+
+        function fmtVal(v) {
+            const s = (v ?? "").toString().trim();
+            return s ? s : "-";
+        }
+
+        function showInspectionFamilySwal(opts) {
+            const parent = opts.parent || null;
+            const children = Array.isArray(opts.children) ? opts.children : [];
+            const currentChildId = opts.currentChildId;
+            const isCurrentParent =
+                parent && Number(parent?.id) === Number(currentChildId);
+
+            function dueSortKey(x) {
+                const d = (x?.due_date || "").toString().trim();
+                if (!d) return Number.POSITIVE_INFINITY;
+                const t = Date.parse(`${d}T00:00:00`);
+                return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+            }
+
+            // Ordenar por Due Date y dejar el "Parent/Last Partial" siempre al final
+            const sortedChildren = [...children].sort((a, b) => {
+                const ka = dueSortKey(a);
+                const kb = dueSortKey(b);
+                if (ka !== kb) return ka - kb;
+                return Number(a?.id || 0) - Number(b?.id || 0);
+            });
+
+            const totalItems = sortedChildren.length + (parent ? 1 : 0);
+            let posLabel = "";
+            if (currentChildId && totalItems > 0) {
+                if (parent && Number(parent?.id) === Number(currentChildId)) {
+                    posLabel = `${totalItems}/${totalItems}`;
+                } else {
+                    const idx = sortedChildren.findIndex(
+                        (x) => Number(x?.id) === Number(currentChildId)
+                    );
+                    if (idx >= 0) posLabel = `${idx + 1}/${totalItems}`;
+                }
+            }
+
+            const progressPct = (() => {
+                const p = Number(parent?.inspection_progress);
+                if (Number.isFinite(p)) return p;
+                const maxChild = Math.max(
+                    0,
+                    ...sortedChildren.map((c) => Number(c?.inspection_progress || 0))
+                );
+                return Number.isFinite(maxChild) ? maxChild : 0;
+            })();
+
+            const parentRow = parent
+                ? `<tr class="${String(parent?.status || "").toLowerCase() === "sent" ? "table-success" : ""}">
+                    <td><b>Last Partial</b></td>
+                    <td>${fmtVal(parent.work_id)}</td>
+                    <td>${fmtVal(parent.location)}</td>
+                    <td>${fmtVal(parent.status)}</td>
+                    <td>${fmtVal(parent.due_date)}</td>
+                  </tr>`
+                : "";
+
+            const childRows = sortedChildren
+                .map((c, i) => {
+                    const isCurrent = Number(c?.id) === Number(currentChildId);
+                    const tag = isCurrent ? `<span class="badge badge-primary ml-2">Selected</span>` : "";
+                    const rowClass =
+                        String(c?.status || "").toLowerCase() === "sent"
+                            ? "table-success"
+                            : "";
+                    return `<tr class="${rowClass}">
+                        <td>Partial ${i + 1}${tag}</td>
+                        <td>${fmtVal(c.work_id)}</td>
+                        <td>${fmtVal(c.location)}</td>
+                        <td>${fmtVal(c.status)}</td>
+                        <td>${fmtVal(c.due_date)}</td>
+                    </tr>`;
+                })
+                .join("");
+
+            const html = `
+                <div class="text-left" style="font-size:14px;">
+                    <div class="mb-2 text-muted">
+                        ${
+                            isCurrentParent
+                                ? "This order belongs to a group of partial orders. This is the last partial order."
+                                : "This order belongs to a partials group. Inspection completion is handled by the last partial order."
+                        }
+                        ${posLabel ? `<span class="badge badge-light ml-2">${posLabel}</span>` : ""}
+                    </div>
+                    <div class="mb-2">Current inspection progress: <b>${progressPct}%</b></div>
+                    <div class="table-responsive" style="max-height:320px; overflow:auto;">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th style="width:110px;">Partial</th>
+                                    <th style="width:90px;">Work ID</th>
+                                    <th style="width:90px;">Location</th>
+                                    <th style="width:120px;">Status</th>
+                                    <th style="width:120px;">Due Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${childRows}
+                                ${parentRow}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+
+            return erpSwalFire({
+                title: "Inspection overview",
+                html,
+                icon: "info",
+                showCancelButton: true,
+                confirmButtonText: "Continue",
+                cancelButtonText: "Cancel",
+                reverseButtons: true,
+                focusCancel: true,
+            });
+        }
+
         // ===== Wrapper por si enviarCambioStatus no retorna promesa =====
         function safeEnviarCambioStatus() {
             const r = enviarCambioStatus(); // tu funcion existente
@@ -1861,7 +1985,117 @@ ${error && error.message ? error.message : error}`);
                 .then(function ({ operation, parent_id, inspection_progress }) {
                     const progress = Number(inspection_progress || 0);
 
+                    if (parent_id) {
+                        return fetchInspectionFamily(parent_id)
+                            .then((family) =>
+                                showInspectionFamilySwal({
+                                    parent: family?.parent,
+                                    children: family?.children,
+                                    currentChildId: orderId,
+                                })
+                            )
+                            .then((resp) => {
+                                if (!resp || !resp.isConfirmed) {
+                                    select.val(oldStatus).trigger("change.select2");
+                                    return $.Deferred().reject("cancelled").promise();
+                                }
+
+                                const html = `
+          <p class="text-muted d-block mt-2" style="font-size: 1.05rem;">
+            Changing status to <b>${newStatus}</b> will also move the location to <b>HEARST</b>.
+          </p>`;
+                                return erpSwalFire({
+                                    title: "¿Are you sure?",
+                                    html,
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, Change",
+                                    cancelButtonText: "No, Cancel",
+                                    reverseButtons: true,
+                                }).then((result) => {
+                                    if (!result.isConfirmed) {
+                                        select.val(oldStatus).trigger("change.select2");
+                                        return $.Deferred().reject("cancelled").promise();
+                                    }
+
+                                    localStorage.setItem(
+                                        "location-change",
+                                        JSON.stringify({ orderId, location: "hearst" })
+                                    );
+
+                                    return safeEnviarCambioStatus()
+                                        .then(() => {
+                                            select.data("old-status", newStatus);
+                                            // Importante: este caso (partial/hijo) ya hizo el flujo completo.
+                                            // Cortamos la cadena para que NO se dispare el confirm duplicado
+                                            // del flujo normal (que marca inspection como completed).
+                                            return $.Deferred()
+                                                .reject("handled-child")
+                                                .promise();
+                                        })
+                                        .catch((err) => {
+                                            // Este reject es intencional para cortar el flujo; no revertir el select.
+                                            if (err === "handled-child") {
+                                                return $.Deferred().reject(err).promise();
+                                            }
+                                            select.val(oldStatus).trigger("change.select2");
+                                            return $.Deferred().reject(err).promise();
+                                        });
+                                });
+                            });
+                    }
+
                     //  ÚNICA confirmacion si < 100%
+                    // Si es el parent (no tiene parent_id) y tiene hijos, mostrar el overview primero.
+                    if (!parent_id) {
+                        return fetchInspectionFamily(orderId)
+                            .then((family) => {
+                                const kids = Array.isArray(family?.children)
+                                    ? family.children
+                                    : [];
+                                if (!kids.length) return;
+                                return showInspectionFamilySwal({
+                                    parent: family?.parent,
+                                    children: kids,
+                                    currentChildId: orderId,
+                                }).then((resp) => {
+                                    if (!resp || !resp.isConfirmed) {
+                                        select.val(oldStatus).trigger("change.select2");
+                                        return $.Deferred()
+                                            .reject("cancelled")
+                                            .promise();
+                                    }
+                                });
+                            })
+                            .then(() => {
+                                if (progress < 100) {
+                                    const html = `
+          <div class="mb-2">Current inspection progress: <b>${progress}%</b></div>
+          <small class="text-muted d-block mt-2">
+            If you continue, <b>Inspection</b> will be marked as <b>COMPLETED</b>.
+          </small>`;
+                                    return erpSwalFire({
+                                        title: "Inspection not at 100%",
+                                        html,
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonText: "Yes, continue",
+                                        cancelButtonText: "Review first",
+                                        reverseButtons: true,
+                                        focusCancel: true,
+                                    }).then((resp) => {
+                                        if (!resp.isConfirmed) {
+                                            select.val(oldStatus).trigger("change.select2");
+                                            return $.Deferred()
+                                                .reject("cancelled")
+                                                .promise();
+                                        }
+                                        setInspectionOverrideCompleted(orderId);
+                                    });
+                                }
+                            });
+                    }
+
                     if (progress < 100) {
                         const html = `
           <div class="mb-2">Current inspection progress: <b>${progress}%</b></div>
@@ -1992,7 +2226,8 @@ ${error && error.message ? error.message : error}`);
                 .fail(function (reason) {
                     if (
                         reason !== "cancelled" &&
-                        reason !== "note-not-provided"
+                        reason !== "note-not-provided" &&
+                        reason !== "handled-child"
                     ) {
                         select.val(oldStatus).trigger("change.select2");
                         erpSwalFire({
@@ -2029,6 +2264,31 @@ ${error && error.message ? error.message : error}`);
                     const insp = String(status_inspection || "").toLowerCase();
                     const progress = Number(inspection_progress || 0);
 
+                    if (parent_id) {
+                        return fetchInspectionFamily(parent_id)
+                            .then((family) =>
+                                showInspectionFamilySwal({
+                                    parent: family?.parent,
+                                    children: family?.children,
+                                    currentChildId: orderId,
+                                })
+                            )
+                            .then((resp) => {
+                                if (!resp || !resp.isConfirmed) {
+                                    select.val(oldStatus).trigger("change.select2");
+                                    return;
+                                }
+                                return safeEnviarCambioStatus()
+                                    .then(() => {
+                                        select.data("old-status", newStatus);
+                                    })
+                                    .catch(() => {
+                                        select.val(oldStatus).trigger("change.select2");
+                                    });
+                            });
+                    }
+
+                    function mainFlow() {
                     if (insp === "completed") {
                         return safeEnviarCambioStatus()
                             .then(() => {
@@ -2137,8 +2397,32 @@ ${error && error.message ? error.message : error}`);
                             select.val(oldStatus).trigger("change.select2");
                         }
                     });
+                    }
+
+                    // Parent: si tiene hijos, mostrar overview y luego continuar con la lógica normal.
+                    return fetchInspectionFamily(orderId)
+                        .then((family) => {
+                            const kids = Array.isArray(family?.children)
+                                ? family.children
+                                : [];
+                            if (!kids.length) return;
+                            return showInspectionFamilySwal({
+                                parent: family?.parent,
+                                children: kids,
+                                currentChildId: orderId,
+                            }).then((resp) => {
+                                if (!resp || !resp.isConfirmed) {
+                                    select.val(oldStatus).trigger("change.select2");
+                                    return $.Deferred()
+                                        .reject("cancelled")
+                                        .promise();
+                                }
+                            });
+                        })
+                        .then(() => mainFlow());
                 })
-                .fail(function () {
+                .fail(function (reason) {
+                    if (reason === "cancelled") return;
                     select.val(oldStatus).trigger("change.select2");
                     erpSwalFire({
                         title: "Error",
