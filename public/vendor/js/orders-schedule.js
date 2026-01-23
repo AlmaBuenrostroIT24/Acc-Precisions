@@ -1982,7 +1982,8 @@ ${error && error.message ? error.message : error}`);
             String(currentLocation).toLowerCase() === "yarnell"
         ) {
             fetchOpsMeta(orderId)
-                .then(function ({ operation, parent_id, inspection_progress }) {
+                .then(function ({ operation, parent_id, inspection_progress, status_inspection }) {
+                    const insp = String(status_inspection || "").toLowerCase();
                     const progress = Number(inspection_progress || 0);
 
                     if (parent_id) {
@@ -2047,6 +2048,23 @@ ${error && error.message ? error.message : error}`);
 
                     //  ÚNICA confirmacion si < 100%
                     // Si es el parent (no tiene parent_id) y tiene hijos, mostrar el overview primero.
+                    // Si la inspección ya está completed, mostrar mensaje y continuar (sin warning).
+                    if (insp === "completed") {
+                        const html = `
+          <div class="mb-2">Current inspection progress: <b>100%</b></div>
+          <small class="text-muted d-block mt-2">
+            The inspection of the order is complete.
+          </small>`;
+                        return erpSwalFire({
+                            title: "Inspection complete",
+                            html,
+                            icon: "success",
+                            showCancelButton: false,
+                            confirmButtonText: "Continue",
+                            reverseButtons: true,
+                        });
+                    }
+
                     if (!parent_id) {
                         return fetchInspectionFamily(orderId)
                             .then((family) => {
@@ -2290,14 +2308,28 @@ ${error && error.message ? error.message : error}`);
 
                     function mainFlow() {
                     if (insp === "completed") {
-                        return safeEnviarCambioStatus()
-                            .then(() => {
-                                setInspectionOverrideCompleted(orderId);
-                                select.data("old-status", newStatus);
-                            })
-                            .catch(() => {
-                                select.val(oldStatus).trigger("change.select2");
-                            });
+                        const html = `
+          <div class="mb-2">Current inspection progress: <b>100%</b></div>
+          <small class="text-muted d-block mt-2">
+            The inspection of the order is complete.
+          </small>`;
+                        return erpSwalFire({
+                            title: "Inspection complete",
+                            html,
+                            icon: "success",
+                            showCancelButton: false,
+                            confirmButtonText: "Continue",
+                            reverseButtons: true,
+                        }).then(() => {
+                            return safeEnviarCambioStatus()
+                                .then(() => {
+                                    setInspectionOverrideCompleted(orderId);
+                                    select.data("old-status", newStatus);
+                                })
+                                .catch(() => {
+                                    select.val(oldStatus).trigger("change.select2");
+                                });
+                        });
                     }
 
                     function proceedCompleteAndSend() {

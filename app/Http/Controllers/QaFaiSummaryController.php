@@ -496,6 +496,8 @@ class QaFaiSummaryController extends Controller
         if ($new === 'completed' && $prev !== 'completed') {
             $order->inspection_endate = $order->inspection_endate ?? now();
             $order->completed_by      = $order->completed_by ?? Auth::id();
+            // Si se marca como Completed, el progreso debe ser 100% para reflejar el estado real en Schedule.
+            $order->inspection_progress = 100;
         }
 
         // Reversión desde COMPLETED → limpiar (tú lo quieres así)
