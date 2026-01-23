@@ -293,7 +293,7 @@
                                             title="Return Order"
                                             data-id="{{ $order->id }}"
                                             data-status="sent">
-                                            <i class="fas fa-check"></i>
+                                            <i class="fas fa-undo-alt"></i>
                                         </button>
 
                                         {{-- 🔹 Nuevo botón: PDF --}}

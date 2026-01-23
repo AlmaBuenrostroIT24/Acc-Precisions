@@ -11,8 +11,10 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrdMachiningDateLog;
+use App\Models\QaSamplingPlan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Validators\ValidationException as ExcelValidationException;
 use Maatwebsite\Excel\HeadingRowImport;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -375,11 +377,12 @@ class Order_ScheduleController extends Controller
             // 2) Determinar el padre del grupo (si es hijo, su padre; si es padre, él mismo)
             $parentId = $order->parent_id ?: $order->id;
 
-            // 3) Recalcular total del grupo:
+            // 3) Lock del padre y recalcular total del grupo:
             //    - Siempre suma el padre
             //    - + hijos con work_id no vacío
-            $parentQty = (int) OrderSchedule::whereKey($parentId)
-                ->value(DB::raw('COALESCE(wo_qty,0)'));
+            /** @var \App\Models\OrderSchedule $parent */
+            $parent = OrderSchedule::lockForUpdate()->findOrFail($parentId);
+            $parentQty = (int) ($parent->wo_qty ?? 0);
 
             $childrenSum = (int) OrderSchedule::where('parent_id', $parentId)
                 ->whereRaw("NULLIF(TRIM(work_id),'') IS NOT NULL")
@@ -387,10 +390,19 @@ class Order_ScheduleController extends Controller
 
             $groupTotal = $parentQty + $childrenSum;
 
-            // 4) Guardar el total en el padre
-            OrderSchedule::whereKey($parentId)->update([
-                'group_wo_qty' => (int) $groupTotal,
-            ]);
+            // 4) Guardar total del grupo y recalcular sampling automáticamente
+            $parent->group_wo_qty = (int) $groupTotal;
+
+            $samplingTypeRaw = (string) ($parent->sampling_check ?? 'normal');
+            [$samplingQty, $samplingType] = $this->computeSamplingQtyFromPlan((int) $groupTotal, $samplingTypeRaw);
+            $parent->sampling = (int) $samplingQty;
+
+            // Mantener consistencia con el cálculo de totales en QA (operation * sampling)
+            $op = (int) ($parent->operation ?? 0);
+            $parent->total_fai = $op;
+            $parent->total_ipi = max(0, $op * (int) $parent->sampling - (int) $parent->total_fai);
+
+            $parent->save();
 
             // 5) Responder al front con info útil para actualizar UI
             return response()->json([
@@ -399,8 +411,59 @@ class Order_ScheduleController extends Controller
                 'parent_id'    => $parentId,
                 'wo_qty_saved' => (int) $order->wo_qty,
                 'group_wo_qty' => (int) $groupTotal,
+                'sampling'     => (int) $parent->sampling,
+                'sampling_type'=> (string) $samplingType,
             ]);
         });
+    }
+
+    /**
+     * Recalcula sampling desde la tabla qa_sampling_plans para un lote dado.
+     * Retorna: [sampleQty, normalizedType]
+     */
+    private function computeSamplingQtyFromPlan(int $lotSize, string $samplingTypeRaw): array
+    {
+        $lotSize = max(0, (int) $lotSize);
+        $type = strtolower(trim((string) $samplingTypeRaw));
+
+        $type = match (true) {
+            in_array($type, ['t', 'tight', 'tightened'], true) => 'tightened',
+            in_array($type, ['r', 'reduced'], true)          => 'reduced',
+            default                                         => 'normal',
+        };
+
+        if ($lotSize <= 0) {
+            return [0, $type];
+        }
+
+        $qtyField = match ($type) {
+            'tightened' => 'tightened_qty',
+            'reduced'   => Schema::hasColumn('qa_sampling_plans', 'reduced_qty') ? 'reduced_qty' : 'normal_qty',
+            default     => 'normal_qty',
+        };
+
+        $plan = QaSamplingPlan::query()
+            ->where('min_qty', '<=', $lotSize)
+            ->where(fn($q) => $q->where('max_qty', '>=', $lotSize)->orWhereNull('max_qty'))
+            ->orderBy('min_qty', 'desc')
+            ->first()
+            ?? QaSamplingPlan::query()->orderBy('min_qty', 'asc')->first();
+
+        if (!$plan) {
+            // Fallback: inspecciona todo el lote
+            return [$lotSize, $type];
+        }
+
+        $calc = function ($value, $isPercent) use ($lotSize) {
+            if ($value === null) return 1;
+            $n = $isPercent ? (int) ceil($lotSize * ((float) $value / 100)) : (int) $value;
+            return max(1, min($n, $lotSize));
+        };
+
+        $baseQtyField = Schema::hasColumn($plan->getTable(), $qtyField) ? $qtyField : 'normal_qty';
+        $sampleQty = $calc($plan->{$baseQtyField}, (bool) $plan->is_percent);
+
+        return [(int) $sampleQty, $type];
     }
 
     /** +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
