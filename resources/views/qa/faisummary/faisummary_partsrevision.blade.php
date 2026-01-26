@@ -23,11 +23,23 @@
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
           <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="badge badge-pill badge-light border mr-2 d-none" id="badgePending"></span>
+            <span class="btn fai-chip fai-chip--gray mr-2 d-none" id="badgePending" style="pointer-events:none;">
+              Total <span class="fai-chip-count">0</span>
+            </span>
             <div class="dt-filter-slot" data-dt-filter-slot="empty"></div>
           </div>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive position-relative fai-table-shell">
+          <div class="fai-skeleton is-hidden" data-skeleton-for="ordersTableEmpty" aria-hidden="true">
+            @for ($i = 0; $i < 8; $i++)
+              <div class="fai-skeleton-row">
+                <span class="fai-skeleton-cell fai-skeleton-cell--lg"></span>
+                <span class="fai-skeleton-cell fai-skeleton-cell--sm"></span>
+                <span class="fai-skeleton-cell fai-skeleton-cell--md"></span>
+                <span class="fai-skeleton-cell fai-skeleton-cell--xs"></span>
+              </div>
+            @endfor
+          </div>
           <table id="ordersTableEmpty" class="table table-sm table-hover align-middle w-100 fai-dt-table">
             <thead class="table-light">
               <tr>
@@ -59,11 +71,23 @@
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
           <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="badge badge-pill badge-light border mr-2 d-none" id="badgeProcess"></span>
+            <span class="btn fai-chip fai-chip--gray mr-2 d-none" id="badgeProcess" style="pointer-events:none;">
+              Total <span class="fai-chip-count">0</span>
+            </span>
             <div class="dt-filter-slot" data-dt-filter-slot="process"></div>
           </div>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive position-relative fai-table-shell">
+          <div class="fai-skeleton is-hidden" data-skeleton-for="ordersTableProcess" aria-hidden="true">
+            @for ($i = 0; $i < 8; $i++)
+              <div class="fai-skeleton-row">
+                <span class="fai-skeleton-cell fai-skeleton-cell--lg"></span>
+                <span class="fai-skeleton-cell fai-skeleton-cell--sm"></span>
+                <span class="fai-skeleton-cell fai-skeleton-cell--xl"></span>
+                <span class="fai-skeleton-cell fai-skeleton-cell--xs"></span>
+              </div>
+            @endfor
+          </div>
           <table id="ordersTableProcess" class="table table-sm table-hover align-middle w-100 fai-dt-table">
             <thead class="table-light">
               <tr>
@@ -95,8 +119,321 @@
     border-left: 2px solid rgba(0, 0, 0, 0.08);
   }
 
+  /* Base font size */
+  body,
+  .content-wrapper,
+  .content-wrapper .content,
+  .card,
+  .table,
+  .modal-content {
+    font-size: 14px;
+  }
+
   .table thead th {
     white-space: normal; /* permitir salto y evitar overflow */
+  }
+
+  /* Tabla tipo ERP + filas alternadas (gris/blanco) */
+  .fai-dt-table {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #d5d8dd;
+    margin-bottom: 0;
+  }
+
+  .fai-dt-table thead th {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #d5d8dd !important;
+    vertical-align: middle;
+    padding: 6px 8px;
+  }
+
+  .fai-dt-table tbody td {
+    font-size: 14px;
+    color: #111827;
+    vertical-align: middle;
+    padding: 6px 8px;
+  }
+
+  .fai-dt-table tbody tr:nth-child(odd) {
+    background: #fff !important;
+  }
+
+  .fai-dt-table tbody tr:nth-child(even) {
+    background: rgba(248, 250, 252, 0.85) !important;
+  }
+
+  .fai-dt-table tbody tr:hover {
+    background: rgba(2, 6, 23, 0.04) !important;
+  }
+
+  /* Skeleton loading (primera carga AJAX) */
+  .fai-table-shell {
+    min-height: 220px; /* evita salto mientras carga */
+  }
+
+  .fai-skeleton {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 44px; /* deja visible el thead */
+    bottom: 0;
+    padding: 10px 10px 12px;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 10px;
+    z-index: 3;
+  }
+
+  .fai-skeleton.is-hidden {
+    display: none;
+  }
+
+  .fai-skeleton-row {
+    display: grid;
+    grid-template-columns: 1.6fr 0.6fr 0.9fr 0.35fr;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 8px;
+    border-radius: 10px;
+  }
+
+  .fai-skeleton-row:nth-child(even) {
+    background: rgba(248, 250, 252, 0.85);
+  }
+
+  .fai-skeleton-cell {
+    height: 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+        rgba(148, 163, 184, 0.18) 0%,
+        rgba(148, 163, 184, 0.34) 45%,
+        rgba(148, 163, 184, 0.18) 100%);
+    background-size: 220% 100%;
+    animation: faiShimmer 1.15s ease-in-out infinite;
+  }
+
+  .fai-skeleton-cell--xs { width: 34px; height: 20px; border-radius: 8px; justify-self: end; }
+  .fai-skeleton-cell--sm { width: 70px; }
+  .fai-skeleton-cell--md { width: 110px; }
+  .fai-skeleton-cell--lg { width: 100%; }
+  .fai-skeleton-cell--xl { width: 160px; }
+
+  @keyframes faiShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -20% 0; }
+  }
+
+  /* Search tipo ERP (DataTables filter movido al header) */
+  /* Evitar "brinco": ocultar filtro en su posición original y mostrarlo solo en el slot */
+  #ordersTableEmpty_wrapper .dataTables_filter,
+  #ordersTableProcess_wrapper .dataTables_filter {
+    display: none;
+  }
+
+  .dt-filter-slot .dataTables_filter {
+    display: block !important;
+    margin: 0;
+  }
+
+  .dt-filter-slot .dataTables_filter label {
+    margin: 0;
+    width: 260px;
+  }
+
+  .dt-filter-slot {
+    min-width: 260px;
+    min-height: 34px;
+  }
+
+  .dt-filter-slot .dataTables_filter input {
+    width: 100% !important;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #d5d8dd;
+    padding: 6px 10px;
+    background: #fff;
+    box-shadow: none;
+    color: #0f172a;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .dt-filter-slot .dataTables_filter input:focus {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+    outline: none;
+  }
+
+  /* Tools container (badge + search) en gris y un poco más grande */
+  .fai-dt-tools {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+    background: rgba(148, 163, 184, 0.16);
+    border: 1px solid rgba(51, 65, 85, 0.18);
+    border-radius: 12px;
+    padding: 6px 8px;
+    gap: 0.35rem;
+    min-height: 46px; /* reserva alto para chip + search (evita salto) */
+  }
+
+  .fai-chip {
+    height: 34px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    border: 1px solid rgba(51, 65, 85, 0.35);
+    background: rgba(51, 65, 85, 0.10);
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 0.90rem;
+    box-shadow: none;
+  }
+
+  .fai-chip .fai-chip-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 22px;
+    margin-left: 6px;
+    border-radius: 999px;
+    padding: 0 6px;
+    background: rgba(51, 65, 85, 0.18);
+    color: #0f172a;
+    font-weight: 900;
+    font-size: 0.85rem;
+  }
+
+  .fai-chip--gray {
+    border-color: rgba(51, 65, 85, 0.45);
+    background: rgba(51, 65, 85, 0.12);
+  }
+
+  /* Botones tipo ERP (igual que Schedule) */
+  .fai-dt-table .erp-table-btn {
+    height: 30px;
+    width: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .fai-dt-table .btn-erp-primary,
+  .fai-dt-table .btn-erp-warning {
+    background: #f8fafc;
+    border: 1px solid #d5d8dd;
+    color: #1f2937;
+    box-shadow: none;
+    font-weight: 700;
+  }
+
+  .fai-dt-table .btn-erp-primary i {
+    color: #0b5ed7;
+  }
+
+  .fai-dt-table .btn-erp-warning i {
+    color: #f59e0b;
+  }
+
+  .fai-dt-table .btn-erp-primary:hover,
+  .fai-dt-table .btn-erp-warning:hover {
+    filter: brightness(0.97);
+    color: #111827;
+  }
+
+  /* Progress tipo ERP (igual que Schedule) */
+  .fai-dt-table .progress {
+    height: 22px !important;
+    border-radius: 10px;
+    border: 0;
+    overflow: hidden;
+    box-shadow: none;
+    background: rgba(148, 163, 184, 0.18);
+  }
+
+  .fai-dt-table .progress .progress-bar {
+    height: 100%;
+    box-sizing: border-box;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    white-space: nowrap;
+    font-family: inherit;
+    letter-spacing: 0;
+    border: 0;
+  }
+
+  .fai-dt-table .progress .progress-bar.bg-danger {
+    background: #dc3545 !important;
+    color: #fff;
+  }
+
+  .fai-dt-table .progress .progress-bar.bg-warning {
+    background: #facc15 !important;
+    color: #000;
+  }
+
+  .fai-dt-table .progress .progress-bar.bg-success {
+    background: #0f8f3ece !important;
+    color: #fff;
+  }
+
+  .fai-dt-table .progress .progress-bar.bg-secondary {
+    background: rgba(148, 163, 184, 0.55) !important;
+    color: #0f172a;
+  }
+
+  /* Footer/paginación ERP (DataTables) */
+  #ordersTableEmpty_wrapper .dataTables_info,
+  #ordersTableProcess_wrapper .dataTables_info {
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.80rem;
+    line-height: 1.1;
+  }
+
+  #ordersTableEmpty_wrapper .erp-dt-footer,
+  #ordersTableProcess_wrapper .erp-dt-footer {
+    margin-top: 2px; /* pegarlo a la tabla */
+    padding: 0 0 8px;
+  }
+
+  #ordersTableEmpty_wrapper .pagination .page-link,
+  #ordersTableProcess_wrapper .pagination .page-link {
+    border-radius: 8px;
+    margin: 0 2px;
+    border: 1px solid #d5d8dd;
+    background: #f8fafc;
+    color: #1f2937;
+    font-weight: 700;
+    box-shadow: none;
+    font-size: 0.80rem; /* mismo tamaño que Schedule */
+    line-height: 1.1;
+    padding: 0.35rem 0.55rem;
+  }
+
+  #ordersTableEmpty_wrapper .pagination .page-item.active .page-link,
+  #ordersTableProcess_wrapper .pagination .page-item.active .page-link {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
+    color: #fff;
+  }
+
+  #ordersTableEmpty_wrapper .pagination .page-item.disabled .page-link,
+  #ordersTableProcess_wrapper .pagination .page-item.disabled .page-link {
+    opacity: .6;
   }
 
   .card-title-mini {
@@ -712,16 +1049,21 @@ body .content {
     };
 
     function makeDT(bucket, badgeSelector) {
-      return $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process')).DataTable({
+      const $table = $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process'));
+      const dt = $table.DataTable({
         responsive: true,
         deferRender: true,
-        pageLength: 17,
+        pageLength: 15,
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
         lengthChange: false,
+        // Footer/paginación ERP (igual que Schedule)
+        dom: "frt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
         // 2025-12-17: search sin label y placeholder elegante
         language: {
           search: '',
-          searchPlaceholder: 'Search…'
+          searchPlaceholder: 'Search…',
+          emptyTable: 'No orders found.',
+          zeroRecords: 'No matching orders.'
         },
         // 2025-12-17: ordenar por due_date en Pending (bucket=empty), mantener JOB en Process
         order: bucket === 'empty' ? [[2, 'asc']] : [[1, 'desc']],
@@ -756,9 +1098,11 @@ body .content {
           const api = this.api();
           const total = api.page.info().recordsDisplay;
           // Mostrar badge solo cuando haya datos; ocultar si es 0 o vacío
-          $(badgeSelector)
-            .text(total > 0 ? total : '')
-            .toggleClass('d-none', !total);
+          const $chip = $(badgeSelector);
+          if ($chip.length) {
+            $chip.toggleClass('d-none', !total);
+            $chip.find('.fai-chip-count').text(total > 0 ? total : 0);
+          }
 
           if (bucket !== 'process') return;
 
@@ -781,6 +1125,36 @@ body .content {
           });
         }
       });
+
+      // Skeleton (solo mostrar si la carga tarda para evitar "flash" al entrar)
+      const tableId = dt.table().node()?.id;
+      const $skeleton = tableId ? $(`[data-skeleton-for="${tableId}"]`) : $();
+      let skTimer = null;
+
+      function hideSkeleton() {
+        if (skTimer) {
+          clearTimeout(skTimer);
+          skTimer = null;
+        }
+        $skeleton.addClass('is-hidden');
+      }
+
+      function maybeShowSkeleton() {
+        if (!$skeleton.length) return;
+        if (skTimer) clearTimeout(skTimer);
+        skTimer = setTimeout(() => {
+          $skeleton.removeClass('is-hidden');
+        }, 250);
+      }
+
+      $table.on('preXhr.dt', maybeShowSkeleton);
+      $table.on('xhr.dt', hideSkeleton);
+      $table.on('error.dt', hideSkeleton);
+
+      // Asegurar oculto al cargar inicialmente
+      hideSkeleton();
+
+      return dt;
     }
 
     // Init
@@ -788,6 +1162,8 @@ body .content {
       ctx.dtEmpty = makeDT('empty', '#badgePending');
       ctx.dtProcess = makeDT('process', '#badgeProcess');
     });
+
+    // Nota: el search de DataTables ya incluye el botón "X" para limpiar.
 
     // --------------------------
     // Export resumen PDF (In Process)
@@ -1251,8 +1627,12 @@ body .content {
       const $row = $(this).closest('tr');
       $row.find('input, select').prop('disabled', false);
       $row.find('td:last').html(`
-        <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-        <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+        <button type="button" class="btn btn-sm btn-erp-success btn-erp erp-table-btn saveRowBtn mr-1" title="Save">
+          <i class="fas fa-save"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-erp-danger btn-erp erp-table-btn deleteRowBtn" title="Delete">
+          <i class="fas fa-trash-alt"></i>
+        </button>
       `);
 
       // Si es IPI y habilitamos edición, recalcula pendientes de esa fila
@@ -1339,9 +1719,15 @@ body .content {
 
           // Acciones de la última celda
           $row.find('td:last').html(`
-            <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
-            <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-            <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+            <button type="button" class="btn btn-sm btn-erp-success btn-erp erp-table-btn" title="Saved" disabled>
+              <i class="fas fa-check"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-erp-warning btn-erp erp-table-btn editRowBtn mr-1" title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-erp-danger btn-erp erp-table-btn deleteRowBtn" title="Delete">
+              <i class="fas fa-trash-alt"></i>
+            </button>
           `);
 
           // ======= Progreso con ipiReq = sampling - 1 =======
@@ -1556,7 +1942,7 @@ body .content {
         if (sum >= 1) ctx.faiDoneOps.add(op);
       for (const [op, sum] of ipiPassMap.entries()) ctx.ipiCountMap.set(op, sum);
 
-      let resumen = '<table class="table table-sm fai-summary-table mb-0"><thead><tr>'
+      let resumen = '<table class="table table-sm mb-0 fai-summary-table fai-summary-table--erp"><thead class="fai-summary-thead"><tr>'
         + '<th class="text-center">Status</th><th class="text-center">Op</th><th class="text-center">FAI</th><th class="text-center">NP FAI</th><th class="text-center">IPI</th><th class="text-center">NP IPI</th><th class="text-center">Done</th>'
         + '</tr></thead><tbody>';
       let faltantes = false;
@@ -1616,9 +2002,9 @@ body .content {
 
       if ($pre?.length) $pre.html(resumen.trim());
       if ($box?.length) {
-        $box.removeClass('bg-success bg-warning text-white');
-        if (faltantes) $box.addClass('bg-warning text-white');
-        else $box.addClass('bg-success text-white');
+        $box.removeClass('is-ok is-warn');
+        if (faltantes) $box.addClass('is-warn');
+        else $box.addClass('is-ok');
       }
 
       refreshPendingIpiOptions();
@@ -1984,8 +2370,12 @@ body .content {
 
       $row.append(`
         <td>
-          <button type="button" class="btn btn-success btn-sm saveRowBtn me-1"><i class="fas fa-save"></i></button>
-          <button type="button" class="btn btn-danger btn-sm removeRowBtn"><i class="fas fa-minus"></i></button>
+          <button type="button" class="btn btn-sm btn-erp-success btn-erp erp-table-btn saveRowBtn mr-1" title="Save">
+            <i class="fas fa-save"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-erp-danger btn-erp erp-table-btn removeRowBtn" title="Remove draft">
+            <i class="fas fa-minus"></i>
+          </button>
         </td>`);
 
       $inspType.on('change', function() {
@@ -2080,9 +2470,15 @@ body .content {
 
       $row.append(`
         <td>
-          <button type="button" class="btn btn-success btn-sm"><i class="fas fa-check"></i></button>
-          <button type="button" class="btn btn-warning btn-sm editRowBtn me-1"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn btn-danger btn-sm deleteRowBtn"><i class="fas fa-trash-alt"></i></button>
+          <button type="button" class="btn btn-sm btn-erp-success btn-erp erp-table-btn" title="Saved" disabled>
+            <i class="fas fa-check"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-erp-warning btn-erp erp-table-btn editRowBtn mr-1" title="Edit">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-erp-danger btn-erp erp-table-btn deleteRowBtn" title="Delete">
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </td>`);
 
       return $row;

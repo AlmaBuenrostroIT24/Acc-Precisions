@@ -39,7 +39,6 @@ class OrderSchedule extends Model
         'endate_mach',
         'target_mach',
         'machining_date',
-        'status_at_machining_date',
         'status_at_endate_mach',
         'due_date',
         'days',

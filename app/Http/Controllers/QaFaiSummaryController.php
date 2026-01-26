@@ -122,7 +122,7 @@ class QaFaiSummaryController extends Controller
 
                 $sum = (int) ($r->group_wo_qty ?? 0);
 
-                $btn = '<button class="btn btn-sm btn-primary"
+                $btn = '<button class="btn btn-sm btn-erp-primary erp-table-btn"
               data-toggle="modal" data-target="#editModal"
               data-id="' . e($r->id) . '"
               data-workid="' . e($r->work_id) . '"
@@ -137,7 +137,7 @@ class QaFaiSummaryController extends Controller
 
                 $btnOther = '';
                 if ($bucket === 'empty') {
-                    $btnOther = ' <button class="btn btn-sm btn-warning ml-1"
+                    $btnOther = ' <button class="btn btn-sm btn-erp-warning erp-table-btn ml-1"
                     data-toggle="modal" data-target="#otherModal"
                     data-id="' . e($r->id) . '"
                     data-pn="' . e($r->PN) . '"

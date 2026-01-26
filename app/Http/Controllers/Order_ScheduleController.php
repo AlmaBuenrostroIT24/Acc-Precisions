@@ -1412,7 +1412,9 @@ class Order_ScheduleController extends Controller
             $newDate = $request->machining_date;
 
             $dateChanged = ($order->machining_date !== $newDate);
-            $missingStatusSnapshot = empty($order->status_at_machining_date);
+            // La columna puede no existir si la migración no ha corrido aún.
+            $hasStatusSnapshotColumn = Schema::hasColumn('orders_schedule', 'status_at_endate_mach');
+            $missingStatusSnapshot = $hasStatusSnapshotColumn && empty($order->status_at_endate_mach);
 
             // Guardar log solo si la fecha cambia
             if ($dateChanged) {
@@ -1428,7 +1430,9 @@ class Order_ScheduleController extends Controller
             if ($dateChanged || $missingStatusSnapshot) {
                 $order->machining_date = $newDate;
                 // Guardar el status vigente al momento de guardar la machining_date
-                $order->status_at_machining_date = $order->status;
+                if ($hasStatusSnapshotColumn) {
+                    $order->status_at_endate_mach = $order->status;
+                }
                 $order->save();
             }
 
@@ -1443,7 +1447,9 @@ class Order_ScheduleController extends Controller
             return response()->json([
                 'success' => true,
                 'machining_date' => $order->machining_date,
-                'status_at_machining_date' => $order->status_at_machining_date,
+                // Compat: el front viejo esperaba `status_at_machining_date`
+                'status_at_machining_date' => $hasStatusSnapshotColumn ? $order->status_at_endate_mach : null,
+                'status_at_endate_mach' => $hasStatusSnapshotColumn ? $order->status_at_endate_mach : null,
                 'dias_restantes' => $dias,
                 'alertColor' => $alertColor,
                 'alertLabel' => $alertLabel,

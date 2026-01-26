@@ -60,12 +60,14 @@
                                         <div class="d-flex align-items-end">
                                             <input type="hidden" id="order-id">
                                             <input type="text" class="form-control w-auto" style="max-width: 90px;" id="operationInput" name="dynamic_field[]">
-                                            <button type="button" class="btn btn-success btn-erp ml-2 d-none" id="addOperationBtn"><i class="fas fa-save mr-1"></i></button>
+                                            <button type="button" class="btn btn-sm btn-erp-primary btn-erp btn-erp-icon ml-2 d-none" id="addOperationBtn" title="Save ops">
+                                                <i class="fas fa-save"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="form-group col-md-4 mb-0 d-flex align-items-end justify-content-end">
-                                    <button type="button" class="btn btn-info btn-erp ml-2" id="addRowBtn" disabled>
+                                    <button type="button" class="btn btn-erp-primary btn-erp ml-2" id="addRowBtn" disabled>
                                         <i class="fas fa-plus mr-1"></i> Inspection
                                     </button>
                                 </div>
@@ -77,9 +79,9 @@
                             <div class="form-group col-md-12">
                                 <div class="d-flex align-items-center justify-content-between mb-1 fai-packet-head">
                                     <div class="d-flex align-items-center">
-                                        <span class="fai-packet-icon mr-2" id="openPacketPdfBtn" role="button" title="Open PDF" style="cursor: pointer;">
+                                        <button type="button" class="btn btn-sm btn-erp-primary btn-erp erp-table-btn mr-2" id="openPacketPdfBtn" title="Open PDF">
                                             <i class="fas fa-file-alt"></i>
-                                        </span>
+                                        </button>
                                         <div>
                                             <label class="mb-0">FAI/IPI Inspection Packet Report</label>
                                             <small class="text-muted d-block">Resumen</small>
@@ -87,7 +89,7 @@
                                     </div>
                                 </div>
                                 <div id="inspection-missing-container" class="fai-packet-box">
-                                    <pre id="inspection-missing" class="m-0" style="white-space: pre-wrap;"></pre>
+                                    <div id="inspection-missing" class="fai-packet-report m-0"></div>
                                 </div>
                             </div>
                         </div>
@@ -120,10 +122,10 @@
 
                 </div>
                 <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" class="btn btn-success btn-erp" id="btnFinishInspection">
+                    <button type="button" class="btn btn-erp-success btn-erp" id="btnFinishInspection">
                         <i class="fas fa-check-circle mr-1"></i> Finish Inspection
                     </button>
-                    <button type="button" class="btn btn-light border btn-erp text-secondary" data-dismiss="modal">Exit</button>
+                    <button type="button" class="btn btn-erp-secondary btn-erp" data-dismiss="modal">Exit</button>
                 </div>
             </div>
         </form>
@@ -146,8 +148,7 @@
 
     .fai-modal-header {
         background: #f8fafc;
-        border-left: 4px solid #17a2b8;
-        /* info */
+        border-left: 4px solid rgba(15, 23, 42, 0.10);
     }
 
     .fai-modal-icon {
@@ -176,6 +177,74 @@
         letter-spacing: 0.01em;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
         transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+    }
+
+    /* Variantes tipo Schedule (fondo claro + borde + ícono con color) */
+    #editModal .btn-erp-primary,
+    #editModal .btn-erp-success,
+    #editModal .btn-erp-warning,
+    #editModal .btn-erp-danger,
+    #editModal .btn-erp-secondary {
+        background: #f8fafc;
+        border: 1px solid #d5d8dd;
+        color: #1f2937;
+        box-shadow: none;
+        font-weight: 800;
+    }
+
+    #editModal .btn-erp-primary i {
+        color: #0b5ed7;
+    }
+
+    #editModal .btn-erp-success i {
+        color: #0f5132;
+    }
+
+    #editModal .btn-erp-warning i {
+        color: #f59e0b;
+    }
+
+    #editModal .btn-erp-danger i {
+        color: #b91c1c;
+    }
+
+    #editModal .btn-erp-secondary {
+        color: #475569;
+    }
+
+    #editModal .btn-erp-secondary i {
+        color: #475569;
+    }
+
+    /* Botones ícono dentro de la tabla del modal */
+    #editModal .erp-table-btn {
+        height: 34px;
+        width: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+    }
+
+    #editModal .erp-table-btn i {
+        font-size: 1.05rem;
+        line-height: 1;
+    }
+
+    #editModal .erp-table-btn:disabled {
+        opacity: 0.7;
+        cursor: default;
+    }
+
+    #editModal .btn-erp-icon {
+        height: 34px;
+        width: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
     }
 
     .btn-erp:hover {
@@ -257,54 +326,88 @@
     }
 
     /* Caja ERP para FAI/IPI packet */
+    .fai-packet-head {
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        margin-bottom: 8px !important;
+    }
+
     .fai-packet-head label {
         font-weight: 700;
         color: #0f172a;
     }
 
-    .fai-packet-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: #e2e8f0;
-        color: #0f172a;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.9rem;
-    }
-
     .fai-packet-box {
         min-height: 90px;
-        background: linear-gradient(180deg, #f9fbfd 0%, #eef2f6 100%);
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 6px 8px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-        font-size: 0.9rem;
-        line-height: 1.3;
+        background: #fff;
+        border: 1px solid #d5d8dd;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+        font-size: 14px;
+        line-height: 1.35;
     }
 
-    /* 2025-12-18: tabla resumen ERP compacta */
-    .fai-summary-table {
-        font-size: 0.85rem;
+    /* Estado del packet (sin fondos "amarillos/verdes" fuertes) */
+    .fai-packet-box.is-ok {
+        border-color: rgba(34, 197, 94, 0.45);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06), 0 0 0 2px rgba(34, 197, 94, 0.08);
+    }
+
+    .fai-packet-box.is-warn {
+        border-color: rgba(245, 158, 11, 0.55);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06), 0 0 0 2px rgba(245, 158, 11, 0.10);
+    }
+
+    .fai-packet-report {
+        font-family: inherit;
+        color: #0f172a;
+        font-size: 14px;
+        line-height: 1.35;
+        max-height: 260px;
+        overflow: auto;
+    }
+
+    /* Tabla resumen tipo ERP */
+    .fai-summary-table--erp {
         width: 100%;
         table-layout: fixed;
         margin-bottom: 0;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
     }
 
-    .fai-summary-table th {
-        background: #f1f5f9;
+    .fai-summary-table--erp thead th,
+    .fai-summary-table--erp .fai-summary-thead th {
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
         color: #0f172a;
-        border-bottom: 1px solid #e2e8f0;
+        font-weight: 800;
+        font-size: 12px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.12);
         text-align: center;
-        padding: 4px 6px;
+        padding: 6px 8px;
+        white-space: nowrap;
     }
 
-    .fai-summary-table td {
+    .fai-summary-table--erp tbody td {
         vertical-align: middle;
-        padding: 4px 6px;
+        padding: 6px 8px;
         text-align: center;
+        font-size: 14px;
+        color: #0f172a;
+        border-top: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .fai-summary-table--erp tbody tr:nth-child(even) td {
+        background: rgba(248, 250, 252, 0.85);
+    }
+
+    .fai-summary-table--erp tbody tr:hover td {
+        background: rgba(2, 6, 23, 0.04);
     }
 
     .fai-summary-table .badge {
