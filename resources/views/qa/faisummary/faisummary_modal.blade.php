@@ -96,7 +96,7 @@
                     </div>
 
                     <!-- Contenedor con scroll -->
-                    <div class="border rounded" style="max-height: 500px; overflow-y: auto;">
+                    <div class="border rounded" style="max-height: 450px; overflow-y: auto;">
                         <!-- Tabla dinámica -->
                         <table class="table table-sm table-hover mb-0" id="dynamicTable">
                             <thead>
@@ -142,6 +142,17 @@
         border-radius: 14px;
     }
 
+    /* Todo el texto del modal en negro */
+    #editModal,
+    #editModal .modal-content,
+    #editModal .modal-content * {
+        color: #0f172a !important;
+    }
+
+    #editModal .form-control::placeholder {
+        color: rgba(15, 23, 42, 0.70) !important;
+    }
+
     #editModal .modal-header {
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
@@ -157,7 +168,7 @@
         border-radius: 10px;
         background: rgba(23, 162, 184, 0.12);
         /* info soft */
-        color: #17a2b8;
+        color: #17a2b8 !important;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -193,19 +204,19 @@
     }
 
     #editModal .btn-erp-primary i {
-        color: #0b5ed7;
+        color: #0b5ed7 !important;
     }
 
     #editModal .btn-erp-success i {
-        color: #0f5132;
+        color: #0f5132 !important;
     }
 
     #editModal .btn-erp-warning i {
-        color: #f59e0b;
+        color: #f59e0b !important;
     }
 
     #editModal .btn-erp-danger i {
-        color: #b91c1c;
+        color: #b91c1c !important;
     }
 
     #editModal .btn-erp-secondary {
@@ -213,7 +224,7 @@
     }
 
     #editModal .btn-erp-secondary i {
-        color: #475569;
+        color: #475569 !important;
     }
 
     /* Botones ícono dentro de la tabla del modal */
@@ -366,6 +377,15 @@
         line-height: 1.35;
         max-height: 260px;
         overflow: auto;
+    }
+
+    /* Evitar efecto "caja dentro de caja": si renderizamos la tabla ERP dentro,
+       dejamos que la tabla sea el "card" visual y el contenedor no agregue otro marco. */
+    .fai-packet-box.has-summary {
+        border: 0;
+        box-shadow: none;
+        padding: 0;
+        background: transparent;
     }
 
     /* Tabla resumen tipo ERP */

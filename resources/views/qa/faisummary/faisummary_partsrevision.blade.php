@@ -6,10 +6,10 @@
 
 @section('content')
 
-<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0">
+<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0 mx-0">
   <!-- Pending -->
   <div class="col">
-    <div class="card  shadow-sm rounded-3 border-left-warning">
+    <div class="card shadow-sm rounded-3 fai-card">
       <div class="card-body fai-compact-body">
         <div class="card-title-mini fai-card-title">
           <div class="d-flex align-items-center">
@@ -57,7 +57,7 @@
 
   <!-- In Process -->
   <div class="col">
-    <div class="card shadow-sm rounded-3 border-left-success">
+    <div class="card shadow-sm rounded-3 fai-card">
       <div class="card-body fai-compact-body">
         <div class="card-title-mini fai-card-title">
           <div class="d-flex align-items-center">
@@ -113,10 +113,21 @@
 @section('css')
 <!-- CSS complementario (puedes ponerlo en tu .css) -->
 <style>
-  /* Bordes laterales neutrales (sin franjas de color) */
-  .card.border-left-success,
-  .card.border-left-warning {
-    border-left: 2px solid rgba(0, 0, 0, 0.08);
+  :root {
+    /* Colores ERP (sólidos, derivados de .erp-pill en #orders_endscheduleTable) */
+    --erp-warn-border: #eab308;
+    --erp-warn-bg: #facc15;
+
+    --erp-danger-border: #dc2626;
+    --erp-danger-bg: #ef4444;
+
+    --erp-success-border: #16a34a;
+    --erp-success-bg: #22c55e;
+  }
+
+  /* Card container neutral (sin borde amarillo/verde) */
+  .fai-card {
+    border: 1px solid rgba(15, 23, 42, 0.10) !important;
   }
 
   /* Base font size */
@@ -127,6 +138,25 @@
   .table,
   .modal-content {
     font-size: 14px;
+  }
+
+  /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT) */
+  html,
+  body,
+  .wrapper,
+  .content-wrapper,
+  .content-wrapper .content {
+    overflow-x: hidden !important;
+  }
+
+  /* DataTables wrappers a veces agregan 1px extra */
+  .dataTables_wrapper,
+  .dataTables_wrapper .row,
+  .dataTables_wrapper .col-sm-12,
+  .dataTables_wrapper .col-md-6,
+  .dataTables_wrapper .col-md-12 {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 
   .table thead th {
@@ -356,7 +386,8 @@
     border: 0;
     overflow: hidden;
     box-shadow: none;
-    background: rgba(148, 163, 184, 0.18);
+    background: #f8fafc;
+    position: relative;
   }
 
   .fai-dt-table .progress .progress-bar {
@@ -373,21 +404,142 @@
     font-family: inherit;
     letter-spacing: 0;
     border: 0;
+    /* Evitar look "borroso": sin overlay blanco */
+    background-image: none;
+    box-shadow: none;
+  }
+
+  .fai-dt-table .progress .progress-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    pointer-events: none;
+    user-select: none;
+    text-shadow: none;
   }
 
   .fai-dt-table .progress .progress-bar.bg-danger {
-    background: #dc3545 !important;
-    color: #fff;
+    border: 0 !important;
+    background: var(--erp-danger-bg) !important;
+    color: #0f172a !important;
+  }
+
+  /* ERP pills (para resumen FAI/IPI) */
+  .fai-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid #d5d8dd;
+    background: #f8fafc;
+    color: #111827;
+    font-weight: 800;
+    font-size: 0.82rem;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: none;
+    user-select: none;
+  }
+
+  .fai-pill--icon {
+    width: 34px;
+    padding: 0;
+    border-radius: 10px;
+  }
+
+  .fai-pill--click {
+    cursor: pointer;
+  }
+
+  .fai-pill--click:hover {
+    filter: brightness(0.98);
+  }
+
+  .fai-pill--success {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(34, 197, 94, 0.12);
+    color: #14532d;
+  }
+
+  .fai-pill--warn {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.12);
+    color: #7c2d12;
+  }
+
+  .fai-pill--danger {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.12);
+    color: #7f1d1d;
+  }
+
+  .fai-pill--off {
+    border-color: rgba(148, 163, 184, 0.55);
+    background: rgba(148, 163, 184, 0.12);
+    color: #475569;
+  }
+
+  .fai-pill--icon i {
+    font-size: 1rem;
+  }
+
+  /* Tabla resumen (renderizada dentro del modal/box) */
+  .fai-summary-table {
+    width: 100%;
+    border: 1px solid #d5d8dd;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0;
+    background: #fff;
+  }
+
+  .fai-summary-table thead th {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #d5d8dd !important;
+    vertical-align: middle;
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+
+  .fai-summary-table tbody td {
+    font-size: 14px;
+    color: #111827;
+    vertical-align: middle;
+    padding: 6px 8px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .fai-summary-table tbody tr:nth-child(even) td {
+    background: rgba(248, 250, 252, 0.85);
+  }
+
+  .fai-summary-table tbody tr:hover td {
+    background: rgba(2, 6, 23, 0.04);
   }
 
   .fai-dt-table .progress .progress-bar.bg-warning {
-    background: #facc15 !important;
-    color: #000;
+    border: 0 !important;
+    background: var(--erp-warn-bg) !important;
+    color: #0f172a !important;
   }
 
   .fai-dt-table .progress .progress-bar.bg-success {
-    background: #0f8f3ece !important;
-    color: #fff;
+    border: 0 !important;
+    background: var(--erp-success-bg) !important;
+    color: #0f172a !important;
   }
 
   .fai-dt-table .progress .progress-bar.bg-secondary {
@@ -419,9 +571,9 @@
     color: #1f2937;
     font-weight: 700;
     box-shadow: none;
-    font-size: 0.80rem; /* mismo tamaño que Schedule */
-    line-height: 1.1;
-    padding: 0.35rem 0.55rem;
+    font-size: 1rem; /* paginado normal (Bootstrap) */
+    line-height: 1.5;
+    padding: 0.375rem 0.75rem;
   }
 
   #ordersTableEmpty_wrapper .pagination .page-item.active .page-link,
@@ -555,10 +707,18 @@
     /* 2025-12-17: quitar efecto "cuadro" alrededor de la tabla */
     border: 0;
     border-radius: 0;
-    overflow-x: auto;
+    /* En escritorio no forzar contenedor con overflow (a veces deja scrollbar “fantasma”). */
+    overflow-x: visible;
     overflow-y: hidden; /* evita scroll vertical interno (doble barra) */
     background: transparent;
     box-shadow: none;
+  }
+
+  /* En pantallas chicas sí permitir scroll horizontal real */
+  @media (max-width: 991.98px) {
+    .table-responsive {
+      overflow-x: auto;
+    }
   }
 
   .table {
@@ -827,9 +987,9 @@ body .content {
 
   .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
     /* 2025-12-17: botones de paginación un poco más grandes */
-    padding: 0.18rem 0.60rem !important;
-    font-size: 0.94rem !important;
-    line-height: 1.12 !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
     border: none !important;
     background: transparent !important;
     color: inherit !important;
@@ -1106,6 +1266,24 @@ body .content {
 
           if (bucket !== 'process') return;
 
+          function applyProgressUI($wrap, pct) {
+            const $bar = $wrap.find('.progress-bar');
+            if (!$bar.length) return;
+
+            let $label = $wrap.find('.progress-label');
+            if (!$label.length) {
+              $label = $('<span class="progress-label"></span>');
+              $wrap.append($label);
+            }
+
+            $label.text(pct + '%');
+            $bar.attr('aria-valuenow', pct).css('width', pct + '%').text('');
+            $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
+            if (pct >= 100) $bar.addClass('bg-success');
+            else if (pct >= 50) $bar.addClass('bg-warning');
+            else $bar.addClass('bg-danger');
+          }
+
           api.rows({
             page: 'current'
           }).every(function() {
@@ -1114,14 +1292,8 @@ body .content {
             const pct = parseInt(row?.progress_pct, 10) || 0;
 
             const $wrap = $(`.progress[data-order-id="${id}"]`);
-            const $bar = $wrap.find('.progress-bar');
-            if (!$wrap.length || !$bar.length) return;
-
-            $bar.attr('aria-valuenow', pct).css('width', pct + '%').text(pct + '%');
-            $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
-            if (pct >= 100) $bar.addClass('bg-success');
-            else if (pct >= 50) $bar.addClass('bg-warning');
-            else $bar.addClass('bg-danger');
+            if (!$wrap.length) return;
+            applyProgressUI($wrap, pct);
           });
         }
       });
@@ -1742,31 +1914,6 @@ body .content {
             const pct = computeProgressFromRows(rows, opsNow, ipiReqNow);
             renderOrderProgress(orderId, pct);
 
-            // ===== [MOD IPI → saltar a siguiente] =====
-            try {
-              if (typeof updateInspectionMissing === 'function') updateInspectionMissing();
-
-              if (String(inspType).toUpperCase() === 'IPI') {
-                const opJustSaved = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || '';
-                const ipiDoneForOp = ctx.ipiCountMap.get(opJustSaved) || 0;
-
-                // Cuando cumpla ipiReqNow para esa op, sugiere la siguiente
-                if (ipiReqNow > 0 && ipiDoneForOp >= ipiReqNow) {
-                  const opsTotal = parseInt(ctx.modal.$operationInput.val(), 10) || 0;
-                  const nextPair = getNextInspectionPair(opsTotal); // esta ya usa (sampling-1) internamente
-                  if (nextPair) {
-                    const draft = createDraftRow();
-                    if (draft) {
-                      ctx.modal.$rowsContainer.prepend(draft);
-                      draft.find('input,select').filter(':visible:not([disabled])').first().focus();
-                    }
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn('auto-next IPI suggestion skipped:', e);
-            }
-
             // ======= Completed / In progress =======
             if (pct >= 100) {
               Swal.fire({
@@ -1907,7 +2054,8 @@ body .content {
 
       if (!operations) {
         if ($pre?.length) $pre.text('');
-        if ($box?.length) $box.removeClass('bg-success bg-warning text-white');
+        // Mantener el contenedor neutral (sin borde/fondo amarillo/verde).
+        if ($box?.length) $box.removeClass('bg-success bg-warning text-white is-ok is-warn has-summary');
         return;
       }
 
@@ -1942,7 +2090,7 @@ body .content {
         if (sum >= 1) ctx.faiDoneOps.add(op);
       for (const [op, sum] of ipiPassMap.entries()) ctx.ipiCountMap.set(op, sum);
 
-      let resumen = '<table class="table table-sm mb-0 fai-summary-table fai-summary-table--erp"><thead class="fai-summary-thead"><tr>'
+      let resumen = '<table class="table table-sm fai-summary-table mb-0"><thead><tr>'
         + '<th class="text-center">Status</th><th class="text-center">Op</th><th class="text-center">FAI</th><th class="text-center">NP FAI</th><th class="text-center">IPI</th><th class="text-center">NP IPI</th><th class="text-center">Done</th>'
         + '</tr></thead><tbody>';
       let faltantes = false;
@@ -1960,10 +2108,13 @@ body .content {
         const faiRealizadosOp = faiPass + faiFail;
         const ipiRealizadosOp = ipiPass + ipiFail;
 
-        // Icono con badge para mejor visibilidad
-        const globalBadgeClass = (faiPass >= faiReq && ipiPass >= ipiReq)
-          ? 'badge badge-success fai-icon-badge'
-          : (faiPass < faiReq && ipiPass < ipiReq ? 'badge badge-danger fai-icon-badge' : 'badge badge-warning text-dark fai-icon-badge');
+        // ERP pills (consistente con Schedule)
+        const globalPillClass = (faiPass >= faiReq && ipiPass >= ipiReq)
+          ? 'fai-pill fai-pill--success fai-pill--icon'
+          : (faiPass < faiReq && ipiPass < ipiReq ? 'fai-pill fai-pill--danger fai-pill--icon' : 'fai-pill fai-pill--warn fai-pill--icon');
+        const globalTitle = (faiPass >= faiReq && ipiPass >= ipiReq)
+          ? 'FAI + IPI complete'
+          : (faiPass < faiReq && ipiPass < ipiReq ? 'FAI + IPI missing' : 'FAI / IPI partial');
         // Font Awesome 5 friendly icons
         const globalLabel = (faiPass >= faiReq && ipiPass >= ipiReq)
           ? '<i class="fas fa-check-circle"></i>'
@@ -1971,25 +2122,25 @@ body .content {
             ? '<i class="fas fa-times-circle"></i>'
             : '<i class="fas fa-exclamation-triangle"></i>');
 
-        let faiBadgeClass = 'badge badge-secondary'; // gris cuando no hay avances
+        let faiPillClass = 'fai-pill fai-pill--off fai-pill--click'; // gris cuando no hay avances
         if (faiPass >= faiReq) {
-          faiBadgeClass = 'badge badge-success';
+          faiPillClass = 'fai-pill fai-pill--success fai-pill--click';
         } else if (faiPass > 0) {
-          faiBadgeClass = 'badge badge-warning text-dark'; // amarillo si tiene al menos 1
+          faiPillClass = 'fai-pill fai-pill--warn fai-pill--click';
         }
-        let ipiBadgeClass = 'badge badge-secondary';
+        let ipiPillClass = 'fai-pill fai-pill--off fai-pill--click';
         if (ipiPass >= ipiReq) {
-          ipiBadgeClass = 'badge badge-success';
+          ipiPillClass = 'fai-pill fai-pill--success fai-pill--click';
         } else if (ipiPass > 0) {
-          ipiBadgeClass = 'badge badge-warning text-dark';
+          ipiPillClass = 'fai-pill fai-pill--warn fai-pill--click';
         }
 
         const line = `<tr class="text-center fai-summary-row" data-op="${op}">
-            <td><span class="${globalBadgeClass}">${globalLabel}</span></td>
+            <td><span class="${globalPillClass}" title="${globalTitle}">${globalLabel}</span></td>
             <td><strong>${op}</strong></td>
-            <td><span class="${faiBadgeClass} fai-filter" data-op="${op}" data-type="FAI">FAI ${faiPass}/${faiReq}</span></td>
+            <td><span class="${faiPillClass} fai-filter" data-op="${op}" data-type="FAI" title="Filter FAI (${op})">FAI ${faiPass}/${faiReq}</span></td>
             <td class="text-muted small">${faiFail}</td>
-            <td><span class="${ipiBadgeClass} fai-filter" data-op="${op}" data-type="IPI">IPI ${ipiPass}/${ipiReq}</span></td>
+            <td><span class="${ipiPillClass} fai-filter" data-op="${op}" data-type="IPI" title="Filter IPI (${op})">IPI ${ipiPass}/${ipiReq}</span></td>
             <td class="text-muted small">${ipiFail}</td>
             <td class="text-muted small">${faiRealizadosOp + ipiRealizadosOp}</td>
           </tr>`;
@@ -2001,11 +2152,8 @@ body .content {
       resumen += '</tbody></table>';
 
       if ($pre?.length) $pre.html(resumen.trim());
-      if ($box?.length) {
-        $box.removeClass('is-ok is-warn');
-        if (faltantes) $box.addClass('is-warn');
-        else $box.addClass('is-ok');
-      }
+      // Mantener el contenedor neutral (sin borde/fondo amarillo/verde).
+      if ($box?.length) $box.removeClass('bg-success bg-warning text-white is-ok is-warn').addClass('has-summary');
 
       refreshPendingIpiOptions();
     }
@@ -2245,7 +2393,15 @@ body .content {
       if (!$wrap.length) return;
       const $bar = $wrap.find('.progress-bar');
       if (!$bar.length) return;
-      $bar.attr('aria-valuenow', percent).css('width', percent + '%').text(percent + '%');
+
+      let $label = $wrap.find('.progress-label');
+      if (!$label.length) {
+        $label = $('<span class="progress-label"></span>');
+        $wrap.append($label);
+      }
+
+      $label.text(percent + '%');
+      $bar.attr('aria-valuenow', percent).css('width', percent + '%').text('');
       $bar.removeClass('bg-secondary bg-danger bg-warning bg-success');
       if (percent >= 100) $bar.addClass('bg-success');
       else if (percent >= 50) $bar.addClass('bg-warning');
