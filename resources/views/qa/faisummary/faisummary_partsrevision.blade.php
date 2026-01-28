@@ -390,22 +390,10 @@
     position: relative;
   }
 
-  /* QTY INSP + QTY PROCESS dentro de la misma celda */
-  .fai-qty-duo {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-wrap: nowrap;
-  }
-
-  .fai-qty-duo .qty-insp {
-    flex: 0 0 92px;
-    min-width: 92px;
-  }
-
-  .fai-qty-duo .qty-process {
-    flex: 1 1 120px;
-    min-width: 120px;
+  /* Columna QTY PROCESS (modal inspection) */
+  #dynamicTable td.col-qty-process input.qty-process-input {
+    width: 72px;
+    min-width: 72px;
   }
 
   .fai-dt-table .progress .progress-bar {
@@ -1812,31 +1800,99 @@ body .content {
       refreshAllSamplingSelects();
     });
 
+    function isNewOperationForFai(op) {
+      const opNorm = (op || '').toString().trim();
+      if (!opNorm) return false;
+      // "Nueva operación" = aún no tiene FAI completado en esa op
+      return !ctx.faiDoneOps.has(opNorm);
+    }
+
+    function refreshQtyProcessUiForRow($row) {
+      if (!$row?.length) return;
+      const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+      const op = ($row.find('select[name="operation[]"]').val() || $row.find('input[name="operation[]"]').val() || '').toString();
+      const isSavedRow = !!$row.attr('data-id');
+      const $qtyInp = $row.find('input[name="qty_process[]"]');
+
+      // Filas guardadas: por default mostrar valor (readonly)
+      if (isSavedRow) {
+        const isEditing = String($row.attr('data-editing') || '') === '1';
+        if (!isEditing) {
+          if ($qtyInp.length) {
+            // Solo mostrar QTY PROCESS en FAI
+            $qtyInp.toggleClass('d-none', type !== 'FAI');
+            $qtyInp.prop('disabled', true);
+          }
+          $row.find('.qtyprocessopBtn').addClass('d-none');
+          return;
+        }
+
+        // En edición: permitir editar qty_process, y qty_insp si fue habilitado
+        if ($qtyInp.length) {
+          // Solo mostrar/editar QTY PROCESS en FAI
+          $qtyInp.toggleClass('d-none', type !== 'FAI');
+          $qtyInp.prop('disabled', type !== 'FAI');
+        }
+        $row.find('.qtyprocessopBtn').addClass('d-none');
+        return;
+      }
+
+      const canShowBtn = (type === 'FAI') && isNewOperationForFai(op);
+      $row.find('.qtyprocessopBtn').toggleClass('d-none', !canShowBtn);
+
+      // Drafts: oculto por defecto; se muestra solo al presionar el botón
+      const isShown = String($row.attr('data-show-qty-process') || '') === '1';
+      const isEditQtyInsp = String($row.attr('data-edit-qty-insp') || '') === '1';
+      const shouldShowInput = canShowBtn && isShown;
+
+      if ($qtyInp.length) {
+        // Solo en FAI (nueva operación) y cuando se presionó el botón
+        $qtyInp.toggleClass('d-none', type !== 'FAI' || !shouldShowInput);
+        $qtyInp.prop('disabled', type !== 'FAI' || !shouldShowInput);
+      }
+
+      if (!canShowBtn) {
+        $row.removeAttr('data-show-qty-process');
+        $row.removeAttr('data-edit-qty-insp');
+      }
+
+      // Si habilitamos qty_process, también habilitar edición de qty_insp (FAI)
+      const $sampleCell = $row.find('td.col-sample');
+      if ($sampleCell.length) {
+        if (shouldShowInput && !isEditQtyInsp) $row.attr('data-edit-qty-insp', '1');
+        if (!shouldShowInput && isEditQtyInsp) $row.removeAttr('data-edit-qty-insp');
+        const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || 0, 10) || 0;
+        const cur = $sampleCell.find('input[name="sample_idx[]"]').not('.sample-fixed').val() ||
+          $sampleCell.find('input[name="sample_idx[]"].sample-fixed').val() ||
+          null;
+        renderSampleCell($sampleCell, type || 'FAI', sampling, cur, op);
+      }
+    }
+
     // QTY PROCESS: mostrar/enfocar input dentro de la misma fila (sin agregar filas)
     $('#editModal').on('click', '.qtyprocessopBtn', function() {
       const $row = $(this).closest('tr');
+      const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+      const op = ($row.find('select[name="operation[]"]').val() || $row.find('input[name="operation[]"]').val() || '').toString();
+      // Solo cuando sea nueva operación y sea FAI
+      if (type !== 'FAI' || !isNewOperationForFai(op)) return;
+
       $row.attr('data-show-qty-process', '1');
-
-      const $cell = $row.find('td.col-sample');
-      if (!$cell.length) return;
-
-      const type = $row.find('select[name="insp_type[]"]').val() || 'FAI';
-      const sampling = parseInt(ctx.modal.$samplingResult?.val?.() || 0, 10) || 0;
-      const op = $row.find('select[name="operation[]"]').val() || $row.find('input[name="operation[]"]').val() || null;
-      const curSample = $cell.find('input[name="sample_idx[]"]').not('.sample-fixed').val() ||
-        $cell.find('input[name="sample_idx[]"].sample-fixed').val() ||
-        null;
-
-      renderSampleCell($cell, type, sampling, curSample, op);
+      $row.attr('data-edit-qty-insp', '1');
+      refreshQtyProcessUiForRow($row);
 
       const $inp = $row.find('input[name="qty_process[]"]');
-      if ($inp.length) $inp.focus().select();
+      if ($inp.length) {
+        if (($inp.val() || '').toString().trim() === '') $inp.val('1');
+        $inp.focus().select();
+      }
     });
 
     // Editar fila guardada
     $('#editModal').on('click', '.editRowBtn', function() {
       const $row = $(this).closest('tr');
       $row.find('input, select').prop('disabled', false);
+      $row.attr('data-editing', '1');
       $row.find('td:last').html(`
         <button type="button" class="btn btn-sm btn-erp-success btn-erp erp-table-btn saveRowBtn mr-1" title="Save">
           <i class="fas fa-save"></i>
@@ -1854,6 +1910,19 @@ body .content {
         const $cell = $row.find('td.col-sample');
         const cur = $cell.find('input[name="sample_idx[]"]').val() || null;
         renderSampleCell($cell.empty(), 'IPI', sampling, cur, op);
+        // En IPI nunca se muestra QTY PROCESS
+        refreshQtyProcessUiForRow($row);
+      } else if (type === 'FAI') {
+        // En edición FAI: habilitar qty_insp editable si aplica (misma lógica que qtyprocessopBtn)
+        $row.attr('data-edit-qty-insp', '1');
+        $row.attr('data-show-qty-process', '1');
+
+        const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
+        const op = $row.find('select[name="operation[]"], input[name="operation[]"]').val() || null;
+        const $cell = $row.find('td.col-sample');
+        const saved = parseInt($row.attr('data-qty_pcs') || 1, 10) || 1;
+        renderSampleCell($cell.empty(), 'FAI', sampling, saved, op);
+        refreshQtyProcessUiForRow($row);
       }
     });
 
@@ -1868,7 +1937,13 @@ body .content {
       // sample_idx: FAI => 1; IPI => input
       let sampleIdx = null;
       if (inspType === 'FAI') {
-        sampleIdx = 1;
+        const allowEdit = String($row.attr('data-edit-qty-insp') || '') === '1';
+        if (allowEdit) {
+          const v = parseInt($row.find('input[name="sample_idx[]"]').val(), 10);
+          sampleIdx = Number.isFinite(v) && v >= 1 ? v : 1;
+        } else {
+          sampleIdx = 1;
+        }
       } else {
         const $inp = $row.find('input[name="sample_idx[]"]').not('.sample-fixed');
         const $hid = $row.find('input[name="sample_idx[]"].sample-fixed');
@@ -1905,8 +1980,16 @@ body .content {
         method: $row.find('select[name="method[]"]').val(),
         inspector: $('#edit-inspector').val(),
         qty_pcs: sampleIdx,
-        // Nota: actualmente el backend no persiste este valor; queda listo si se agrega columna/validación.
+        // QTY PROCESS (opcional)
         qty_process: (function() {
+          const type = String($row.find('select[name="insp_type[]"]').val() || '').toUpperCase();
+          const op = ($row.find('select[name="operation[]"]').val() || $row.find('input[name="operation[]"]').val() || '').toString();
+          if (type !== 'FAI') return null;
+
+          // En edición de filas guardadas, permitir modificar siempre.
+          const isEditing = String($row.attr('data-editing') || '') === '1';
+          if (!isEditing && !isNewOperationForFai(op)) return null;
+
           const raw = ($row.find('input[name="qty_process[]"]').val() || '').toString().trim();
           if (raw === '') return null;
           const n = parseInt(raw, 10);
@@ -1926,10 +2009,20 @@ body .content {
           if (resp?.id) $row.attr('data-id', resp.id);
 
           // mantener qty de la fila para futuras ediciones
-          if (inspType === 'IPI') $row.attr('data-qty_pcs', sampleIdx);
+          if (inspType === 'IPI' || inspType === 'FAI') $row.attr('data-qty_pcs', sampleIdx);
+          if (inspType === 'FAI') {
+            const existing = $row.attr('data-qty_process');
+            const qp = (payload.qty_process ?? (existing !== undefined && existing !== null && String(existing).trim() !== '' ? parseInt(existing, 10) : 1));
+            $row.attr('data-qty_process', String(qp));
+            $row.find('input[name="qty_process[]"]').removeClass('d-none').val(String(qp)).prop('disabled', true);
+          }
 
           $row.find('input, select, .saveRowBtn').prop('disabled', true);
           $row.find('input.sample-fixed').prop('disabled', true);
+          // qty_process ya se deshabilitó arriba si aplica
+          $row.removeAttr('data-editing');
+          $row.removeAttr('data-edit-qty-insp');
+          $row.removeAttr('data-show-qty-process');
 
           // Actualiza mapas y selects dependientes
           updateInspectionMissing();
@@ -2123,8 +2216,16 @@ body .content {
         const qty = getRowQty($r);
 
         if (type === 'FAI') {
-          if (res === 'pass') faiPassMap.set(op, (faiPassMap.get(op) || 0) + qty);
-          if (res === 'no pass') faiFailMap.set(op, (faiFailMap.get(op) || 0) + qty);
+          // FAI cuenta como 1 pieza; si qty>1, el excedente cuenta como IPI (pass) para esa operación.
+          const faiQty = Math.min(1, qty || 0);
+          const spillToIpi = Math.max(0, (qty || 0) - faiQty);
+          if (res === 'pass') {
+            faiPassMap.set(op, (faiPassMap.get(op) || 0) + faiQty);
+            if (spillToIpi > 0) ipiPassMap.set(op, (ipiPassMap.get(op) || 0) + spillToIpi);
+          }
+          if (res === 'no pass') {
+            faiFailMap.set(op, (faiFailMap.get(op) || 0) + faiQty);
+          }
         }
         if (type === 'IPI') {
           if (res === 'pass') ipiPassMap.set(op, (ipiPassMap.get(op) || 0) + qty);
@@ -2298,26 +2399,30 @@ body .content {
     }
 
     function renderSampleCell($cell, type, sampling, currentVal = null, opForPending = null) {
-      const $row = $cell.closest('tr');
-      const prevQtyProcess = ($cell.find('input[name="qty_process[]"]').val() || $row.attr('data-qty_process') || '').toString();
-      const showQtyProcess = String($row.attr('data-show-qty-process') || '') === '1';
-
       $cell.empty();
       const t = String(type).toUpperCase();
-
-      const $wrap = $('<div class="fai-qty-duo"></div>');
-      const $qtyProc = $(`<input type="number" name="qty_process[]" class="form-control qty-process" placeholder="QTY PROCESS" min="0">`);
-      if (prevQtyProcess) $qtyProc.val(prevQtyProcess);
-      $qtyProc.on('input change', function() {
-        $row.attr('data-qty_process', ($(this).val() || '').toString());
-      });
+      const $row = $cell.closest('tr');
 
       if (t === 'FAI') {
-        const $fixed = $(`<input type="number" class="form-control sample-fixed qty-insp" value="1" readonly>`);
-        $wrap.append($fixed);
-        if (showQtyProcess) $wrap.append($qtyProc);
-        $cell.append($wrap);
-        $cell.append(`<input type="hidden" name="sample_idx[]" value="1">`);
+        const allowEdit = String($row.attr('data-edit-qty-insp') || '') === '1';
+        if (allowEdit) {
+          const cur = parseInt(currentVal, 10);
+          const initVal = Number.isFinite(cur) && cur >= 1 ? cur : 1;
+          const $inp = $(`<input type="number" name="sample_idx[]" class="form-control" min="1">`);
+          $inp.val(initVal);
+          $inp.on('input change', function() {
+            let v = parseInt($(this).val(), 10);
+            if (!Number.isFinite(v) || v < 1) v = 1;
+            $(this).val(v);
+          });
+          $cell.append($inp);
+        } else {
+          const cur = parseInt(currentVal, 10);
+          const initVal = Number.isFinite(cur) && cur >= 1 ? cur : 1;
+          const $fixed = $(`<input type="number" class="form-control sample-fixed" value="${initVal}" readonly>`);
+          $cell.append($fixed);
+          $cell.append(`<input type="hidden" name="sample_idx[]" value="${initVal}">`);
+        }
         return;
       }
 
@@ -2326,11 +2431,9 @@ body .content {
       const woMax = getWoQty();
 
       if (!woMax || !op) {
-        const $inpDisabled = $(`<input type="number" name="sample_idx[]" class="form-control qty-insp" disabled
+        const $inpDisabled = $(`<input type="number" name="sample_idx[]" class="form-control" disabled
                            placeholder="${!woMax ? 'WO_QTY required' : 'Operation required'}">`);
-        $wrap.append($inpDisabled);
-        if (showQtyProcess) $wrap.append($qtyProc);
-        $cell.append($wrap);
+        $cell.append($inpDisabled);
         return;
       }
 
@@ -2338,10 +2441,7 @@ body .content {
       const remaining = getIpiRemainingForOpByWo(op, curQty, $row);
 
       if (remaining === 0) {
-        const $inp0 = $(`<input type="number" name="sample_idx[]" class="form-control qty-insp" min="0" max="0" value="0" disabled placeholder="Sin piezas pendientes">`);
-        $wrap.append($inp0);
-        if (showQtyProcess) $wrap.append($qtyProc);
-        $cell.append($wrap);
+        $cell.append($(`<input type="number" name="sample_idx[]" class="form-control" min="0" max="0" value="0" disabled placeholder="Sin piezas pendientes">`));
         return;
       }
 
@@ -2351,10 +2451,7 @@ body .content {
 
       const $inpNow = buildSamplingInput(sampling, initVal, remaining);
       $inpNow.attr('data-live-max', remaining);
-      $inpNow.addClass('qty-insp');
-      $wrap.append($inpNow);
-      if (showQtyProcess) $wrap.append($qtyProc);
-      $cell.append($wrap);
+      $cell.append($inpNow);
 
       $inpNow.off('input.__dynmax change.__dynmax')
         .on('input.__dynmax change.__dynmax', debounce(() => {
@@ -2436,7 +2533,12 @@ body .content {
 
         const qty = getRowQty($r);
 
-        if (type === 'FAI') faiSum.set(theOp, (faiSum.get(theOp) || 0) + qty);
+        if (type === 'FAI') {
+          const faiQty = Math.min(1, qty || 0);
+          const spillToIpi = Math.max(0, (qty || 0) - faiQty);
+          faiSum.set(theOp, (faiSum.get(theOp) || 0) + faiQty);
+          if (spillToIpi > 0) ipiSum.set(theOp, (ipiSum.get(theOp) || 0) + spillToIpi);
+        }
         if (type === 'IPI') ipiSum.set(theOp, (ipiSum.get(theOp) || 0) + qty);
       });
 
@@ -2488,7 +2590,12 @@ body .content {
 
         const qty = parseInt(r.qty_pcs ?? r.sample_idx ?? 1, 10) || 0;
 
-        if (type === 'FAI') faiMap.set(op, (faiMap.get(op) || 0) + qty);
+        if (type === 'FAI') {
+          const faiQty = Math.min(1, qty || 0);
+          const spillToIpi = Math.max(0, (qty || 0) - faiQty);
+          faiMap.set(op, (faiMap.get(op) || 0) + faiQty);
+          if (spillToIpi > 0) ipiMap.set(op, (ipiMap.get(op) || 0) + spillToIpi);
+        }
         if (type === 'IPI') ipiMap.set(op, (ipiMap.get(op) || 0) + qty);
       });
 
@@ -2590,13 +2697,17 @@ body .content {
       renderSampleCell($sampleCell, $inspType.val(), sampling, null, preferredOp);
       $row.append($sampleCell);
 
+      const $qtyProcCell = $('<td class="col-qty-process"></td>');
+      $qtyProcCell.append(`<input type="number" name="qty_process[]" class="form-control qty-process-input d-none" placeholder="QTY PROCESS" min="0" disabled>`);
+      $row.append($qtyProcCell);
+
       $row.append(`
         <td>
           <button type="button" class="btn btn-sm btn-erp-success btn-erp erp-table-btn saveRowBtn mr-1" title="Save">
             <i class="fas fa-save"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-erp-primary btn-erp erp-table-btn qtyprocessopBtn mr-1" title="Add qtyprocessop">
-            <i class="fas fa-plus"></i>
+          <button type="button" class="btn btn-sm btn-erp-primary btn-erp erp-table-btn qtyprocessopBtn mr-1 d-none" title="Add Qty Process">
+            <i class="fas fa-boxes"></i>
           </button>
           <button type="button" class="btn btn-sm btn-erp-danger btn-erp erp-table-btn removeRowBtn" title="Remove draft">
             <i class="fas fa-minus"></i>
@@ -2623,7 +2734,10 @@ body .content {
           const sNow = parseInt(ctx.modal.$samplingResult.val()) || 0;
           const cur = $sampleCell.find('input[name="sample_idx[]"]').val() || null;
           renderSampleCell($sampleCell.empty(), newType, sNow, cur, opX);
+          refreshQtyProcessUiForRow($row);
         });
+
+        refreshQtyProcessUiForRow($row);
       });
 
       const $opSel = $opCell.find('select[name="operation[]"]');
@@ -2633,8 +2747,10 @@ body .content {
         const opNow = $(this).val() || null;
         const cur = $sampleCell.find('input[name="sample_idx[]"]').val() || null;
         renderSampleCell($sampleCell.empty(), tNow, sNow, cur, opNow);
+        refreshQtyProcessUiForRow($row);
       });
 
+      refreshQtyProcessUiForRow($row);
       return $row;
     }
 
@@ -2689,13 +2805,20 @@ body .content {
       renderSampleCell($sampleCell, data.insp_type, sampling, savedQty, data.operation);
       $row.append($sampleCell);
 
+      const qp = (data.qty_process !== undefined && data.qty_process !== null) ? String(data.qty_process) : '';
+      $row.append(`
+        <td class="col-qty-process">
+          <input type="number" name="qty_process[]" class="form-control qty-process-input ${data.insp_type === 'FAI' ? '' : 'd-none'}" value="${qp}" disabled>
+        </td>
+      `);
+
       const $inp = $sampleCell.find('input[name="sample_idx[]"]').not('.sample-fixed');
       if ($inp.length) {
         $inp.val(String(savedQty)).prop('disabled', true);
       } else {
         $sampleCell.find('input.sample-fixed').prop('disabled', true);
       }
-      $sampleCell.find('input[name="qty_process[]"]').prop('disabled', true);
+      // qty_process va en su propia columna
 
       $row.append(`
         <td>

@@ -109,13 +109,14 @@
                                     <th style="width: 11%;">SB/IS</th>
                                     <th style="width: 20%;">OBSERVATION</th>
                                     <th style="width: 8%;">STATION</th>
-                                    <th style="width: 10%;">METHOD</th>
-                                    <th style="width: 7%;">QTY INSP</th>
-                                    <th style="width: 10%;">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rowsContainer">
-                                <!-- Se agregan dinámicamente -->
+                                     <th style="width: 10%;">METHOD</th>
+                                     <th style="width: 7%;">QTY INSP</th>
+                                     <th style="width: 8%;">QTY PROCESS</th>
+                                     <th style="width: 9%;">ACTIONS</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="rowsContainer">
+                                 <!-- Se agregan dinámicamente -->
                             </tbody>
                         </table>
                     </div>
@@ -334,6 +335,33 @@
 
     #dynamicTable tbody tr:hover {
         background: rgba(13, 110, 253, 0.04);
+    }
+
+    /* Compactar columnas Qty para que Actions quede en una sola línea */
+    #dynamicTable th:nth-last-child(2),
+    #dynamicTable td:nth-last-child(2) {
+        width: 6% !important; /* QTY PROCESS */
+        white-space: nowrap;
+    }
+
+    #dynamicTable th:nth-last-child(3),
+    #dynamicTable td:nth-last-child(3) {
+        width: 6% !important; /* QTY INSP */
+        white-space: nowrap;
+    }
+
+    #dynamicTable td:nth-last-child(3) input,
+    #dynamicTable td:nth-last-child(2) input {
+        width: 72px;
+        min-width: 72px;
+        max-width: 72px;
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    #dynamicTable th:last-child,
+    #dynamicTable td:last-child {
+        white-space: nowrap;
     }
 
     /* Caja ERP para FAI/IPI packet */

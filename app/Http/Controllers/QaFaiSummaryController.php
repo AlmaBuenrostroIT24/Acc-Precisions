@@ -335,7 +335,13 @@ class QaFaiSummaryController extends Controller
             'method' => 'required|in:Manual,Vmm/Manual,Visual,Vmm,Keyence,Keyence/Manual',
             'inspector' => 'required|string',
             'qty_pcs'   => 'nullable|integer|min:1',
+            'qty_process' => 'nullable|integer|min:0',
         ]);
+
+        // Default: si no envían qty_process, guardar 1 (solo para FAI)
+        if (($validated['insp_type'] ?? null) === 'FAI' && (!array_key_exists('qty_process', $validated) || $validated['qty_process'] === null)) {
+            $validated['qty_process'] = 1;
+        }
 
         // ⭐ Convertir fecha a datetime agregando la hora actual
         $validated['date'] = $validated['date'] . ' ' . now()->format('H:i:s');

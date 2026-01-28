@@ -49,8 +49,16 @@ class InspectionSummary
       // if ($qty <= 0) $qty = 1; // si quieres asegurar mínimo 1, descomenta
 
       if ($type === 'FAI') {
-        if ($res === 'pass') $faiPass[$op] = ($faiPass[$op] ?? 0) + $qty;
-        else                 $faiFail[$op] = ($faiFail[$op] ?? 0) + $qty;
+        // FAI cuenta como 1; el excedente cuenta como IPI (pass) para la misma operación.
+        $faiQty = min(1, max(0, $qty));
+        $spillToIpi = max(0, $qty - $faiQty);
+
+        if ($res === 'pass') {
+          $faiPass[$op] = ($faiPass[$op] ?? 0) + $faiQty;
+          if ($spillToIpi > 0) $ipiPass[$op] = ($ipiPass[$op] ?? 0) + $spillToIpi;
+        } else {
+          $faiFail[$op] = ($faiFail[$op] ?? 0) + $faiQty;
+        }
       } elseif ($type === 'IPI') {
         if ($res === 'pass') $ipiPass[$op] = ($ipiPass[$op] ?? 0) + $qty;
         else                 $ipiFail[$op] = ($ipiFail[$op] ?? 0) + $qty;

@@ -22,6 +22,7 @@ class QaFaiSummary extends Model
         'station',
         'method',
         'qty_pcs',
+        'qty_process',
         'inspector',
         'status_operation',
         'order_schedule_id',
