@@ -143,28 +143,30 @@
                                                     <i class="fas fa-cogs text-secondary"></i>
                                                 </span>
                                             </div>
-                                            <button class="form-control text-left dropdown-toggle erp-filter-control"
-                                                type="button"
-                                                id="actionMenuButton"
-                                                data-toggle="dropdown"
-                                                aria-haspopup="true"
-                                                aria-expanded="false">
-                                                — Action —
-                                            </button>
-                                            <div class="dropdown-menu dropdown-menu-right w-100 p-2 erp-dropdown-menu" aria-labelledby="actionMenuButton">
-                                                <button type="button"
-                                                    class="erp-menu-item erp-menu-item--priority w-100 mb-2"
-                                                    data-toggle="modal" data-target="#deleteModal" data-mode="priority">
-                                                    <span class="erp-menu-icon" aria-hidden="true"><i class="fas fa-star"></i></span>
-                                                    <span class="erp-menu-text">Priority</span>
+                                            <div class="dropdown flex-grow-1">
+                                                <button class="form-control text-left dropdown-toggle erp-filter-control"
+                                                    type="button"
+                                                    id="actionMenuButton"
+                                                    data-toggle="dropdown"
+                                                    aria-haspopup="true"
+                                                    aria-expanded="false">
+                                                    — Action —
                                                 </button>
+                                                <div class="dropdown-menu dropdown-menu-right w-100 p-2 erp-dropdown-menu" aria-labelledby="actionMenuButton" style="min-width:100%;">
+                                                    <button type="button"
+                                                        class="erp-menu-item erp-menu-item--priority w-100 mb-2"
+                                                        data-toggle="modal" data-target="#deleteModal" data-mode="priority">
+                                                        <span class="erp-menu-icon" aria-hidden="true"><i class="fas fa-star"></i></span>
+                                                        <span class="erp-menu-text">Priority</span>
+                                                    </button>
 
-                                                <button type="button"
-                                                    class="erp-menu-item erp-menu-item--danger w-100"
-                                                    data-toggle="modal" data-target="#deleteModal" data-mode="delete">
-                                                    <span class="erp-menu-icon" aria-hidden="true"><i class="fas fa-trash-alt"></i></span>
-                                                    <span class="erp-menu-text">Delete</span>
-                                                </button>
+                                                    <button type="button"
+                                                        class="erp-menu-item erp-menu-item--danger w-100"
+                                                        data-toggle="modal" data-target="#deleteModal" data-mode="delete">
+                                                        <span class="erp-menu-icon" aria-hidden="true"><i class="fas fa-trash-alt"></i></span>
+                                                        <span class="erp-menu-text">Delete</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -276,14 +278,12 @@
         margin: 0;
     }
 
-    /* Cuando el contenido se hace m\u00e1s angosto (ej. al abrir/cerrar el men\u00fa hamburguesa),
-       mantener todo en una sola fila y compactar en lugar de "romperse". */
+    /* En desktop, permitir que los filtros se acomoden como "select normal" (sin scroll horizontal). */
     @media (min-width: 992px) {
         .erp-schedule-row {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 2px;
+            flex-wrap: wrap;
+            overflow-x: visible;
+            overflow-y: visible;
         }
     }
 
@@ -466,6 +466,7 @@
     .erp-input-group .dropdown {
         flex: 1 1 auto;
         min-width: 0;
+        position: relative;
     }
 
     .erp-input-group .dropdown > .erp-filter-control {
@@ -517,6 +518,7 @@
         border: 1px solid #d5d8dd;
         box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
         background: #fff;
+        z-index: 2000;
     }
 
     .erp-menu-item {
@@ -553,6 +555,16 @@
         flex: 0 0 auto;
     }
 
+    /* Asegurar que los íconos FontAwesome se rendericen con tamaño visible */
+    .erp-menu-icon i,
+    .erp-pane-icon i,
+    .erp-action-btn i {
+        display: inline-block;
+        font-size: 1rem;
+        line-height: 1;
+        color: inherit;
+    }
+
     /* Modal header icon (Priority/Delete) */
     .erp-pane-icon {
         width: 34px;
@@ -579,6 +591,22 @@
         background: rgba(220, 53, 69, 0.12);
         color: #b91c1c;
     }
+
+    /* En el modal hay reglas más específicas (.erp-modal .erp-pane-icon) que pueden "pisar" el color */
+    .erp-modal .erp-pane-icon--priority {
+        border-color: rgba(147, 51, 234, 0.30);
+        background: rgba(147, 51, 234, 0.12);
+        color: #6d28d9;
+    }
+
+    .erp-modal .erp-pane-icon--danger {
+        border-color: rgba(220, 53, 69, 0.30);
+        background: rgba(220, 53, 69, 0.12);
+        color: #b91c1c;
+    }
+
+    .erp-modal .erp-action-btn--danger { color: #b91c1c; }
+    .erp-modal .erp-action-btn--priority { color: #6d28d9; }
 
     .erp-menu-item--priority .erp-menu-icon {
         border-color: rgba(147, 51, 234, 0.30);
