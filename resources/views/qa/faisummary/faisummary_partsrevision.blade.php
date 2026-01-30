@@ -3,6 +3,9 @@
 
 @section('title', 'QA/Parts Revision')
 
+@section('meta')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+@endsection
 
 @section('content')
 
@@ -105,6 +108,7 @@
 </div>
 
 @include('qa.faisummary.faisummary_modal')
+@include('qa.faisummary.ncr_modal')
 
 <!--  {{-- Tab: By End Schedule --}}-->
 @endsection
@@ -112,6 +116,7 @@
 
 @section('css')
 <!-- CSS complementario (puedes ponerlo en tu .css) -->
+<link rel="stylesheet" href="{{ asset('vendor/select2/dist/css/select2.min.css') }}">
 <style>
   :root {
     /* Colores ERP (sólidos, derivados de .erp-pill en #orders_endscheduleTable) */
@@ -1062,12 +1067,221 @@ body .content {
   color: #0b0b0b !important;
 }
 
+/* NCR modal (ERP style) */
+#ncrModal .modal-content {
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+#ncrModal .modal-dialog {
+  max-width: 1120px;
+  width: calc(100% - 1rem);
+}
+
+#ncrModal .erp-ncr-modal-header {
+  background: #fff !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  padding: 14px 16px !important;
+}
+
+#ncrModal .erp-ncr-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 158, 11, 0.40);
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+#ncrModal .erp-ncr-title-icon i {
+  font-size: 16px;
+}
+
+#ncrModal .erp-ncr-chip {
+  display: none !important;
+}
+
+#ncrModal .erp-ncr-subtitle {
+  display: block !important;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+#ncrModal .erp-ncr-modal-body {
+  background: #fff;
+  padding: 14px 16px !important;
+  max-height: calc(100vh - 190px) !important;
+  overflow: auto;
+}
+
+#ncrModal .erp-ncr-modal-footer {
+  background: #fff !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+  padding: 14px 16px !important;
+}
+
+#ncrModal .erp-ncr-label {
+  display: block !important;
+  margin: 0 0 6px !important;
+  color: #6b7280 !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+}
+
+#ncrModal .erp-ncr-input-group .input-group-text {
+  display: none !important;
+}
+
+#ncrModal .erp-ncr-control {
+  height: 46px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+  color: #111827 !important;
+  font-weight: 600 !important;
+  padding: 10px 12px !important;
+}
+
+#ncrModal .erp-ncr-control:focus {
+  border-color: rgba(59, 130, 246, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+  outline: none !important;
+}
+
+#ncrModal .erp-ncr-control[readonly] {
+  background: rgba(241, 245, 249, 0.85) !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
+#ncrModal textarea.erp-ncr-control {
+  height: auto;
+  min-height: 86px !important;
+  resize: vertical;
+}
+
+#ncrModal .erp-ncr-orderbox {
+  background: #fff !important;
+  border: 1px solid rgba(15, 23, 42, 0.10) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+  border-radius: 10px !important;
+  padding: 12px 12px 10px !important;
+}
+
+#ncrModal .erp-ncr-orderbox-title {
+  font-weight: 700 !important;
+  color: #111827 !important;
+  font-size: 1.1rem !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  margin-bottom: 10px !important;
+}
+
+#ncrModal .erp-ncr-btn {
+  height: 40px !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  font-weight: 700 !important;
+}
+
+#ncrModal .select2-container {
+  width: 100% !important;
+}
+
+#ncrModal .input-group .select2-container {
+  flex: 1 1 auto;
+  width: 1% !important;
+  min-width: 0;
+}
+
+#ncrModal .select2-container--default .select2-selection--single {
+  height: 46px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+#ncrModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+  height: 46px !important;
+  line-height: 46px !important;
+  padding: 0 40px 0 12px !important;
+  flex: 1 1 auto;
+  color: #0f172a !important;
+}
+
+#ncrModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 46px !important;
+  top: 50% !important;
+  right: 8px !important;
+  width: 26px !important;
+  transform: translateY(-50%);
+  border-left: 0 !important;
+  background: transparent !important;
+}
+
+#ncrModal .select2-container--default.select2-container--focus .select2-selection--single,
+#ncrModal .select2-container--default.select2-container--open .select2-selection--single {
+  border-color: rgba(59, 130, 246, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+}
+
+#ncrModal .select2-container--default .select2-selection--single .select2-selection__clear {
+  margin-right: 8px !important;
+  display: none !important;
+}
+
+#ncrModal #ncrStageCol .select2-container--default .select2-selection--single .select2-selection__rendered {
+  font-weight: 600 !important;
+}
+
+#ncrModal #ncrStageCol .select2-results__option {
+  font-weight: 500;
+}
+
+#ncrModal .select2-dropdown {
+  border-radius: 10px !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  overflow: hidden;
+}
+
+#ncrModal .select2-search--dropdown .select2-search__field {
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+  height: 40px !important;
+  outline: none !important;
+}
+
+#ncrModal .select2-results__option {
+  padding: 8px 10px;
+}
+
+#ncrModal .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background: rgba(37, 99, 235, 0.10) !important;
+  color: #111827 !important;
+}
+
 </style>
 @endsection
 
 
 @push('js')
 
+<script src="{{ asset('vendor/select2/dist/js/select2.full.min.js') }}"></script>
 <script>
   (() => {
     // ===== Rutas =====
@@ -1339,6 +1553,229 @@ body .content {
     $(function() {
       ctx.dtEmpty = makeDT('empty', '#badgePending');
       ctx.dtProcess = makeDT('process', '#badgeProcess');
+
+      // ---------------------- NCR (modal + guardar) ----------------------
+      const decodeHtml = function(v) {
+        const raw = (v ?? '').toString();
+        if (!raw) return '';
+        try {
+          return $('<div>').html(raw).text();
+        } catch (e) {
+          return raw;
+        }
+      };
+
+      const syncNcarStageOptions = function() {
+        const type = ($('#ncrNcarType').val() || '').toString();
+        const $stage = $('#ncrStage');
+        const $col = $('#ncrStageCol');
+        const $dateCol = $('#ncrDateCol');
+        const $customerCol = $('#ncrCustomerCol');
+        const $numberCol = $('#ncrNumberCol');
+        const $typeCol = $('#ncrNcarTypeCol');
+
+        const currentStage = ($stage.val() || '').toString();
+
+        const internalStages = [
+          { value: 'material', label: 'Material' },
+          { value: 'equipment', label: 'Equipment' },
+          { value: 'human', label: 'Human' },
+          { value: 'customer', label: 'Customer' },
+          { value: 'qa', label: 'QA' }
+        ];
+
+        const externalStages = [
+          { value: 'plating', label: 'Plating' },
+          { value: 'handling', label: 'Handling' },
+          { value: 'other_outside_finish', label: 'Other Outside Finish' }
+        ];
+
+        let stages = [];
+        if (type === 'internal') stages = internalStages;
+        if (type === 'external') stages = externalStages;
+
+        $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
+        stages.forEach(s => $stage.append($('<option>', { value: s.label, text: s.label })));
+
+        const shouldShow = stages.length > 0;
+        $col.toggleClass('d-none', !shouldShow);
+        if (!shouldShow) {
+          $stage.val('');
+        }
+
+        const stripMdCols = function($el) {
+          $el
+            .removeClass('col-md-2')
+            .removeClass('col-md-3')
+            .removeClass('col-md-4');
+        };
+
+        const applyMdCol = function($el, md) {
+          stripMdCols($el);
+          $el.addClass('col-md-' + md);
+        };
+
+        if (shouldShow) {
+          applyMdCol($dateCol, 2);
+          applyMdCol($customerCol, 3);
+          applyMdCol($numberCol, 2);
+          applyMdCol($typeCol, 2);
+        } else {
+          applyMdCol($dateCol, 2);
+          applyMdCol($customerCol, 4);
+          applyMdCol($numberCol, 3);
+          applyMdCol($typeCol, 3);
+        }
+
+        if (currentStage) {
+          const exists = $stage.find('option').toArray().some(o => (o.value || '') === currentStage);
+          if (!exists) $stage.append($('<option>', { value: currentStage, text: currentStage }));
+          $stage.val(currentStage);
+        }
+
+        if (shouldShow && $.fn && $.fn.select2 && !$stage.data('select2')) {
+          $stage.select2({
+            tags: true,
+            width: '100%',
+            dropdownParent: $('#ncrModal'),
+            placeholder: 'Select or type...',
+            allowClear: false
+          });
+        }
+      };
+
+      const ensureStageOption = function(value) {
+        const v = (value ?? '').toString().trim();
+        if (!v) return;
+        const $stage = $('#ncrStage');
+        const exists = $stage.find('option').toArray().some(o => (o.value || '') === v);
+        if (exists) return;
+        $stage.append($('<option>', { value: v, text: v }));
+      };
+
+      $('#ordersTableProcess').on('click', '.btn-ncr', function() {
+        const $btn = $(this);
+        const orderId = ($btn.data('id') || '').toString();
+        const url = ($btn.data('url') || '').toString();
+
+        const today = new Date().toISOString().split('T')[0];
+        $('#ncrDate').val(today);
+
+        $('#ncrOrderId').val(orderId);
+        $('#ncrPostUrl').val(url);
+        $('#ncrNumber').val(decodeHtml($btn.data('ncr-number')));
+        $('#ncrNotes').val(decodeHtml($btn.data('ncr-notes')));
+
+        const workId = decodeHtml($btn.data('work-id'));
+        const customer = decodeHtml($btn.data('customer'));
+
+        $('#ncrWorkId').val(workId);
+        $('#ncrCo').val(decodeHtml($btn.data('co')));
+        $('#ncrCustPo').val(decodeHtml($btn.data('cust-po')));
+        $('#ncrPn').val(decodeHtml($btn.data('pn')));
+        $('#ncrCustomer').val(customer);
+        $('#ncrQty').val(decodeHtml($btn.data('qty')));
+        $('#ncrWoQty').val(decodeHtml($btn.data('wo-qty')));
+        $('#ncrDescription').val(decodeHtml($btn.data('part-description')));
+
+        $('#ncrHeaderWorkId').text(workId || '—');
+        $('#ncrHeaderCustomer').text(customer || '—');
+
+        const ncarType = (decodeHtml($btn.data('ncar-type')) || '').toString();
+        const ncarStage = (decodeHtml($btn.data('ncar-stage')) || '').toString();
+        $('#ncrNcarType').val(ncarType);
+        syncNcarStageOptions();
+        ensureStageOption(ncarStage);
+        $('#ncrStage').val(ncarStage);
+        if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
+
+        const canSave = !!url;
+        $('#ncrSaveBtn').prop('disabled', !canSave);
+
+        $('#ncrModal').data('btn', $btn);
+        $('#ncrModal').modal('show');
+      });
+
+      $('#ncrModal')
+        .off('hidden.bs.modal.ncr')
+        .on('hidden.bs.modal.ncr', function() {
+          const $stage = $('#ncrStage');
+          if ($.fn && $.fn.select2 && $stage.data('select2')) $stage.select2('destroy');
+        });
+
+      $('#ncrNcarType')
+        .off('change.ncar')
+        .on('change.ncar', function() {
+          syncNcarStageOptions();
+          $('#ncrStage').val('');
+          if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
+        });
+
+      $('#ncrForm')
+        .off('submit.ncr')
+        .on('submit.ncr', function(e) {
+          e.preventDefault();
+
+          const url = ($('#ncrPostUrl').val() || '').toString();
+          if (!url) {
+            Swal.fire('Attention', 'NCR saving is disabled (missing DB columns).', 'warning');
+            return;
+          }
+
+          const ncrNumber = ($('#ncrNumber').val() || '').toString().trim();
+          const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
+          const ncarType = ($('#ncrNcarType').val() || '').toString().trim();
+          const ncarStage = ($('#ncrStage').val() || '').toString().trim();
+
+          const $saveBtn = $('#ncrSaveBtn');
+          $saveBtn.prop('disabled', true);
+
+          $.ajax({
+            url,
+            method: 'POST',
+            data: {
+              _token: getCsrf(),
+              ncr_number: ncrNumber,
+              ncr_notes: ncrNotes,
+              ncar_type: ncarType,
+              ncar_stage: ncarStage
+            }
+          }).done(function(res) {
+            if (!res || !res.success) {
+              Swal.fire('Attention', (res && res.message) ? res.message : 'Could not save NCR.', 'warning');
+              return;
+            }
+
+            const $btn = $('#ncrModal').data('btn');
+            if ($btn && $btn.length) {
+              const savedNumber = (res.ncr_number || '').toString();
+              const savedNotes = (res.ncr_notes || '').toString();
+              $btn.data('ncr-number', savedNumber);
+              $btn.data('ncr-notes', savedNotes);
+              $btn.attr('data-ncr-number', savedNumber);
+              $btn.attr('data-ncr-notes', savedNotes);
+
+              $btn.data('ncar-type', ncarType);
+              $btn.data('ncar-stage', ncarStage);
+              $btn.attr('data-ncar-type', ncarType);
+              $btn.attr('data-ncar-stage', ncarStage);
+
+              $btn.toggleClass('is-active', !!savedNumber);
+              $btn.attr('title', savedNumber ? ('NCR: ' + savedNumber) : 'Register NCR');
+            }
+
+            $('#ncrModal').modal('hide');
+            Swal.fire('Saved', 'NCR updated.', 'success');
+          }).always(function() {
+            $saveBtn.prop('disabled', false);
+          }).fail(function(xhr) {
+            let msg = 'Error saving NCR.';
+            try {
+              if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+            } catch (e) {}
+            Swal.fire('Error', msg, 'error');
+          });
+        });
     });
 
     // Nota: el search de DataTables ya incluye el botón "X" para limpiar.

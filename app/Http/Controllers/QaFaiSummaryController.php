@@ -62,6 +62,15 @@ class QaFaiSummaryController extends Controller
                 'inspection_progress',
             ];
 
+            // Campos opcionales (evita "Unknown column" si la DB no está migrada)
+            foreach (['co', 'cust_po', 'costumer', 'qty', 'ncr_number', 'ncr_notes'] as $col) {
+                if (Schema::hasColumn('orders_schedule', $col)) {
+                    $select[] = $col;
+                }
+            }
+
+            $hasNcrCols = Schema::hasColumn('orders_schedule', 'ncr_number') && Schema::hasColumn('orders_schedule', 'ncr_notes');
+
             $rows = OrderSchedule::query()
                 ->select($select)
                 ->where('status', '<>', 'sent')
@@ -110,7 +119,7 @@ class QaFaiSummaryController extends Controller
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opName, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -136,15 +145,28 @@ class QaFaiSummaryController extends Controller
             </button>';
 
                 $btnOther = '';
-                if ($bucket === 'empty') {
-                    $btnOther = ' <button class="btn btn-sm btn-erp-warning erp-table-btn ml-1"
-                    data-toggle="modal" data-target="#otherModal"
+                if ($bucket === 'process') {
+                    $hasNcr = $hasNcrCols && !empty($r->ncr_number);
+                    $title = $hasNcr ? ('NCR: ' . $r->ncr_number) : 'Register NCR';
+
+                    // Si la DB aún no tiene columnas NCR, dejamos el modal en modo "solo vista" (sin URL para guardar).
+                    $postUrl = $hasNcrCols ? route('schedule.finished.ncr', $r->id) : '';
+
+                    $btnOther = ' <button type="button" class="btn btn-sm btn-erp-warning erp-table-btn ml-1 btn-ncr ' . ($hasNcr ? 'is-active' : '') . '"
+                    title="' . e($title) . '"
                     data-id="' . e($r->id) . '"
-                    data-pn="' . e($r->PN) . '"
-                    data-description="' . e($r->Part_description) . '"
-                    data-woqty="' . e($sum) . '"
-                    data-location="' . e($r->location) . '">
-                    <i class="fas fa-clipboard-list"></i>
+                    data-url="' . e($postUrl) . '"
+                    data-work-id="' . e($r->work_id) . '"
+                    data-co="' . e($r->co ?? '') . '"
+                    data-cust-po="' . e($r->cust_po ?? '') . '"
+                    data-pn="' . e($r->PN ?? '') . '"
+                    data-part-description="' . e($r->Part_description ?? '') . '"
+                    data-customer="' . e($r->costumer ?? '') . '"
+                    data-qty="' . e($r->qty ?? '') . '"
+                    data-wo-qty="' . e($sum) . '"
+                    data-ncr-number="' . e($hasNcr ? ($r->ncr_number ?? '') : '') . '"
+                    data-ncr-notes="' . e($hasNcr ? ($r->ncr_notes ?? '') : '') . '">
+                    <i class="fas fa-exclamation-triangle text-purple"></i>
                 </button>';
                 }
 
