@@ -219,6 +219,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/QA/NonConformace/data',  [NonConformanceController::class, 'data'])->name('nonconformance.data');
 
     Route::get('/QA/NonConformace/stats', [NonConformanceController::class, 'stats'])->name('nonconformance.stats');
+
+    // Acciones
+    Route::get('/QA/NonConformace/ncar/{id}/edit', [NonConformanceController::class, 'edit'])->name('nonconformance.ncar.edit');
+    Route::put('/QA/NonConformace/ncar/{id}', [NonConformanceController::class, 'update'])->name('nonconformance.ncar.update');
+    Route::get('/QA/NonConformace/ncar/{id}/pdf', [NonConformanceController::class, 'pdf'])->name('nonconformance.ncar.pdf');
 });
 
 
