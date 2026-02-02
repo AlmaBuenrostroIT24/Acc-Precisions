@@ -159,6 +159,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
     Route::get('/qa/rejectedfaiorders', [QaFaiSummaryController::class, 'rejectedfaiorders'])->name('faisummary.rejectedfaiorders');
+    Route::get('/qa/ncar/next-number', [QaFaiSummaryController::class, 'nextNcarNumber'])->name('qa.ncar.nextNumber');
+    Route::post('/qa/ncar', [QaFaiSummaryController::class, 'storeNcar'])->name('qa.ncar.store');
 });
 //=========================================================================================================
 // -----------------------------------faisummary-------------------------------------------------------

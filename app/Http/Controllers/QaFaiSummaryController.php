@@ -153,21 +153,23 @@ class QaFaiSummaryController extends Controller
                     $postUrl = $hasNcrCols ? route('schedule.finished.ncr', $r->id) : '';
 
                     $btnOther = ' <button type="button" class="btn btn-sm btn-erp-warning erp-table-btn ml-1 btn-ncr ' . ($hasNcr ? 'is-active' : '') . '"
-                    title="' . e($title) . '"
-                    data-id="' . e($r->id) . '"
-                    data-url="' . e($postUrl) . '"
-                    data-work-id="' . e($r->work_id) . '"
-                    data-co="' . e($r->co ?? '') . '"
-                    data-cust-po="' . e($r->cust_po ?? '') . '"
-                    data-pn="' . e($r->PN ?? '') . '"
-                    data-part-description="' . e($r->Part_description ?? '') . '"
-                    data-customer="' . e($r->costumer ?? '') . '"
-                    data-qty="' . e($r->qty ?? '') . '"
-                    data-wo-qty="' . e($sum) . '"
-                    data-ncr-number="' . e($hasNcr ? ($r->ncr_number ?? '') : '') . '"
-                    data-ncr-notes="' . e($hasNcr ? ($r->ncr_notes ?? '') : '') . '">
-                    <i class="fas fa-exclamation-triangle text-purple"></i>
-                </button>';
+                     title="' . e($title) . '"
+                     data-id="' . e($r->id) . '"
+                     data-url="' . e($postUrl) . '"
+                     data-work-id="' . e($r->work_id) . '"
+                     data-operation="' . e($r->operation ?? '') . '"
+                     data-co="' . e($r->co ?? '') . '"
+                     data-cust-po="' . e($r->cust_po ?? '') . '"
+                     data-pn="' . e($r->PN ?? '') . '"
+                     data-part-description="' . e($r->Part_description ?? '') . '"
+                     data-customer="' . e($r->costumer ?? '') . '"
+                     data-qty="' . e($r->qty ?? '') . '"
+                     data-wo-qty="' . e($sum) . '"
+                     data-ncr-reviewer="' . e($r->ncr_reviewer ?? '') . '"
+                     data-ncr-number="' . e($hasNcr ? ($r->ncr_number ?? '') : '') . '"
+                     data-ncr-notes="' . e($hasNcr ? ($r->ncr_notes ?? '') : '') . '">
+                     <i class="fas fa-exclamation-triangle text-purple"></i>
+                 </button>';
                 }
 
                 $row = [
@@ -1606,6 +1608,131 @@ class QaFaiSummaryController extends Controller
             'operators' => $operators,
             'year'      => $year,
             'operator'  => $operator,
+        ]);
+    }
+
+    public function nextNcarNumber(Request $request)
+    {
+        $type = strtolower((string) $request->query('type', ''));
+
+        $map = [
+            'internal' => 'INTERNAL',
+            'external' => 'EXTERNAL',
+            'customer' => 'CUSTOMER',
+            'qa'       => 'QA',
+        ];
+
+        if (!isset($map[$type])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid NCAR type.',
+            ], 422);
+        }
+
+        $code = $map[$type];
+
+        $row = DB::table('qa_ncartype as t')
+            ->join('qa_ncar_counter as c', 'c.ncartype_id', '=', 't.id')
+            ->select([
+                't.id as ncartype_id',
+                't.code',
+                't.prefix',
+                'c.next_number',
+            ])
+            ->where('t.code', $code)
+            ->first();
+
+        if (!$row) {
+            return response()->json([
+                'success' => false,
+                'message' => 'NCAR type/counter not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success'     => true,
+            'type'        => $type,
+            'code'        => $row->code,
+            'ncartype_id' => (int) $row->ncartype_id,
+            'prefix'      => (string) $row->prefix,
+            'next_number' => (int) $row->next_number,
+            'ncar_no'     => ((string) $row->prefix) . ((int) $row->next_number),
+        ]);
+    }
+
+    public function storeNcar(Request $request)
+    {
+        $data = $request->validate([
+            'order_id' => ['nullable', 'integer'],
+            'type' => ['required', 'string', 'in:internal,external'],
+            'stage' => ['nullable', 'string', 'max:120'],
+            'ncar_date' => ['nullable', 'date'],
+            'nc_description' => ['nullable', 'string'],
+        ]);
+
+        $code = $data['type'] === 'internal' ? 'INTERNAL' : 'EXTERNAL';
+
+        $typeRow = DB::table('qa_ncartype')
+            ->select(['id', 'prefix', 'code'])
+            ->where('code', $code)
+            ->first();
+
+        if (!$typeRow) {
+            return response()->json([
+                'success' => false,
+                'message' => 'NCAR type not found in qa_ncartype.',
+            ], 404);
+        }
+
+        $order = null;
+        if (!empty($data['order_id'])) {
+            $order = DB::table('orders_schedule')
+                ->select(['id', 'work_id', 'co', 'cust_po', 'PN', 'Part_description', 'costumer', 'qty', 'location'])
+                ->where('id', (int) $data['order_id'])
+                ->first();
+        }
+
+        $insert = [
+            'order_id' => $order ? (int) $order->id : null,
+            'ncartype_id' => (int) $typeRow->id,
+            'ncar_no' => '',
+            'ncar_date' => $data['ncar_date'] ?? null,
+            'status' => 'New',
+            'ncar_customer' => $order ? (string) ($order->costumer ?? '') : null,
+            'stage' => $data['stage'] ?? null,
+            'nc_description' => $data['nc_description'] ?? null,
+            'location' => $order ? (string) ($order->location ?? '') : null,
+        ];
+
+        // Guardar qty si viene numérica desde orders_schedule (si no, dejar null)
+        if ($order && isset($order->qty)) {
+            $q = is_numeric($order->qty) ? (int) $order->qty : null;
+            $insert['qty'] = $q > 0 ? $q : null;
+        }
+
+        $id = DB::table('qa_ncar')->insertGetId($insert);
+
+        $ncar = DB::table('qa_ncar as n')
+            ->join('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
+            ->select([
+                'n.id',
+                'n.ncar_no',
+                'n.created_at',
+                'n.ncar_date',
+                'n.status',
+                't.name as type_name',
+            ])
+            ->where('n.id', $id)
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'id' => (int) $ncar->id,
+            'ncar_no' => (string) $ncar->ncar_no,
+            'created_at' => (string) $ncar->created_at,
+            'ncar_date' => $ncar->ncar_date,
+            'status' => $ncar->status,
+            'type' => $ncar->type_name,
         ]);
     }
 }

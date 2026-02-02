@@ -1285,18 +1285,20 @@ body .content {
 <script>
   (() => {
     // ===== Rutas =====
-    const ROUTES = {
-      partsData: document.querySelector('meta[name="route-parts-data"]')?.content || '/qa/partsrevision/data',
-      samplingPlan: (lot, type = 'Normal') => `/sampling-plan?lot_size=${lot}&sampling_type=${encodeURIComponent(type)}`,
-      faibyOrder: (id) => `/qa/faisummary/by-order/${id}`, // GET
-      validateOps: (id, ops) => `/orders-schedule/${id}/validate-ops?ops=${encodeURIComponent(ops)}`,
-      updateOps: (id) => `/orders-schedule/${id}/update-operation`, // POST
-      statusInspection: (id) => `/orders-schedule/${id}/status-inspection`, // PUT
-      storeSingle: `/qa/faisummary/store-single`, // POST
-      deleteRow: (id) => `/qa/faisummary/delete/${id}`, // DELETE
-      stationsByOrder: (id) => `/stations/by-order/${id}`, // GET
-      operatorsByOrder: (id) => `/operators/by-order/${id}` // GET
-    };
+      const ROUTES = {
+        partsData: document.querySelector('meta[name="route-parts-data"]')?.content || '/qa/partsrevision/data',
+        samplingPlan: (lot, type = 'Normal') => `/sampling-plan?lot_size=${lot}&sampling_type=${encodeURIComponent(type)}`,
+        faibyOrder: (id) => `/qa/faisummary/by-order/${id}`, // GET
+        validateOps: (id, ops) => `/orders-schedule/${id}/validate-ops?ops=${encodeURIComponent(ops)}`,
+        updateOps: (id) => `/orders-schedule/${id}/update-operation`, // POST
+        statusInspection: (id) => `/orders-schedule/${id}/status-inspection`, // PUT
+        storeSingle: `/qa/faisummary/store-single`, // POST
+        deleteRow: (id) => `/qa/faisummary/delete/${id}`, // DELETE
+        stationsByOrder: (id) => `/stations/by-order/${id}`, // GET
+        operatorsByOrder: (id) => `/operators/by-order/${id}`, // GET
+        nextNcarNumber: `/qa/ncar/next-number`, // GET ?type=internal|external
+        storeNcar: `/qa/ncar` // POST
+      };
 
     const COLLATOR = new Intl.Collator('es', {
       sensitivity: 'base',
@@ -1565,6 +1567,24 @@ body .content {
         }
       };
 
+      const applyNextNcarNumber = function(force = false) {
+        const type = ($('#ncrNcarType').val() || '').toString();
+        if (!type) return;
+
+        const $field = $('#ncrNumber');
+        const current = (($field.val() || '').toString()).trim();
+        const lastAuto = (($field.data('autoNcarNo') || '').toString()).trim();
+
+        if (!force && current && current !== lastAuto) return;
+
+        fetchJson(ROUTES.nextNcarNumber, { data: { type } })
+          .then((res) => {
+            if (!res || !res.success || !res.ncar_no) return;
+            $field.val(res.ncar_no);
+            $field.data('autoNcarNo', res.ncar_no);
+          });
+      };
+
       const syncNcarStageOptions = function() {
         const type = ($('#ncrNcarType').val() || '').toString();
         const $stage = $('#ncrStage');
@@ -1665,6 +1685,7 @@ body .content {
         $('#ncrPostUrl').val(url);
         $('#ncrNumber').val(decodeHtml($btn.data('ncr-number')));
         $('#ncrNotes').val(decodeHtml($btn.data('ncr-notes')));
+        $('#ncrNumber').data('autoNcarNo', '');
 
         const workId = decodeHtml($btn.data('work-id'));
         const customer = decodeHtml($btn.data('customer'));
@@ -1674,6 +1695,11 @@ body .content {
         $('#ncrCustPo').val(decodeHtml($btn.data('cust-po')));
         $('#ncrPn').val(decodeHtml($btn.data('pn')));
         $('#ncrCustomer').val(customer);
+        const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
+        $('#ncrReviewer').val(defaultReviewer);
+        const reviewer = decodeHtml($btn.data('ncr-reviewer'));
+        if (reviewer) $('#ncrReviewer').val(reviewer);
+        $('#ncrOperation').val(decodeHtml($btn.data('operation')));
         $('#ncrQty').val(decodeHtml($btn.data('qty')));
         $('#ncrWoQty').val(decodeHtml($btn.data('wo-qty')));
         $('#ncrDescription').val(decodeHtml($btn.data('part-description')));
@@ -1689,8 +1715,10 @@ body .content {
         $('#ncrStage').val(ncarStage);
         if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
 
-        const canSave = !!url;
-        $('#ncrSaveBtn').prop('disabled', !canSave);
+        const existingNo = ($('#ncrNumber').val() || '').toString().trim();
+        if (!existingNo && ncarType) applyNextNcarNumber(true);
+
+        $('#ncrSaveBtn').prop('disabled', false);
 
         $('#ncrModal').data('btn', $btn);
         $('#ncrModal').modal('show');
@@ -1709,6 +1737,18 @@ body .content {
           syncNcarStageOptions();
           $('#ncrStage').val('');
           if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
+          $('#ncrNumber').val('').data('autoNcarNo', '');
+          applyNextNcarNumber(true);
+        });
+
+      $('#ncrNumber')
+        .off('input.ncarNo')
+        .on('input.ncarNo', function() {
+          const $field = $(this);
+          const v = (($field.val() || '').toString()).trim();
+          const auto = (($field.data('autoNcarNo') || '').toString()).trim();
+          if (!auto) return;
+          if (v !== auto) $field.data('autoNcarNo', '');
         });
 
       $('#ncrForm')
@@ -1716,44 +1756,53 @@ body .content {
         .on('submit.ncr', function(e) {
           e.preventDefault();
 
-          const url = ($('#ncrPostUrl').val() || '').toString();
-          if (!url) {
-            Swal.fire('Attention', 'NCR saving is disabled (missing DB columns).', 'warning');
-            return;
-          }
-
-          const ncrNumber = ($('#ncrNumber').val() || '').toString().trim();
           const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
           const ncarType = ($('#ncrNcarType').val() || '').toString().trim();
           const ncarStage = ($('#ncrStage').val() || '').toString().trim();
+          const ncarDate = ($('#ncrDate').val() || '').toString().trim();
+          const orderId = ($('#ncrOrderId').val() || '').toString().trim();
+
+          if (!ncarType) {
+            Swal.fire('Required', 'Select NCAR Type.', 'warning');
+            return;
+          }
 
           const $saveBtn = $('#ncrSaveBtn');
           $saveBtn.prop('disabled', true);
 
           $.ajax({
-            url,
+            url: ROUTES.storeNcar,
             method: 'POST',
             data: {
               _token: getCsrf(),
-              ncr_number: ncrNumber,
-              ncr_notes: ncrNotes,
-              ncar_type: ncarType,
-              ncar_stage: ncarStage
+              order_id: orderId || null,
+              type: ncarType,
+              stage: ncarStage || null,
+              ncar_date: ncarDate || null,
+              nc_description: ncrNotes || null
             }
           }).done(function(res) {
             if (!res || !res.success) {
-              Swal.fire('Attention', (res && res.message) ? res.message : 'Could not save NCR.', 'warning');
+              Swal.fire('Attention', (res && res.message) ? res.message : 'Could not save NCAR.', 'warning');
               return;
+            }
+
+            const savedNumber = (res.ncar_no || '').toString();
+            if (savedNumber) {
+              $('#ncrNumber').val(savedNumber);
+              $('#ncrNumber').data('autoNcarNo', savedNumber);
             }
 
             const $btn = $('#ncrModal').data('btn');
             if ($btn && $btn.length) {
-              const savedNumber = (res.ncr_number || '').toString();
-              const savedNotes = (res.ncr_notes || '').toString();
               $btn.data('ncr-number', savedNumber);
-              $btn.data('ncr-notes', savedNotes);
+              $btn.data('ncr-notes', ncrNotes);
               $btn.attr('data-ncr-number', savedNumber);
-              $btn.attr('data-ncr-notes', savedNotes);
+              $btn.attr('data-ncr-notes', ncrNotes);
+
+              const reviewer = ($('#ncrReviewer').val() || '').toString();
+              $btn.data('ncr-reviewer', reviewer);
+              $btn.attr('data-ncr-reviewer', reviewer);
 
               $btn.data('ncar-type', ncarType);
               $btn.data('ncar-stage', ncarStage);
@@ -1761,15 +1810,15 @@ body .content {
               $btn.attr('data-ncar-stage', ncarStage);
 
               $btn.toggleClass('is-active', !!savedNumber);
-              $btn.attr('title', savedNumber ? ('NCR: ' + savedNumber) : 'Register NCR');
+              $btn.attr('title', savedNumber ? ('NCAR: ' + savedNumber) : 'Register NCAR');
             }
 
             $('#ncrModal').modal('hide');
-            Swal.fire('Saved', 'NCR updated.', 'success');
+            Swal.fire('Saved', 'NCAR saved.', 'success');
           }).always(function() {
             $saveBtn.prop('disabled', false);
           }).fail(function(xhr) {
-            let msg = 'Error saving NCR.';
+            let msg = 'Error saving NCAR.';
             try {
               if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
             } catch (e) {}

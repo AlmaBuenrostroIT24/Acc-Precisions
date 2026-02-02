@@ -2963,6 +2963,17 @@ class Order_ScheduleController extends Controller
 
         $order->ncr_number = $ncrNumber !== '' ? $ncrNumber : null;
         $order->ncr_notes = $ncrNotes !== '' ? $ncrNotes : null;
+
+        // Si existe la columna, guardar quién registró/actualizó el NCR.
+        if (\Illuminate\Support\Facades\Schema::hasColumn('orders_schedule', 'ncr_reviewer')) {
+            if (($order->ncr_number ?? null) !== null || ($order->ncr_notes ?? null) !== null) {
+                $u = $request->user();
+                $order->ncr_reviewer = $u?->name ?: $u?->email;
+            } else {
+                $order->ncr_reviewer = null;
+            }
+        }
+
         $order->save();
 
         return response()->json([
@@ -2970,6 +2981,9 @@ class Order_ScheduleController extends Controller
             'order_id' => $order->id,
             'ncr_number' => $order->ncr_number,
             'ncr_notes' => $order->ncr_notes,
+            'ncr_reviewer' => \Illuminate\Support\Facades\Schema::hasColumn('orders_schedule', 'ncr_reviewer')
+                ? $order->ncr_reviewer
+                : null,
         ]);
     }
 

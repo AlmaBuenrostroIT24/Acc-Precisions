@@ -34,6 +34,18 @@
                     <input type="hidden" id="ncrPostUrl">
 
                     <div class="form-row">
+                        <div class="form-group col-12 col-md-6 mb-2">
+                            <label class="mb-1 erp-ncr-label" for="ncrReviewer">Reviewer</label>
+                            <div class="input-group input-group-sm erp-ncr-input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-user-check text-primary"></i></span>
+                                </div>
+                                <input id="ncrReviewer" type="text" class="form-control erp-ncr-control" readonly value="{{ auth()->user()->name ?? auth()->user()->email ?? '' }}" data-default="{{ auth()->user()->name ?? auth()->user()->email ?? '' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group col-12 col-md-2 mb-2" id="ncrDateCol">
                             <label for="ncrDate" class="mb-1 erp-ncr-label">Date</label>
                             <div class="input-group input-group-sm erp-ncr-input-group">
@@ -60,7 +72,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-clipboard-check text-warning"></i></span>
                                 </div>
-                                <input type="text" id="ncrNumber" class="form-control erp-ncr-control" maxlength="50" placeholder="e.g. NCR-1234">
+                                <input type="text" id="ncrNumber" class="form-control erp-ncr-control" maxlength="50" placeholder="e.g. NCR-1234" readonly>
                             </div>
                         </div>
 
@@ -137,7 +149,17 @@
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group col-6 col-md-6 mb-2">
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrOperation">Operation</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-tasks text-secondary"></i></span>
+                                    </div>
+                                    <input id="ncrOperation" type="text" class="form-control erp-ncr-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-6 col-md-3 mb-2">
                                 <label class="mb-1 erp-ncr-label" for="ncrQty">Qty</label>
                                 <div class="input-group input-group-sm erp-ncr-input-group">
                                     <div class="input-group-prepend">
@@ -147,7 +169,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group col-6 col-md-6 mb-2">
+                            <div class="form-group col-6 col-md-3 mb-2">
                                 <label class="mb-1 erp-ncr-label" for="ncrWoQty">WO Qty</label>
                                 <div class="input-group input-group-sm erp-ncr-input-group">
                                     <div class="input-group-prepend">

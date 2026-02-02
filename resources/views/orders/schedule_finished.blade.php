@@ -303,6 +303,7 @@
                                             data-id="{{ $order->id }}"
                                             data-url="{{ route('schedule.finished.ncr', $order->id) }}"
                                             data-work-id="{{ $order->work_id }}"
+                                            data-operation="{{ $order->operation ?? '' }}"
                                             data-co="{{ $order->co ?? '' }}"
                                             data-cust-po="{{ e($order->cust_po ?? '') }}"
                                             data-pn="{{ e($order->PN ?? '') }}"
@@ -310,6 +311,7 @@
                                             data-customer="{{ e($order->costumer ?? '') }}"
                                             data-qty="{{ $order->qty ?? '' }}"
                                             data-wo-qty="{{ $order->wo_qty ?? '' }}"
+                                            data-ncr-reviewer="{{ e($order->ncr_reviewer ?? '') }}"
                                             data-ncr-number="{{ $order->ncr_number ?? '' }}"
                                             data-ncr-notes="{{ e($order->ncr_notes ?? '') }}">
                                             <i class="fas fa-exclamation-triangle"></i>
@@ -415,12 +417,24 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body py-2 erp-ncr-modal-body">
-                    <input type="hidden" id="ncrOrderId">
-                    <input type="hidden" id="ncrPostUrl">
+                    <div class="modal-body py-2 erp-ncr-modal-body">
+                        <input type="hidden" id="ncrOrderId">
+                        <input type="hidden" id="ncrPostUrl">
 
-                    <div class="erp-ncr-orderbox mb-2">
-                        <div class="erp-ncr-orderbox-title">Impact</div>
+                        <div class="form-row">
+                            <div class="form-group col-12 col-md-6 mb-2">
+                                <label class="mb-1 erp-ncr-label" for="ncrReviewer">Reviewer</label>
+                                <div class="input-group input-group-sm erp-ncr-input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-user-check text-primary"></i></span>
+                                    </div>
+                                    <input id="ncrReviewer" type="text" class="form-control erp-ncr-control" readonly value="{{ auth()->user()->name ?? auth()->user()->email ?? '' }}" data-default="{{ auth()->user()->name ?? auth()->user()->email ?? '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="erp-ncr-orderbox mb-2">
+                            <div class="erp-ncr-orderbox-title">Impact</div>
 
                         <div class="form-row">
                             <div class="form-group col-12 col-md-6 mb-2">
@@ -510,7 +524,7 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-clipboard-check text-warning"></i></span>
                             </div>
-                            <input type="text" id="ncrNumber" class="form-control erp-ncr-control" maxlength="50" placeholder="e.g. NCR-1234">
+                            <input type="text" id="ncrNumber" class="form-control erp-ncr-control" maxlength="50" placeholder="e.g. NCR-1234" readonly>
                         </div>
                     </div>
 
@@ -1661,6 +1675,11 @@
             $('#ncrCustPo').val(decodeHtml($btn.data('cust-po')));
             $('#ncrPn').val(decodeHtml($btn.data('pn')));
             $('#ncrCustomer').val(customer);
+            const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
+            $('#ncrReviewer').val(defaultReviewer);
+            const reviewer = decodeHtml($btn.data('ncr-reviewer'));
+            if (reviewer) $('#ncrReviewer').val(reviewer);
+            $('#ncrOperation').val(decodeHtml($btn.data('operation')));
             $('#ncrQty').val(decodeHtml($btn.data('qty')));
             $('#ncrWoQty').val(decodeHtml($btn.data('wo-qty')));
             $('#ncrDescription').val(decodeHtml($btn.data('part-description')));
@@ -1706,6 +1725,10 @@
                     $btn.data('ncr-notes', savedNotes);
                     $btn.attr('data-ncr-number', savedNumber);
                     $btn.attr('data-ncr-notes', savedNotes);
+
+                    const reviewer = ($('#ncrReviewer').val() || '').toString();
+                    $btn.data('ncr-reviewer', reviewer);
+                    $btn.attr('data-ncr-reviewer', reviewer);
 
                     $btn.toggleClass('is-active', !!savedNumber);
                     $btn.attr('title', savedNumber ? ('NCR: ' + savedNumber) : 'Register NCR');
