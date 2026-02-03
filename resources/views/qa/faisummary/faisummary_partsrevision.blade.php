@@ -630,7 +630,7 @@
   }
 
   .fai-title-icon i {
-    font-size: 1.05rem;
+    font-size: 1.12rem;
     line-height: 1;
   }
 
@@ -943,7 +943,7 @@
   .table .btn i,
   .table .btn .fas,
   .table .btn .far {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
   }
 
 /* Controles DataTables */

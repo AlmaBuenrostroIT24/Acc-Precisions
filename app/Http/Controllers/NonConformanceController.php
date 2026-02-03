@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Facades\Excel;
 
 class NonConformanceController extends Controller
 {
@@ -60,10 +63,11 @@ class NonConformanceController extends Controller
                     'customer' => (string) (($x->ncar_customer ?? '') ?: ($x->costumer ?? '')),
                     'ref_numbers' => implode(' | ', $refs),
                     'type' => (string) ($x->type_name ?? ''),
-                    'parts' => (string) ($pn ?: ''),
                     'status' => (string) (($x->status ?? '') ?: 'New'),
                     'edit_url' => route('nonconformance.ncar.edit', ['id' => (int) $x->id]),
                     'pdf_url' => route('nonconformance.ncar.pdf', ['id' => (int) $x->id]),
+                    'excel_url' => route('nonconformance.ncar.excel', ['id' => (int) $x->id]),
+                    'delete_url' => route('nonconformance.ncar.destroy', ['id' => (int) $x->id]),
                 ];
             })
             ->values()
@@ -175,10 +179,32 @@ class NonConformanceController extends Controller
 
     public function pdf($id)
     {
+        $ordersCols = Schema::hasTable('orders_schedule') ? Schema::getColumnListing('orders_schedule') : [];
+        $woQtyCol = null;
+        foreach (['wo_qty', 'WO_Qty', 'WO_QTY', 'WOQty', 'woQty'] as $c) {
+            if (in_array($c, $ordersCols, true)) {
+                $woQtyCol = $c;
+                break;
+            }
+        }
+
         $ncar = DB::table('qa_ncar as n')
             ->leftJoin('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
             ->leftJoin('orders_schedule as o', 'o.id', '=', 'n.order_id')
-            ->select('n.*', 't.name as type_name', 'o.work_id', 'o.co', 'o.cust_po', 'o.PN', 'o.Part_description', 'o.costumer as order_customer')
+            ->select(
+                'n.*',
+                't.name as type_name',
+                'o.work_id',
+                'o.co',
+                'o.cust_po',
+                'o.PN',
+                'o.Part_description',
+                'o.revision as order_revision',
+                'o.qty as order_qty',
+                'o.operation as order_operation',
+                'o.costumer as order_customer',
+                $woQtyCol ? DB::raw("o.`{$woQtyCol}` as wo_qty") : DB::raw('NULL as wo_qty'),
+            )
             ->where('n.id', (int) $id)
             ->first();
 
@@ -186,8 +212,98 @@ class NonConformanceController extends Controller
 
         $filename = 'NCAR-' . preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) ($ncar->ncar_no ?? $id)) . '.pdf';
         return Pdf::loadView('qa.nonconformance.ncar_pdf', compact('ncar'))
-            ->setPaper('letter')
-            ->download($filename);
+            ->setPaper('letter', 'portrait')
+            ->stream($filename);
+    }
+
+    public function excel($id)
+    {
+        $ncar = DB::table('qa_ncar as n')
+            ->leftJoin('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
+            ->leftJoin('orders_schedule as o', 'o.id', '=', 'n.order_id')
+            ->select(
+                'n.*',
+                't.name as type_name',
+                'o.work_id',
+                'o.co',
+                'o.cust_po',
+                'o.PN',
+                'o.Part_description',
+                'o.costumer as order_customer'
+            )
+            ->where('n.id', (int) $id)
+            ->first();
+
+        abort_unless($ncar, 404);
+
+        $safeNo = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) ($ncar->ncar_no ?? $id));
+        $filename = 'NCAR-' . $safeNo . '.xlsx';
+
+        $export = new class($ncar) implements FromArray, WithHeadings {
+            public function __construct(private object $ncar)
+            {
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'NCAR No',
+                    'Created At',
+                    'Status',
+                    'Type',
+                    'Stage',
+                    'Location',
+                    'Reference',
+                    'NC Description',
+                    'Order Customer',
+                    'WorkID',
+                    'CO',
+                    'PO',
+                    'PN',
+                    'Part Description',
+                ];
+            }
+
+            public function array(): array
+            {
+                $n = $this->ncar;
+                return [[
+                    (string) ($n->ncar_no ?? ''),
+                    (string) ($n->created_at ?? ''),
+                    (string) (($n->status ?? '') ?: 'New'),
+                    (string) ($n->type_name ?? ''),
+                    (string) ($n->stage ?? ''),
+                    (string) ($n->location ?? ''),
+                    (string) ($n->ref ?? ''),
+                    (string) ($n->nc_description ?? ''),
+                    (string) ($n->order_customer ?? ''),
+                    (string) ($n->work_id ?? ''),
+                    (string) ($n->co ?? ''),
+                    (string) ($n->cust_po ?? ''),
+                    (string) ($n->PN ?? ''),
+                    (string) ($n->Part_description ?? ''),
+                ]];
+            }
+        };
+
+        return Excel::download($export, $filename);
+    }
+
+    public function destroy(Request $r, $id)
+    {
+        $id = (int) $id;
+        abort_unless(DB::table('qa_ncar')->where('id', $id)->exists(), 404);
+
+        try {
+            DB::table('qa_ncar')->where('id', $id)->delete();
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not delete NCAR.',
+            ], 500);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     private function ruleForNcarField(string $field): array

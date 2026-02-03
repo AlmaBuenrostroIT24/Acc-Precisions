@@ -224,6 +224,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/QA/NonConformace/ncar/{id}/edit', [NonConformanceController::class, 'edit'])->name('nonconformance.ncar.edit');
     Route::put('/QA/NonConformace/ncar/{id}', [NonConformanceController::class, 'update'])->name('nonconformance.ncar.update');
     Route::get('/QA/NonConformace/ncar/{id}/pdf', [NonConformanceController::class, 'pdf'])->name('nonconformance.ncar.pdf');
+    Route::get('/QA/NonConformace/ncar/{id}/excel', [NonConformanceController::class, 'excel'])->name('nonconformance.ncar.excel');
+    Route::delete('/QA/NonConformace/ncar/{id}', [NonConformanceController::class, 'destroy'])->name('nonconformance.ncar.destroy');
 });
 
 

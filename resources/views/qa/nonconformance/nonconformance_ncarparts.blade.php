@@ -3,6 +3,10 @@
 
 @section('title', 'FAI Summary')
 
+@section('meta')
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+@endsection
+
 @section('content_header')
   <div class="d-flex align-items-center justify-content-between">
     <h1 class="mb-0">
@@ -158,7 +162,6 @@
             <th>Customers</th>
             <th>Reference Numbers</th>
             <th>Type</th>
-            <th>Parts</th>
             <th>Status</th>
             <th class="text-center">Actions</th>
           </tr>
@@ -369,8 +372,43 @@
 
   /* Solo forzar scroll en pantallas chicas */
   @media (max-width: 992px) {
-    #ncrTable td:nth-child(2) { min-width: 240px; } /* Title */
-    #ncrTable td:nth-child(5) { min-width: 260px; } /* Reference Numbers */
+    #ncrTable td:nth-child(3) { min-width: 240px; } /* Title */
+    #ncrTable td:nth-child(6) { min-width: 260px; } /* Reference Numbers */
+  }
+
+  /* Buttons tipo ERP (icon-only) */
+  .ncar-page .erp-table-btn {
+    height: 30px;
+    width: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .ncar-page .btn-erp-primary,
+  .ncar-page .btn-erp-success,
+  .ncar-page .btn-erp-danger,
+  .ncar-page .btn-erp-warning {
+    background: #f8fafc;
+    border: 1px solid #d5d8dd;
+    color: #1f2937;
+    box-shadow: none;
+    font-weight: 700;
+  }
+
+  .ncar-page .btn-erp-primary i { color: #0b5ed7; }
+  .ncar-page .btn-erp-success i { color: #0f5132; }
+  .ncar-page .btn-erp-danger i { color: #b91c1c; }
+  .ncar-page .btn-erp-warning i { color: #f59e0b; }
+
+  .ncar-page .btn-erp-primary:hover,
+  .ncar-page .btn-erp-success:hover,
+  .ncar-page .btn-erp-danger:hover,
+  .ncar-page .btn-erp-warning:hover {
+    filter: brightness(0.97);
+    color: #111827;
   }
 </style>
 @endsection
@@ -399,7 +437,7 @@ $(function(){
     columnDefs: [
       { targets: [1], className: 'col-desc', width: '320px' },
       { targets: [2,5], className: 'text-wrap' },
-      { targets: [9], orderable: false, searchable: false, className: 'text-nowrap text-center', width: '120px' }
+      { targets: [8], orderable: false, searchable: false, className: 'text-nowrap text-center', width: '170px' }
     ],
     dom: "frt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
     columns: [
@@ -422,7 +460,6 @@ $(function(){
           .join('<br>');
       }},
       {data:'type'},
-      {data:'parts'},
       {data:'status', render:s=>{
         const closed = String(s).toLowerCase()==='closed';
         return `<span class="badge badge-status ${closed?'badge-closed':'badge-open'}">${s}</span>`;
@@ -430,18 +467,74 @@ $(function(){
       {data:null, render:(d, t, row)=>{
         const editUrl = row?.edit_url || '#';
         const pdfUrl = row?.pdf_url || '#';
+        const excelUrl = row?.excel_url || '#';
+        const deleteUrl = row?.delete_url || '#';
         return `
-          <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-            <a class="btn btn-outline-primary" href="${editUrl}" title="Edit">
+          <div class="d-inline-flex align-items-center" style="gap:6px" role="group" aria-label="Actions">
+            <a class="btn btn-sm btn-erp-warning erp-table-btn" href="${editUrl}" title="Edit">
               <i class="fas fa-edit"></i>
             </a>
-            <a class="btn btn-outline-danger" href="${pdfUrl}" target="_blank" rel="noopener" title="PDF">
+            <a class="btn btn-sm btn-erp-primary erp-table-btn" href="${pdfUrl}" target="_blank" rel="noopener" title="PDF">
               <i class="fas fa-file-pdf"></i>
             </a>
+            <a class="btn btn-sm btn-erp-success erp-table-btn" href="${excelUrl}" title="Excel">
+              <i class="fas fa-file-excel"></i>
+            </a>
+            <button type="button" class="btn btn-sm btn-erp-danger erp-table-btn btn-ncar-delete" data-url="${deleteUrl}" title="Delete">
+              <i class="fas fa-trash-alt"></i>
+            </button>
           </div>
         `;
       }}
     ]
+  });
+
+  const getCsrf = () => $('meta[name="csrf-token"]').attr('content') || '';
+
+  $('#ncrTable').on('click', '.btn-ncar-delete', function(e) {
+    e.preventDefault();
+    const url = ($(this).data('url') || '').toString();
+    if (!url || url === '#') return;
+
+    const doDelete = () => $.ajax({
+      url,
+      method: 'DELETE',
+      dataType: 'json',
+      data: { _token: getCsrf() },
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .done((res) => {
+        if (!res || res.success !== true) {
+          const msg = (res && res.message) ? res.message : 'Could not delete NCAR.';
+          if (window.Swal) return Swal.fire('Error', msg, 'error');
+          alert(msg);
+          return;
+        }
+        dt.ajax.reload(null, false);
+        if (window.Swal) return Swal.fire('Deleted', 'NCAR deleted.', 'success');
+      })
+      .fail((xhr) => {
+        const msg = xhr?.responseJSON?.message || 'Could not delete NCAR.';
+        if (window.Swal) return Swal.fire('Error', msg, 'error');
+        alert(msg);
+      });
+
+    if (window.Swal) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Delete NCAR?',
+        text: 'This action cannot be undone.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel'
+      }).then((r) => {
+        if (!r.isConfirmed) return;
+        doDelete();
+      });
+      return;
+    }
+
+    if (confirm('Delete NCAR? This action cannot be undone.')) doDelete();
   });
 
   // Acomodar search estilo ERP (igual que otras vistas)
@@ -483,7 +576,7 @@ $(function(){
     // (para poder cambiar de opción sin tener que regresar a "-- All --").
     fillSelect($('#fltType'), dt.column(6, { search: 'none' }).data().toArray());
     fillSelect($('#fltCustomer'), dt.column(4, { search: 'none' }).data().toArray());
-    fillSelect($('#fltStatus'), dt.column(8, { search: 'none' }).data().toArray());
+    fillSelect($('#fltStatus'), dt.column(7, { search: 'none' }).data().toArray());
   }
 
   // Inicial + cada vez que cambie el dataset
@@ -501,7 +594,7 @@ $(function(){
   });
   $('#fltStatus').on('change', function() {
     const v = (this.value || '').toString();
-    dt.column(8).search(v ? ('^' + escapeRegex(v) + '$') : '', true, false).draw();
+    dt.column(7).search(v ? ('^' + escapeRegex(v) + '$') : '', true, false).draw();
   });
 
   // ===== Charts =====
