@@ -211,9 +211,59 @@ class NonConformanceController extends Controller
         abort_unless($ncar, 404);
 
         $filename = 'NCAR-' . preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) ($ncar->ncar_no ?? $id)) . '.pdf';
-        return Pdf::loadView('qa.nonconformance.ncar_pdf', compact('ncar'))
-            ->setPaper('letter', 'portrait')
-            ->stream($filename);
+
+        $pdf = Pdf::loadView('qa.nonconformance.ncar_pdf', compact('ncar'))
+            ->setPaper('letter', 'portrait');
+
+        $dompdf = $pdf->getDomPDF();
+        $dompdf->render();
+
+        $canvas = $dompdf->getCanvas();
+        $fontMetrics = $dompdf->getFontMetrics();
+        $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
+        $size = 10;
+
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+
+        // These must match the view's @page margins.
+        $pageMarginLeft = 12;
+        $pageMarginRight = 12;
+        $pageMarginBottom = 64;
+
+        // Dompdf canvas size can be either the full page box or the content box (excluding margins),
+        // depending on backend/version. Detect heuristically and compute coordinates accordingly.
+        $canvasIsContentBox = ($w < 600) || ($h < 760);
+
+        $y = $canvasIsContentBox
+            ? ($h + $pageMarginBottom - 22)
+            : ($h - 22);
+
+        // Align footer text with the same left/right edges as the table in the view.
+        // View CSS:
+        // - @page { margin: 18pt 12pt 64pt; }
+        // - table.grid { width: 96%; margin: 0 auto; }
+        if ($canvasIsContentBox) {
+            $tableWidth = $w * 0.96;
+            $tableLeft = ($w - $tableWidth) / 2;
+            $tableRight = $tableLeft + $tableWidth;
+        } else {
+            $contentWidth = $w - $pageMarginLeft - $pageMarginRight;
+            $tableWidth = $contentWidth * 0.96;
+            $tableLeft = $pageMarginLeft + (($contentWidth - $tableWidth) / 2);
+            $tableRight = $tableLeft + $tableWidth;
+        }
+
+        $canvas->page_text($tableLeft, $y, 'F-870-001 Rev. D  LA Authorized', $font, $size, [0, 0, 0]);
+
+        $rightText = 'Page {PAGE_NUM} of {PAGE_COUNT}';
+        $rightTextMeasure = 'Page 999 of 999';
+        // Use canvas text width to match the actual rendering backend.
+        $rightWidth = $canvas->get_text_width($rightTextMeasure, $font, $size);
+        $xRight = $tableRight - $rightWidth;
+        $canvas->page_text($xRight, $y, $rightText, $font, $size, [0, 0, 0]);
+
+        return $dompdf->stream($filename, ['Attachment' => false]);
     }
 
     public function excel($id)

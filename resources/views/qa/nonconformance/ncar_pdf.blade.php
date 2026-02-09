@@ -37,7 +37,9 @@
   $accQty = (string) ($ncar->accqty ?? $ncar->acc_qty ?? '');
   $tmInit = (string) ($ncar->tminit ?? $ncar->tm_init ?? '');
   $tmSignoff = (string) ($ncar->tm_signoff ?? $ncar->tmsignoff ?? '');
+  $tmSignoffDate = $fmtDate($ncar->tm_signoff_date ?? $ncar->tmsignoff_date ?? $ncar->tm_signoff_dt ?? null);
   $completionSignoff = (string) ($ncar->completion_signoff ?? $ncar->completionsignoff ?? '');
+  $completionSignoffDate = $fmtDate($ncar->completion_signoff_date ?? $ncar->completionsignoff_date ?? $ncar->completion_signoff_dt ?? null);
   $otherPartProcessAffected = (string) ($ncar->otherpartprocessaffected ?? $ncar->other_part_process_affected ?? '');
 
   $pn = (string) ($ncar->PN ?? '');
@@ -61,6 +63,8 @@
   $rootCause = (string) ($ncar->rootcause ?? '');
   $corrective = (string) ($ncar->corrective ?? '');
   $verification = (string) ($ncar->verification ?? '');
+  $hasCorrective = trim($corrective) !== '';
+  $hasVerification = trim($verification) !== '';
 
   $relevantFunction = (string) ($ncar->relevantfunction ?? '');
   $issueFoundBy = (string) ($ncar->issuefoundbt ?? '');
@@ -77,16 +81,16 @@
     <style>
       /* Let cells grow with content (may create more than 1 page). */
       /* Extra bottom margin to reserve space for the fixed footer */
-      @page { margin: 18pt 12pt 44pt; size: letter portrait; }
+      @page { margin: 18pt 12pt 84pt; size: letter portrait; }
       html, body { margin: 0; padding: 0; }
       body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #000; }
 
       /* Align header block with the table width/margins */
-      .hdr { width: 96%; margin: 6pt auto 6pt; table-layout: fixed; }
+      .hdr { width: 96%; margin: 20pt auto 6pt; table-layout: fixed; }
       .hdr td { vertical-align: top; }
 
-      .company { font-weight: 800; font-size: 12px; }
-      .title { font-weight: 800; font-size: 12px; }
+      .company { font-weight: 800; font-size: 14px; }
+      .title { font-weight: 800; font-size: 14px; }
       .addr { text-align: right; font-size: 12px; line-height: 1.05; }
       .addr .small { font-size: 11px; font-weight: 700; }
       .hdr td:first-child { width: 58%; }
@@ -103,33 +107,61 @@
         word-break: break-word;
         overflow-wrap: anywhere;
       }
+      table.grid td.ca-cell { padding-bottom: 0 !important; }
+
+      /* Row height helpers: behave like minimum heights (cells can still grow with content). */
+      tr.h18 td { height: 18pt; }
+      tr.h22 td { height: 22pt; }
+      tr.h34 td { height: 34pt; }
+      tr.h44 td { height: 44pt; }
+      tr.h52 td { height: 52pt; }
+      tr.h70 td { height: 60pt; }
+      tr.grow td { height: auto !important; }
+      tr.grow { page-break-inside: auto; }
 
       .k { font-weight: 800; }
       .v { font-weight: 700; white-space: normal; }
       .shade { background: #d9eefb; }
+      .shade-gray { background: #eef2f7; }
       .muted { color: #222; font-weight: 700; }
+
+      /* Key/value cells (header gray rows) */
+      .kv { font-size: 11px; }
+      .kv-2 { font-size: 11px; }
+      .kv-4 { font-size: 11px; }
+
+      /* Spacer row repeated on each page (keeps top margin on page breaks) */
+      thead { display: table-header-group; }
+      tr.page-spacer td { border: 0 !important; padding: 0 !important; height: 10pt; background: transparent !important; }
+
+      /* Inner table helper (avoid inheriting grid borders) */
+      table.grid table.inner { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      table.grid table.inner td { border: 0 !important; padding: 0 !important; }
+      table.grid table.inner td.r { text-align: right; white-space: nowrap; padding-left: 10pt !important; }
+
+      /* Corrective Action sign-off row (draw only internal lines) */
+      table.grid table.ca-sign { width: 100%; border-collapse: collapse; table-layout: fixed; display: inline-table; height: auto !important; }
+      table.grid table.ca-sign tr { height: auto !important; }
+      table.grid table.ca-sign td { border: 0 !important; padding: 0.6pt 1.2pt !important; vertical-align: middle; height: auto !important; line-height: 1.05; }
+      table.grid table.ca-sign td:nth-child(2),
+      table.grid table.ca-sign td:nth-child(3) { border-top: 1px solid #000 !important; }
+      table.grid table.ca-sign td + td { border-left: 1px solid #000 !important; }
+      table.grid table.ca-sign td.c { text-align: left; white-space: nowrap; }
+      table.grid table.ca-sign tr.tall td { padding-top: 3.6pt !important; padding-bottom: 3.6pt !important; }
+
+      /* Disposition block: keep as one outer grid row, draw only internal lines */
+      table.grid table.dispblock { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      table.grid table.dispblock td { border: 0 !important; padding: 0.8pt 1.2pt !important; vertical-align: top; }
+      table.grid table.dispblock td + td { border-left: 1px solid #000 !important; }
+      table.grid table.dispblock tr.dispblock-head td { background: #d9eefb; }
+      table.grid table.dispblock tr.dispblock-subhead td { background: #d9eefb; font-weight: 800; }
+      table.grid table.dispblock tr.dispblock-body td { border-top: 1px solid #000 !important; }
 
       .pre { white-space: pre-wrap; }
 
       /* No clipping; allow content to expand rows */
       .clip { display: inline; }
       .clip--h34, .clip--h44, .clip--h58 { height: auto; }
-
-      /* Fixed footer: always at the bottom of the page (repeats on each page in Dompdf). */
-      .foot {
-        position: fixed;
-        left: 12pt;
-        right: 12pt;
-        bottom: 12pt;
-      }
-      .foot-inner {
-        width: 96%;
-        margin: 0 auto;
-        font-size: 12px;
-      }
-      .foot .l { float: left; }
-      .foot .r { float: right; }
-      .clearfix { clear: both; }
 
       /* Allow page breaks naturally */
     </style>
@@ -157,124 +189,113 @@
             <col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%">
             <col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%">
           </colgroup>
+          <thead>
+            <tr class="page-spacer">
+              <td colspan="12"></td>
+            </tr>
+          </thead>
+          <tbody>
 
-          <tr class="h18 shade">
-            <td class="k">Date</td>
-            <td class="v">{{ $reportDate }}</td>
-            <td class="k">NCAR</td>
-            <td class="v">{{ $ncarNo }}</td>
-            <td class="k">CoName</td>
-            <td class="v" colspan="3">{{ $customerCompany }}</td>
-            <td class="k">Contact</td>
-            <td class="v">{{ $contact }}</td>
-            <td class="k">Class</td>
-            <td class="v">{{ $class }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k">PN</td>
-            <td class="v" colspan="3">{{ $pn }}{{ $rev ? (' / ' . $rev) : '' }}</td>
-            <td class="k">Desc.</td>
-            <td class="v" colspan="3">{{ $partDesc }}</td>
-            <td class="k">PO#</td>
-            <td class="v">{{ $poNo }}</td>
-            <td class="k">Location</td>
-            <td class="v">{{ $location }}</td>
+          <tr class="h18 shade-gray">
+            <td class="k kv kv-2" colspan="2">Date:&nbsp;<span class="v">{{ $reportDate }}</span></td>
+            <td class="k kv kv-2" colspan="2">NCAR:&nbsp;<span class="v">{{ $ncarNo }}</span></td>
+            <td class="k kv kv-4" colspan="3">CoName:&nbsp;<span class="v">{{ $customerCompany }}</span></td>
+            <td class="k kv kv-4" colspan="3">Contact:&nbsp;<span class="v">{{ $contact }}</span></td>
+            <td class="k kv kv-2" colspan="2">Class:&nbsp;<span class="v">{{ $class }}</span></td>
           </tr>
 
-          <tr class="h18 shade">
-            <td class="k">WO#</td>
-            <td class="v">{{ $woNo }}</td>
-            <td class="k">WOQty.</td>
-            <td class="v">{{ $woQty }}</td>
-            <td class="k">COQty.</td>
-            <td class="v">{{ $coQty }}</td>
-            <td class="k">DelQty.</td>
-            <td class="v">{{ $delQty }}</td>
-            <td class="k">RejQty.</td>
-            <td class="v">{{ $rejQty }}</td>
-            <td class="k">Ref#</td>
-            <td class="v">{{ $refNo }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="2">OP# (Tot. # Ops)</td>
-            <td class="v">{{ $ops }}</td>
-            <td class="k">JobPktCopy?</td>
-            <td class="v">{{ $jobPktCopy }}</td>
-            <td class="k" colspan="2">Trav.&amp;Insp.Compl.?</td>
-            <td class="v">{{ $travInspCompl }}</td>
-            <td class="k">SamplCompl</td>
-            <td class="v">{{ $samplCompl }}</td>
-            <td class="k">RodBy</td>
-            <td class="v">{{ $rodBy }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="2">Issue Found</td>
-            <td class="v" colspan="3">{{ $issueFound }}</td>
-            <td class="k">Date</td>
-            <td class="v">{{ $issueFoundDate }}</td>
-            <td class="k">StkQty.</td>
-            <td class="v">{{ $stkQty }}</td>
-            <td class="k" colspan="2">SP Proc. Invalid.?</td>
-            <td class="v">{{ $spProcInvalid }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="11">Discrepancy</td>
-            <td class="k">Qty.</td>
-          </tr>
-          <tr class="h52">
-            <td class="v pre" colspan="11">{{ $discrepancy }}</td>
-            <td class="v">{{ $rejQty ?: '1' }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="2">Containment Req.?</td>
-            <td class="v">{{ $containmentReq }}</td>
-            <td class="k">Containment:</td>
-            <td class="v pre" colspan="8">{{ $containment }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="12">Disposition / Correction: <span class="muted">Use as is (Dev. Apprvl.) / Screen &amp; Rework / Remake / Credit / RTV / Scrap / Other</span></td>
-          </tr>
-          <tr class="h22 shade">
-            <td class="k" colspan="8">Action below / Notes</td>
-            <td class="k">AccQty.</td>
-            <td class="k">RejQty.</td>
-            <td class="k">TM Init</td>
-            <td class="k">Date</td>
-          </tr>
-          <tr class="h34">
-            <td class="v pre" colspan="8">{{ $actionBelowNotes ?: $disposition }}</td>
-            <td class="v">{{ $accQty }}</td>
-            <td class="v">{{ $rejQty }}</td>
-            <td class="v">{{ $tmInit }}</td>
-            <td class="v"></td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="6">Relevant Function (PLN/PU/ENG/RP/PROD/QC/TM)</td>
-            <td class="k" colspan="3">Sign-off</td>
-            <td class="k" colspan="3">Date</td>
-          </tr>
           <tr class="h18">
-            <td class="v" colspan="6">{{ $relevantFunction }}</td>
-            <td class="v" colspan="3"></td>
-            <td class="v" colspan="3"></td>
+            <td class="k" colspan="4">PN:&nbsp;<span class="v">{{ $pn }}{{ $rev ? (' / ' . $rev) : '' }}</span></td>
+            <td class="k" colspan="4">Desc.:&nbsp;<span class="v">{{ $partDesc }}</span></td>
+            <td class="k" colspan="2">PO#:&nbsp;<span class="v">{{ $poNo }}</span></td>
+            <td class="k" colspan="2">Location:&nbsp;<span class="v">{{ $location }}</span></td>
           </tr>
 
           <tr class="h18 shade">
-            <td class="k" colspan="6">Issue found by and how?</td>
-            <td class="k" colspan="4">Req. root cause and corrective action?</td>
-            <td class="k" colspan="2">TM Init</td>
+            <td class="k" colspan="2">WO#:&nbsp;<span class="v">{{ $woNo }}</span></td>
+            <td class="k" colspan="2">WOQty.:&nbsp;<span class="v">{{ $woQty }}</span></td>
+            <td class="k" colspan="2">COQty.:&nbsp;<span class="v">{{ $coQty }}</span></td>
+            <td class="k" colspan="2">DelQty.:&nbsp;<span class="v">{{ $delQty }}</span></td>
+            <td class="k" colspan="2">RejQty.:&nbsp;<span class="v">{{ $rejQty }}</span></td>
+            <td class="k" colspan="2">Ref#:&nbsp;<span class="v">{{ $refNo }}</span></td>
           </tr>
-          <tr class="h18">
-            <td class="v" colspan="6">{{ $issueFoundBy }}</td>
-            <td class="v" colspan="4">{{ $reqRootCause }}</td>
-            <td class="v" colspan="2">{{ $tmInit }}</td>
+
+          <tr class="h18 shade">
+            <td class="k" colspan="3">OP# (Tot. # Ops):&nbsp;<span class="v">{{ $ops }}</span></td>
+            <td class="k" colspan="3">JobPktCopy?:&nbsp;<span class="v">{{ $jobPktCopy }}</span></td>
+            <td class="k" colspan="3">Trav.&amp;Insp.Compl.?:&nbsp;<span class="v">{{ $travInspCompl }}</span></td>
+            <td class="k" colspan="3">SamplCompl:&nbsp;<span class="v">{{ $samplCompl }}</span></td>
+          </tr>
+
+          <tr class="h18 shade">
+            <td class="k" colspan="5">
+              <table class="inner" aria-hidden="true">
+                <tr>
+                  <td>Issue Prcs:&nbsp;<span class="v">{{ $issueFound }}</span></td>
+                  <td class="r">Date:&nbsp;<span class="v">{{ $issueFoundDate }}</span></td>
+                </tr>
+              </table>
+            </td>
+            <td class="k" colspan="2">StkQty.:&nbsp;<span class="v">{{ $stkQty }}</span></td>
+            <td class="k" colspan="3">SP Proc. Invalid.?:&nbsp;<span class="v">{{ $spProcInvalid }}</span></td>
+            <td class="k" colspan="2">RodBy:&nbsp;<span class="v">{{ $rodBy }}</span></td>
+          </tr>
+
+          <tr class="h52 shade-gray">
+            <td colspan="11">
+              <div class="k">Discrepancy</div>
+              <div class="v pre">{{ $discrepancy }}</div>
+            </td>
+            <td colspan="1">
+              <div class="k">Qty.</div>
+              <div class="v">{{ $rejQty ?: '1' }}</div>
+            </td>
+          </tr>
+
+          <tr class="h18 ">
+            <td class="k" colspan="4">Containment Req.?:&nbsp;<span class="v">{{ $containmentReq }}</span></td>
+            <td class="k" colspan="8">Containment:&nbsp;<span class="v pre">{{ $containment }}</span></td>
+          </tr>
+
+          <tr class="h18 shade-gray">
+            <td colspan="12" >
+              <table class="dispblock" aria-hidden="true">
+                <colgroup>
+                  <col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%">
+                  <col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%">
+                  <col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%">
+                </colgroup>
+                <tr class="dispblock-head">
+                  <td class="k" colspan="12">Disposition / Correction: <span class="muted">Use as is (Dev. Apprvl.) / Screen &amp; Rework / Remake / Credit / RTV / Scrap / Other</span></td>
+                </tr>
+                <tr class="dispblock-subhead">
+                  <td colspan="8">Action below / Notes</td>
+                  <td colspan="1">AccQty.</td>
+                  <td colspan="1">RejQty.</td>
+                  <td colspan="1">TM Init</td>
+                  <td colspan="1">Date</td>
+                </tr>
+                <tr class="dispblock-body">
+                  <td class="v pre" colspan="8">{{ $actionBelowNotes ?: $disposition }}</td>
+                  <td class="v" colspan="1">{{ $accQty }}</td>
+                  <td class="v" colspan="1">{{ $rejQty }}</td>
+                  <td class="v" colspan="1">{{ $tmInit }}</td>
+                  <td class="v" colspan="1"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr class="h18 ">
+            <td class="k" colspan="6">Relevant Function (PLN/PU/ENG/RP/PROD/QC/TM):&nbsp;<span class="v">{{ $relevantFunction }}</span></td>
+            <td class="k" colspan="3">Sign-off:&nbsp;<span class="v">&nbsp;</span></td>
+            <td class="k" colspan="3">Date:&nbsp;<span class="v">&nbsp;</span></td>
+          </tr>
+
+          <tr class="h18 shade">
+            <td class="k" colspan="6">Issue found by and how?:&nbsp;<span class="v">{{ $issueFoundBy }}</span></td>
+            <td class="k" colspan="4">Req. root cause and corrective action?:&nbsp;<span class="v">{{ $reqRootCause }}</span></td>
+            <td class="k" colspan="2">TM Init:&nbsp;<span class="v">{{ $tmInit }}</span></td>
           </tr>
 
           <tr class="h70 shade">
@@ -292,51 +313,81 @@
           </tr>
 
           <tr class="h18 shade">
-            <td class="k" colspan="12">Root Cause</td>
+            <td class="k" colspan="2">Personnel Involved</td>
+            <td class="k" colspan="2">Position/Area</td>
+            <td class="k" colspan="1">Init</td>
+            <td class="k" colspan="1">Date</td>
+            <td class="k" colspan="2">Personnel Involved</td>
+            <td class="k" colspan="2">Position/Area</td>
+            <td class="k" colspan="1">Init</td>
+            <td class="k" colspan="1">Date</td>
           </tr>
-          <tr class="h52">
-            <td class="v pre" colspan="12">{{ $rootCause }}</td>
+          <tr class="h18">
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="1">&nbsp;</td>
+            <td colspan="1">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="1">&nbsp;</td>
+            <td colspan="1">&nbsp;</td>
           </tr>
 
-          <tr class="h18 shade">
-            <td class="k" colspan="4">Other Part Process Affected?</td>
-            <td class="v" colspan="8">{{ $otherPartProcessAffected }}</td>
-          </tr>
-
-          <tr class="h18 shade">
-            <td class="k" colspan="12">Corrective Action - CA</td>
-          </tr>
-          <tr class="h52">
-            <td class="v pre" colspan="12">{{ $corrective }}</td>
+          <tr class="h70 shade-gray">
+            <td colspan="12">
+              <div class="k">Root Cause</div>
+              <div class="v pre">{{ $rootCause }}</div>
+            </td>
           </tr>
 
           <tr class="h18">
-            <td colspan="9"></td>
-            <td class="k" colspan="2">TM Sign-off</td>
-            <td class="v">{{ $tmSignoff }}</td>
+            <td class="k" colspan="12">Other Part Process Affected?:&nbsp;<span class="v">{{ $otherPartProcessAffected }}</span></td>
           </tr>
 
-          <tr class="h18 shade">
-            <td class="k" colspan="12">Verification of effect of implemented actions (Closure)</td>
-          </tr>
-          <tr class="h52">
-            <td class="v pre" colspan="12">{{ $verification }}</td>
+          <tr class="h70 shade-gray grow">
+            <td colspan="12" class="ca-cell">
+              <div class="k">Corrective Action - CA</div>
+              @if($hasCorrective)
+                <div class="v pre">{{ $corrective }}</div>
+              @endif
+              <table class="ca-sign" aria-hidden="true" style="margin-top:{{ $hasCorrective ? '12pt' : '40pt' }};">
+                <colgroup>
+                  <col style="width:{{ $hasCorrective ? '50%' : '70%' }}">
+                  <col style="width:{{ $hasCorrective ? '25%' : '15%' }}">
+                  <col style="width:{{ $hasCorrective ? '25%' : '15%' }}">
+                </colgroup>
+                <tr class="ca-sign-row tall">
+                  <td><span class="k">Evaluate:</span></td>
+                  <td class="c"><span class="k">TM Sign-off</span>@if($tmSignoff)&nbsp;<span class="v">{{ $tmSignoff }}</span>@endif</td>
+                  <td class="c"><span class="k">Date</span>@if($tmSignoffDate)&nbsp;<span class="v">{{ $tmSignoffDate }}</span>@endif</td>
+                </tr>
+              </table>
+            </td>
           </tr>
 
-          <tr class="h18">
-            <td colspan="9"></td>
-            <td class="k" colspan="2">Completion Sign-off</td>
-            <td class="v">{{ $completionSignoff }}</td>
+          <tr class="h70 shade grow">
+            <td colspan="12" class="ca-cell">
+              <div class="k">Verification of effect of implemented actions (Closure)</div>
+              @if($hasVerification)
+                <div class="v pre">{{ $verification }}</div>
+              @endif
+              <table class="ca-sign" aria-hidden="true" style="margin-top:{{ $hasVerification ? '12pt' : '40pt' }};">
+                <colgroup>
+                  <col style="width:70%">
+                  <col style="width:15%">
+                  <col style="width:15%">
+                </colgroup>
+                <tr class="ca-sign-row tall">
+                  <td>&nbsp;</td>
+                  <td class="c"><span class="k">Completion Sign-off</span>@if($completionSignoff)&nbsp;<span class="v">{{ $completionSignoff }}</span>@endif</td>
+                  <td class="c"><span class="k">Date</span>@if($completionSignoffDate)&nbsp;<span class="v">{{ $completionSignoffDate }}</span>@endif</td>
+                </tr>
+              </table>
+            </td>
           </tr>
+          </tbody>
         </table>
 
-        <div class="foot">
-          <div class="foot-inner">
-            <div class="l">F-870-001 Rev. D&nbsp;&nbsp;LA Authorized</div>
-            <div class="r">Page 1 of 1</div>
-            <div class="clearfix"></div>
-          </div>
-        </div>
       </div>
     </div>
   </body>
