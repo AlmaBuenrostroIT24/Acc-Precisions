@@ -88,6 +88,37 @@
   }
   $containment = (string) ($ncar->containment ?? '');
   $disposition = (string) ($ncar->disposition ?? '');
+  $dispositionItems = [];
+  $dispRaw = trim((string) ($ncar->disposition ?? ''));
+  $dispDecoded = null;
+  if ($dispRaw !== '' && (str_starts_with($dispRaw, '[') || str_starts_with($dispRaw, '{'))) {
+    $dispDecoded = json_decode($dispRaw, true);
+  }
+  if (is_array($dispDecoded)) {
+    if (array_is_list($dispDecoded)) {
+      foreach ($dispDecoded as $it) {
+        if (!is_array($it)) continue;
+        $dispositionItems[] = [
+          'action' => (string) ($it['action'] ?? $it['type'] ?? $it['desc'] ?? ''),
+          'accqty' => (string) ($it['accqty'] ?? $it['acc_qty'] ?? ''),
+          'rejqty' => (string) ($it['rejqty'] ?? $it['rej_qty'] ?? ''),
+        ];
+      }
+    } else {
+      $dispositionItems[] = [
+        'action' => (string) ($dispDecoded['action'] ?? $dispDecoded['type'] ?? $dispDecoded['desc'] ?? ''),
+        'accqty' => (string) ($dispDecoded['accqty'] ?? $dispDecoded['acc_qty'] ?? ''),
+        'rejqty' => (string) ($dispDecoded['rejqty'] ?? $dispDecoded['rej_qty'] ?? ''),
+      ];
+    }
+  }
+  if (empty($dispositionItems)) {
+    $dispositionItems[] = [
+      'action' => (string) ($actionBelowNotes ?: $disposition),
+      'accqty' => $accQty,
+      'rejqty' => $rejQty,
+    ];
+  }
   $rootCause = (string) ($ncar->rootcause ?? '');
   $corrective = (string) ($ncar->corrective ?? '');
   $verification = (string) ($ncar->verification ?? '');
@@ -166,6 +197,7 @@
       table.grid table.inner { width: 100%; border-collapse: collapse; table-layout: fixed; }
       table.grid table.inner td { border: 0 !important; padding: 0 !important; }
       table.grid table.inner td.r { text-align: right; white-space: nowrap; padding-left: 10pt !important; }
+      table.grid td.c { text-align: center; }
 
       /* Corrective Action sign-off row (draw only internal lines) */
       table.grid table.ca-sign { width: 100%; border-collapse: collapse; table-layout: fixed; display: inline-table; height: auto !important; }
@@ -180,6 +212,7 @@
       /* Disposition block: keep as one outer grid row, draw only internal lines */
       table.grid table.dispblock { width: 100%; border-collapse: collapse; table-layout: fixed; }
       table.grid table.dispblock td { border: 0 !important; padding: 0.8pt 1.2pt !important; vertical-align: top; }
+      table.grid table.dispblock td.c { text-align: center; }
       table.grid table.dispblock td + td { border-left: 1px solid #000 !important; }
       table.grid table.dispblock tr.dispblock-head td { background: #d9eefb; }
       table.grid table.dispblock tr.dispblock-subhead td { background: #d9eefb; font-weight: 800; }
@@ -303,19 +336,25 @@
                   <td class="k" colspan="12">Disposition / Correction: <span class="muted">Use as is (Dev. Apprvl.) / Screen &amp; Rework / Remake / Credit / RTV / Scrap / Other</span></td>
                 </tr>
                 <tr class="dispblock-subhead">
-                  <td colspan="8">Action below / Notes</td>
+                  <td colspan="6">Action below / Notes</td>
                   <td colspan="1">AccQty.</td>
                   <td colspan="1">RejQty.</td>
+                  <td colspan="1">Init.</td>
+                  <td colspan="1">Date</td>
                   <td colspan="1">TM Init</td>
                   <td colspan="1">Date</td>
                 </tr>
-                <tr class="dispblock-body">
-                  <td class="v pre" colspan="8">{{ $actionBelowNotes ?: $disposition }}</td>
-                  <td class="v" colspan="1">{{ $accQty }}</td>
-                  <td class="v" colspan="1">{{ $rejQty }}</td>
-                  <td class="v" colspan="1">{{ $tmInit }}</td>
-                  <td class="v" colspan="1"></td>
-                </tr>
+                @foreach($dispositionItems as $idx => $it)
+                  <tr class="dispblock-body">
+                    <td class="v pre" colspan="6">{{ (string) ($it['action'] ?? '') }}</td>
+                    <td class="v c" colspan="1">{{ (string) ($it['accqty'] ?? '') }}</td>
+                    <td class="v c" colspan="1">{{ (string) ($it['rejqty'] ?? '') }}</td>
+                    <td class="v" colspan="1"></td>
+                    <td class="v" colspan="1"></td>
+                    <td class="v" colspan="1">{{ $idx === 0 ? $tmInit : '' }}</td>
+                    <td class="v" colspan="1"></td>
+                  </tr>
+                @endforeach
               </table>
             </td>
           </tr>

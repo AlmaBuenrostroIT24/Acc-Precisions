@@ -252,10 +252,10 @@
             </a>
           </div>
           <div class="card-body">
-            @php
-            $statusVal = strtolower((string) old('status', $ncar->status ?? 'New'));
-            $containReqKey = in_array('containmentreq', $columns ?? [], true) ? 'containmentreq' : 'contaimentreq';
-            @endphp
+              @php
+                $statusVal = strtolower((string) old('status', $ncar->status ?? 'New'));
+                $containReqKey = in_array('containmentreq', $columns ?? [], true) ? 'containmentreq' : 'contaimentreq';
+              @endphp
 
             <div class="d-flex align-items-center justify-content-between mt-1 mb-2">
               <div style="font-weight:900; color:#0f172a;">Other</div>
@@ -524,15 +524,230 @@
               </div>
 
               <div class="col-12">
-                <div class="form-group">
-                  <label>Disposition</label>
-                  <textarea name="disposition" rows="4" class="form-control form-control-sm {{ $errors->has('disposition') ? 'is-invalid' : '' }}">{{ old('disposition', $ncar->disposition ?? '') }}</textarea>
-                  @if($errors->has('disposition'))<div class="invalid-feedback">{{ $errors->first('disposition') }}</div>@endif
+                @php
+                  $dispRaw = (string) old('disposition', $ncar->disposition ?? '');
+                  $dispItems = [];
+                  $dispDecoded = null;
+                  $dispTrim = trim($dispRaw);
+                  if ($dispTrim !== '' && (str_starts_with($dispTrim, '[') || str_starts_with($dispTrim, '{'))) {
+                    $dispDecoded = json_decode($dispTrim, true);
+                  }
+
+                  $normalizeKey = function ($v): string {
+                    return strtolower(trim((string) $v));
+                  };
+
+                  if (is_array($dispDecoded)) {
+                    if (array_is_list($dispDecoded)) {
+                      foreach ($dispDecoded as $it) {
+                        if (!is_array($it)) continue;
+                        $dispItems[] = [
+                          'action' => (string) ($it['action'] ?? $it['type'] ?? $it['desc'] ?? ''),
+                          'accqty' => (string) ($it['accqty'] ?? $it['acc_qty'] ?? ''),
+                          'rejqty' => (string) ($it['rejqty'] ?? $it['rej_qty'] ?? ''),
+                        ];
+                      }
+                    } else {
+                      $dispItems[] = [
+                        'action' => (string) ($dispDecoded['action'] ?? $dispDecoded['type'] ?? $dispDecoded['desc'] ?? ''),
+                        'accqty' => (string) ($dispDecoded['accqty'] ?? $dispDecoded['acc_qty'] ?? ''),
+                        'rejqty' => (string) ($dispDecoded['rejqty'] ?? $dispDecoded['rej_qty'] ?? ''),
+                      ];
+                    }
+                  } elseif ($dispTrim !== '') {
+                    $dispItems[] = [
+                      'action' => $dispRaw,
+                      'accqty' => '',
+                      'rejqty' => '',
+                    ];
+                  }
+
+                  if (empty($dispItems)) {
+                    $dispItems[] = ['action' => '', 'accqty' => '', 'rejqty' => ''];
+                  }
+
+                  $dispOptions = [
+                    'Screen & Rework',
+                    'Remake',
+                    'Credit',
+                    'RTV',
+                    'Scrap',
+                    'Other',
+                  ];
+                @endphp
+
+                <div class="form-group mb-0">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <label class="mb-1">Disposition / Correction</label>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="addDispositionBtn">
+                      <i class="fas fa-plus mr-1"></i> Add
+                    </button>
+                  </div>
+
+                  <textarea name="disposition" id="dispositionJson" class="d-none">{{ $dispRaw }}</textarea>
+
+                  <div id="dispositionsWrap">
+                    @foreach($dispItems as $it)
+                      @php
+                        $selected = '';
+                        $k = $normalizeKey($it['action'] ?? '');
+                        foreach ($dispOptions as $opt) {
+                          if ($normalizeKey($opt) === $k) {
+                            $selected = $opt;
+                            break;
+                          }
+                        }
+                      @endphp
+                      <div class="row disposition-row mb-2">
+                        <div class="col-md-6">
+                          <select class="form-control form-control-sm disposition-action">
+                            <option value=""></option>
+                            @foreach($dispOptions as $opt)
+                              <option value="{{ $opt }}" {{ $selected === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                            @endforeach
+                          </select>
+                        </div>
+                        <div class="col-md-2">
+                          <input type="number" step="any" class="form-control form-control-sm disposition-accqty" placeholder="Acc Qty" value="{{ $it['accqty'] ?? '' }}">
+                        </div>
+                        <div class="col-md-2">
+                          <input type="number" step="any" class="form-control form-control-sm disposition-rejqty" placeholder="Rej Qty" value="{{ $it['rejqty'] ?? '' }}">
+                        </div>
+                        <div class="col-md-2">
+                          <button type="button" class="btn btn-outline-danger btn-sm remove-disposition" title="Remove">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    @endforeach
+                  </div>
+
+                  @if($errors->has('disposition'))<div class="invalid-feedback d-block">{{ $errors->first('disposition') }}</div>@endif
                 </div>
               </div>
 
 
             </div>
+
+            <script>
+              (function () {
+                var wrap = document.getElementById('dispositionsWrap');
+                var hidden = document.getElementById('dispositionJson');
+                var addBtn = document.getElementById('addDispositionBtn');
+                if (!wrap || !hidden || !addBtn) return;
+
+                var options = [
+                  'Screen & Rework',
+                  'Remake',
+                  'Credit',
+                  'RTV',
+                  'Scrap',
+                  'Other',
+                ];
+
+                function normalizeText(value) {
+                  return (value == null ? '' : String(value)).trim();
+                }
+
+                function getRows() {
+                  return Array.prototype.slice.call(wrap.querySelectorAll('.disposition-row'));
+                }
+
+                function syncToHidden() {
+                  var items = getRows().map(function (row) {
+                    var actionEl = row.querySelector('.disposition-action');
+                    var accEl = row.querySelector('.disposition-accqty');
+                    var rejEl = row.querySelector('.disposition-rejqty');
+                    return {
+                      action: normalizeText(actionEl ? actionEl.value : ''),
+                      accqty: normalizeText(accEl ? accEl.value : ''),
+                      rejqty: normalizeText(rejEl ? rejEl.value : ''),
+                    };
+                  }).filter(function (it) {
+                    return it.action !== '' || it.accqty !== '' || it.rejqty !== '';
+                  });
+
+                  if (items.length === 0) {
+                    items = [{ action: '', accqty: '', rejqty: '' }];
+                  }
+
+                  hidden.value = JSON.stringify(items);
+                }
+
+                function optionsHtml(selected) {
+                  var html = '<option value=""></option>';
+                  options.forEach(function (opt) {
+                    var sel = (selected === opt) ? ' selected' : '';
+                    html += '<option value="' + opt.replace(/\"/g, '&quot;') + '"' + sel + '>' + opt + '</option>';
+                  });
+                  return html;
+                }
+
+                function addRow(action, accqty, rejqty) {
+                  var row = document.createElement('div');
+                  row.className = 'row disposition-row mb-2';
+                  row.innerHTML =
+                    '<div class="col-md-6">' +
+                      '<select class="form-control form-control-sm disposition-action">' + optionsHtml(action || '') + '</select>' +
+                    '</div>' +
+                    '<div class="col-md-2">' +
+                      '<input type="number" step="any" class="form-control form-control-sm disposition-accqty" placeholder="Acc Qty" />' +
+                    '</div>' +
+                    '<div class="col-md-2">' +
+                      '<input type="number" step="any" class="form-control form-control-sm disposition-rejqty" placeholder="Rej Qty" />' +
+                    '</div>' +
+                    '<div class="col-md-2">' +
+                      '<button type="button" class="btn btn-outline-danger btn-sm remove-disposition" title="Remove"><i class="fas fa-trash"></i></button>' +
+                    '</div>';
+
+                  wrap.appendChild(row);
+                  var accEl = row.querySelector('.disposition-accqty');
+                  var rejEl = row.querySelector('.disposition-rejqty');
+                  if (accEl) accEl.value = accqty || '';
+                  if (rejEl) rejEl.value = rejqty || '';
+                  syncToHidden();
+                }
+
+                wrap.addEventListener('input', function (e) {
+                  if (!e.target) return;
+                  if (
+                    e.target.classList.contains('disposition-action') ||
+                    e.target.classList.contains('disposition-accqty') ||
+                    e.target.classList.contains('disposition-rejqty')
+                  ) {
+                    syncToHidden();
+                  }
+                });
+
+                wrap.addEventListener('change', function (e) {
+                  if (e.target && e.target.classList.contains('disposition-action')) {
+                    syncToHidden();
+                  }
+                });
+
+                wrap.addEventListener('click', function (e) {
+                  var btn = e.target && (e.target.closest ? e.target.closest('.remove-disposition') : null);
+                  if (!btn) return;
+                  var row = btn.closest('.disposition-row');
+                  if (row) row.remove();
+                  if (getRows().length === 0) addRow('', '', '');
+                  syncToHidden();
+                });
+
+                addBtn.addEventListener('click', function () {
+                  addRow('', '', '');
+                });
+
+                syncToHidden();
+
+                var form = addBtn.closest('form');
+                if (form) {
+                  form.addEventListener('submit', function () {
+                    syncToHidden();
+                  });
+                }
+              })();
+            </script>
 
             <script>
               (function () {
