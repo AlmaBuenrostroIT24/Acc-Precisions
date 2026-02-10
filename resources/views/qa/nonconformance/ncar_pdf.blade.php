@@ -58,6 +58,34 @@
   $refNo = (string) ($ncar->ref ?? '');
 
   $discrepancy = (string) (($ncar->discrepancy ?? '') ?: ($ncar->nc_description ?? ''));
+  $discrepancyItems = [];
+  $discRaw = trim((string) ($ncar->discrepancy ?? ''));
+  $discDecoded = null;
+  if ($discRaw !== '' && (str_starts_with($discRaw, '[') || str_starts_with($discRaw, '{'))) {
+    $discDecoded = json_decode($discRaw, true);
+  }
+  if (is_array($discDecoded)) {
+    if (array_is_list($discDecoded)) {
+      foreach ($discDecoded as $it) {
+        if (!is_array($it)) continue;
+        $discrepancyItems[] = [
+          'desc' => (string) ($it['desc'] ?? ''),
+          'qty' => (string) ($it['qty'] ?? ''),
+        ];
+      }
+    } else {
+      $discrepancyItems[] = [
+        'desc' => (string) ($discDecoded['desc'] ?? ''),
+        'qty' => (string) ($discDecoded['qty'] ?? ''),
+      ];
+    }
+  }
+  if (empty($discrepancyItems)) {
+    $discrepancyItems[] = [
+      'desc' => $discrepancy,
+      'qty' => (string) ($rejQty !== '' ? $rejQty : '1'),
+    ];
+  }
   $containment = (string) ($ncar->containment ?? '');
   $disposition = (string) ($ncar->disposition ?? '');
   $rootCause = (string) ($ncar->rootcause ?? '');
@@ -241,14 +269,22 @@
             <td class="k" colspan="2">RodBy:&nbsp;<span class="v">{{ $rodBy }}</span></td>
           </tr>
 
-          <tr class="h52 shade-gray">
+          <tr class="h52 grow shade-gray">
             <td colspan="11">
               <div class="k">Discrepancy</div>
-              <div class="v pre">{{ $discrepancy }}</div>
+              <div class="v pre">
+                @foreach($discrepancyItems as $it)
+                  {{ $it['desc'] }}@if(!$loop->last){{ "\n" }}@endif
+                @endforeach
+              </div>
             </td>
             <td colspan="1">
               <div class="k">Qty.</div>
-              <div class="v">{{ $rejQty ?: '1' }}</div>
+              <div class="v pre">
+                @foreach($discrepancyItems as $it)
+                  {{ trim((string)($it['qty'] ?? '')) !== '' ? $it['qty'] : ($rejQty !== '' ? $rejQty : '1') }}@if(!$loop->last){{ "\n" }}@endif
+                @endforeach
+              </div>
             </td>
           </tr>
 

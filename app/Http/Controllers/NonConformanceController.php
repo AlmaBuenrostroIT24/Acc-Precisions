@@ -126,6 +126,15 @@ class NonConformanceController extends Controller
 
     public function edit($id)
     {
+        $ordersCols = Schema::hasTable('orders_schedule') ? Schema::getColumnListing('orders_schedule') : [];
+        $woQtyCol = null;
+        foreach (['wo_qty', 'WO_Qty', 'WO_QTY', 'WOQty', 'woQty'] as $c) {
+            if (in_array($c, $ordersCols, true)) {
+                $woQtyCol = $c;
+                break;
+            }
+        }
+
         $ncar = DB::table('qa_ncar as n')
             ->leftJoin('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
             ->leftJoin('orders_schedule as o', 'o.id', '=', 'n.order_id')
@@ -137,7 +146,10 @@ class NonConformanceController extends Controller
                 'o.cust_po',
                 'o.PN',
                 'o.Part_description',
-                'o.costumer as order_customer'
+                'o.costumer as order_customer',
+                'o.operation as order_operation',
+                'o.qty as order_qty',
+                $woQtyCol ? DB::raw("o.`{$woQtyCol}` as wo_qty") : DB::raw('NULL as wo_qty'),
             )
             ->where('n.id', (int) $id)
             ->first();
@@ -155,7 +167,7 @@ class NonConformanceController extends Controller
         abort_unless(DB::table('qa_ncar')->where('id', $id)->exists(), 404);
 
         $tableColumns = Schema::hasTable('qa_ncar') ? Schema::getColumnListing('qa_ncar') : [];
-        $blocked = ['id', 'ncar_no', 'order_id', 'ncartype_id', 'created_at', 'updated_at', 'ncar_customer'];
+        $blocked = ['id', 'ncar_no', 'order_id', 'ncartype_id', 'created_at', 'updated_at', 'ncar_customer', 'contact'];
         $allowed = array_values(array_diff($tableColumns, $blocked));
 
         $input = $r->except(['_token', '_method']);
@@ -167,6 +179,19 @@ class NonConformanceController extends Controller
         }
 
         $data = $rules ? $r->validate($rules) : [];
+
+        // Laravel converts empty strings to null (ConvertEmptyStringsToNull middleware).
+        // Some NCAR columns are NOT NULL in the database, so normalize string nulls back to ''.
+        foreach ($rules as $field => $rule) {
+            if (!array_key_exists($field, $data) || $data[$field] !== null) {
+                continue;
+            }
+
+            $ruleStr = is_array($rule) ? implode('|', $rule) : (string) $rule;
+            if (str_contains($ruleStr, 'string')) {
+                $data[$field] = '';
+            }
+        }
 
         if (!empty($data)) {
             DB::table('qa_ncar')->where('id', $id)->update($data);
@@ -362,6 +387,10 @@ class NonConformanceController extends Controller
 
         if ($f === 'status') {
             return ['nullable', 'string', 'max:50'];
+        }
+
+        if (in_array($f, ['jobpktcopy', 'travinsp', 'samplecompl'], true)) {
+            return ['nullable', 'boolean'];
         }
 
         if (str_contains($f, 'date')) {
