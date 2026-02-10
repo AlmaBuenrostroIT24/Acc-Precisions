@@ -269,24 +269,22 @@
             <td class="k" colspan="2">RodBy:&nbsp;<span class="v">{{ $rodBy }}</span></td>
           </tr>
 
-          <tr class="h52 grow shade-gray">
-            <td colspan="11">
-              <div class="k">Discrepancy</div>
-              <div class="v pre">
-                @foreach($discrepancyItems as $it)
-                  {{ $it['desc'] }}@if(!$loop->last){{ "\n" }}@endif
-                @endforeach
-              </div>
-            </td>
-            <td colspan="1">
-              <div class="k">Qty.</div>
-              <div class="v pre">
-                @foreach($discrepancyItems as $it)
-                  {{ trim((string)($it['qty'] ?? '')) !== '' ? $it['qty'] : ($rejQty !== '' ? $rejQty : '1') }}@if(!$loop->last){{ "\n" }}@endif
-                @endforeach
-              </div>
-            </td>
-          </tr>
+          @foreach($discrepancyItems as $idx => $it)
+            <tr class="h18 grow shade-gray">
+              <td colspan="11">
+                @if($idx === 0)
+                  <div class="k">Discrepancy</div>
+                @endif
+                <div class="v pre">{{ $it['desc'] }}</div>
+              </td>
+              <td colspan="1">
+                @if($idx === 0)
+                  <div class="k">Qty.</div>
+                @endif
+                <div class="v">{{ trim((string)($it['qty'] ?? '')) !== '' ? $it['qty'] : ($rejQty !== '' ? $rejQty : '1') }}</div>
+              </td>
+            </tr>
+          @endforeach
 
           <tr class="h18 ">
             <td class="k" colspan="4">Containment Req.?:&nbsp;<span class="v">{{ $containmentReq }}</span></td>
