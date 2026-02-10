@@ -11,6 +11,14 @@
       }
   };
 
+  $fmtYesNo = function ($raw) {
+      $norm = strtolower(trim((string) ($raw ?? '')));
+      if ($norm === '') return '';
+      if (in_array($norm, ['1', 'true', 'yes', 'y', 'on'], true)) return 'Yes';
+      if (in_array($norm, ['0', 'false', 'no', 'n', 'off'], true)) return 'No';
+      return (string) $raw;
+  };
+
   $companyName = 'ACC Precision, Inc.';
   $companyAddr = '321 Hearst Drive Oxnard, CA 93030';
   $companyPhoneTel = 'Tel. 805-278-9801';
@@ -24,15 +32,15 @@
   $class = (string) (($ncar->class ?? '') ?: ($ncar->ncar_class ?? '') ?: ($ncar->type_name ?? ''));
   $poNo = (string) (($ncar->cust_po ?? '') ?: ($ncar->PO ?? '') ?: ($ncar->po ?? ''));
 
-  $jobPktCopy = (string) ($ncar->jobpktcopy ?? $ncar->job_pkt_copy ?? '');
-  $travInspCompl = (string) ($ncar->travinspcompl ?? $ncar->trav_insp_compl ?? '');
-  $samplCompl = (string) ($ncar->samplcompl ?? $ncar->sampl_compl ?? '');
+  $jobPktCopy = $fmtYesNo($ncar->jobpktcopy ?? $ncar->job_pkt_copy ?? '');
+  $travInspCompl = $fmtYesNo($ncar->travinsp ?? $ncar->travinspcompl ?? $ncar->trav_insp_compl ?? '');
+  $samplCompl = $fmtYesNo($ncar->samplecompl ?? $ncar->samplcompl ?? $ncar->sampl_compl ?? '');
   $issueFound = (string) ($ncar->issue_found ?? $ncar->issuefound ?? '');
   $issueFoundDate = $fmtDate($ncar->issue_date ?? $ncar->issuefound_date ?? null);
   $spProcInvalid = (string) ($ncar->spprocinvalid ?? $ncar->sp_proc_invalid ?? '');
   $rodBy = (string) ($ncar->rodby ?? $ncar->rod_by ?? '');
 
-  $containmentReq = (string) ($ncar->containment_req ?? $ncar->containmentreq ?? '');
+  $containmentReq = $fmtYesNo($ncar->containmentreq ?? $ncar->contaimentreq ?? $ncar->containment_req ?? '');
   $actionBelowNotes = (string) ($ncar->action_below ?? $ncar->actionbelow ?? '');
   $accQty = (string) ($ncar->accqty ?? $ncar->acc_qty ?? '');
   $tmInit = (string) ($ncar->tminit ?? $ncar->tm_init ?? '');
