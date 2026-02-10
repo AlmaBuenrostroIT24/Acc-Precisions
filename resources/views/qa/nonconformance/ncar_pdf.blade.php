@@ -140,7 +140,7 @@
     <style>
       /* Let cells grow with content (may create more than 1 page). */
       /* Extra bottom margin to reserve space for the fixed footer */
-      @page { margin: 18pt 12pt 84pt; size: letter portrait; }
+      @page { margin: 18pt 12pt 150pt; size: letter portrait; }
       html, body { margin: 0; padding: 0; }
       body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #000; }
 
@@ -303,7 +303,7 @@
           </tr>
 
           @foreach($discrepancyItems as $idx => $it)
-            <tr class="h18 grow shade-gray">
+            <tr class="h18 shade-gray">
               <td colspan="11">
                 @if($idx === 0)
                   <div class="k">Discrepancy</div>
@@ -314,7 +314,7 @@
                 @if($idx === 0)
                   <div class="k">Qty.</div>
                 @endif
-                <div class="v">{{ trim((string)($it['qty'] ?? '')) !== '' ? $it['qty'] : ($rejQty !== '' ? $rejQty : '1') }}</div>
+                <div class="v">{{ trim((string)($it['qty'] ?? '')) !== '' ? $it['qty'] : '' }}</div>
               </td>
             </tr>
           @endforeach

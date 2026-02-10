@@ -254,7 +254,7 @@ class NonConformanceController extends Controller
         // These must match the view's @page margins.
         $pageMarginLeft = 12;
         $pageMarginRight = 12;
-        $pageMarginBottom = 64;
+        $pageMarginBottom = 150;
 
         // Dompdf canvas size can be either the full page box or the content box (excluding margins),
         // depending on backend/version. Detect heuristically and compute coordinates accordingly.
@@ -266,7 +266,7 @@ class NonConformanceController extends Controller
 
         // Align footer text with the same left/right edges as the table in the view.
         // View CSS:
-        // - @page { margin: 18pt 12pt 64pt; }
+        // - @page { margin: 18pt 12pt 150pt; }
         // - table.grid { width: 96%; margin: 0 auto; }
         if ($canvasIsContentBox) {
             $tableWidth = $w * 0.96;
