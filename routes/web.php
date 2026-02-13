@@ -8,6 +8,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Order_ScheduleController;
 use App\Http\Controllers\QaFaiSummaryController;
 use App\Http\Controllers\NonConformanceController;
+use App\Http\Controllers\CostingController;
 use App\Http\Controllers\Machines\MachCodeController;
 use App\Http\Controllers\Machines\MachMachinaryController;
 
@@ -33,6 +34,12 @@ Route::get('/login', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/quote/costing', [CostingController::class, 'index'])->middleware(['auth'])->name('costing');
+Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->middleware(['auth'])->name('costing.pdf');
+Route::get('/costing', function () {
+    return redirect()->route('costing');
+})->middleware(['auth']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

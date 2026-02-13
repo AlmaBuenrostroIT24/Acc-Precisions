@@ -395,6 +395,17 @@ return [
                 ],
             ],
         ],
+        [
+            'text' => 'Quotes',
+            'icon' => 'nav-icon fas fa-file-invoice',
+            'submenu' => [
+                [
+                    'text' => 'Costing',
+                    'url' => 'quote/costing',
+                    'icon' => 'fas fa-calculator',
+                ],
+            ],
+        ],
 
         [
             'text' => 'Employees',
