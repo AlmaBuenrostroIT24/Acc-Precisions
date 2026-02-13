@@ -97,6 +97,34 @@
   $containment = (string) ($ncar->containment ?? '');
   $disposition = (string) ($ncar->disposition ?? '');
   $dispositionItems = [];
+
+  $personnelInvolvedItems = [];
+  $personnelInvolvedRaw = trim((string) ($ncar->personnelinvolved ?? ''));
+  $personnelInvolvedDecoded = null;
+  if ($personnelInvolvedRaw !== '' && (str_starts_with($personnelInvolvedRaw, '[') || str_starts_with($personnelInvolvedRaw, '{'))) {
+    $personnelInvolvedDecoded = json_decode($personnelInvolvedRaw, true);
+  }
+  if (is_array($personnelInvolvedDecoded)) {
+    if (array_is_list($personnelInvolvedDecoded)) {
+      foreach ($personnelInvolvedDecoded as $it) {
+        if (is_string($it)) {
+          $op = trim($it);
+          if ($op !== '') $personnelInvolvedItems[] = ['operator' => $op, 'ope_position' => ''];
+          continue;
+        }
+        if (!is_array($it)) continue;
+        $op = trim((string) ($it['operator'] ?? $it['name'] ?? $it['value'] ?? ''));
+        $pos = trim((string) ($it['ope_position'] ?? $it['position'] ?? $it['opePosition'] ?? ''));
+        if ($op !== '') $personnelInvolvedItems[] = ['operator' => $op, 'ope_position' => $pos];
+      }
+    } else {
+      $op = trim((string) ($personnelInvolvedDecoded['operator'] ?? $personnelInvolvedDecoded['name'] ?? $personnelInvolvedDecoded['value'] ?? ''));
+      $pos = trim((string) ($personnelInvolvedDecoded['ope_position'] ?? $personnelInvolvedDecoded['position'] ?? $personnelInvolvedDecoded['opePosition'] ?? ''));
+      if ($op !== '') $personnelInvolvedItems[] = ['operator' => $op, 'ope_position' => $pos];
+    }
+  } elseif ($personnelInvolvedRaw !== '') {
+    $personnelInvolvedItems[] = ['operator' => $personnelInvolvedRaw, 'ope_position' => ''];
+  }
   $dispRaw = trim((string) ($ncar->disposition ?? ''));
   $dispDecoded = null;
   if ($dispRaw !== '' && (str_starts_with($dispRaw, '[') || str_starts_with($dispRaw, '{'))) {
@@ -403,16 +431,30 @@
             <td class="k" colspan="1">Init</td>
             <td class="k" colspan="1">Date</td>
           </tr>
-          <tr class="h18">
-            <td colspan="2">&nbsp;</td>
-            <td colspan="2">&nbsp;</td>
-            <td colspan="1">&nbsp;</td>
-            <td colspan="1">&nbsp;</td>
-            <td colspan="2">&nbsp;</td>
-            <td colspan="2">&nbsp;</td>
-            <td colspan="1">&nbsp;</td>
-            <td colspan="1">&nbsp;</td>
-          </tr>
+          @php
+            $pairs = array_chunk($personnelInvolvedItems, 2);
+            if (empty($pairs)) $pairs = [[['operator' => '', 'ope_position' => ''], ['operator' => '', 'ope_position' => '']]];
+          @endphp
+          @foreach($pairs as $pair)
+            @php
+              $left = $pair[0] ?? ['operator' => '', 'ope_position' => ''];
+              $right = $pair[1] ?? ['operator' => '', 'ope_position' => ''];
+              $lOp = trim((string) ($left['operator'] ?? ''));
+              $lPos = trim((string) ($left['ope_position'] ?? ''));
+              $rOp = trim((string) ($right['operator'] ?? ''));
+              $rPos = trim((string) ($right['ope_position'] ?? ''));
+            @endphp
+            <tr class="h18">
+              <td colspan="2">{!! $lOp !== '' ? e($lOp) : '&nbsp;' !!}</td>
+              <td colspan="2">{!! $lPos !== '' ? e($lPos) : '&nbsp;' !!}</td>
+              <td colspan="1">&nbsp;</td>
+              <td colspan="1">&nbsp;</td>
+              <td colspan="2">{!! $rOp !== '' ? e($rOp) : '&nbsp;' !!}</td>
+              <td colspan="2">{!! $rPos !== '' ? e($rPos) : '&nbsp;' !!}</td>
+              <td colspan="1">&nbsp;</td>
+              <td colspan="1">&nbsp;</td>
+            </tr>
+          @endforeach
 
           <tr class="h70 shade-gray">
             <td colspan="12">

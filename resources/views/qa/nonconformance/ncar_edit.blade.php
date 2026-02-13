@@ -151,9 +151,9 @@
                       <div class="list-group list-group-flush">
                         <a class="list-group-item list-group-item-action" href="#sec-other">Other</a>
                         <a class="list-group-item list-group-item-action" href="#sec-issue">Issue / Disposition</a>
+                        <a class="list-group-item list-group-item-action" href="#sec-personnel">Personnel / Process</a>
                         <a class="list-group-item list-group-item-action" href="#sec-general">General</a>
                         <a class="list-group-item list-group-item-action" href="#sec-root">Root Cause</a>
-                        <a class="list-group-item list-group-item-action" href="#sec-personnel">Personnel / Process</a>
                         <a class="list-group-item list-group-item-action" href="#sec-corrective">Corrective / Verification</a>
                       </div>
                     </div>
@@ -297,52 +297,6 @@
                                 <label>Rcd By</label>
                                 <input name="rcdrby" type="text" class="form-control form-control-sm {{ $errors->has('rcdrby') ? 'is-invalid' : '' }}" value="{{ old('rcdrby', $ncar->rcdrby ?? '') }}">
                                 @if($errors->has('rcdrby'))<div class="invalid-feedback">{{ $errors->first('rcdrby') }}</div>@endif
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div id="sec-general" class="card erp-section">
-                    <div class="card-header py-2">
-                      <strong>General</strong>
-                    </div>
-                    <div class="card-body">
-                      <div class="row">
-                        <div class="col-12">
-                          <div class="row">
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Ref</label>
-                                <input name="ref" type="text" class="form-control form-control-sm {{ $errors->has('ref') ? 'is-invalid' : '' }}" value="{{ old('ref', $ncar->ref ?? '') }}">
-                                @if($errors->has('ref'))<div class="invalid-feedback">{{ $errors->first('ref') }}</div>@endif
-                              </div>
-                            </div>
-
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Desc</label>
-                                <input name="desc" type="text" class="form-control form-control-sm {{ $errors->has('desc') ? 'is-invalid' : '' }}" value="{{ old('desc', $ncar->desc ?? '') }}">
-                                @if($errors->has('desc'))<div class="invalid-feedback">{{ $errors->first('desc') }}</div>@endif
-                              </div>
-                            </div>
-
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Date</label>
-                                <input name="date" type="date" class="form-control form-control-sm {{ $errors->has('date') ? 'is-invalid' : '' }}" value="{{ substr((string) old('date', $ncar->date ?? ''), 0, 10) }}">
-                                @if($errors->has('date'))<div class="invalid-feedback">{{ $errors->first('date') }}</div>@endif
-                              </div>
-                            </div>
-
-
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Date Issue</label>
-                                <input name="dateissue" type="date" class="form-control form-control-sm {{ $errors->has('dateissue') ? 'is-invalid' : '' }}" value="{{ substr((string) old('dateissue', $ncar->dateissue ?? ''), 0, 10) }}">
-                                @if($errors->has('dateissue'))<div class="invalid-feedback">{{ $errors->first('dateissue') }}</div>@endif
                               </div>
                             </div>
                           </div>
@@ -558,6 +512,54 @@
                     </div>
                   </div>
 
+                  <div id="sec-general" class="card erp-section">
+                    <div class="card-header py-2">
+                      <strong>General</strong>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="row">
+                            <div class="col-md-4">
+                              <div class="form-group">
+                                <label>Ref</label>
+                                <input name="ref" type="text" class="form-control form-control-sm {{ $errors->has('ref') ? 'is-invalid' : '' }}" value="{{ old('ref', $ncar->ref ?? '') }}">
+                                @if($errors->has('ref'))<div class="invalid-feedback">{{ $errors->first('ref') }}</div>@endif
+                              </div>
+                            </div>
+
+                            <div class="col-md-4">
+                              <div class="form-group">
+                                <label>Desc</label>
+                                <input name="desc" type="text" class="form-control form-control-sm {{ $errors->has('desc') ? 'is-invalid' : '' }}" value="{{ old('desc', $ncar->desc ?? '') }}">
+                                @if($errors->has('desc'))<div class="invalid-feedback">{{ $errors->first('desc') }}</div>@endif
+                              </div>
+                            </div>
+
+                            <div class="col-md-4">
+                              <div class="form-group">
+                                <label>Date</label>
+                                <input name="date" type="date" class="form-control form-control-sm {{ $errors->has('date') ? 'is-invalid' : '' }}" value="{{ substr((string) old('date', $ncar->date ?? ''), 0, 10) }}">
+                                @if($errors->has('date'))<div class="invalid-feedback">{{ $errors->first('date') }}</div>@endif
+                              </div>
+                            </div>
+
+
+                            <div class="col-md-4">
+                              <div class="form-group">
+                                <label>Date Issue</label>
+                                <input name="dateissue" type="date" class="form-control form-control-sm {{ $errors->has('dateissue') ? 'is-invalid' : '' }}" value="{{ substr((string) old('dateissue', $ncar->dateissue ?? ''), 0, 10) }}">
+                                @if($errors->has('dateissue'))<div class="invalid-feedback">{{ $errors->first('dateissue') }}</div>@endif
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+
                   <div id="sec-root" class="card erp-section">
                     <div class="card-header py-2">
                       <strong>Root Cause</strong>
@@ -623,9 +625,110 @@
 
                         <div class="col-12">
                           <div class="form-group">
-                            <label>Personnel Involved</label>
-                            <textarea name="personnelinvolved" rows="3" class="form-control form-control-sm {{ $errors->has('personnelinvolved') ? 'is-invalid' : '' }}">{{ old('personnelinvolved', $ncar->personnelinvolved ?? '') }}</textarea>
-                            @if($errors->has('personnelinvolved'))<div class="invalid-feedback">{{ $errors->first('personnelinvolved') }}</div>@endif
+                            @php
+                            $personnelRaw = (string) old('personnelinvolved', $ncar->personnelinvolved ?? '');
+                            $personnelItems = [];
+                            $personnelDecoded = null;
+                            $personnelTrim = trim($personnelRaw);
+                            if ($personnelTrim !== '' && (str_starts_with($personnelTrim, '[') || str_starts_with($personnelTrim, '{'))) {
+                            $personnelDecoded = json_decode($personnelTrim, true);
+                            }
+
+                            if (is_array($personnelDecoded)) {
+                            if (array_is_list($personnelDecoded)) {
+                            foreach ($personnelDecoded as $it) {
+                            if (is_string($it)) {
+                            $v = trim($it);
+                            if ($v !== '') $personnelItems[] = ['operator' => $v, 'ope_position' => ''];
+                            continue;
+                            }
+                            if (is_array($it)) {
+                            $op = trim((string) ($it['operator'] ?? $it['name'] ?? $it['value'] ?? ''));
+                            $pos = trim((string) ($it['ope_position'] ?? $it['position'] ?? $it['opePosition'] ?? ''));
+                            if ($op !== '') $personnelItems[] = ['operator' => $op, 'ope_position' => $pos];
+                            }
+                            }
+                            } else {
+                            $op = trim((string) ($personnelDecoded['operator'] ?? $personnelDecoded['name'] ?? $personnelDecoded['value'] ?? ''));
+                            $pos = trim((string) ($personnelDecoded['ope_position'] ?? $personnelDecoded['position'] ?? $personnelDecoded['opePosition'] ?? ''));
+                            if ($op !== '') $personnelItems[] = ['operator' => $op, 'ope_position' => $pos];
+                            }
+                            } elseif ($personnelTrim !== '') {
+                            $personnelItems[] = ['operator' => $personnelTrim, 'ope_position' => ''];
+                            }
+
+                            if (empty($personnelItems)) {
+                            $personnelItems[] = ['operator' => '', 'ope_position' => ''];
+                            }
+
+                            $locStr = strtolower(trim((string) ($ncar->location ?? '')));
+                            $opRows = \Illuminate\Support\Facades\DB::table('gen_operators as o')
+                            ->leftJoin('gen_location as l', 'l.id', '=', 'o.location_id')
+                            ->select(['o.operator', 'o.ope_position', 'l.location as location'])
+                            ->when($locStr !== '', function ($q) use ($locStr) {
+                            $q->whereRaw('LOWER(l.location) = ?', [$locStr]);
+                            })
+                            ->orderBy('o.operator')
+                            ->get();
+
+                            $operatorOptions = [];
+                            $operatorPosMap = [];
+                            foreach ($opRows as $r) {
+                            $val = trim((string) ($r->operator ?? ''));
+                            if ($val === '') continue;
+                            $pos = trim((string) ($r->ope_position ?? ''));
+                            $operatorPosMap[$val] = $pos;
+                            $operatorOptions[] = ['value' => $val, 'pos' => $pos];
+                            }
+                            @endphp
+
+                            <textarea name="personnelinvolved" id="personnelInvolvedJson" class="d-none">{{ $personnelRaw }}</textarea>
+
+                            <div class="erp-field-head">
+                              <label class="mb-1">Personnel Involved</label>
+                              <button type="button" class="btn btn-sm erp-btn-add" id="addPersonnelBtn">
+                                <i class="fas fa-plus mr-1"></i> Add
+                              </button>
+                            </div>
+
+                            <select id="personnelOperatorTemplate" class="d-none">
+                              <option value=""></option>
+                              @foreach($operatorOptions as $opt)
+                              <option value="{{ $opt['value'] }}" data-pos="{{ $opt['pos'] }}">{{ $opt['value'] }}</option>
+                              @endforeach
+                            </select>
+
+                            <div id="personnelInvolvedWrap">
+                              @foreach($personnelItems as $it)
+                              @php
+                              $itOp = (string) ($it['operator'] ?? '');
+                              $itPos = (string) ($it['ope_position'] ?? '');
+                              if ($itPos === '' && $itOp !== '' && isset($operatorPosMap[$itOp])) {
+                              $itPos = (string) $operatorPosMap[$itOp];
+                              }
+                              @endphp
+                              <div class="row personnel-row mb-2">
+                                <div class="col-md-7">
+                                  <select class="form-control form-control-sm personnel-operator {{ $errors->has('personnelinvolved') ? 'is-invalid' : '' }}">
+                                    <option value=""></option>
+                                    @foreach($operatorOptions as $opt)
+                                    <option value="{{ $opt['value'] }}" data-pos="{{ $opt['pos'] }}" {{ $itOp === (string)$opt['value'] ? 'selected' : '' }}>{{ $opt['value'] }}</option>
+                                    @endforeach
+                                  </select>
+                                </div>
+                                <div class="col-md-4">
+                                  <input type="text" class="form-control form-control-sm personnel-position" value="{{ $itPos }}" readonly>
+                                </div>
+                                <div class="col-md-1">
+                                  <button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-personnel" title="Remove">
+                                    <i class="fas fa-trash"></i>
+                                  </button>
+                                </div>
+                              </div>
+                              @endforeach
+                            </div>
+
+                            @if($errors->has('personnelinvolved'))<div class="invalid-feedback d-block">{{ $errors->first('personnelinvolved') }}</div>@endif
                           </div>
                         </div>
 
@@ -683,368 +786,487 @@
   </div>
   @endsection
 
-@section('css')
-<style>
-  .ncar-edit-page,
-  .ncar-edit-page * {
-    font-size: 14px !important;
-  }
+  @section('css')
+  <style>
+    .ncar-edit-page,
+    .ncar-edit-page * {
+      font-size: 14px !important;
+    }
 
-  .ncar-edit-page .card {
-    border-radius: 12px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
-  }
+    .ncar-edit-page .card {
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+    }
 
-  .ncar-edit-page .card-header {
-    border-bottom: 1px solid rgba(15, 23, 42, 0.10);
-    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
-    color: #0f172a;
-    font-weight: 800;
-    letter-spacing: .02em;
-  }
+    .ncar-edit-page .card-header {
+      border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+      background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+      color: #0f172a;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
 
-  .ncar-edit-page .erp-ro-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    padding: 2px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.55);
-    background: rgba(148, 163, 184, 0.12);
-    color: #475569;
-    font-weight: 800;
-    font-size: 0.82rem !important;
-    line-height: 1;
-    white-space: nowrap;
-  }
+    .ncar-edit-page .erp-ro-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(148, 163, 184, 0.12);
+      color: #475569;
+      font-weight: 800;
+      font-size: 0.82rem !important;
+      line-height: 1;
+      white-space: nowrap;
+    }
 
-  .ncar-edit-page .erp-ro-badge i {
-    font-size: 0.9rem !important;
-  }
+    .ncar-edit-page .erp-ro-badge i {
+      font-size: 0.9rem !important;
+    }
 
-  .ncar-edit-page .form-group label {
-    font-weight: 700;
-    color: rgba(15, 23, 42, 0.80);
-    margin-bottom: .35rem;
-  }
+    .ncar-edit-page .form-group label {
+      font-weight: 700;
+      color: rgba(15, 23, 42, 0.80);
+      margin-bottom: .35rem;
+    }
 
-  .ncar-edit-page .form-group {
-    margin-bottom: .65rem;
-  }
+    .ncar-edit-page .form-group {
+      margin-bottom: .65rem;
+    }
 
-  .ncar-edit-page .form-control,
-  .ncar-edit-page .custom-select,
-  .ncar-edit-page select.form-control {
-    border: 1px solid #d6dbe3;
-    border-radius: 12px;
-    padding: 8px 12px;
-    background: #f8fafc;
-    box-shadow: none;
-    color: #0f172a;
-    font-weight: 600;
-    height: 40px;
-    line-height: 1.15;
-  }
+    .ncar-edit-page .form-control,
+    .ncar-edit-page .custom-select,
+    .ncar-edit-page select.form-control {
+      border: 1px solid #d6dbe3;
+      border-radius: 12px;
+      padding: 8px 12px;
+      background: #f8fafc;
+      box-shadow: none;
+      color: #0f172a;
+      font-weight: 600;
+      height: 40px;
+      line-height: 1.15;
+    }
 
-  .ncar-edit-page textarea.form-control {
-    height: auto;
-    min-height: 40px;
-    font-weight: 500;
-  }
+    .ncar-edit-page textarea.form-control {
+      height: auto;
+      min-height: 40px;
+      font-weight: 500;
+    }
 
-  /* Auto-grow textareas (Discrepancy) */
-  .ncar-edit-page .erp-autogrow {
-    resize: none;
-    overflow: hidden;
-  }
+    /* Auto-grow textareas (Discrepancy) */
+    .ncar-edit-page .erp-autogrow {
+      resize: none;
+      overflow: hidden;
+    }
 
-  /* Info (solo lectura): que se note que NO es editable */
-  .ncar-edit-page .form-control[readonly],
-  .ncar-edit-page textarea.form-control[readonly],
-  .ncar-edit-page .form-control:disabled,
-  .ncar-edit-page textarea.form-control:disabled {
-    background: rgba(241, 245, 249, 0.9) !important;
-    color: #0f172a !important;
-    box-shadow: none !important;
-    cursor: not-allowed;
-  }
+    /* Info (solo lectura): que se note que NO es editable */
+    .ncar-edit-page .form-control[readonly],
+    .ncar-edit-page textarea.form-control[readonly],
+    .ncar-edit-page .form-control:disabled,
+    .ncar-edit-page textarea.form-control:disabled {
+      background: rgba(241, 245, 249, 0.9) !important;
+      color: #0f172a !important;
+      box-shadow: none !important;
+      cursor: not-allowed;
+    }
 
-  /* Editable section inputs: keep them white (not gray) */
-  .ncar-edit-page .erp-section .form-control,
-  .ncar-edit-page .erp-section .custom-select,
-  .ncar-edit-page .erp-section select.form-control {
-    background: #fff;
-  }
+    /* Editable section inputs: keep them white (not gray) */
+    .ncar-edit-page .erp-section .form-control,
+    .ncar-edit-page .erp-section .custom-select,
+    .ncar-edit-page .erp-section select.form-control {
+      background: #fff;
+    }
 
-  /* Left-side ERP fields: keep the default gray ERP look */
-  .ncar-edit-page .erp-gray-fields .form-control,
-  .ncar-edit-page .erp-gray-fields .custom-select,
-  .ncar-edit-page .erp-gray-fields select.form-control {
-    background: #f8fafc;
-  }
+    /* Left-side ERP fields: keep the default gray ERP look */
+    .ncar-edit-page .erp-gray-fields .form-control,
+    .ncar-edit-page .erp-gray-fields .custom-select,
+    .ncar-edit-page .erp-gray-fields select.form-control {
+      background: #f8fafc;
+    }
 
-  .ncar-edit-page .form-control:focus {
-    border-color: #94a3b8;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
-    outline: none;
-  }
+    .ncar-edit-page .form-control:focus {
+      border-color: #94a3b8;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
+      outline: none;
+    }
 
-  .ncar-edit-page .btn-group-sm>.btn,
-  .ncar-edit-page .btn-sm {
-    border-radius: 10px;
-    font-weight: 700;
-  }
+    .ncar-edit-page .btn-group-sm>.btn,
+    .ncar-edit-page .btn-sm {
+      border-radius: 10px;
+      font-weight: 700;
+    }
 
-  .ncar-edit-page .alert {
-    border-radius: 12px;
-    border: 1px solid rgba(16, 185, 129, 0.25);
-  }
+    .ncar-edit-page .alert {
+      border-radius: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
 
-  .ncar-edit-page .section-meta {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    color: #64748b;
-    font-weight: 800;
-    font-size: 0.85rem !important;
-    white-space: nowrap;
-  }
+    .ncar-edit-page .section-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      color: #64748b;
+      font-weight: 800;
+      font-size: 0.85rem !important;
+      white-space: nowrap;
+    }
 
-  .ncar-edit-page .erp-field-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: .5rem;
-    flex-wrap: wrap;
-    margin-bottom: .4rem;
-  }
+    .ncar-edit-page .erp-field-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: .4rem;
+    }
 
-  .ncar-edit-page .erp-field-head label {
-    margin: 0;
-    flex: 1 1 220px;
-    min-width: 0;
-  }
+    .ncar-edit-page .erp-field-head label {
+      margin: 0;
+      flex: 1 1 220px;
+      min-width: 0;
+    }
 
-  .ncar-edit-page .erp-btn-add {
-    display: inline-flex;
-    align-items: center;
-    flex: 0 0 auto;
-    white-space: nowrap;
-    margin-left: auto;
-    height: 34px;
-    border-radius: 10px;
-    font-weight: 800;
-    border: 1px solid rgba(148, 163, 184, 0.65);
-    background: #fff;
-    color: #0f172a;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-    padding: .35rem .75rem;
-  }
+    .ncar-edit-page .erp-btn-add {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      white-space: nowrap;
+      margin-left: auto;
+      height: 34px;
+      border-radius: 10px;
+      font-weight: 800;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      background: #fff;
+      color: #0f172a;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      padding: .35rem .75rem;
+    }
 
-  .ncar-edit-page .erp-btn-add i {
-    color: #2563eb;
-    font-size: 0.95rem;
-  }
+    .ncar-edit-page .erp-btn-add i {
+      color: #2563eb;
+      font-size: 0.95rem;
+    }
 
-  .ncar-edit-page .erp-btn-add:hover {
-    background: #f8fafc;
-    border-color: rgba(100, 116, 139, 0.55);
-    color: #0f172a;
-  }
+    .ncar-edit-page .erp-btn-add:hover {
+      background: #f8fafc;
+      border-color: rgba(100, 116, 139, 0.55);
+      color: #0f172a;
+    }
 
-  .ncar-edit-page .erp-btn-add:focus {
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
-  }
+    .ncar-edit-page .erp-btn-add:focus {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
 
-  .ncar-edit-page .erp-btn-remove {
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-  }
+    .ncar-edit-page .erp-btn-remove {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
 
-  /* ERP layout helpers */
-  .ncar-edit-page {
-    background: #f4f6f9;
-    padding: 8px 0 18px;
-  }
+    /* ERP layout helpers */
+    .ncar-edit-page {
+      background: #f4f6f9;
+      padding: 8px 0 18px;
+    }
 
-  .ncar-edit-page .erp-sticky {
-    position: sticky;
-    top: 12px;
-  }
+    .ncar-edit-page .erp-sticky {
+      position: sticky;
+      top: 12px;
+    }
 
-  .ncar-edit-page .erp-nav .list-group-item {
-    border: 0;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    padding: .45rem .6rem;
-    font-weight: 800;
-    color: #0f172a;
-    font-size: 0.9rem !important;
-  }
+    .ncar-edit-page .erp-nav .list-group-item {
+      border: 0;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      padding: .45rem .6rem;
+      font-weight: 800;
+      color: #0f172a;
+      font-size: 0.9rem !important;
+    }
 
-  .ncar-edit-page .erp-nav .list-group-item.active {
-    background: rgba(59, 130, 246, 0.12);
-    color: #0f172a;
-  }
+    .ncar-edit-page .erp-nav .list-group-item.active {
+      background: rgba(59, 130, 246, 0.12);
+      color: #0f172a;
+    }
 
-  .ncar-edit-page .erp-section {
-    border-radius: 12px;
-    margin-bottom: 12px;
-  }
+    .ncar-edit-page .erp-section {
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
 
-  .ncar-edit-page .erp-section .card-header {
-    background: #fff;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  }
+    .ncar-edit-page .erp-section .card-header {
+      background: #fff;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
 
-  .ncar-edit-page .erp-section .card-body {
-    padding-top: .75rem;
-    padding-bottom: .25rem;
-  }
+    .ncar-edit-page .erp-section .card-body {
+      padding-top: .75rem;
+      padding-bottom: .25rem;
+    }
 
-  /* Scroll only the sections area when using the sticky "Sections" nav */
-  .ncar-edit-page .erp-sections-scroll {
-    max-height: calc(100vh - 320px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 4px;
-    scroll-behavior: smooth;
-    scroll-padding-top: 12px;
-  }
+    /* Scroll only the sections area when using the sticky "Sections" nav */
+    .ncar-edit-page .erp-sections-scroll {
+      max-height: calc(100vh - 320px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 4px;
+      scroll-behavior: smooth;
+      scroll-padding-top: 12px;
+    }
 
-  .ncar-edit-page .erp-section {
-    scroll-margin-top: 12px;
-  }
+    .ncar-edit-page .erp-section {
+      scroll-margin-top: 12px;
+    }
 
-  .ncar-edit-page .erp-actions {
-    position: sticky;
-    bottom: 0;
-    z-index: 20;
-  }
-</style>
-@endsection
+    .ncar-edit-page .erp-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 20;
+    }
+  </style>
+  @endsection
 
-@push('js')
+  @push('js')
 <script>
   (function() {
     var wrap = document.getElementById('dispositionsWrap');
     var hidden = document.getElementById('dispositionJson');
     var addBtn = document.getElementById('addDispositionBtn');
-    if (!wrap || !hidden || !addBtn) return;
+      if (!wrap || !hidden || !addBtn) return;
 
-    var options = [
-      'Screen & Rework',
-      'Remake',
-      'Credit',
-      'RTV',
-      'Scrap',
-      'Other',
-    ];
+      var options = [
+        'Screen & Rework',
+        'Remake',
+        'Credit',
+        'RTV',
+        'Scrap',
+        'Other',
+      ];
+
+      function normalizeText(value) {
+        return (value == null ? '' : String(value)).trim();
+      }
+
+      function getRows() {
+        return Array.prototype.slice.call(wrap.querySelectorAll('.disposition-row'));
+      }
+
+      function syncToHidden() {
+        var items = getRows().map(function(row) {
+          var actionEl = row.querySelector('.disposition-action');
+          var accEl = row.querySelector('.disposition-accqty');
+          var rejEl = row.querySelector('.disposition-rejqty');
+          return {
+            action: normalizeText(actionEl ? actionEl.value : ''),
+            accqty: normalizeText(accEl ? accEl.value : ''),
+            rejqty: normalizeText(rejEl ? rejEl.value : ''),
+          };
+        }).filter(function(it) {
+          return it.action !== '' || it.accqty !== '' || it.rejqty !== '';
+        });
+
+        if (items.length === 0) {
+          items = [{
+            action: '',
+            accqty: '',
+            rejqty: ''
+          }];
+        }
+
+        hidden.value = JSON.stringify(items);
+      }
+
+      function optionsHtml(selected) {
+        var html = '<option value=""></option>';
+        options.forEach(function(opt) {
+          var sel = (selected === opt) ? ' selected' : '';
+          html += '<option value="' + opt.replace(/\"/g, '&quot;') + '"' + sel + '>' + opt + '</option>';
+        });
+        return html;
+      }
+
+      function addRow(action, accqty, rejqty) {
+        var row = document.createElement('div');
+        row.className = 'row disposition-row mb-2';
+        row.innerHTML =
+          '<div class="col-md-5">' +
+          '<select class="form-control form-control-sm disposition-action">' + optionsHtml(action || '') + '</select>' +
+          '</div>' +
+          '<div class="col-md-3">' +
+          '<input type="number" step="any" class="form-control form-control-sm disposition-accqty" placeholder="Acc Qty" />' +
+          '</div>' +
+          '<div class="col-md-4">' +
+          '<div class="d-flex" style="gap:.5rem">' +
+          '<input type="number" step="any" class="form-control form-control-sm disposition-rejqty" placeholder="Rej Qty" />' +
+          '<button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-disposition" title="Remove"><i class="fas fa-trash"></i></button>' +
+          '</div>' +
+          '</div>';
+
+        wrap.appendChild(row);
+        var accEl = row.querySelector('.disposition-accqty');
+        var rejEl = row.querySelector('.disposition-rejqty');
+        if (accEl) accEl.value = accqty || '';
+        if (rejEl) rejEl.value = rejqty || '';
+        syncToHidden();
+      }
+
+      wrap.addEventListener('input', function(e) {
+        if (!e.target) return;
+        if (
+          e.target.classList.contains('disposition-action') ||
+          e.target.classList.contains('disposition-accqty') ||
+          e.target.classList.contains('disposition-rejqty')
+        ) {
+          syncToHidden();
+        }
+      });
+
+      wrap.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('disposition-action')) {
+          syncToHidden();
+        }
+      });
+
+      wrap.addEventListener('click', function(e) {
+        var btn = e.target && (e.target.closest ? e.target.closest('.remove-disposition') : null);
+        if (!btn) return;
+        var row = btn.closest('.disposition-row');
+        if (row) row.remove();
+        if (getRows().length === 0) addRow('', '', '');
+        syncToHidden();
+      });
+
+      addBtn.addEventListener('click', function() {
+        addRow('', '', '');
+      });
+
+      syncToHidden();
+
+      var form = addBtn.closest('form');
+      if (form) {
+        form.addEventListener('submit', function() {
+          syncToHidden();
+        });
+      }
+  })();
+</script>
+
+<script>
+  (function() {
+    var wrap = document.getElementById('personnelInvolvedWrap');
+    var hidden = document.getElementById('personnelInvolvedJson');
+    var addBtn = document.getElementById('addPersonnelBtn');
+    var template = document.getElementById('personnelOperatorTemplate');
+    if (!wrap || !hidden || !addBtn || !template) return;
 
     function normalizeText(value) {
       return (value == null ? '' : String(value)).trim();
     }
 
+    function optionPosition(sel) {
+      if (!sel) return '';
+      var opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+      return opt && opt.dataset ? (opt.dataset.pos || '') : '';
+    }
+
     function getRows() {
-      return Array.prototype.slice.call(wrap.querySelectorAll('.disposition-row'));
+      return Array.prototype.slice.call(wrap.querySelectorAll('.personnel-row'));
     }
 
     function syncToHidden() {
       var items = getRows().map(function(row) {
-        var actionEl = row.querySelector('.disposition-action');
-        var accEl = row.querySelector('.disposition-accqty');
-        var rejEl = row.querySelector('.disposition-rejqty');
+        var sel = row.querySelector('.personnel-operator');
+        var pos = row.querySelector('.personnel-position');
+        var opVal = normalizeText(sel ? sel.value : '');
+        var posVal = normalizeText(pos ? pos.value : '');
         return {
-          action: normalizeText(actionEl ? actionEl.value : ''),
-          accqty: normalizeText(accEl ? accEl.value : ''),
-          rejqty: normalizeText(rejEl ? rejEl.value : ''),
+          operator: opVal,
+          ope_position: posVal
         };
       }).filter(function(it) {
-        return it.action !== '' || it.accqty !== '' || it.rejqty !== '';
+        return it.operator !== '';
       });
-
-      if (items.length === 0) {
-        items = [{
-          action: '',
-          accqty: '',
-          rejqty: ''
-        }];
-      }
-
       hidden.value = JSON.stringify(items);
     }
 
-    function optionsHtml(selected) {
-      var html = '<option value=""></option>';
-      options.forEach(function(opt) {
-        var sel = (selected === opt) ? ' selected' : '';
-        html += '<option value="' + opt.replace(/\"/g, '&quot;') + '"' + sel + '>' + opt + '</option>';
-      });
-      return html;
-    }
-
-    function addRow(action, accqty, rejqty) {
+    function addRow(value) {
       var row = document.createElement('div');
-      row.className = 'row disposition-row mb-2';
-      row.innerHTML =
-        '<div class="col-md-5">' +
-        '<select class="form-control form-control-sm disposition-action">' + optionsHtml(action || '') + '</select>' +
-        '</div>' +
-        '<div class="col-md-3">' +
-        '<input type="number" step="any" class="form-control form-control-sm disposition-accqty" placeholder="Acc Qty" />' +
-        '</div>' +
-        '<div class="col-md-4">' +
-        '<div class="d-flex" style="gap:.5rem">' +
-        '<input type="number" step="any" class="form-control form-control-sm disposition-rejqty" placeholder="Rej Qty" />' +
-        '<button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-disposition" title="Remove"><i class="fas fa-trash"></i></button>' +
-        '</div>' +
-        '</div>';
+      row.className = 'row personnel-row mb-2';
 
+      var colSel = document.createElement('div');
+      colSel.className = 'col-md-7';
+
+      var sel = document.createElement('select');
+      sel.className = 'form-control form-control-sm personnel-operator';
+      sel.innerHTML = template.innerHTML;
+      if (value) sel.value = value;
+
+      colSel.appendChild(sel);
+
+      var colPos = document.createElement('div');
+      colPos.className = 'col-md-4';
+      var pos = document.createElement('input');
+      pos.type = 'text';
+      pos.className = 'form-control form-control-sm personnel-position';
+      pos.readOnly = true;
+      pos.value = optionPosition(sel);
+      colPos.appendChild(pos);
+
+      var colBtn = document.createElement('div');
+      colBtn.className = 'col-md-1';
+      colBtn.innerHTML =
+        '<button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-personnel" title="Remove">' +
+        '<i class="fas fa-trash"></i>' +
+        '</button>';
+
+      row.appendChild(colSel);
+      row.appendChild(colPos);
+      row.appendChild(colBtn);
       wrap.appendChild(row);
-      var accEl = row.querySelector('.disposition-accqty');
-      var rejEl = row.querySelector('.disposition-rejqty');
-      if (accEl) accEl.value = accqty || '';
-      if (rejEl) rejEl.value = rejqty || '';
+
       syncToHidden();
     }
 
-    wrap.addEventListener('input', function(e) {
-      if (!e.target) return;
-      if (
-        e.target.classList.contains('disposition-action') ||
-        e.target.classList.contains('disposition-accqty') ||
-        e.target.classList.contains('disposition-rejqty')
-      ) {
-        syncToHidden();
-      }
-    });
-
     wrap.addEventListener('change', function(e) {
-      if (e.target && e.target.classList.contains('disposition-action')) {
+      if (e.target && e.target.classList.contains('personnel-operator')) {
+        var row = e.target.closest ? e.target.closest('.personnel-row') : null;
+        if (row) {
+          var pos = row.querySelector('.personnel-position');
+          if (pos) pos.value = optionPosition(e.target);
+        }
         syncToHidden();
       }
     });
 
     wrap.addEventListener('click', function(e) {
-      var btn = e.target && (e.target.closest ? e.target.closest('.remove-disposition') : null);
+      var btn = e.target && (e.target.closest ? e.target.closest('.remove-personnel') : null);
       if (!btn) return;
-      var row = btn.closest('.disposition-row');
+      var row = btn.closest('.personnel-row');
       if (row) row.remove();
-      if (getRows().length === 0) addRow('', '', '');
+      if (getRows().length === 0) addRow('');
       syncToHidden();
     });
 
     addBtn.addEventListener('click', function() {
-      addRow('', '', '');
+      addRow('');
     });
 
     syncToHidden();
+
+    getRows().forEach(function(row) {
+      var sel = row.querySelector('.personnel-operator');
+      var pos = row.querySelector('.personnel-position');
+      if (sel && pos && !normalizeText(pos.value)) {
+        pos.value = optionPosition(sel);
+      }
+    });
 
     var form = addBtn.closest('form');
     if (form) {
@@ -1062,148 +1284,152 @@
     var addBtn = document.getElementById('addDiscrepancyBtn');
     if (!wrap || !hidden || !addBtn) return;
 
-    function normalizeText(value) {
-      return (value == null ? '' : String(value)).trim();
-    }
-
-    function getRows() {
-      return Array.prototype.slice.call(wrap.querySelectorAll('.discrepancy-row'));
-    }
-
-    function syncToHidden() {
-      var items = getRows().map(function(row) {
-        var descEl = row.querySelector('.discrepancy-desc');
-        var qtyEl = row.querySelector('.discrepancy-qty');
-        return {
-          desc: normalizeText(descEl ? descEl.value : ''),
-          qty: normalizeText(qtyEl ? qtyEl.value : ''),
-        };
-      }).filter(function(it) {
-        return it.desc !== '' || it.qty !== '';
-      });
-
-      if (items.length === 0) {
-        items = [{
-          desc: '',
-          qty: ''
-        }];
+      function normalizeText(value) {
+        return (value == null ? '' : String(value)).trim();
       }
 
-      hidden.value = JSON.stringify(items);
-    }
+      function getRows() {
+        return Array.prototype.slice.call(wrap.querySelectorAll('.discrepancy-row'));
+      }
 
-    function autosizeTextarea(el) {
-      if (!el) return;
-      el.style.height = 'auto';
-      el.style.height = el.scrollHeight + 'px';
-    }
+      function syncToHidden() {
+        var items = getRows().map(function(row) {
+          var descEl = row.querySelector('.discrepancy-desc');
+          var qtyEl = row.querySelector('.discrepancy-qty');
+          return {
+            desc: normalizeText(descEl ? descEl.value : ''),
+            qty: normalizeText(qtyEl ? qtyEl.value : ''),
+          };
+        }).filter(function(it) {
+          return it.desc !== '' || it.qty !== '';
+        });
 
-    function autosizeAll() {
-      getRows().forEach(function(row) {
-        autosizeTextarea(row.querySelector('.discrepancy-desc'));
-      });
-    }
-
-    function addRow(desc, qty) {
-      var row = document.createElement('div');
-      row.className = 'row discrepancy-row mb-2';
-      row.innerHTML =
-        '<div class="col-md-9">' +
-        '<textarea rows="1" class="form-control form-control-sm discrepancy-desc erp-autogrow" placeholder="Description"></textarea>' +
-        '</div>' +
-        '<div class="col-md-3">' +
-        '<div class="d-flex" style="gap:.5rem">' +
-        '<input type="number" step="any" class="form-control form-control-sm discrepancy-qty" placeholder="Qty" />' +
-        '<button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-discrepancy" title="Remove">' +
-        '<i class="fas fa-trash"></i>' +
-        '</button>' +
-        '</div>' +
-        '</div>';
-
-      wrap.appendChild(row);
-      var descEl = row.querySelector('.discrepancy-desc');
-      var qtyEl = row.querySelector('.discrepancy-qty');
-      if (descEl) descEl.value = desc || '';
-      if (qtyEl) qtyEl.value = qty || '';
-      autosizeTextarea(descEl);
-      syncToHidden();
-    }
-
-    wrap.addEventListener('input', function(e) {
-      if (e.target && (e.target.classList.contains('discrepancy-desc') || e.target.classList.contains('discrepancy-qty'))) {
-        if (e.target.classList.contains('discrepancy-desc')) {
-          autosizeTextarea(e.target);
+        if (items.length === 0) {
+          items = [{
+            desc: '',
+            qty: ''
+          }];
         }
-        syncToHidden();
+
+        hidden.value = JSON.stringify(items);
       }
-    });
 
-    wrap.addEventListener('click', function(e) {
-      var btn = e.target && (e.target.closest ? e.target.closest('.remove-discrepancy') : null);
-      if (!btn) return;
-      var row = btn.closest('.discrepancy-row');
-      if (row) row.remove();
-      if (getRows().length === 0) addRow('', '');
-      syncToHidden();
-    });
-
-    addBtn.addEventListener('click', function() {
-      addRow('', '');
-    });
-
-    syncToHidden();
-    autosizeAll();
-
-    var form = addBtn.closest('form');
-    if (form) {
-      form.addEventListener('submit', function() {
-        syncToHidden();
-      });
-    }
-  })();
-</script>
-
-<script>
-  (function() {
-    function initContainmentAutogrow() {
-      var req = document.getElementById('containmentReqSelect');
-      var wrap = document.getElementById('containmentFieldWrap');
-      var el = document.querySelector('textarea[name="containment"]');
-      if (!req || !wrap || !el) return;
-
-      function autosize() {
+      function autosizeTextarea(el) {
+        if (!el) return;
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
       }
 
-      function syncVisibility() {
-        var show = String(req.value) === '1';
-        wrap.classList.toggle('d-none', !show);
-        el.disabled = !show;
-        if (show) autosize();
+      function autosizeAll() {
+        getRows().forEach(function(row) {
+          autosizeTextarea(row.querySelector('.discrepancy-desc'));
+        });
       }
 
-      autosize();
-      syncVisibility();
-      el.addEventListener('input', autosize);
-      window.addEventListener('resize', autosize);
-      req.addEventListener('change', syncVisibility);
-    }
+      function addRow(desc, qty) {
+        var row = document.createElement('div');
+        row.className = 'row discrepancy-row mb-2';
+        row.innerHTML =
+          '<div class="col-md-9">' +
+          '<textarea rows="1" class="form-control form-control-sm discrepancy-desc erp-autogrow" placeholder="Description"></textarea>' +
+          '</div>' +
+          '<div class="col-md-3">' +
+          '<div class="d-flex" style="gap:.5rem">' +
+          '<input type="number" step="any" class="form-control form-control-sm discrepancy-qty" placeholder="Qty" />' +
+          '<button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-discrepancy" title="Remove">' +
+          '<i class="fas fa-trash"></i>' +
+          '</button>' +
+          '</div>' +
+          '</div>';
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initContainmentAutogrow);
-    } else {
-      initContainmentAutogrow();
-    }
-  })();
-</script>
+        wrap.appendChild(row);
+        var descEl = row.querySelector('.discrepancy-desc');
+        var qtyEl = row.querySelector('.discrepancy-qty');
+        if (descEl) descEl.value = desc || '';
+        if (qtyEl) qtyEl.value = qty || '';
+        autosizeTextarea(descEl);
+        syncToHidden();
+      }
 
-<script>
-  (function() {
-    function initErpSectionsNavScroll() {
-      var nav = document.querySelector('.ncar-edit-page .erp-nav');
-      var scroller = document.getElementById('erpSectionsScroll');
-      if (!nav || !scroller) return;
+      wrap.addEventListener('input', function(e) {
+        if (e.target && (e.target.classList.contains('discrepancy-desc') || e.target.classList.contains('discrepancy-qty'))) {
+          if (e.target.classList.contains('discrepancy-desc')) {
+            autosizeTextarea(e.target);
+          }
+          syncToHidden();
+        }
+      });
+
+      wrap.addEventListener('click', function(e) {
+        var btn = e.target && (e.target.closest ? e.target.closest('.remove-discrepancy') : null);
+        if (!btn) return;
+        var row = btn.closest('.discrepancy-row');
+        if (row) row.remove();
+        if (getRows().length === 0) addRow('', '');
+        syncToHidden();
+      });
+
+      addBtn.addEventListener('click', function() {
+        addRow('', '');
+      });
+
+      syncToHidden();
+      autosizeAll();
+
+      var form = addBtn.closest('form');
+      if (form) {
+        form.addEventListener('submit', function() {
+          syncToHidden();
+        });
+      }
+    })();
+  </script>
+
+  <script>
+    (function() {
+      function initContainmentAutogrow() {
+        var req = document.getElementById('containmentReqSelect');
+        var wrap = document.getElementById('containmentFieldWrap');
+        var el = document.querySelector('textarea[name="containment"]');
+        if (!req || !wrap || !el) return;
+
+        function autosize() {
+          el.style.height = 'auto';
+          el.style.height = el.scrollHeight + 'px';
+        }
+
+        function syncVisibility() {
+          var show = String(req.value) === '1';
+          wrap.classList.toggle('d-none', !show);
+          if (!show) {
+            el.value = '';
+            el.style.height = 'auto';
+          } else {
+            autosize();
+          }
+        }
+
+        autosize();
+        syncVisibility();
+        el.addEventListener('input', autosize);
+        window.addEventListener('resize', autosize);
+        req.addEventListener('change', syncVisibility);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initContainmentAutogrow);
+      } else {
+        initContainmentAutogrow();
+      }
+    })();
+  </script>
+
+  <script>
+    (function() {
+      function initErpSectionsNavScroll() {
+        var nav = document.querySelector('.ncar-edit-page .erp-nav');
+        var scroller = document.getElementById('erpSectionsScroll');
+        if (!nav || !scroller) return;
 
       var secOther = document.getElementById('sec-other');
       var secIssue = document.getElementById('sec-issue');
@@ -1211,47 +1437,52 @@
         secOther.insertAdjacentElement('afterend', secIssue);
       }
 
+      var secPersonnel = document.getElementById('sec-personnel');
+      if (secIssue && secPersonnel) {
+        secIssue.insertAdjacentElement('afterend', secPersonnel);
+      }
+
       var footer = document.querySelector('.ncar-edit-page .erp-actions');
 
       function setScrollerMaxHeight() {
         var rect = scroller.getBoundingClientRect();
         var footerH = footer ? footer.offsetHeight : 0;
-        var available = window.innerHeight - rect.top - footerH - 80;
-        if (available < 220) available = 220;
-        scroller.style.maxHeight = available + 'px';
+          var available = window.innerHeight - rect.top - footerH - 80;
+          if (available < 220) available = 220;
+          scroller.style.maxHeight = available + 'px';
+        }
+
+        setScrollerMaxHeight();
+        window.addEventListener('resize', setScrollerMaxHeight);
+
+        nav.querySelectorAll('a[href^=\"#sec-\"]').forEach(function(a) {
+          a.addEventListener('click', function(e) {
+            var href = a.getAttribute('href');
+            if (!href) return;
+
+            var target = document.querySelector(href);
+            if (!target) return;
+
+            if (scroller.contains(target)) {
+              e.preventDefault();
+              nav.querySelectorAll('.list-group-item.active').forEach(function(el) {
+                el.classList.remove('active');
+              });
+              a.classList.add('active');
+              target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+              });
+            }
+          });
+        });
       }
 
-      setScrollerMaxHeight();
-      window.addEventListener('resize', setScrollerMaxHeight);
-
-      nav.querySelectorAll('a[href^=\"#sec-\"]').forEach(function(a) {
-        a.addEventListener('click', function(e) {
-          var href = a.getAttribute('href');
-          if (!href) return;
-
-          var target = document.querySelector(href);
-          if (!target) return;
-
-          if (scroller.contains(target)) {
-            e.preventDefault();
-            nav.querySelectorAll('.list-group-item.active').forEach(function(el) {
-              el.classList.remove('active');
-            });
-            a.classList.add('active');
-            target.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
-          }
-        });
-      });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initErpSectionsNavScroll);
-    } else {
-      initErpSectionsNavScroll();
-    }
-  })();
-</script>
-@endpush
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initErpSectionsNavScroll);
+      } else {
+        initErpSectionsNavScroll();
+      }
+    })();
+  </script>
+  @endpush

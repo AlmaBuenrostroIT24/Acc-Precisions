@@ -485,7 +485,7 @@ class QaFaiSummaryController extends Controller
         // usando query builder por si no tienes modelo:
         $rows = DB::table('gen_operators as o')
             ->join('gen_location as l', 'l.id', '=', 'o.location_id')
-            ->select('o.id', 'o.operator', 'l.location as location')
+            ->select('o.id', 'o.operator', 'o.ope_position', 'l.location as location')
             ->whereRaw('LOWER(l.location) = ?', [strtolower($loc)])
             ->orderBy('o.operator')
             ->get();
