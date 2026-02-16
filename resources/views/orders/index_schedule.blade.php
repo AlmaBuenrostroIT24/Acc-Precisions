@@ -33,9 +33,13 @@
                 {{-- Filtros dinámicos --}}
 
                 <div class="erp-filters-shell mb-3">
-                    @unlessrole('Deburring|QCShipping')
+                    @php
+                        $canImportSchedule = auth()->check() && !auth()->user()->hasAnyRole(['Deburring', 'QCShipping']);
+                    @endphp
 
+                    @unlessrole('Deburring')
                         <div class="row no-gutters erp-schedule-row">
+                            @if ($canImportSchedule)
                             <!-- Columna izquierda: primer filtro + botón + gráfica -->
                             <div class="col-12 col-lg-4 erp-schedule-split">
                             <div class="erp-pane erp-pane--import">
@@ -71,7 +75,8 @@
                                 </div>
                             </div>
                             <!-- Columna derecha: segundo filtro + botón + gráfica -->
-                            <div class="col-12 col-lg-8 erp-schedule-right">
+                            @endif
+                            <div class="col-12 {{ $canImportSchedule ? 'col-lg-8' : '' }} erp-schedule-right">
                                 <div class="erp-pane erp-pane--filters">
                                 <div class="form-group mb-0 col-12 col-md-2 erp-filter-search">
                                     <div class="input-group erp-input-group">
@@ -81,6 +86,7 @@
                                         <input id="scheduleGlobalSearch" type="search" class="form-control erp-filter-control" placeholder="Search..." autocomplete="off">
                                     </div>
                                 </div>
+                                @unlessrole('QCShipping')
                                 {{-- Location --}}
                                 <form method="GET" action="{{ route('schedule.general') }}" id="filterForm" class="form-row">
                                     {{-- Location --}}
@@ -217,6 +223,7 @@
 
 
                                 </form>
+                                @endunlessrole
                                 </div>
                             </div>
 
