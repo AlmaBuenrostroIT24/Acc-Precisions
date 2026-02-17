@@ -193,6 +193,12 @@ class NonConformanceController extends Controller
             }
         }
 
+        // Normalize nullable boolean fields that are stored as INT(0/1) to 0 when empty.
+        // Some DB columns may be NOT NULL, and Dompdf/report expects a value.
+        if (array_key_exists('reqrootcause', $data) && $data['reqrootcause'] === null) {
+            $data['reqrootcause'] = 0;
+        }
+
         if (!empty($data)) {
             DB::table('qa_ncar')->where('id', $id)->update($data);
         }
@@ -389,7 +395,7 @@ class NonConformanceController extends Controller
             return ['nullable', 'string', 'max:50'];
         }
 
-        if (in_array($f, ['jobpktcopy', 'travinsp', 'samplecompl'], true)) {
+        if (in_array($f, ['jobpktcopy', 'travinsp', 'samplecompl', 'reqrootcause'], true)) {
             return ['nullable', 'boolean'];
         }
 
@@ -406,7 +412,7 @@ class NonConformanceController extends Controller
             return ['nullable', 'string', 'max:10'];
         }
 
-        if (in_array($f, ['nc_description', 'disposition', 'discrepancy', 'rootcause', 'corrective', 'verification', 'containment', 'noterpreroot', 'personnelaccounts', 'personnelinvolved', 'processaffected', 'relevantfunction', 'issuefoundbt', 'reqrootcause'], true)) {
+        if (in_array($f, ['nc_description', 'disposition', 'discrepancy', 'rootcause', 'corrective', 'verification', 'containment', 'noterpreroot', 'personnelaccounts', 'personnelinvolved', 'processaffected', 'relevantfunction', 'issuefoundbt'], true)) {
             return ['nullable', 'string', 'max:4000'];
         }
 

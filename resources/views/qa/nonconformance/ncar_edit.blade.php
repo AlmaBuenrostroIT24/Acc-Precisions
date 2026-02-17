@@ -152,9 +152,7 @@
                         <a class="list-group-item list-group-item-action" href="#sec-other">Other</a>
                         <a class="list-group-item list-group-item-action" href="#sec-issue">Issue / Disposition</a>
                         <a class="list-group-item list-group-item-action" href="#sec-personnel">Personnel / Process</a>
-                        <a class="list-group-item list-group-item-action" href="#sec-general">General</a>
-                        <a class="list-group-item list-group-item-action" href="#sec-root">Root Cause</a>
-                        <a class="list-group-item list-group-item-action" href="#sec-corrective">Corrective / Verification</a>
+                        <a class="list-group-item list-group-item-action" href="#sec-root">Root Cause / Corrective</a>
                       </div>
                     </div>
                   </div>
@@ -315,6 +313,26 @@
                           <div class="row">
                             <div class="col-12 col-md-2">
                               <div class="form-group">
+                                <label>Relevant Function</label>
+                                @php
+                                $relevantFunctionVal = (string) old('relevantfunction', $ncar->relevantfunction ?? '');
+                                $relevantFunctionVal = strtoupper(trim($relevantFunctionVal));
+                                $relevantFunctionOpts = ['PLN', 'PUR', 'ENGR', 'PROD', 'QC', 'TM'];
+                                @endphp
+                                <select name="relevantfunction" class="form-control form-control-sm {{ $errors->has('relevantfunction') ? 'is-invalid' : '' }}">
+                                  <option value=""></option>
+                                  @foreach($relevantFunctionOpts as $opt)
+                                  <option value="{{ $opt }}" {{ $relevantFunctionVal === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                  @endforeach
+                                  @if($relevantFunctionVal !== '' && !in_array($relevantFunctionVal, $relevantFunctionOpts, true))
+                                  <option value="{{ $relevantFunctionVal }}" selected>{{ $relevantFunctionVal }}</option>
+                                  @endif
+                                </select>
+                                @if($errors->has('relevantfunction'))<div class="invalid-feedback">{{ $errors->first('relevantfunction') }}</div>@endif
+                              </div>
+                            </div>
+                            <div class="col-12 col-md-2">
+                              <div class="form-group">
                                 <label>¿Containment?</label>
                                 @php
                                 $containReqRaw = old($containReqKey, $ncar->{$containReqKey} ?? '');
@@ -329,7 +347,7 @@
                               </div>
                             </div>
 
-                            <div class="col-12 col-md-10" id="containmentFieldWrap">
+                            <div class="col-12 col-md-8" id="containmentFieldWrap">
                               <div class="form-group mb-0">
                                 <label>Containment</label>
                                 <textarea name="containment" rows="1" class="form-control form-control-sm erp-autogrow {{ $errors->has('containment') ? 'is-invalid' : '' }}">{{ old('containment', $ncar->containment ?? '') }}</textarea>
@@ -505,109 +523,12 @@
                             </div>
 
                             @if($errors->has('disposition'))<div class="invalid-feedback d-block">{{ $errors->first('disposition') }}</div>@endif
-                          </div>
-                        </div>
+                          </div> 
+                        </div> 
 
-                      </div>
-                    </div>
-                  </div>
-
-                  <div id="sec-general" class="card erp-section">
-                    <div class="card-header py-2">
-                      <strong>General</strong>
-                    </div>
-                    <div class="card-body">
-                      <div class="row">
-                        <div class="col-12">
-                          <div class="row">
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Ref</label>
-                                <input name="ref" type="text" class="form-control form-control-sm {{ $errors->has('ref') ? 'is-invalid' : '' }}" value="{{ old('ref', $ncar->ref ?? '') }}">
-                                @if($errors->has('ref'))<div class="invalid-feedback">{{ $errors->first('ref') }}</div>@endif
-                              </div>
-                            </div>
-
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Desc</label>
-                                <input name="desc" type="text" class="form-control form-control-sm {{ $errors->has('desc') ? 'is-invalid' : '' }}" value="{{ old('desc', $ncar->desc ?? '') }}">
-                                @if($errors->has('desc'))<div class="invalid-feedback">{{ $errors->first('desc') }}</div>@endif
-                              </div>
-                            </div>
-
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Date</label>
-                                <input name="date" type="date" class="form-control form-control-sm {{ $errors->has('date') ? 'is-invalid' : '' }}" value="{{ substr((string) old('date', $ncar->date ?? ''), 0, 10) }}">
-                                @if($errors->has('date'))<div class="invalid-feedback">{{ $errors->first('date') }}</div>@endif
-                              </div>
-                            </div>
-
-
-                            <div class="col-md-4">
-                              <div class="form-group">
-                                <label>Date Issue</label>
-                                <input name="dateissue" type="date" class="form-control form-control-sm {{ $errors->has('dateissue') ? 'is-invalid' : '' }}" value="{{ substr((string) old('dateissue', $ncar->dateissue ?? ''), 0, 10) }}">
-                                @if($errors->has('dateissue'))<div class="invalid-feedback">{{ $errors->first('dateissue') }}</div>@endif
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-
-
-                  <div id="sec-root" class="card erp-section">
-                    <div class="card-header py-2">
-                      <strong>Root Cause</strong>
-                    </div>
-                    <div class="card-body">
-                      <div class="row">
-                        <div class="col-12">
-                          <div class="form-group">
-                            <label>Relevant Function</label>
-                            <textarea name="relevantfunction" rows="3" class="form-control form-control-sm {{ $errors->has('relevantfunction') ? 'is-invalid' : '' }}">{{ old('relevantfunction', $ncar->relevantfunction ?? '') }}</textarea>
-                            @if($errors->has('relevantfunction'))<div class="invalid-feedback">{{ $errors->first('relevantfunction') }}</div>@endif
-                          </div>
-                        </div>
-
-                        <div class="col-12">
-                          <div class="form-group">
-                            <label>Issue Found By</label>
-                            <textarea name="issuefoundbt" rows="2" class="form-control form-control-sm {{ $errors->has('issuefoundbt') ? 'is-invalid' : '' }}">{{ old('issuefoundbt', $ncar->issuefoundbt ?? '') }}</textarea>
-                            @if($errors->has('issuefoundbt'))<div class="invalid-feedback">{{ $errors->first('issuefoundbt') }}</div>@endif
-                          </div>
-                        </div>
-
-                        <div class="col-12">
-                          <div class="form-group">
-                            <label>Req Root Cause</label>
-                            <textarea name="reqrootcause" rows="2" class="form-control form-control-sm {{ $errors->has('reqrootcause') ? 'is-invalid' : '' }}">{{ old('reqrootcause', $ncar->reqrootcause ?? '') }}</textarea>
-                            @if($errors->has('reqrootcause'))<div class="invalid-feedback">{{ $errors->first('reqrootcause') }}</div>@endif
-                          </div>
-                        </div>
-
-                        <div class="col-12">
-                          <div class="form-group">
-                            <label>Root Cause</label>
-                            <textarea name="rootcause" rows="4" class="form-control form-control-sm {{ $errors->has('rootcause') ? 'is-invalid' : '' }}">{{ old('rootcause', $ncar->rootcause ?? '') }}</textarea>
-                            @if($errors->has('rootcause'))<div class="invalid-feedback">{{ $errors->first('rootcause') }}</div>@endif
-                          </div>
-                        </div>
-
-                        <div class="col-12">
-                          <div class="form-group mb-0">
-                            <label>Note (Pre Root)</label>
-                            <textarea name="noterpreroot" rows="3" class="form-control form-control-sm {{ $errors->has('noterpreroot') ? 'is-invalid' : '' }}">{{ old('noterpreroot', $ncar->noterpreroot ?? '') }}</textarea>
-                            @if($errors->has('noterpreroot'))<div class="invalid-feedback">{{ $errors->first('noterpreroot') }}</div>@endif
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      </div> 
+                    </div> 
+                  </div> 
 
                   <div id="sec-personnel" class="card erp-section">
                     <div class="card-header py-2">
@@ -615,11 +536,44 @@
                     </div>
                     <div class="card-body">
                       <div class="row">
-                        <div class="col-12">
+                        @php
+                        $reqRootCauseValue = (string) old('reqrootcause', $ncar->reqrootcause ?? '');
+                        $reqRootCauseNorm = strtolower(trim($reqRootCauseValue));
+                        @endphp
+
+                        <div class="col-md-10">
+                          <div class="form-group">
+                            <label>Issue Found By and ¿How?</label>
+                            <input name="issuefoundbt" type="text" class="form-control form-control-sm {{ $errors->has('issuefoundbt') ? 'is-invalid' : '' }}" value="{{ old('issuefoundbt', $ncar->issuefoundbt ?? '') }}">
+                            @if($errors->has('issuefoundbt'))<div class="invalid-feedback">{{ $errors->first('issuefoundbt') }}</div>@endif
+                          </div>
+                        </div>
+
+                        <div class="col-md-2">
+                          <div class="form-group">
+                            <label> ¿Req Corrective Action?</label>
+                            <select name="reqrootcause" class="form-control form-control-sm {{ $errors->has('reqrootcause') ? 'is-invalid' : '' }}">
+                              <option value=""></option>
+                              <option value="1" {{ in_array($reqRootCauseNorm, ['yes','y','1','true'], true) ? 'selected' : '' }}>Yes</option>
+                              <option value="0" {{ in_array($reqRootCauseNorm, ['no','n','0','false'], true) ? 'selected' : '' }}>No</option>
+                            </select>
+                            @if($errors->has('reqrootcause'))<div class="invalid-feedback">{{ $errors->first('reqrootcause') }}</div>@endif
+                          </div>
+                        </div>
+
+                        <div class="col-md-6">
                           <div class="form-group">
                             <label>Personnel Accounts</label>
                             <textarea name="personnelaccounts" rows="3" class="form-control form-control-sm {{ $errors->has('personnelaccounts') ? 'is-invalid' : '' }}">{{ old('personnelaccounts', $ncar->personnelaccounts ?? '') }}</textarea>
                             @if($errors->has('personnelaccounts'))<div class="invalid-feedback">{{ $errors->first('personnelaccounts') }}</div>@endif
+                          </div>
+                        </div>
+
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label>Note (Pre Root)</label>
+                            <textarea name="noterpreroot" rows="3" class="form-control form-control-sm {{ $errors->has('noterpreroot') ? 'is-invalid' : '' }}">{{ old('noterpreroot', $ncar->noterpreroot ?? '') }}</textarea>
+                            @if($errors->has('noterpreroot'))<div class="invalid-feedback">{{ $errors->first('noterpreroot') }}</div>@endif
                           </div>
                         </div>
 
@@ -732,38 +686,48 @@
                           </div>
                         </div>
 
-                        <div class="col-12">
-                          <div class="form-group mb-0">
-                            <label>Process Affected</label>
-                            <textarea name="processaffected" rows="3" class="form-control form-control-sm {{ $errors->has('processaffected') ? 'is-invalid' : '' }}">{{ old('processaffected', $ncar->processaffected ?? '') }}</textarea>
-                            @if($errors->has('processaffected'))<div class="invalid-feedback">{{ $errors->first('processaffected') }}</div>@endif
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      </div> 
+                    </div> 
+                  </div> 
 
-                  <div id="sec-corrective" class="card erp-section">
+                  
+                  <div id="sec-root" class="card erp-section">
                     <div class="card-header py-2">
-                      <strong>Corrective / Verification</strong>
+                      <strong>Root Cause / Corrective</strong>
                     </div>
                     <div class="card-body">
                       <div class="row">
-                        <div class="col-12">
-                          <div class="form-group">
-                            <label>Corrective Action</label>
-                            <textarea name="corrective" rows="4" class="form-control form-control-sm {{ $errors->has('corrective') ? 'is-invalid' : '' }}">{{ old('corrective', $ncar->corrective ?? '') }}</textarea>
-                            @if($errors->has('corrective'))<div class="invalid-feedback">{{ $errors->first('corrective') }}</div>@endif
-                          </div>
-                        </div>
+                        <div class="col-12"> 
+                          <div class="form-group"> 
+                            <label>Root Cause</label> 
+                            <textarea name="rootcause" rows="3" class="form-control form-control-sm {{ $errors->has('rootcause') ? 'is-invalid' : '' }}">{{ old('rootcause', $ncar->rootcause ?? '') }}</textarea> 
+                            @if($errors->has('rootcause'))<div class="invalid-feedback">{{ $errors->first('rootcause') }}</div>@endif 
+                          </div> 
+                        </div> 
 
                         <div class="col-12">
-                          <div class="form-group mb-0">
-                            <label>Verification</label>
-                            <textarea name="verification" rows="4" class="form-control form-control-sm {{ $errors->has('verification') ? 'is-invalid' : '' }}">{{ old('verification', $ncar->verification ?? '') }}</textarea>
-                            @if($errors->has('verification'))<div class="invalid-feedback">{{ $errors->first('verification') }}</div>@endif
+                          <div class="form-group">
+                            <label>Process Affected</label>
+                            <textarea name="processaffected" rows="1" class="form-control form-control-sm {{ $errors->has('processaffected') ? 'is-invalid' : '' }}">{{ old('processaffected', $ncar->processaffected ?? '') }}</textarea>
+                            @if($errors->has('processaffected'))<div class="invalid-feedback">{{ $errors->first('processaffected') }}</div>@endif
                           </div>
                         </div>
+ 
+                        <div class="col-md-6"> 
+                          <div class="form-group"> 
+                            <label>Corrective Action</label> 
+                            <textarea name="corrective" rows="4" class="form-control form-control-sm {{ $errors->has('corrective') ? 'is-invalid' : '' }}">{{ old('corrective', $ncar->corrective ?? '') }}</textarea> 
+                            @if($errors->has('corrective'))<div class="invalid-feedback">{{ $errors->first('corrective') }}</div>@endif 
+                          </div> 
+                        </div> 
+ 
+                        <div class="col-md-6"> 
+                          <div class="form-group mb-0"> 
+                            <label>Verification</label> 
+                            <textarea name="verification" rows="4" class="form-control form-control-sm {{ $errors->has('verification') ? 'is-invalid' : '' }}">{{ old('verification', $ncar->verification ?? '') }}</textarea> 
+                            @if($errors->has('verification'))<div class="invalid-feedback">{{ $errors->first('verification') }}</div>@endif 
+                          </div> 
+                        </div> 
                       </div>
                     </div>
                   </div>

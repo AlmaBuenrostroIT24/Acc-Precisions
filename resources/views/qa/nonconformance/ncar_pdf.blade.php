@@ -48,7 +48,11 @@
   $tmSignoffDate = $fmtDate($ncar->tm_signoff_date ?? $ncar->tmsignoff_date ?? $ncar->tm_signoff_dt ?? null);
   $completionSignoff = (string) ($ncar->completion_signoff ?? $ncar->completionsignoff ?? '');
   $completionSignoffDate = $fmtDate($ncar->completion_signoff_date ?? $ncar->completionsignoff_date ?? $ncar->completion_signoff_dt ?? null);
-  $otherPartProcessAffected = (string) ($ncar->otherpartprocessaffected ?? $ncar->other_part_process_affected ?? '');
+  $otherPartProcessAffected = (string) (
+    ($ncar->processaffected ?? '') ?:
+    ($ncar->process_affected ?? '') ?:
+    ($ncar->otherpartprocessaffected ?? $ncar->other_part_process_affected ?? '')
+  );
 
   $pn = (string) ($ncar->PN ?? '');
   $rev = (string) ($ncar->order_revision ?? $ncar->revision ?? '');
@@ -163,7 +167,15 @@
 
   $relevantFunction = (string) ($ncar->relevantfunction ?? '');
   $issueFoundBy = (string) ($ncar->issuefoundbt ?? '');
-  $reqRootCause = (string) ($ncar->reqrootcause ?? '');
+  $reqRootCauseRaw = $ncar->reqrootcause ?? '';
+  $reqRootCauseTrim = is_string($reqRootCauseRaw) ? trim($reqRootCauseRaw) : $reqRootCauseRaw;
+  $reqRootCause = '';
+  if ($reqRootCauseTrim !== '' && $reqRootCauseTrim !== null) {
+      $norm = strtolower((string) $reqRootCauseTrim);
+      if (in_array($norm, ['yes', 'y', '1', 'true'], true)) $reqRootCause = 'Yes';
+      else if (in_array($norm, ['no', 'n', '0', 'false'], true)) $reqRootCause = 'No';
+      else $reqRootCause = (string) $reqRootCauseTrim;
+  }
   $notePreRoot = (string) ($ncar->noterpreroot ?? '');
   $personnelAccounts = (string) ($ncar->personnelaccounts ?? '');
 @endphp
@@ -464,7 +476,7 @@
           </tr>
 
           <tr class="h18">
-            <td class="k" colspan="12">Other Part Process Affected?:&nbsp;<span class="v">{{ $otherPartProcessAffected }}</span></td>
+            <td class="k" colspan="12">Process Affected:&nbsp;<span class="v">{{ $otherPartProcessAffected }}</span></td>
           </tr>
 
           <tr class="h70 shade-gray grow">
