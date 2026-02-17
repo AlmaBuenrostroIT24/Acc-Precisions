@@ -393,7 +393,10 @@
                         <div class="col-12 col-lg-7 mb-3 mb-lg-0">
                           <div class="form-group mb-0">
                             <div class="erp-field-head">
-                              <label class="mb-1">Discrepancy</label>
+                              <div class="erp-field-label">
+                                <label class="mb-1">Discrepancy</label>
+                                <small class="erp-help">Add rows as needed</small>
+                              </div>
                               <button type="button" class="btn btn-sm erp-btn-add" id="addDiscrepancyBtn">
                                 <i class="fas fa-plus mr-1"></i> Discrepancy
                               </button>
@@ -478,7 +481,10 @@
 
                           <div class="form-group mb-0">
                             <div class="erp-field-head">
-                              <label class="mb-1">Disposition / Correction</label>
+                              <div class="erp-field-label">
+                                <label class="mb-1">Disposition / Correction</label>
+                                <small class="erp-help">Add rows as needed</small>
+                              </div>
                               <button type="button" class="btn btn-sm erp-btn-add" id="addDispositionBtn">
                                 <i class="fas fa-plus mr-1"></i> Disposition
                               </button>
@@ -639,9 +645,12 @@
                             <textarea name="personnelinvolved" id="personnelInvolvedJson" class="d-none">{{ $personnelRaw }}</textarea>
 
                             <div class="erp-field-head">
-                              <label class="mb-1">Personnel Involved</label>
+                              <div class="erp-field-label">
+                                <label class="mb-1">Personnel Involved</label>
+                                <small class="erp-help">Add rows as needed</small>
+                              </div>
                               <button type="button" class="btn btn-sm erp-btn-add" id="addPersonnelBtn">
-                                <i class="fas fa-plus mr-1"></i> Add
+                                <i class="fas fa-plus mr-1"></i> Personnel
                               </button>
                             </div>
 
@@ -763,12 +772,94 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
     }
 
-    .ncar-edit-page .card-header {
-      border-bottom: 1px solid rgba(15, 23, 42, 0.10);
-      background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
-      color: #0f172a;
-      font-weight: 800;
-      letter-spacing: .02em;
+    .ncar-edit-page .card-header { 
+      border-bottom: 1px solid rgba(15, 23, 42, 0.10); 
+      background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%); 
+      color: #0f172a; 
+      font-weight: 800; 
+      letter-spacing: .02em; 
+    } 
+
+    /* Editable sections: colored headers (no functional changes) */ 
+    .ncar-edit-page .erp-section { 
+      --sec-accent: #94a3b8; 
+    } 
+
+    .ncar-edit-page #sec-other { --sec-accent: #0b5ed7; }
+    .ncar-edit-page #sec-issue { --sec-accent: #f59e0b; }
+    .ncar-edit-page #sec-personnel { --sec-accent: #7c3aed; }
+    .ncar-edit-page #sec-root { --sec-accent: #16a34a; }
+
+    .ncar-edit-page .erp-section > .card-header { 
+      position: relative; 
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      background: #fff; 
+      border-bottom-color: rgba(15, 23, 42, 0.08); 
+      padding: .55rem .75rem .55rem 18px; 
+      overflow: hidden;
+    } 
+
+    .ncar-edit-page .erp-section > .card-header::before { 
+      content: ''; 
+      position: absolute; 
+      left: 0; 
+      top: 0; 
+      bottom: 0; 
+      width: 8px; 
+      background: var(--sec-accent); 
+    } 
+
+    .ncar-edit-page .erp-section > .card-header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--sec-accent);
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+    .ncar-edit-page .erp-section.sec-status--none > .card-header::after {
+      opacity: 0.10;
+    }
+
+    .ncar-edit-page .erp-section.sec-status--partial > .card-header::after,
+    .ncar-edit-page .erp-section.sec-status--done > .card-header::after {
+      opacity: 0.12;
+    }
+
+    .ncar-edit-page .erp-section > .card-header > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ncar-edit-page .erp-section > .card-header strong {
+      font-size: 0.95rem !important;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    /* Section buttons inherit accent */
+    .ncar-edit-page .erp-section .erp-btn-add {
+      border-color: rgba(15, 23, 42, 0.25) !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 0 rgba(0,0,0,0);
+    }
+    .ncar-edit-page .erp-section .erp-btn-add:hover {
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12), 0 0 0 3px rgba(148, 163, 184, 0.18);
+      transform: translateY(-1px);
+    }
+
+    /* Validation clarity */
+    .ncar-edit-page .form-control.is-invalid,
+    .ncar-edit-page select.form-control.is-invalid,
+    .ncar-edit-page textarea.form-control.is-invalid {
+      border-color: rgba(220, 38, 38, 0.85) !important;
+    }
+    .ncar-edit-page .form-control.is-invalid:focus {
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18) !important;
     }
 
     .ncar-edit-page .erp-ro-badge {
@@ -888,10 +979,25 @@
       margin-bottom: .4rem;
     }
 
-    .ncar-edit-page .erp-field-head label {
-      margin: 0;
+    .ncar-edit-page .erp-field-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
       flex: 1 1 220px;
       min-width: 0;
+    }
+
+    .ncar-edit-page .erp-field-head label {
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    .ncar-edit-page .erp-help {
+      display: block;
+      font-size: 0.78rem !important;
+      line-height: 1.1;
+      color: #64748b;
+      font-weight: 600;
     }
 
     .ncar-edit-page .erp-btn-add {
@@ -925,14 +1031,19 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
     }
 
-    .ncar-edit-page .erp-btn-remove {
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
+    .ncar-edit-page .erp-btn-remove { 
+      width: 34px; 
+      height: 34px; 
+      padding: 0; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      border-radius: 10px; 
+    } 
+
+    .ncar-edit-page .erp-btn-remove i {
+      font-size: 0.95rem;
+      line-height: 1;
     }
 
     /* ERP layout helpers */
@@ -946,18 +1057,71 @@
       top: 12px;
     }
 
-    .ncar-edit-page .erp-nav .list-group-item {
-      border: 0;
-      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-      padding: .45rem .6rem;
-      font-weight: 800;
-      color: #0f172a;
-      font-size: 0.9rem !important;
+    .ncar-edit-page .erp-nav .list-group-item { 
+      border: 0; 
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08); 
+      padding: .45rem .6rem; 
+      font-weight: 800; 
+      color: #0f172a; 
+      font-size: 0.9rem !important; 
+      position: relative;
+      transition: background-color .12s ease, box-shadow .12s ease, border-color .12s ease;
+    } 
+ 
+    .ncar-edit-page .erp-nav .list-group-item.active { 
+      background: rgba(59, 130, 246, 0.12); 
+      color: #0f172a; 
+    } 
+
+    /* Nav status: partial (yellow) / done (green) */
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--none {
+      background: rgba(148, 163, 184, 0.14);
+      border-left: 6px solid rgba(100, 116, 139, 0.55);
+      padding-left: .5rem;
     }
 
-    .ncar-edit-page .erp-nav .list-group-item.active {
-      background: rgba(59, 130, 246, 0.12);
-      color: #0f172a;
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--partial {
+      background: rgba(245, 158, 11, 0.16);
+      border-left: 6px solid rgba(245, 158, 11, 0.85);
+      padding-left: .5rem;
+    }
+
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--done {
+      background: rgba(34, 197, 94, 0.16);
+      border-left: 6px solid rgba(34, 197, 94, 0.85);
+      padding-left: .5rem;
+    }
+
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--none::after,
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--partial::after,
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--done::after {
+      content: '';
+      position: absolute;
+      right: .55rem;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      transform: translateY(-50%);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.85);
+    }
+
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--none::after {
+      background: rgba(100, 116, 139, 0.75);
+    }
+
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--partial::after {
+      background: rgba(245, 158, 11, 0.95);
+    }
+
+    .ncar-edit-page .erp-nav .list-group-item.sec-status--done::after {
+      background: rgba(34, 197, 94, 0.95);
+    }
+
+    .ncar-edit-page .erp-nav .list-group-item.active.sec-status--none,
+    .ncar-edit-page .erp-nav .list-group-item.active.sec-status--partial,
+    .ncar-edit-page .erp-nav .list-group-item.active.sec-status--done {
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
     }
 
     .ncar-edit-page .erp-section {
@@ -1388,12 +1552,12 @@
     })();
   </script>
 
-  <script>
-    (function() {
-      function initErpSectionsNavScroll() {
-        var nav = document.querySelector('.ncar-edit-page .erp-nav');
-        var scroller = document.getElementById('erpSectionsScroll');
-        if (!nav || !scroller) return;
+  <script> 
+    (function() { 
+      function initErpSectionsNavScroll() { 
+        var nav = document.querySelector('.ncar-edit-page .erp-nav'); 
+        var scroller = document.getElementById('erpSectionsScroll'); 
+        if (!nav || !scroller) return; 
 
       var secOther = document.getElementById('sec-other');
       var secIssue = document.getElementById('sec-issue');
@@ -1442,10 +1606,128 @@
         });
       }
 
+      if (document.readyState === 'loading') { 
+        document.addEventListener('DOMContentLoaded', initErpSectionsNavScroll); 
+      } else { 
+        initErpSectionsNavScroll(); 
+      } 
+    })(); 
+  </script> 
+
+  <script>
+    (function() {
+      function debounce(fn, wait) {
+        var t = null;
+        return function() {
+          var args = arguments;
+          clearTimeout(t);
+          t = setTimeout(function() { fn.apply(null, args); }, wait || 120);
+        };
+      }
+
+      function isFilled(el) {
+        if (!el) return false;
+        if (el.disabled || el.readOnly) return false;
+        if (el.type && String(el.type).toLowerCase() === 'hidden') return false;
+        if (el.classList && el.classList.contains('d-none')) return false;
+        if (el.closest && el.closest('.d-none')) return false;
+
+        var tag = (el.tagName || '').toLowerCase();
+        var val = (el.value ?? '').toString();
+
+        if (tag === 'select') return val.trim() !== '';
+        if ((el.type || '').toLowerCase() === 'number') return val !== '';
+        return val.trim() !== '';
+      }
+
+      function getEditableControls(sectionEl) {
+        if (!sectionEl) return [];
+        var ignoreNames = {
+          jobpktcopy: true,
+          travinsp: true,
+          samplecompl: true,
+          containmentreq: true,
+          contaimentreq: true,
+        };
+        var controls = sectionEl.querySelectorAll('input, textarea, select');
+        var out = [];
+        for (var i = 0; i < controls.length; i++) {
+          var el = controls[i];
+          if (!el || el.disabled || el.readOnly) continue;
+          if (el.name && ignoreNames[el.name]) continue;
+          if (el.type && String(el.type).toLowerCase() === 'hidden') continue;
+          if (el.closest && el.closest('select.d-none, textarea.d-none, input.d-none')) continue;
+          if (el.classList && el.classList.contains('d-none')) continue;
+          if (el.closest && el.closest('.d-none')) continue;
+          // Skip hidden JSON storages
+          if (el.id && /Json$/i.test(el.id)) continue;
+          if (el.name && /^(discrepancy|disposition|personnelinvolved)$/.test(el.name) && el.classList.contains('d-none')) continue;
+          out.push(el);
+        }
+        return out;
+      }
+
+      function computeSectionStatus(sectionEl) {
+        var controls = getEditableControls(sectionEl);
+        if (!controls.length) return 'none';
+        var filled = 0;
+        for (var i = 0; i < controls.length; i++) {
+          if (isFilled(controls[i])) filled++;
+        }
+        if (filled === 0) return 'none';
+        if (filled === controls.length) return 'done';
+        return 'partial';
+      }
+
+      function applyNavStatus(nav, sectionId, status) {
+        var a = nav.querySelector('a[href="#' + sectionId + '"]');
+        if (!a) return;
+        a.classList.toggle('sec-status--none', status === 'none');
+        a.classList.toggle('sec-status--partial', status === 'partial');
+        a.classList.toggle('sec-status--done', status === 'done');
+      }
+
+      function applySectionStatus(sectionEl, status) {
+        if (!sectionEl) return;
+        sectionEl.classList.toggle('sec-status--partial', status === 'partial');
+        sectionEl.classList.toggle('sec-status--done', status === 'done');
+        sectionEl.classList.toggle('sec-status--none', status === 'none');
+
+        // Override per-section accent with the completion status colors.
+        var accent = '#94a3b8'; // none = gray
+        if (status === 'partial') accent = '#f59e0b'; // yellow
+        if (status === 'done') accent = '#22c55e'; // green
+        sectionEl.style.setProperty('--sec-accent', accent);
+      }
+
+      function initSectionCompletionNav() {
+        var nav = document.querySelector('.ncar-edit-page .erp-nav');
+        var scroller = document.getElementById('erpSectionsScroll');
+        if (!nav || !scroller) return;
+
+        var sectionIds = ['sec-other', 'sec-issue', 'sec-personnel', 'sec-root'];
+
+        function updateAll() {
+          sectionIds.forEach(function(id) {
+            var sec = document.getElementById(id);
+            var status = computeSectionStatus(sec);
+            applyNavStatus(nav, id, status);
+            applySectionStatus(sec, status);
+          });
+        }
+
+        var updateDebounced = debounce(updateAll, 140);
+        updateAll();
+
+        scroller.addEventListener('input', updateDebounced, true);
+        scroller.addEventListener('change', updateDebounced, true);
+        scroller.addEventListener('click', updateDebounced, true);
+      }
+
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initErpSectionsNavScroll);
+        document.addEventListener('DOMContentLoaded', initSectionCompletionNav);
       } else {
-        initErpSectionsNavScroll();
+        initSectionCompletionNav();
       }
     })();
   </script>
