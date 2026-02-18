@@ -1814,7 +1814,13 @@ body .content {
             }
 
             $('#ncrModal').modal('hide');
-            Swal.fire('Saved', 'NCAR saved.', 'success');
+
+            const editUrl = (res.edit_url || '').toString();
+            if (editUrl) {
+              window.location.href = editUrl;
+            } else {
+              Swal.fire('Saved', 'NCAR saved.', 'success');
+            }
           }).always(function() {
             $saveBtn.prop('disabled', false);
           }).fail(function(xhr) {

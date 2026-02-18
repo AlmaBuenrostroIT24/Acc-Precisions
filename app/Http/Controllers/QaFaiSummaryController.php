@@ -1729,6 +1729,7 @@ class QaFaiSummaryController extends Controller
             'success' => true,
             'id' => (int) $ncar->id,
             'ncar_no' => (string) $ncar->ncar_no,
+            'edit_url' => route('nonconformance.ncar.edit', ['id' => (int) $ncar->id]),
             'created_at' => (string) $ncar->created_at,
             'ncar_date' => $ncar->ncar_date,
             'status' => $ncar->status,
