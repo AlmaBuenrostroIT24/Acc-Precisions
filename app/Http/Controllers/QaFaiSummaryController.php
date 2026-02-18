@@ -106,6 +106,44 @@ class QaFaiSummaryController extends Controller
                 ->orderByDesc('due_date')
                 ->get();
 
+            // NCAR status per order (internal/external) for UI indicator in Process table
+            $ncarMap = [];
+            if ($bucket === 'process' && Schema::hasTable('qa_ncar') && Schema::hasTable('qa_ncartype')) {
+                $orderIds = $rows->pluck('id')->filter()->map(fn($v) => (int) $v)->values()->all();
+                if (!empty($orderIds)) {
+                    $ncarRows = DB::table('qa_ncar as n')
+                        ->join('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
+                        ->select([
+                            'n.id',
+                            'n.order_id',
+                            'n.ncar_no',
+                            'n.nc_description',
+                            'n.stage',
+                            't.code as type_code', // INTERNAL / EXTERNAL
+                        ])
+                        ->whereIn('n.order_id', $orderIds)
+                        ->orderByDesc('n.id')
+                        ->get();
+
+                    foreach ($ncarRows as $nr) {
+                        $oid = (int) ($nr->order_id ?? 0);
+                        if (!$oid) continue;
+
+                        $code = strtoupper(trim((string) ($nr->type_code ?? '')));
+                        if (!in_array($code, ['INTERNAL', 'EXTERNAL'], true)) continue;
+
+                        if (!isset($ncarMap[$oid])) {
+                            $ncarMap[$oid] = ['INTERNAL' => null, 'EXTERNAL' => null];
+                        }
+
+                        // Keep only latest per type (query is DESC by id)
+                        if ($ncarMap[$oid][$code] === null) {
+                            $ncarMap[$oid][$code] = $nr;
+                        }
+                    }
+                }
+            }
+
 
             $opName = function (int $i): string {
                 return match ($i) {
@@ -119,7 +157,7 @@ class QaFaiSummaryController extends Controller
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -146,13 +184,30 @@ class QaFaiSummaryController extends Controller
 
                 $btnOther = '';
                 if ($bucket === 'process') {
+                    // NCAR indicator: internal => blue, external => orange
+                    $orderId = (int) ($r->id ?? 0);
+                    $info = $orderId && isset($ncarMap[$orderId]) ? $ncarMap[$orderId] : ['INTERNAL' => null, 'EXTERNAL' => null];
+                    $ext = $info['EXTERNAL'] ?? null;
+                    $int = $info['INTERNAL'] ?? null;
+
+                    $hasExt = !!$ext;
+                    $hasInt = !!$int;
+                    $hasAny = $hasExt || $hasInt;
+
+                    $btnClass = $hasExt ? 'btn-erp-warning' : ($hasInt ? 'btn-erp-primary' : 'btn-erp-secondary');
+                    $btnToneClass = $hasExt ? 'btn-ncr--external' : ($hasInt ? 'btn-ncr--internal' : 'btn-ncr--none');
+                    $typeLabel = $hasExt ? 'External' : ($hasInt ? 'Internal' : '');
+                    $ncarNo = $hasExt ? (string) ($ext->ncar_no ?? '') : ($hasInt ? (string) ($int->ncar_no ?? '') : '');
+                    $ncarNotes = $hasExt ? (string) ($ext->nc_description ?? '') : ($hasInt ? (string) ($int->nc_description ?? '') : '');
+                    $ncarType = $hasExt ? 'external' : ($hasInt ? 'internal' : '');
+                    $ncarStage = $hasExt ? (string) ($ext->stage ?? '') : ($hasInt ? (string) ($int->stage ?? '') : '');
                     $hasNcr = $hasNcrCols && !empty($r->ncr_number);
-                    $title = $hasNcr ? ('NCR: ' . $r->ncr_number) : 'Register NCR';
+                    $title = $hasAny ? ($typeLabel . ' NCAR: ' . $ncarNo) : 'Create NCAR';
 
                     // Si la DB aún no tiene columnas NCR, dejamos el modal en modo "solo vista" (sin URL para guardar).
                     $postUrl = $hasNcrCols ? route('schedule.finished.ncr', $r->id) : '';
 
-                    $btnOther = ' <button type="button" class="btn btn-sm btn-erp-warning erp-table-btn ml-1 btn-ncr ' . ($hasNcr ? 'is-active' : '') . '"
+                    $btnOther = ' <button type="button" class="btn btn-sm ' . e($btnClass) . ' ' . e($btnToneClass) . ' erp-table-btn ml-1 btn-ncr ' . ($hasAny ? 'is-active' : '') . '"
                      title="' . e($title) . '"
                      data-id="' . e($r->id) . '"
                      data-url="' . e($postUrl) . '"
@@ -166,9 +221,11 @@ class QaFaiSummaryController extends Controller
                      data-qty="' . e($r->qty ?? '') . '"
                      data-wo-qty="' . e($sum) . '"
                      data-ncr-reviewer="' . e($r->ncr_reviewer ?? '') . '"
-                     data-ncr-number="' . e($hasNcr ? ($r->ncr_number ?? '') : '') . '"
-                     data-ncr-notes="' . e($hasNcr ? ($r->ncr_notes ?? '') : '') . '">
-                     <i class="fas fa-exclamation-triangle text-purple"></i>
+                     data-ncr-number="' . e($ncarNo) . '"
+                     data-ncr-notes="' . e($ncarNotes) . '"
+                     data-ncar-type="' . e($ncarType) . '"
+                     data-ncar-stage="' . e($ncarStage) . '">
+                     <i class="fas fa-exclamation-triangle"></i>
                  </button>';
                 }
 

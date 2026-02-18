@@ -362,6 +362,7 @@
   }
 
   .fai-dt-table .btn-erp-primary,
+  .fai-dt-table .btn-erp-secondary,
   .fai-dt-table .btn-erp-warning {
     background: #f8fafc;
     border: 1px solid #d5d8dd;
@@ -374,14 +375,47 @@
     color: #0b5ed7;
   }
 
+  .fai-dt-table .btn-erp-secondary i {
+    color: #64748b;
+  }
+
   .fai-dt-table .btn-erp-warning i {
     color: #f59e0b;
   }
 
   .fai-dt-table .btn-erp-primary:hover,
+  .fai-dt-table .btn-erp-secondary:hover,
   .fai-dt-table .btn-erp-warning:hover {
     filter: brightness(0.97);
     color: #111827;
+  }
+
+  /* NCAR indicator (btnOther) tones */
+  .fai-dt-table .btn-ncr--none {
+    border-color: rgba(100, 116, 139, 0.40) !important;
+    background: rgba(148, 163, 184, 0.12) !important;
+  }
+
+  .fai-dt-table .btn-ncr--none i {
+    color: #64748b !important;
+  }
+
+  .fai-dt-table .btn-ncr--internal {
+    border-color: rgba(11, 94, 215, 0.45) !important;
+    background: rgba(11, 94, 215, 0.12) !important;
+  }
+
+  .fai-dt-table .btn-ncr--internal i {
+    color: #0b5ed7 !important;
+  }
+
+  .fai-dt-table .btn-ncr--external {
+    border-color: rgba(245, 158, 11, 0.55) !important;
+    background: rgba(245, 158, 11, 0.14) !important;
+  }
+
+  .fai-dt-table .btn-ncr--external i {
+    color: #f59e0b !important;
   }
 
   /* Progress tipo ERP (igual que Schedule) */
