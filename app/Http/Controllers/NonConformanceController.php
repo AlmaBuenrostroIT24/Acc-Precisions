@@ -193,10 +193,17 @@ class NonConformanceController extends Controller
             }
         }
 
-        // Normalize nullable boolean fields that are stored as INT(0/1) to 0 when empty.
-        // Some DB columns may be NOT NULL, and Dompdf/report expects a value.
-        if (array_key_exists('reqrootcause', $data) && $data['reqrootcause'] === null) {
-            $data['reqrootcause'] = 0;
+        // Allow empty selects (null) for boolean-ish fields when DB columns are nullable.
+        // If a column is NOT NULL, fall back to 0 to avoid SQL errors.
+        foreach (['jobpktcopy', 'travinsp', 'samplecompl', 'reqrootcause', 'containmentreq', 'contaimentreq'] as $f) {
+            if (!array_key_exists($f, $data) || $data[$f] !== null) {
+                continue;
+            }
+
+            $nullable = $this->columnIsNullable('qa_ncar', $f);
+            if ($nullable === false) {
+                $data[$f] = 0;
+            }
         }
 
         if (!empty($data)) {
@@ -387,17 +394,17 @@ class NonConformanceController extends Controller
         return response()->json(['success' => true]);
     }
 
-    private function ruleForNcarField(string $field): array
-    {
+    private function ruleForNcarField(string $field): array 
+    { 
         $f = strtolower($field);
 
         if ($f === 'status') {
             return ['nullable', 'string', 'max:50'];
         }
 
-        if (in_array($f, ['jobpktcopy', 'travinsp', 'samplecompl', 'reqrootcause'], true)) {
-            return ['nullable', 'boolean'];
-        }
+        if (in_array($f, ['jobpktcopy', 'travinsp', 'samplecompl', 'reqrootcause', 'containmentreq', 'contaimentreq', 'spprocsinvld', 'spprocinvld', 'spprocinvalid', 'sp_proc_invalid'], true)) { 
+            return ['nullable', 'boolean']; 
+        } 
 
         if (str_contains($f, 'date')) {
             // Aceptar formatos comunes (YYYY-MM-DD o texto); no forzamos date por compatibilidad
@@ -416,6 +423,24 @@ class NonConformanceController extends Controller
             return ['nullable', 'string', 'max:4000'];
         }
 
-        return ['nullable', 'string', 'max:255'];
+        return ['nullable', 'string', 'max:255']; 
+    } 
+
+    private function columnIsNullable(string $table, string $column): ?bool
+    {
+        try {
+            $db = DB::getDatabaseName();
+            $row = DB::selectOne(
+                'SELECT IS_NULLABLE as is_nullable FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1',
+                [$db, $table, $column]
+            );
+            if (!$row) return null;
+            $v = strtoupper((string) ($row->is_nullable ?? $row->IS_NULLABLE ?? ''));
+            if ($v === 'YES') return true;
+            if ($v === 'NO') return false;
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

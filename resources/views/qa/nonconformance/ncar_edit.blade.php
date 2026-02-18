@@ -230,11 +230,12 @@
                               <div class="form-group">
                                 <label>¿Job Packet Copy?</label>
                                 @php
-                                $jobPktCopyRaw = old('jobpktcopy', $ncar->jobpktcopy ?? '0');
+                                $jobPktCopyRaw = old('jobpktcopy', $ncar->jobpktcopy ?? '');
                                 $jobPktCopyNorm = strtolower(trim((string) $jobPktCopyRaw));
-                                $jobPktCopyVal = in_array($jobPktCopyNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0';
+                                $jobPktCopyVal = $jobPktCopyNorm === '' ? '' : (in_array($jobPktCopyNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0');
                                 @endphp
                                 <select name="jobpktcopy" class="form-control form-control-sm {{ $errors->has('jobpktcopy') ? 'is-invalid' : '' }}">
+                                  <option value="" {{ $jobPktCopyVal === '' ? 'selected' : '' }}></option>
                                   <option value="1" {{ $jobPktCopyVal === '1' ? 'selected' : '' }}>Yes</option>
                                   <option value="0" {{ $jobPktCopyVal === '0' ? 'selected' : '' }}>No</option>
                                 </select>
@@ -246,11 +247,12 @@
                               <div class="form-group">
                                 <label>¿Travel & Insp. Completed?</label>
                                 @php
-                                $travInspRaw = old('travinsp', $ncar->travinsp ?? '0');
+                                $travInspRaw = old('travinsp', $ncar->travinsp ?? '');
                                 $travInspNorm = strtolower(trim((string) $travInspRaw));
-                                $travInspVal = in_array($travInspNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0';
+                                $travInspVal = $travInspNorm === '' ? '' : (in_array($travInspNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0');
                                 @endphp
                                 <select name="travinsp" class="form-control form-control-sm {{ $errors->has('travinsp') ? 'is-invalid' : '' }}">
+                                  <option value="" {{ $travInspVal === '' ? 'selected' : '' }}></option>
                                   <option value="1" {{ $travInspVal === '1' ? 'selected' : '' }}>Yes</option>
                                   <option value="0" {{ $travInspVal === '0' ? 'selected' : '' }}>No</option>
                                 </select>
@@ -262,11 +264,12 @@
                               <div class="form-group">
                                 <label>¿Sample Completed?</label>
                                 @php
-                                $sampleComplRaw = old('samplecompl', $ncar->samplecompl ?? '0');
+                                $sampleComplRaw = old('samplecompl', $ncar->samplecompl ?? '');
                                 $sampleComplNorm = strtolower(trim((string) $sampleComplRaw));
-                                $sampleComplVal = in_array($sampleComplNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0';
+                                $sampleComplVal = $sampleComplNorm === '' ? '' : (in_array($sampleComplNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0');
                                 @endphp
                                 <select name="samplecompl" class="form-control form-control-sm {{ $errors->has('samplecompl') ? 'is-invalid' : '' }}">
+                                  <option value="" {{ $sampleComplVal === '' ? 'selected' : '' }}></option>
                                   <option value="1" {{ $sampleComplVal === '1' ? 'selected' : '' }}>Yes</option>
                                   <option value="0" {{ $sampleComplVal === '0' ? 'selected' : '' }}>No</option>
                                 </select>
@@ -337,9 +340,10 @@
                                 @php
                                 $containReqRaw = old($containReqKey, $ncar->{$containReqKey} ?? '');
                                 $containReqNorm = strtolower(trim((string) $containReqRaw));
-                                $containReqVal = in_array($containReqNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0';
+                                $containReqVal = $containReqNorm === '' ? '' : (in_array($containReqNorm, ['1', 'true', 'yes', 'y', 'on'], true) ? '1' : '0');
                                 @endphp
                                 <select id="containmentReqSelect" name="{{ $containReqKey }}" class="form-control form-control-sm {{ $errors->has($containReqKey) ? 'is-invalid' : '' }}">
+                                  <option value="" {{ $containReqVal === '' ? 'selected' : '' }}></option>
                                   <option value="1" {{ $containReqVal === '1' ? 'selected' : '' }}>Yes</option>
                                   <option value="0" {{ $containReqVal === '0' ? 'selected' : '' }}>No</option>
                                 </select>
@@ -405,7 +409,8 @@
                             {{-- Store as JSON in the existing DB column (qa_ncar.discrepancy) --}}
                             <textarea name="discrepancy" id="discrepancyJson" class="d-none">{{ $discRaw }}</textarea>
 
-                            <div id="discrepanciesWrap">
+                            <div class="erp-grid">
+                              <div id="discrepanciesWrap" class="erp-grid-wrap">
                               @foreach($discItems as $it)
                               <div class="row discrepancy-row mb-2">
                                 <div class="col-md-9">
@@ -421,6 +426,7 @@
                                 </div>
                               </div>
                               @endforeach
+                              </div>
                             </div>
 
                             @if($errors->has('discrepancy'))<div class="invalid-feedback d-block">{{ $errors->first('discrepancy') }}</div>@endif
@@ -492,7 +498,8 @@
 
                             <textarea name="disposition" id="dispositionJson" class="d-none">{{ $dispRaw }}</textarea>
 
-                            <div id="dispositionsWrap">
+                            <div class="erp-grid">
+                              <div id="dispositionsWrap" class="erp-grid-wrap">
                               @foreach($dispItems as $it)
                               @php
                               $selected = '';
@@ -526,6 +533,7 @@
                                 </div>
                               </div>
                               @endforeach
+                              </div>
                             </div>
 
                             @if($errors->has('disposition'))<div class="invalid-feedback d-block">{{ $errors->first('disposition') }}</div>@endif
@@ -661,7 +669,8 @@
                               @endforeach
                             </select>
 
-                            <div id="personnelInvolvedWrap">
+                            <div class="erp-grid">
+                              <div id="personnelInvolvedWrap" class="erp-grid-wrap">
                               @foreach($personnelItems as $it)
                               @php
                               $itOp = (string) ($it['operator'] ?? '');
@@ -683,12 +692,15 @@
                                   <input type="text" class="form-control form-control-sm personnel-position" value="{{ $itPos }}" readonly>
                                 </div>
                                 <div class="col-md-1">
-                                  <button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-personnel" title="Remove">
-                                    <i class="fas fa-trash"></i>
-                                  </button>
+                                  <div class="d-flex" style="gap:.5rem">
+                                    <button type="button" class="btn btn-outline-danger btn-sm erp-btn-remove remove-personnel" title="Remove">
+                                      <i class="fas fa-trash"></i>
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                               @endforeach
+                            </div>
                             </div>
 
                             @if($errors->has('personnelinvolved'))<div class="invalid-feedback d-block">{{ $errors->first('personnelinvolved') }}</div>@endif
@@ -1044,6 +1056,67 @@
     .ncar-edit-page .erp-btn-remove i {
       font-size: 0.95rem;
       line-height: 1;
+    }
+
+    /* ERP "table-like" dynamic rows (Discrepancy / Disposition / Personnel) */
+    .ncar-edit-page .erp-grid {
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .ncar-edit-page .erp-grid-head {
+      background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+      font-weight: 900;
+      color: rgba(15, 23, 42, 0.78);
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      font-size: 0.74rem !important;
+      padding: 8px 10px;
+      margin: 0;
+    }
+
+    .ncar-edit-page .erp-grid-head > [class^="col-"],
+    .ncar-edit-page .erp-grid-head > [class*=" col-"] {
+      padding-left: 0.45rem;
+      padding-right: 0.45rem;
+    }
+
+    .ncar-edit-page .erp-grid-wrap {
+      padding: 0;
+    }
+
+    .ncar-edit-page .erp-grid-wrap .row.discrepancy-row,
+    .ncar-edit-page .erp-grid-wrap .row.disposition-row,
+    .ncar-edit-page .erp-grid-wrap .row.personnel-row {
+      margin-left: 0;
+      margin-right: 0;
+      margin-bottom: 0 !important;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      align-items: center;
+    }
+
+    .ncar-edit-page .erp-grid-wrap .row.discrepancy-row:last-child,
+    .ncar-edit-page .erp-grid-wrap .row.disposition-row:last-child,
+    .ncar-edit-page .erp-grid-wrap .row.personnel-row:last-child {
+      border-bottom: 0;
+    }
+
+    .ncar-edit-page .erp-grid-wrap .row.discrepancy-row:nth-child(even),
+    .ncar-edit-page .erp-grid-wrap .row.disposition-row:nth-child(even),
+    .ncar-edit-page .erp-grid-wrap .row.personnel-row:nth-child(even) {
+      background: rgba(248, 250, 252, 0.85);
+    }
+
+    .ncar-edit-page .erp-grid-wrap .erp-btn-remove {
+      align-self: center;
+    }
+
+    .ncar-edit-page .erp-grid-wrap .d-flex {
+      align-items: center;
     }
 
     /* ERP layout helpers */
