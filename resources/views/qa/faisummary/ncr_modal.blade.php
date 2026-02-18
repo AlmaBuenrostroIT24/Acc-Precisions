@@ -52,7 +52,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-calendar-alt text-secondary"></i></span>
                                 </div>
-                                <input type="date" id="ncrDate" class="form-control erp-ncr-control" readonly>
+                                <input type="date" id="ncrDate" class="form-control erp-ncr-control">
                             </div>
                         </div>
 
