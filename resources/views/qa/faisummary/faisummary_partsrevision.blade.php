@@ -418,6 +418,27 @@
     color: #f59e0b !important;
   }
 
+  .fai-dt-table .btn-ncr--both {
+    border-color: rgba(51, 65, 85, 0.35) !important;
+    background: linear-gradient(
+      90deg,
+      rgba(11, 94, 215, 0.12) 0%,
+      rgba(11, 94, 215, 0.12) 50%,
+      rgba(245, 158, 11, 0.14) 50%,
+      rgba(245, 158, 11, 0.14) 100%
+    ) !important;
+  }
+
+  /* Half blue / half orange icon (FontAwesome uses ::before glyph) */
+  .fai-dt-table .btn-ncr--both i::before {
+    background: linear-gradient(90deg, #0b5ed7 0%, #0b5ed7 50%, #f59e0b 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: inline-block;
+  }
+
   /* Progress tipo ERP (igual que Schedule) */
   .fai-dt-table .progress {
     height: 22px !important;

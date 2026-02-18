@@ -195,8 +195,11 @@ class QaFaiSummaryController extends Controller
                     $hasAny = $hasExt || $hasInt;
 
                     $btnClass = $hasExt ? 'btn-erp-warning' : ($hasInt ? 'btn-erp-primary' : 'btn-erp-secondary');
-                    $btnToneClass = $hasExt ? 'btn-ncr--external' : ($hasInt ? 'btn-ncr--internal' : 'btn-ncr--none');
-                    $typeLabel = $hasExt ? 'External' : ($hasInt ? 'Internal' : '');
+                    $hasBoth = $hasExt && $hasInt;
+                    $btnToneClass = $hasBoth
+                        ? 'btn-ncr--both'
+                        : ($hasExt ? 'btn-ncr--external' : ($hasInt ? 'btn-ncr--internal' : 'btn-ncr--none'));
+                    $typeLabel = $hasBoth ? 'External + Internal' : ($hasExt ? 'External' : ($hasInt ? 'Internal' : ''));
                     $ncarNo = $hasExt ? (string) ($ext->ncar_no ?? '') : ($hasInt ? (string) ($int->ncar_no ?? '') : '');
                     $ncarNotes = $hasExt ? (string) ($ext->nc_description ?? '') : ($hasInt ? (string) ($int->nc_description ?? '') : '');
                     $ncarType = $hasExt ? 'external' : ($hasInt ? 'internal' : '');
