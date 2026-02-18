@@ -204,6 +204,8 @@ class QaFaiSummaryController extends Controller
                     $ncarNotes = $hasExt ? (string) ($ext->nc_description ?? '') : ($hasInt ? (string) ($int->nc_description ?? '') : '');
                     $ncarType = $hasExt ? 'external' : ($hasInt ? 'internal' : '');
                     $ncarStage = $hasExt ? (string) ($ext->stage ?? '') : ($hasInt ? (string) ($int->stage ?? '') : '');
+                    $editUrlExt = $hasExt ? route('nonconformance.ncar.edit', (int) ($ext->id ?? 0)) : '';
+                    $editUrlInt = $hasInt ? route('nonconformance.ncar.edit', (int) ($int->id ?? 0)) : '';
                     $hasNcr = $hasNcrCols && !empty($r->ncr_number);
                     $title = $hasAny ? ($typeLabel . ' NCAR: ' . $ncarNo) : 'Create NCAR';
 
@@ -227,7 +229,9 @@ class QaFaiSummaryController extends Controller
                      data-ncr-number="' . e($ncarNo) . '"
                      data-ncr-notes="' . e($ncarNotes) . '"
                      data-ncar-type="' . e($ncarType) . '"
-                     data-ncar-stage="' . e($ncarStage) . '">
+                     data-ncar-stage="' . e($ncarStage) . '"
+                     data-ncar-edit-url-external="' . e($editUrlExt) . '"
+                     data-ncar-edit-url-internal="' . e($editUrlInt) . '">
                      <i class="fas fa-exclamation-triangle"></i>
                  </button>';
                 }

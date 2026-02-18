@@ -1730,53 +1730,100 @@ body .content {
 
       $('#ordersTableProcess').on('click', '.btn-ncr', function() {
         const $btn = $(this);
-        const orderId = ($btn.data('id') || '').toString();
-        const url = ($btn.data('url') || '').toString();
+        const openNcrModalFromBtn = function(forceNew = false) {
+          const orderId = ($btn.data('id') || '').toString();
+          const url = ($btn.data('url') || '').toString();
 
-        const today = new Date().toISOString().split('T')[0];
-        $('#ncrDate').val(today);
+          const today = new Date().toISOString().split('T')[0];
+          $('#ncrDate').val(today);
 
-        $('#ncrOrderId').val(orderId);
-        $('#ncrPostUrl').val(url);
-        $('#ncrNumber').val(decodeHtml($btn.data('ncr-number')));
-        $('#ncrNotes').val(decodeHtml($btn.data('ncr-notes')));
-        $('#ncrNumber').data('autoNcarNo', '');
+          $('#ncrOrderId').val(orderId);
+          $('#ncrPostUrl').val(url);
 
-        const workId = decodeHtml($btn.data('work-id'));
-        const customer = decodeHtml($btn.data('customer'));
+          if (forceNew) {
+            $('#ncrNumber').val('');
+            $('#ncrNotes').val('');
+            $('#ncrNcarType').val('');
+            $('#ncrStage').val('');
+            $('#ncrNumber').data('autoNcarNo', '');
+          } else {
+            $('#ncrNumber').val(decodeHtml($btn.data('ncr-number')));
+            $('#ncrNotes').val(decodeHtml($btn.data('ncr-notes')));
+            $('#ncrNumber').data('autoNcarNo', '');
+          }
 
-        $('#ncrWorkId').val(workId);
-        $('#ncrCo').val(decodeHtml($btn.data('co')));
-        $('#ncrCustPo').val(decodeHtml($btn.data('cust-po')));
-        $('#ncrPn').val(decodeHtml($btn.data('pn')));
-        $('#ncrCustomer').val(customer);
-        const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
-        $('#ncrReviewer').val(defaultReviewer);
-        const reviewer = decodeHtml($btn.data('ncr-reviewer'));
-        if (reviewer) $('#ncrReviewer').val(reviewer);
-        $('#ncrOperation').val(decodeHtml($btn.data('operation')));
-        $('#ncrQty').val(decodeHtml($btn.data('qty')));
-        $('#ncrWoQty').val(decodeHtml($btn.data('wo-qty')));
-        $('#ncrDescription').val(decodeHtml($btn.data('part-description')));
+          const workId = decodeHtml($btn.data('work-id'));
+          const customer = decodeHtml($btn.data('customer'));
 
-        $('#ncrHeaderWorkId').text(workId || '—');
-        $('#ncrHeaderCustomer').text(customer || '—');
+          $('#ncrWorkId').val(workId);
+          $('#ncrCo').val(decodeHtml($btn.data('co')));
+          $('#ncrCustPo').val(decodeHtml($btn.data('cust-po')));
+          $('#ncrPn').val(decodeHtml($btn.data('pn')));
+          $('#ncrCustomer').val(customer);
+          const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
+          $('#ncrReviewer').val(defaultReviewer);
+          const reviewer = decodeHtml($btn.data('ncr-reviewer'));
+          if (reviewer) $('#ncrReviewer').val(reviewer);
+          $('#ncrOperation').val(decodeHtml($btn.data('operation')));
+          $('#ncrQty').val(decodeHtml($btn.data('qty')));
+          $('#ncrWoQty').val(decodeHtml($btn.data('wo-qty')));
+          $('#ncrDescription').val(decodeHtml($btn.data('part-description')));
 
-        const ncarType = (decodeHtml($btn.data('ncar-type')) || '').toString();
-        const ncarStage = (decodeHtml($btn.data('ncar-stage')) || '').toString();
-        $('#ncrNcarType').val(ncarType);
-        syncNcarStageOptions();
-        ensureStageOption(ncarStage);
-        $('#ncrStage').val(ncarStage);
-        if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
+          $('#ncrHeaderWorkId').text(workId || '—');
+          $('#ncrHeaderCustomer').text(customer || '—');
 
-        const existingNo = ($('#ncrNumber').val() || '').toString().trim();
-        if (!existingNo && ncarType) applyNextNcarNumber(true);
+          const ncarType = forceNew ? '' : (decodeHtml($btn.data('ncar-type')) || '').toString();
+          const ncarStage = forceNew ? '' : (decodeHtml($btn.data('ncar-stage')) || '').toString();
+          $('#ncrNcarType').val(ncarType);
+          syncNcarStageOptions();
+          ensureStageOption(ncarStage);
+          $('#ncrStage').val(ncarStage);
+          if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
 
-        $('#ncrSaveBtn').prop('disabled', false);
+          const existingNo = ($('#ncrNumber').val() || '').toString().trim();
+          if (!existingNo && ncarType) applyNextNcarNumber(true);
 
-        $('#ncrModal').data('btn', $btn);
-        $('#ncrModal').modal('show');
+          $('#ncrSaveBtn').prop('disabled', false);
+
+          $('#ncrModal').data('btn', $btn);
+          $('#ncrModal').modal('show');
+        };
+
+        const editUrlExt = (decodeHtml($btn.data('ncar-edit-url-external')) || '').toString().trim();
+        const editUrlInt = (decodeHtml($btn.data('ncar-edit-url-internal')) || '').toString().trim();
+        const hasExt = !!editUrlExt;
+        const hasInt = !!editUrlInt;
+
+        if (hasExt || hasInt) {
+          const hasBoth = hasExt && hasInt;
+          const inputOptions = hasBoth ? { external: 'External NCAR', internal: 'Internal NCAR' } : undefined;
+          const inputValue = hasExt ? 'external' : 'internal';
+
+          Swal.fire({
+            icon: 'question',
+            title: 'NCAR exists',
+            text: 'This order already has an NCAR. What do you want to do?',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'View NCAR',
+            denyButtonText: 'New NCAR',
+            cancelButtonText: 'Cancel',
+            ...(hasBoth ? { input: 'radio', inputOptions, inputValue } : {})
+          }).then((res) => {
+            if (res.isConfirmed) {
+              const which = hasBoth ? (res.value || inputValue) : inputValue;
+              const url = (which === 'internal') ? editUrlInt : editUrlExt;
+              if (url) window.location.href = url;
+              return;
+            }
+            if (res.isDenied) {
+              openNcrModalFromBtn(true);
+            }
+          });
+          return;
+        }
+
+        openNcrModalFromBtn(false);
       });
 
       $('#ncrModal')
