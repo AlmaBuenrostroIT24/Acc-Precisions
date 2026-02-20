@@ -1882,7 +1882,8 @@ body .content {
               type: ncarType,
               stage: ncarStage || null,
               ncar_date: ncarDate || null,
-              nc_description: ncrNotes || null
+              nc_description: ncrNotes || null,
+              contact: (($('#ncrReviewer').val() || '').toString().trim() || null)
             }
           }).done(function(res) {
             if (!res || !res.success) {

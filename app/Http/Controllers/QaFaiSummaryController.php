@@ -1740,6 +1740,7 @@ class QaFaiSummaryController extends Controller
             'stage' => ['nullable', 'string', 'max:120'],
             'ncar_date' => ['nullable', 'date'],
             'nc_description' => ['nullable', 'string'],
+            'contact' => ['nullable', 'string', 'max:120'],
         ]);
 
         $code = $data['type'] === 'internal' ? 'INTERNAL' : 'EXTERNAL';
@@ -1775,6 +1776,19 @@ class QaFaiSummaryController extends Controller
             'nc_description' => $data['nc_description'] ?? null,
             'location' => $order ? (string) ($order->location ?? '') : null,
         ];
+
+        // Contact (para el header del NCAR)
+        $contact = trim((string) ($data['contact'] ?? ''));
+        if ($contact === '') {
+            $contact = trim((string) (auth()->user()->name ?? auth()->user()->email ?? ''));
+        }
+        if ($contact !== '') {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'contact')) {
+                $insert['contact'] = $contact;
+            } elseif (\Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'ncar_contact')) {
+                $insert['ncar_contact'] = $contact;
+            }
+        }
 
         // Guardar qty si viene numérica desde orders_schedule (si no, dejar null)
         if ($order && isset($order->qty)) {
