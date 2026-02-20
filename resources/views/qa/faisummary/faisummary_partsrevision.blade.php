@@ -1351,6 +1351,7 @@ body .content {
         deleteRow: (id) => `/qa/faisummary/delete/${id}`, // DELETE
         stationsByOrder: (id) => `/stations/by-order/${id}`, // GET
         operatorsByOrder: (id) => `/operators/by-order/${id}`, // GET
+        ncarTypes: `/qa/ncar/types`, // GET
         nextNcarNumber: `/qa/ncar/next-number`, // GET ?type=internal|external
         storeNcar: `/qa/ncar` // POST
       };
@@ -1622,9 +1623,41 @@ body .content {
         }
       };
 
+      let __ncarTypesPromise = null;
+      const loadNcarTypes = function() {
+        if (__ncarTypesPromise) return __ncarTypesPromise;
+        __ncarTypesPromise = fetchJson(ROUTES.ncarTypes).then(res => {
+          let list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+          const $sel = $('#ncrNcarType');
+          if (!$sel.length) return list;
+
+          const filterAttr = ($('#ncrModal').attr('data-ncar-type-filter') || '').toString().trim();
+          const allowedCodes = filterAttr
+            ? filterAttr.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+            : [];
+          if (allowedCodes.length) {
+            list = list.filter(t => allowedCodes.includes(String(t?.code || '').toUpperCase()));
+          }
+
+          const current = ($sel.val() || '').toString();
+          $sel.empty().append($('<option>', { value: '', text: 'Select...' }));
+          list.forEach(t => {
+            const id = (t?.id ?? '').toString();
+            if (!id) return;
+            const name = (t?.name ?? t?.code ?? id).toString();
+            const $opt = $('<option>', { value: id, text: name });
+            if (t?.code) $opt.attr('data-code', String(t.code));
+            $sel.append($opt);
+          });
+          if (current) $sel.val(current);
+          return list;
+        });
+        return __ncarTypesPromise;
+      };
+
       const applyNextNcarNumber = function(force = false) {
-        const type = ($('#ncrNcarType').val() || '').toString();
-        if (!type) return;
+        const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
+        if (!ncartypeId) return;
 
         const $field = $('#ncrNumber');
         const current = (($field.val() || '').toString()).trim();
@@ -1632,7 +1665,7 @@ body .content {
 
         if (!force && current && current !== lastAuto) return;
 
-        fetchJson(ROUTES.nextNcarNumber, { data: { type } })
+        fetchJson(ROUTES.nextNcarNumber, { data: { ncartype_id: ncartypeId } })
           .then((res) => {
             if (!res || !res.success || !res.ncar_no) return;
             $field.val(res.ncar_no);
@@ -1641,7 +1674,7 @@ body .content {
       };
 
       const syncNcarStageOptions = function() {
-        const type = ($('#ncrNcarType').val() || '').toString();
+        const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
         const $stage = $('#ncrStage');
         const $col = $('#ncrStageCol');
         const $dateCol = $('#ncrDateCol');
@@ -1666,8 +1699,8 @@ body .content {
         ];
 
         let stages = [];
-        if (type === 'internal') stages = internalStages;
-        if (type === 'external') stages = externalStages;
+        if (code === 'INTERNAL') stages = internalStages;
+        if (code === 'EXTERNAL') stages = externalStages;
 
         $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
         stages.forEach(s => $stage.append($('<option>', { value: s.label, text: s.label })));
@@ -1730,7 +1763,10 @@ body .content {
 
       $('#ordersTableProcess').on('click', '.btn-ncr', function() {
         const $btn = $(this);
+        // En Parts Revision solo mostramos INTERNAL/EXTERNAL en el select.
+        $('#ncrModal').attr('data-ncar-type-filter', 'INTERNAL,EXTERNAL');
         const openNcrModalFromBtn = function(forceNew = false) {
+          return loadNcarTypes().then(() => {
           const orderId = ($btn.data('id') || '').toString();
           const url = ($btn.data('url') || '').toString();
 
@@ -1772,21 +1808,37 @@ body .content {
           $('#ncrHeaderWorkId').text(workId || '—');
           $('#ncrHeaderCustomer').text(customer || '—');
 
-          const ncarType = forceNew ? '' : (decodeHtml($btn.data('ncar-type')) || '').toString();
+          const ncarType = forceNew ? '' : (decodeHtml($btn.data('ncar-type')) || '').toString(); // internal|external
           const ncarStage = forceNew ? '' : (decodeHtml($btn.data('ncar-stage')) || '').toString();
-          $('#ncrNcarType').val(ncarType);
+
+          if (forceNew) {
+            $('#ncrNcarType').val('');
+          } else {
+            const map = { internal: 'INTERNAL', external: 'EXTERNAL', customer: 'CUSTOMER', qa: 'QA' };
+            const wantedCode = map[(ncarType || '').toLowerCase()] || '';
+            if (wantedCode) {
+              const $opt = $('#ncrNcarType option').filter(function() {
+                return String($(this).attr('data-code') || '').toUpperCase() === wantedCode;
+              }).first();
+              $('#ncrNcarType').val($opt.length ? $opt.val() : '');
+            } else {
+              $('#ncrNcarType').val('');
+            }
+          }
+
           syncNcarStageOptions();
           ensureStageOption(ncarStage);
           $('#ncrStage').val(ncarStage);
           if ($('#ncrStage').data('select2')) $('#ncrStage').trigger('change.select2');
 
           const existingNo = ($('#ncrNumber').val() || '').toString().trim();
-          if (!existingNo && ncarType) applyNextNcarNumber(true);
+          if (!existingNo && $('#ncrNcarType').val()) applyNextNcarNumber(true);
 
           $('#ncrSaveBtn').prop('disabled', false);
 
           $('#ncrModal').data('btn', $btn);
           $('#ncrModal').modal('show');
+          });
         };
 
         const editUrlExt = (decodeHtml($btn.data('ncar-edit-url-external')) || '').toString().trim();
@@ -1860,12 +1912,13 @@ body .content {
           e.preventDefault();
 
           const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
-          const ncarType = ($('#ncrNcarType').val() || '').toString().trim();
+          const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
+          const ncarCode = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
           const ncarStage = ($('#ncrStage').val() || '').toString().trim();
           const ncarDate = ($('#ncrDate').val() || '').toString().trim();
           const orderId = ($('#ncrOrderId').val() || '').toString().trim();
 
-          if (!ncarType) {
+          if (!ncartypeId) {
             Swal.fire('Required', 'Select NCAR Type.', 'warning');
             return;
           }
@@ -1879,12 +1932,10 @@ body .content {
             data: {
               _token: getCsrf(),
               order_id: orderId || null,
-              type: ncarType,
+              ncartype_id: ncartypeId || null,
               ncar_class: (function() {
-                const val = ($('#ncrNcarType').val() || '').toString().trim();
-                if (!val) return null;
                 const txt = ($('#ncrNcarType option:selected').text() || '').toString().trim();
-                return txt || val;
+                return txt || null;
               })(),
               stage: ncarStage || null,
               ncar_date: ncarDate || null,
@@ -1914,9 +1965,11 @@ body .content {
               $btn.data('ncr-reviewer', reviewer);
               $btn.attr('data-ncr-reviewer', reviewer);
 
-              $btn.data('ncar-type', ncarType);
+              // Keep current UI logic that expects internal/external
+              const uiType = (ncarCode === 'INTERNAL') ? 'internal' : ((ncarCode === 'EXTERNAL') ? 'external' : '');
+              $btn.data('ncar-type', uiType);
               $btn.data('ncar-stage', ncarStage);
-              $btn.attr('data-ncar-type', ncarType);
+              $btn.attr('data-ncar-type', (ncarCode === 'INTERNAL') ? 'internal' : ((ncarCode === 'EXTERNAL') ? 'external' : ''));
               $btn.attr('data-ncar-stage', ncarStage);
 
               $btn.toggleClass('is-active', !!savedNumber);

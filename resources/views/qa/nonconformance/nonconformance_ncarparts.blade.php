@@ -14,9 +14,9 @@
       Non-Conformance Reports
     </h1>
     <div>
-      <a href="#" class="btn btn-dark btn-sm">
+      <button type="button" class="btn btn-dark btn-sm" id="btnCreateNcar">
         <i class="fas fa-plus mr-1"></i> NCR
-      </a>
+      </button>
     </div>
   </div>
 @endsection
@@ -177,12 +177,15 @@
 <!--  {{-- Tab: By End Schedule --}}-->
 
  </div>
+
+@include('qa.faisummary.ncr_modal')
 @endsection
 
 
 
 @section('css')
 <!-- CSS complementario (puedes ponerlo en tu .css) -->
+<link rel="stylesheet" href="{{ asset('vendor/select2/dist/css/select2.min.css') }}">
 <style>
   /* Forzar 14px en TODO el blade (texto, filtros, KPIs, paginado, etc.) */
   .ncar-page,
@@ -410,12 +413,129 @@
     filter: brightness(0.97);
     color: #111827;
   }
+
+  /* NCR modal (ERP style) */
+  #ncrModal .modal-content {
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+  }
+
+  #ncrModal .modal-dialog {
+    max-width: 1120px;
+    width: calc(100% - 1rem);
+  }
+
+  #ncrModal .erp-ncr-modal-header {
+    background: #fff !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+    padding: 14px 16px !important;
+  }
+
+  #ncrModal .erp-ncr-title-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(245, 158, 11, 0.40);
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+  }
+
+  #ncrModal .erp-ncr-title-icon i { font-size: 16px; }
+  #ncrModal .erp-ncr-chip { display: none !important; }
+
+  #ncrModal .erp-ncr-subtitle {
+    display: block !important;
+    margin-top: 2px;
+    font-size: 0.82rem;
+    color: #6b7280;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  #ncrModal .erp-ncr-modal-body {
+    background: #fff;
+    padding: 14px 16px !important;
+    max-height: calc(100vh - 190px) !important;
+    overflow: auto;
+  }
+
+  #ncrModal .erp-ncr-modal-footer {
+    background: #fff !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+    padding: 14px 16px !important;
+  }
+
+  #ncrModal .erp-ncr-label {
+    display: block !important;
+    margin: 0 0 6px !important;
+    color: #6b7280 !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    letter-spacing: .02em !important;
+    text-transform: none !important;
+  }
+
+  #ncrModal .erp-ncr-input-group .input-group-text { display: none !important; }
+
+  #ncrModal .erp-ncr-control {
+    height: 46px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+    padding: 10px 12px !important;
+  }
+
+  #ncrModal .erp-ncr-control[readonly] {
+    background: rgba(241, 245, 249, 0.85) !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+
+  #ncrModal textarea.erp-ncr-control {
+    height: auto;
+    min-height: 86px !important;
+    resize: vertical;
+  }
+
+  #ncrModal .erp-ncr-control:focus {
+    border-color: rgba(59, 130, 246, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+    outline: none !important;
+  }
+
+  #ncrModal .select2-container { width: 100% !important; }
+  #ncrModal .select2-container--default .select2-selection--single {
+    height: 46px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  #ncrModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+    height: 46px !important;
+    line-height: 46px !important;
+    padding: 0 40px 0 12px !important;
+    flex: 1 1 auto;
+    color: #111827 !important;
+  }
 </style>
 @endsection
 
 
 @push('js')
 
+<script src="{{ asset('vendor/select2/dist/js/select2.full.min.js') }}"></script>
 <script>
 $(function(){
   // Charts: forzar fuentes a 14px también dentro del canvas
@@ -652,6 +772,218 @@ $(function(){
   fetch('{{ route('nonconformance.stats') }}')
     .then(r=>r.json()).then(initCharts).catch(console.error);
 });
+</script>
+
+<script>
+  $(function () {
+    const ROUTES = {
+      ncarTypes: `/qa/ncar/types`,
+      nextNcarNumber: `/qa/ncar/next-number`,
+      storeNcar: `/qa/ncar`,
+    };
+
+    const getCsrf = () =>
+      $('meta[name="csrf-token"]').attr('content') ||
+      $('input[name="_token"]').val() ||
+      '';
+
+    const fetchJson = (url, opts = {}) =>
+      $.ajax(Object.assign({
+        url,
+        method: 'GET',
+        dataType: 'json',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        timeout: 12000
+      }, opts)).catch(() => null);
+
+    let __ncarTypesPromise = null;
+    const loadNcarTypes = function () {
+      if (__ncarTypesPromise) return __ncarTypesPromise;
+      __ncarTypesPromise = fetchJson(ROUTES.ncarTypes).then(res => {
+        const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+        const $sel = $('#ncrNcarType');
+        if (!$sel.length) return list;
+
+        const current = ($sel.val() || '').toString();
+        $sel.empty().append($('<option>', { value: '', text: 'Select...' }));
+        list.forEach(t => {
+          const id = (t?.id ?? '').toString();
+          if (!id) return;
+          const name = (t?.name ?? t?.code ?? id).toString();
+          const $opt = $('<option>', { value: id, text: name });
+          if (t?.code) $opt.attr('data-code', String(t.code));
+          $sel.append($opt);
+        });
+        if (current) $sel.val(current);
+        return list;
+      });
+      return __ncarTypesPromise;
+    };
+
+    const syncNcarStageOptions = function () {
+      const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
+      const $stage = $('#ncrStage');
+      const $col = $('#ncrStageCol');
+
+      const internalStages = [
+        { value: 'Material', label: 'Material' },
+        { value: 'Equipment', label: 'Equipment' },
+        { value: 'Human', label: 'Human' },
+        { value: 'Customer', label: 'Customer' },
+        { value: 'QA', label: 'QA' }
+      ];
+
+      const externalStages = [
+        { value: 'Plating', label: 'Plating' },
+        { value: 'Handling', label: 'Handling' },
+        { value: 'Other Outside Finish', label: 'Other Outside Finish' }
+      ];
+
+      let stages = [];
+      if (code === 'INTERNAL') stages = internalStages;
+      if (code === 'EXTERNAL') stages = externalStages;
+
+      $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
+      stages.forEach(s => $stage.append($('<option>', { value: s.value, text: s.label })));
+
+      $col.toggleClass('d-none', stages.length === 0);
+
+      if (stages.length && $.fn && $.fn.select2 && !$stage.data('select2')) {
+        $stage.select2({
+          tags: true,
+          width: '100%',
+          dropdownParent: $('#ncrModal'),
+          placeholder: 'Select or type...',
+          allowClear: false
+        });
+      }
+      if (!stages.length && $stage.data('select2')) {
+        try { $stage.select2('destroy'); } catch (e) {}
+      }
+    };
+
+    const applyNextNcarNumber = function (force = false) {
+      const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
+      if (!ncartypeId) return;
+
+      const $field = $('#ncrNumber');
+      const current = (($field.val() || '').toString()).trim();
+      const lastAuto = (($field.data('autoNcarNo') || '').toString()).trim();
+      if (!force && current && current !== lastAuto) return;
+
+      fetchJson(ROUTES.nextNcarNumber, { data: { ncartype_id: ncartypeId } }).then(res => {
+        const no = (res && (res.ncar_no || res.number || res.next || res.no)) ? (res.ncar_no || res.number || res.next || res.no) : '';
+        if (!no) return;
+        $field.val(String(no));
+        $field.data('autoNcarNo', String(no));
+      });
+    };
+
+    const openNewNcarModal = function () {
+      loadNcarTypes().then(() => {
+        const today = new Date().toISOString().split('T')[0];
+        $('#ncrDate').val(today);
+
+        $('#ncrOrderId').val('');
+        $('#ncrPostUrl').val('');
+
+        $('#ncrWorkId, #ncrCo, #ncrCustPo, #ncrPn, #ncrCustomer, #ncrOperation, #ncrQty, #ncrWoQty').val('');
+        $('#ncrDescription').val('');
+
+        $('#ncrHeaderWorkId').text('—');
+        $('#ncrHeaderCustomer').text('—');
+
+        $('#ncrNumber').val('').data('autoNcarNo', '');
+        $('#ncrNotes').val('');
+
+        $('#ncrNcarType').val('');
+        $('#ncrStage').val('');
+        syncNcarStageOptions();
+
+        const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
+        $('#ncrReviewer').val(defaultReviewer);
+
+        $('#ncrSaveBtn').prop('disabled', false);
+        $('#ncrModal').data('btn', null);
+        $('#ncrModal').modal('show');
+      });
+    };
+
+    $('#btnCreateNcar').off('click.ncr').on('click.ncr', function (e) {
+      e.preventDefault();
+      openNewNcarModal();
+    });
+
+    $('#ncrNcarType').off('change.ncarparts').on('change.ncarparts', function () {
+      syncNcarStageOptions();
+      $('#ncrStage').val('');
+      applyNextNcarNumber(true);
+    });
+
+    $('#ncrForm').off('submit.ncarparts').on('submit.ncarparts', function (e) {
+      e.preventDefault();
+
+      const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
+      if (!ncartypeId) {
+        if (window.Swal) return Swal.fire('Required', 'Select NCAR Type.', 'warning');
+        alert('Select NCAR Type.');
+        return;
+      }
+
+      const ncarStage = ($('#ncrStage').val() || '').toString().trim();
+      const ncarDate = ($('#ncrDate').val() || '').toString().trim();
+      const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
+
+      const $saveBtn = $('#ncrSaveBtn');
+      $saveBtn.prop('disabled', true);
+
+      $.ajax({
+        url: ROUTES.storeNcar,
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          _token: getCsrf(),
+          order_id: null,
+          ncartype_id: ncartypeId || null,
+          ncar_class: (function () {
+            const txt = ($('#ncrNcarType option:selected').text() || '').toString().trim();
+            return txt || null;
+          })(),
+          stage: ncarStage || null,
+          ncar_date: ncarDate || null,
+          nc_description: ncrNotes || null,
+          contact: (($('#ncrReviewer').val() || '').toString().trim() || null)
+        }
+      }).done(function (res) {
+        if (!res || !res.success) {
+          const msg = (res && res.message) ? res.message : 'Could not save NCAR.';
+          if (window.Swal) return Swal.fire('Attention', msg, 'warning');
+          alert(msg);
+          return;
+        }
+
+        $('#ncrModal').modal('hide');
+
+        const editUrl = (res.edit_url || '').toString();
+        if (editUrl) {
+          window.location.href = editUrl;
+          return;
+        }
+
+        if (window.Swal) return Swal.fire('Saved', 'NCAR saved.', 'success');
+        alert('NCAR saved.');
+      }).fail(function (xhr) {
+        let msg = 'Error saving NCAR.';
+        try {
+          if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+        } catch (e) {}
+        if (window.Swal) return Swal.fire('Error', msg, 'error');
+        alert(msg);
+      }).always(function () {
+        $saveBtn.prop('disabled', false);
+      });
+    });
+  });
 </script>
 
 @endpush

@@ -167,6 +167,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
     Route::get('/qa/rejectedfaiorders', [QaFaiSummaryController::class, 'rejectedfaiorders'])->name('faisummary.rejectedfaiorders');
     Route::get('/qa/ncar/next-number', [QaFaiSummaryController::class, 'nextNcarNumber'])->name('qa.ncar.nextNumber');
+    Route::get('/qa/ncar/types', [QaFaiSummaryController::class, 'ncarTypes'])->name('qa.ncar.types');
     Route::post('/qa/ncar', [QaFaiSummaryController::class, 'storeNcar'])->name('qa.ncar.store');
 });
 //=========================================================================================================

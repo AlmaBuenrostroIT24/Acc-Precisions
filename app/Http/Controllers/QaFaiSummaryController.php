@@ -1685,6 +1685,37 @@ class QaFaiSummaryController extends Controller
 
     public function nextNcarNumber(Request $request)
     {
+        $ncartypeId = (int) $request->query('ncartype_id', 0);
+        if ($ncartypeId > 0) {
+            $row = DB::table('qa_ncartype as t')
+                ->join('qa_ncar_counter as c', 'c.ncartype_id', '=', 't.id')
+                ->select([
+                    't.id as ncartype_id',
+                    't.code',
+                    't.prefix',
+                    'c.next_number',
+                ])
+                ->where('t.id', $ncartypeId)
+                ->first();
+
+            if (!$row) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'NCAR type/counter not found.',
+                ], 404);
+            }
+
+            return response()->json([
+                'success'     => true,
+                'type'        => null,
+                'code'        => $row->code,
+                'ncartype_id' => (int) $row->ncartype_id,
+                'prefix'      => (string) $row->prefix,
+                'next_number' => (int) $row->next_number,
+                'ncar_no'     => ((string) $row->prefix) . ((int) $row->next_number),
+            ]);
+        }
+
         $type = strtolower((string) $request->query('type', ''));
 
         $map = [
@@ -1732,24 +1763,68 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 
+    public function ncarTypes()
+    {
+        $types = DB::table('qa_ncartype')
+            ->select(['id', 'code', 'name', 'prefix'])
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => (int) $r->id,
+                    'code' => (string) $r->code,
+                    'name' => (string) $r->name,
+                    'prefix' => (string) $r->prefix,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $types,
+        ]);
+    }
+
     public function storeNcar(Request $request)
     {
         $data = $request->validate([
             'order_id' => ['nullable', 'integer'],
-            'type' => ['required', 'string', 'in:internal,external'],
+            'type' => ['nullable', 'string'],
+            'ncartype_id' => ['nullable', 'integer'],
             'stage' => ['nullable', 'string', 'max:120'],
             'ncar_date' => ['nullable', 'date'],
             'nc_description' => ['nullable', 'string'],
             'contact' => ['nullable', 'string', 'max:120'],
             'ncar_class' => ['nullable', 'string', 'max:120'],
+            'ncar_customer' => ['nullable', 'string', 'max:180'],
         ]);
 
-        $code = $data['type'] === 'internal' ? 'INTERNAL' : 'EXTERNAL';
+        $typeRow = null;
+        if (!empty($data['ncartype_id'])) {
+            $typeRow = DB::table('qa_ncartype')
+                ->select(['id', 'prefix', 'code', 'name'])
+                ->where('id', (int) $data['ncartype_id'])
+                ->first();
+        } else {
+            $type = strtolower(trim((string) ($data['type'] ?? '')));
+            $map = [
+                'internal' => 'INTERNAL',
+                'external' => 'EXTERNAL',
+                'customer' => 'CUSTOMER',
+                'qa'       => 'QA',
+            ];
+            if (!isset($map[$type])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid NCAR type.',
+                ], 422);
+            }
 
-        $typeRow = DB::table('qa_ncartype')
-            ->select(['id', 'prefix', 'code'])
-            ->where('code', $code)
-            ->first();
+            $typeRow = DB::table('qa_ncartype')
+                ->select(['id', 'prefix', 'code', 'name'])
+                ->where('code', $map[$type])
+                ->first();
+        }
 
         if (!$typeRow) {
             return response()->json([
@@ -1772,11 +1847,20 @@ class QaFaiSummaryController extends Controller
             'ncar_no' => '',
             'ncar_date' => $data['ncar_date'] ?? null,
             'status' => 'New',
-            'ncar_customer' => $order ? (string) ($order->costumer ?? '') : null,
+            'ncar_customer' => null,
             'stage' => $data['stage'] ?? null,
             'nc_description' => $data['nc_description'] ?? null,
             'location' => $order ? (string) ($order->location ?? '') : null,
         ];
+
+        // Customer
+        $ncarCustomer = trim((string) ($data['ncar_customer'] ?? ''));
+        if ($ncarCustomer === '' && $order) {
+            $ncarCustomer = trim((string) ($order->costumer ?? ''));
+        }
+        if ($ncarCustomer !== '') {
+            $insert['ncar_customer'] = $ncarCustomer;
+        }
 
         // Contact (para el header del NCAR)
         $contact = trim((string) ($data['contact'] ?? ''));

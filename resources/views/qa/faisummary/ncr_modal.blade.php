@@ -84,8 +84,6 @@
                                 </div>
                                 <select id="ncrNcarType" class="form-control erp-ncr-control">
                                     <option value="">Select...</option>
-                                    <option value="internal">Internal NCAR</option>
-                                    <option value="external">External NCAR</option>
                                 </select>
                             </div>
                         </div>
