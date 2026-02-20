@@ -1880,6 +1880,12 @@ body .content {
               _token: getCsrf(),
               order_id: orderId || null,
               type: ncarType,
+              ncar_class: (function() {
+                const val = ($('#ncrNcarType').val() || '').toString().trim();
+                if (!val) return null;
+                const txt = ($('#ncrNcarType option:selected').text() || '').toString().trim();
+                return txt || val;
+              })(),
               stage: ncarStage || null,
               ncar_date: ncarDate || null,
               nc_description: ncrNotes || null,

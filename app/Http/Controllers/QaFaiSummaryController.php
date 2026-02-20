@@ -1741,6 +1741,7 @@ class QaFaiSummaryController extends Controller
             'ncar_date' => ['nullable', 'date'],
             'nc_description' => ['nullable', 'string'],
             'contact' => ['nullable', 'string', 'max:120'],
+            'ncar_class' => ['nullable', 'string', 'max:120'],
         ]);
 
         $code = $data['type'] === 'internal' ? 'INTERNAL' : 'EXTERNAL';
@@ -1787,6 +1788,19 @@ class QaFaiSummaryController extends Controller
                 $insert['contact'] = $contact;
             } elseif (\Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'ncar_contact')) {
                 $insert['ncar_contact'] = $contact;
+            }
+        }
+
+        // Class (Internal/External NCAR label)
+        $ncarClass = trim((string) ($data['ncar_class'] ?? ''));
+        if ($ncarClass === '') {
+            $ncarClass = trim((string) ($typeRow->name ?? ''));
+        }
+        if ($ncarClass !== '') {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'ncar_class')) {
+                $insert['ncar_class'] = $ncarClass;
+            } elseif (\Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'class')) {
+                $insert['class'] = $ncarClass;
             }
         }
 

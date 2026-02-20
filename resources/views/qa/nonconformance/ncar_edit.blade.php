@@ -27,10 +27,10 @@
                 <input type="text" class="form-control form-control-sm" value="{{ $ncar->ncar_no }}" readonly>
               </div>
             </div>
-            <div class="col-md-6">
+          <div class="col-md-6">
               <div class="form-group">
                 <label>Type</label>
-                <input type="text" class="form-control form-control-sm" value="{{ $ncar->type_name }}" readonly>
+                <input type="text" class="form-control form-control-sm" value="{{ $ncar->ncar_class ?? $ncar->class ?? '' }}" readonly>
               </div>
             </div>
             <div class="col-md-6">
