@@ -200,14 +200,22 @@ class QaFaiSummaryController extends Controller
                         ? 'btn-ncr--both'
                         : ($hasExt ? 'btn-ncr--external' : ($hasInt ? 'btn-ncr--internal' : 'btn-ncr--none'));
                     $typeLabel = $hasBoth ? 'External + Internal' : ($hasExt ? 'External' : ($hasInt ? 'Internal' : ''));
-                    $ncarNo = $hasExt ? (string) ($ext->ncar_no ?? '') : ($hasInt ? (string) ($int->ncar_no ?? '') : '');
+                    $ncarNoExt = $hasExt ? (string) ($ext->ncar_no ?? '') : '';
+                    $ncarNoInt = $hasInt ? (string) ($int->ncar_no ?? '') : '';
+                    // Para compatibilidad con el modal actual (un solo campo), mantenemos un número "principal"
+                    // (prioriza External si existe).
+                    $ncarNo = $hasExt ? $ncarNoExt : ($hasInt ? $ncarNoInt : '');
                     $ncarNotes = $hasExt ? (string) ($ext->nc_description ?? '') : ($hasInt ? (string) ($int->nc_description ?? '') : '');
                     $ncarType = $hasExt ? 'external' : ($hasInt ? 'internal' : '');
                     $ncarStage = $hasExt ? (string) ($ext->stage ?? '') : ($hasInt ? (string) ($int->stage ?? '') : '');
                     $editUrlExt = $hasExt ? route('nonconformance.ncar.edit', (int) ($ext->id ?? 0)) : '';
                     $editUrlInt = $hasInt ? route('nonconformance.ncar.edit', (int) ($int->id ?? 0)) : '';
                     $hasNcr = $hasNcrCols && !empty($r->ncr_number);
-                    $title = $hasAny ? ($typeLabel . ' NCAR: ' . $ncarNo) : 'Create NCAR';
+                    $title = !$hasAny
+                        ? 'Create NCAR'
+                        : ($hasBoth
+                            ? ('External NCAR: ' . $ncarNoExt . ' | Internal NCAR: ' . $ncarNoInt)
+                            : ($typeLabel . ' NCAR: ' . $ncarNo));
 
                     // Si la DB aún no tiene columnas NCR, dejamos el modal en modo "solo vista" (sin URL para guardar).
                     $postUrl = $hasNcrCols ? route('schedule.finished.ncr', $r->id) : '';

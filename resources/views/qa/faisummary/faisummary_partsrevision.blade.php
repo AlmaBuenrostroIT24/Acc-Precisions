@@ -1808,6 +1808,7 @@ body .content {
             confirmButtonText: 'View NCAR',
             denyButtonText: 'New NCAR',
             cancelButtonText: 'Cancel',
+            denyButtonColor: '#0b5ed7',
             ...(hasBoth ? { input: 'radio', inputOptions, inputValue } : {})
           }).then((res) => {
             if (res.isConfirmed) {
