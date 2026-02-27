@@ -236,6 +236,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/QA/NonConformace/ncar/{id}', [NonConformanceController::class, 'update'])->name('nonconformance.ncar.update');
     Route::get('/QA/NonConformace/ncar/{id}/pdf', [NonConformanceController::class, 'pdf'])->name('nonconformance.ncar.pdf');
     Route::get('/QA/NonConformace/ncar/{id}/excel', [NonConformanceController::class, 'excel'])->name('nonconformance.ncar.excel');
+    Route::post('/QA/NonConformace/ncar/{id}/upload-pdf/{slot}', [NonConformanceController::class, 'uploadPdf'])->name('nonconformance.ncar.uploadPdf');
+    Route::get('/QA/NonConformace/ncar/{id}/uploaded-pdf/{slot}', [NonConformanceController::class, 'uploadedPdf'])->name('nonconformance.ncar.uploadedPdf');
     Route::delete('/QA/NonConformace/ncar/{id}', [NonConformanceController::class, 'destroy'])->name('nonconformance.ncar.destroy');
 });
 

@@ -458,10 +458,19 @@
     border-radius: 8px;
   }
 
+  /* Actions: 2 filas (3 arriba / 3 abajo) */
+  .ncar-page .ncar-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    gap: 6px;
+    justify-content: center;
+  }
+
   .ncar-page .btn-erp-primary,
   .ncar-page .btn-erp-success,
   .ncar-page .btn-erp-danger,
-  .ncar-page .btn-erp-warning {
+  .ncar-page .btn-erp-warning,
+  .ncar-page .btn-erp-info {
     background: #f8fafc;
     border: 1px solid #d5d8dd;
     color: #1f2937;
@@ -473,11 +482,13 @@
   .ncar-page .btn-erp-success i { color: #0f5132; }
   .ncar-page .btn-erp-danger i { color: #b91c1c; }
   .ncar-page .btn-erp-warning i { color: #f59e0b; }
+  .ncar-page .btn-erp-info i { color: #0ea5e9; }
 
   .ncar-page .btn-erp-primary:hover,
   .ncar-page .btn-erp-success:hover,
   .ncar-page .btn-erp-danger:hover,
-  .ncar-page .btn-erp-warning:hover {
+  .ncar-page .btn-erp-warning:hover,
+  .ncar-page .btn-erp-info:hover {
     filter: brightness(0.97);
     color: #111827;
   }
@@ -863,7 +874,7 @@ $(function(){
     columnDefs: [
       { targets: [1], className: 'col-desc', width: '320px' },
       { targets: [2,5], className: 'text-wrap' },
-      { targets: [8], orderable: false, searchable: false, className: 'text-nowrap text-center', width: '170px' }
+      { targets: [8], orderable: false, searchable: false, className: 'text-nowrap text-center', width: '260px' }
     ],
     dom: "frt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
     columns: [
@@ -895,14 +906,21 @@ $(function(){
         const pdfUrl = row?.pdf_url || '#';
         const excelUrl = row?.excel_url || '#';
         const deleteUrl = row?.delete_url || '#';
+        const id = row?.id || '';
         return `
-          <div class="d-inline-flex align-items-center" style="gap:6px" role="group" aria-label="Actions">
+          <div class="ncar-actions-grid" role="group" aria-label="Actions">
             <a class="btn btn-sm btn-erp-warning erp-table-btn" href="${editUrl}" title="Edit">
               <i class="fas fa-edit"></i>
             </a>
             <a class="btn btn-sm btn-erp-primary erp-table-btn" href="${pdfUrl}" target="_blank" rel="noopener" title="PDF">
               <i class="fas fa-file-pdf"></i>
             </a>
+            <button type="button" class="btn btn-sm btn-erp-info erp-table-btn btn-ncar-upload" data-id="${id}" data-slot="1" data-label="PDF" title="Upload PDF">
+              <i class="fas fa-upload"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-erp-info erp-table-btn btn-ncar-upload" data-id="${id}" data-slot="2" data-label="Email" title="Upload Email">
+              <i class="fas fa-envelope"></i>
+            </button>
             <a class="btn btn-sm btn-erp-success erp-table-btn" href="${excelUrl}" title="Excel">
               <i class="fas fa-file-excel"></i>
             </a>
@@ -916,6 +934,60 @@ $(function(){
   });
 
   const getCsrf = () => $('meta[name="csrf-token"]').attr('content') || '';
+  const UPLOAD_BASE = @json(url('/QA/NonConformace/ncar'));
+
+  const $pdfUpload = $('<input type="file" accept=\"application/pdf\" style=\"position:fixed; left:-9999px; width:1px; height:1px;\" />');
+  $(document.body).append($pdfUpload);
+  let pendingUpload = { id: null, slot: null };
+
+  $('#ncrTable').on('click', '.btn-ncar-upload', function (e) {
+    e.preventDefault();
+    const id = ($(this).data('id') || '').toString();
+    const slot = ($(this).data('slot') || '').toString();
+    const label = ($(this).data('label') || '').toString();
+    if (!id || !slot) return;
+    pendingUpload = { id, slot, label };
+    $pdfUpload.val('');
+    $pdfUpload.trigger('click');
+  });
+
+  $pdfUpload.on('change', function () {
+    const file = this.files && this.files[0] ? this.files[0] : null;
+    if (!file || !pendingUpload.id || !pendingUpload.slot) return;
+
+    const url = `${UPLOAD_BASE}/${pendingUpload.id}/upload-pdf/${pendingUpload.slot}`;
+    const fd = new FormData();
+    fd.append('_token', getCsrf());
+    fd.append('pdf', file);
+
+    $.ajax({
+      url,
+      method: 'POST',
+      data: fd,
+      processData: false,
+      contentType: false,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .done((res) => {
+        if (!res || res.success !== true) {
+          const msg = (res && res.message) ? res.message : 'Could not upload PDF.';
+          if (window.Swal) return Swal.fire('Error', msg, 'error');
+          alert(msg);
+          return;
+        }
+        const what = (pendingUpload.label || (pendingUpload.slot === '2' ? 'Email' : 'PDF')).toString();
+        if (window.Swal) return Swal.fire('Uploaded', `${what} uploaded.`, 'success');
+        alert(`${what} uploaded.`);
+      })
+      .fail((xhr) => {
+        const msg = xhr?.responseJSON?.message || 'Could not upload PDF.';
+        if (window.Swal) return Swal.fire('Error', msg, 'error');
+        alert(msg);
+      })
+      .always(() => {
+        pendingUpload = { id: null, slot: null, label: '' };
+      });
+  });
 
   $('#ncrTable').on('click', '.btn-ncar-delete', function(e) {
     e.preventDefault();

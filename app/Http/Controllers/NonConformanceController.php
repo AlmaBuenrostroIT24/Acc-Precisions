@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -13,6 +14,11 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class NonConformanceController extends Controller
 {
+    private function uploadedPdfDiskPath(int $id, int $slot): string
+    {
+        return "ncar_uploads/{$id}/pdf_{$slot}.pdf";
+    }
+
     public function ncarparts()
     {
         return view('qa.nonconformance.nonconformance_ncarparts');
@@ -302,6 +308,54 @@ class NonConformanceController extends Controller
         $canvas->page_text($xRight, $y, $rightText, $font, $size, [0, 0, 0]);
 
         return $dompdf->stream($filename, ['Attachment' => false]);
+    }
+
+    public function uploadPdf(Request $r, $id, $slot)
+    {
+        $id = (int) $id;
+        $slot = (int) $slot;
+
+        abort_unless(in_array($slot, [1, 2], true), 404);
+        abort_unless(DB::table('qa_ncar')->where('id', $id)->exists(), 404);
+
+        $data = $r->validate([
+            'pdf' => ['required', 'file', 'mimetypes:application/pdf', 'max:12288'], // 12MB
+        ]);
+
+        /** @var \Illuminate\Http\UploadedFile $file */
+        $file = $data['pdf'];
+
+        $disk = Storage::disk('local');
+        $path = $this->uploadedPdfDiskPath($id, $slot);
+
+        // Overwrite existing slot file.
+        $disk->put($path, file_get_contents($file->getRealPath()));
+
+        return response()->json([
+            'success' => true,
+            'url' => route('nonconformance.ncar.uploadedPdf', ['id' => $id, 'slot' => $slot]),
+        ]);
+    }
+
+    public function uploadedPdf($id, $slot)
+    {
+        $id = (int) $id;
+        $slot = (int) $slot;
+
+        abort_unless(in_array($slot, [1, 2], true), 404);
+        abort_unless(DB::table('qa_ncar')->where('id', $id)->exists(), 404);
+
+        $disk = Storage::disk('local');
+        $path = $this->uploadedPdfDiskPath($id, $slot);
+        abort_unless($disk->exists($path), 404);
+
+        $tmpPath = $disk->path($path);
+        $filename = "NCAR-{$id}-PDF{$slot}.pdf";
+
+        return response()->file($tmpPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 
     public function excel($id)
