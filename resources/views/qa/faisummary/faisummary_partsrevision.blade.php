@@ -1677,6 +1677,8 @@ body .content {
         const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
         const $stage = $('#ncrStage');
         const $col = $('#ncrStageCol');
+        const $refCol = $('#ncrRefCol');
+        const $ref = $('#ncrRef');
         const $dateCol = $('#ncrDateCol');
         const $customerCol = $('#ncrCustomerCol');
         const $numberCol = $('#ncrNumberCol');
@@ -1709,6 +1711,13 @@ body .content {
         $col.toggleClass('d-none', !shouldShow);
         if (!shouldShow) {
           $stage.val('');
+        }
+
+        // Customer NCAR: show Reference field (en Parts Revision no debe aparecer normalmente)
+        if ($refCol.length) {
+          const isCustomer = code === 'CUSTOMER';
+          $refCol.toggleClass('d-none', !isCustomer);
+          if (!isCustomer && $ref.length) $ref.val('');
         }
 
         const stripMdCols = function($el) {
@@ -1769,7 +1778,7 @@ body .content {
         $('#ncrOrderSearch').val('');
         // En Parts Revision solo mostramos INTERNAL/EXTERNAL en el select.
         $('#ncrModal').attr('data-ncar-type-filter', 'INTERNAL,EXTERNAL');
-        const openNcrModalFromBtn = function(forceNew = false) {
+      const openNcrModalFromBtn = function(forceNew = false) {
           return loadNcarTypes().then(() => {
           const orderId = ($btn.data('id') || '').toString();
           const url = ($btn.data('url') || '').toString();
@@ -1785,10 +1794,12 @@ body .content {
             $('#ncrNotes').val('');
             $('#ncrNcarType').val('');
             $('#ncrStage').val('');
+            $('#ncrRef').val('');
             $('#ncrNumber').data('autoNcarNo', '');
           } else {
             $('#ncrNumber').val(decodeHtml($btn.data('ncr-number')));
             $('#ncrNotes').val(decodeHtml($btn.data('ncr-notes')));
+            $('#ncrRef').val('');
             $('#ncrNumber').data('autoNcarNo', '');
           }
 
@@ -1941,6 +1952,7 @@ body .content {
                 const txt = ($('#ncrNcarType option:selected').text() || '').toString().trim();
                 return txt || null;
               })(),
+              ref: (($('#ncrRef').val() || '').toString().trim() || null),
               stage: ncarStage || null,
               ncar_date: ncarDate || null,
               nc_description: ncrNotes || null,

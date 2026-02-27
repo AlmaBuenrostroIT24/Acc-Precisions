@@ -910,6 +910,8 @@ $(function(){
       const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
       const $stage = $('#ncrStage');
       const $col = $('#ncrStageCol');
+      const $refCol = $('#ncrRefCol');
+      const $ref = $('#ncrRef');
 
       const internalStages = [
         { value: 'Material', label: 'Material' },
@@ -933,6 +935,13 @@ $(function(){
       stages.forEach(s => $stage.append($('<option>', { value: s.value, text: s.label })));
 
       $col.toggleClass('d-none', stages.length === 0);
+
+      // Customer NCAR: show Reference field
+      if ($refCol.length) {
+        const isCustomer = code === 'CUSTOMER';
+        $refCol.toggleClass('d-none', !isCustomer);
+        if (!isCustomer && $ref.length) $ref.val('');
+      }
 
       if (stages.length && $.fn && $.fn.select2 && !$stage.data('select2')) {
         $stage.select2({
@@ -993,6 +1002,7 @@ $(function(){
 
         $('#ncrNcarType').val('');
         $('#ncrStage').val('');
+        $('#ncrRef').val('');
         syncNcarStageOptions();
 
         const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
@@ -1021,6 +1031,7 @@ $(function(){
 
       // Reset Order search UI
       $('#ncrOrderSearch').val('');
+      $('#ncrRef').val('');
       $('#ncrOrderResultsBody').empty().append(`
         <tr>
           <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
@@ -1221,6 +1232,7 @@ $(function(){
             const txt = ($('#ncrNcarType option:selected').text() || '').toString().trim();
             return txt || null;
           })(),
+          ref: (($('#ncrRef').val() || '').toString().trim() || null),
           stage: ncarStage || null,
           ncar_date: ncarDate || null,
           nc_description: ncrNotes || null,

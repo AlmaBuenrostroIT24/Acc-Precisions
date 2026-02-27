@@ -76,17 +76,27 @@
                             </div>
                         </div>
 
-                        <div class="form-group col-12 col-md-2 mb-2" id="ncrNcarTypeCol">
-                            <label for="ncrNcarType" class="mb-1 erp-ncr-label">NCAR Type</label>
-                            <div class="input-group input-group-sm erp-ncr-input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-exchange-alt text-primary"></i></span>
-                                </div>
-                                <select id="ncrNcarType" class="form-control erp-ncr-control">
-                                    <option value="">Select...</option>
-                                </select>
-                            </div>
-                        </div>
+	                        <div class="form-group col-12 col-md-2 mb-2" id="ncrNcarTypeCol">
+	                            <label for="ncrNcarType" class="mb-1 erp-ncr-label">NCAR Type</label>
+	                            <div class="input-group input-group-sm erp-ncr-input-group">
+	                                <div class="input-group-prepend">
+	                                    <span class="input-group-text"><i class="fas fa-exchange-alt text-primary"></i></span>
+	                                </div>
+	                                <select id="ncrNcarType" class="form-control erp-ncr-control">
+	                                    <option value="">Select...</option>
+	                                </select>
+	                            </div>
+	                        </div>
+
+	                        <div class="form-group col-12 col-md-3 mb-2 d-none" id="ncrRefCol">
+	                            <label for="ncrRef" class="mb-1 erp-ncr-label">Reference</label>
+	                            <div class="input-group input-group-sm erp-ncr-input-group">
+	                                <div class="input-group-prepend">
+	                                    <span class="input-group-text"><i class="fas fa-hashtag text-secondary"></i></span>
+	                                </div>
+	                                <input type="text" id="ncrRef" class="form-control erp-ncr-control" maxlength="120" placeholder="Reference...">
+	                            </div>
+	                        </div>
 
                         <div class="form-group col-12 col-md-3 mb-2 d-none" id="ncrStageCol">
                             <label for="ncrStage" class="mb-1 erp-ncr-label font-weight-bold">Stage</label>

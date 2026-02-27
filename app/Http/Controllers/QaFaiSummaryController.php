@@ -1805,17 +1805,18 @@ class QaFaiSummaryController extends Controller
 
     public function storeNcar(Request $request)
     {
-        $data = $request->validate([
-            'order_id' => ['nullable', 'integer'],
-            'type' => ['nullable', 'string'],
-            'ncartype_id' => ['nullable', 'integer'],
-            'stage' => ['nullable', 'string', 'max:120'],
-            'ncar_date' => ['nullable', 'date'],
-            'nc_description' => ['nullable', 'string'],
-            'contact' => ['nullable', 'string', 'max:120'],
-            'ncar_class' => ['nullable', 'string', 'max:120'],
-            'ncar_customer' => ['nullable', 'string', 'max:180'],
-        ]);
+	        $data = $request->validate([
+	            'order_id' => ['nullable', 'integer'],
+	            'type' => ['nullable', 'string'],
+	            'ncartype_id' => ['nullable', 'integer'],
+	            'stage' => ['nullable', 'string', 'max:120'],
+	            'ncar_date' => ['nullable', 'date'],
+	            'nc_description' => ['nullable', 'string'],
+	            'contact' => ['nullable', 'string', 'max:120'],
+	            'ncar_class' => ['nullable', 'string', 'max:120'],
+	            'ncar_customer' => ['nullable', 'string', 'max:180'],
+	            'ref' => ['nullable', 'string', 'max:120'],
+	        ]);
 
         $typeRow = null;
         if (!empty($data['ncartype_id'])) {
@@ -1877,14 +1878,20 @@ class QaFaiSummaryController extends Controller
             'location' => $order ? (string) ($order->location ?? '') : null,
         ];
 
-        // Customer
-        $ncarCustomer = trim((string) ($data['ncar_customer'] ?? ''));
-        if ($ncarCustomer === '' && $order) {
-            $ncarCustomer = trim((string) ($order->costumer ?? ''));
-        }
-        if ($ncarCustomer !== '') {
-            $insert['ncar_customer'] = $ncarCustomer;
-        }
+	        // Customer
+	        $ncarCustomer = trim((string) ($data['ncar_customer'] ?? ''));
+	        if ($ncarCustomer === '' && $order) {
+	            $ncarCustomer = trim((string) ($order->costumer ?? ''));
+	        }
+	        if ($ncarCustomer !== '') {
+	            $insert['ncar_customer'] = $ncarCustomer;
+	        }
+
+	        // Ref (Customer NCAR reference)
+	        $ref = trim((string) ($data['ref'] ?? ''));
+	        if ($ref !== '' && \Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'ref')) {
+	            $insert['ref'] = $ref;
+	        }
 
         // Contact (para el header del NCAR)
         $contact = trim((string) ($data['contact'] ?? ''));
