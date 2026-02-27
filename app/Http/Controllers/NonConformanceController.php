@@ -26,6 +26,14 @@ class NonConformanceController extends Controller
 
     public function data(Request $r)
     {
+        $ncarCols = Schema::hasTable('qa_ncar') ? Schema::getColumnListing('qa_ncar') : [];
+        $hasPdfPath = in_array('pdf_upload_path', $ncarCols, true);
+        $hasEmailPath = in_array('email_upload_path', $ncarCols, true);
+
+        $selectExtra = [];
+        if ($hasPdfPath) $selectExtra[] = 'n.pdf_upload_path';
+        if ($hasEmailPath) $selectExtra[] = 'n.email_upload_path';
+
         $rows = DB::table('qa_ncar as n')
             ->leftJoin('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
             ->leftJoin('orders_schedule as o', 'o.id', '=', 'n.order_id')
@@ -46,11 +54,11 @@ class NonConformanceController extends Controller
                 'o.PN',
                 'o.Part_description',
                 'o.costumer',
-            ])
+            ], $selectExtra)
             ->orderByDesc('n.id')
             ->limit(500)
             ->get()
-            ->map(function ($x) {
+            ->map(function ($x) use ($hasPdfPath, $hasEmailPath) {
                 $pn = (string) ($x->PN ?? '');
                 $desc = trim((string) Str::before((string) ($x->Part_description ?? ''), ','));
                 $title = trim($pn . ($desc ? (' - ' . $desc) : ''));
@@ -59,6 +67,14 @@ class NonConformanceController extends Controller
                 if (!empty($x->work_id)) $refs[] = 'WorkID: ' . $x->work_id;
                 if (!empty($x->co)) $refs[] = 'CO: ' . $x->co;
                 if (!empty($x->cust_po)) $refs[] = 'PO: ' . $x->cust_po;
+
+                $pdfPath = $hasPdfPath && property_exists($x, 'pdf_upload_path') ? ((string) ($x->pdf_upload_path ?? '')) : '';
+                $emailPath = $hasEmailPath && property_exists($x, 'email_upload_path') ? ((string) ($x->email_upload_path ?? '')) : '';
+
+                // If DB columns don't exist (or are empty), still detect uploads by checking disk files.
+                $disk = Storage::disk('local');
+                $hasPdfUpload = $pdfPath !== '' ? true : $disk->exists($this->uploadedPdfDiskPath((int) $x->id, 1));
+                $hasEmailUpload = $emailPath !== '' ? true : $disk->exists($this->uploadedPdfDiskPath((int) $x->id, 2));
 
                 return [
                     'id' => (int) $x->id,
@@ -70,6 +86,10 @@ class NonConformanceController extends Controller
                     'ref_numbers' => implode(' | ', $refs),
                     'type' => (string) ($x->type_name ?? ''),
                     'status' => (string) (($x->status ?? '') ?: 'New'),
+                    'pdf_upload_path' => $pdfPath,
+                    'email_upload_path' => $emailPath,
+                    'has_pdf_upload' => $hasPdfUpload,
+                    'has_email_upload' => $hasEmailUpload,
                     'edit_url' => route('nonconformance.ncar.edit', ['id' => (int) $x->id]),
                     'pdf_url' => route('nonconformance.ncar.pdf', ['id' => (int) $x->id]),
                     'excel_url' => route('nonconformance.ncar.excel', ['id' => (int) $x->id]),
@@ -330,6 +350,18 @@ class NonConformanceController extends Controller
 
         // Overwrite existing slot file.
         $disk->put($path, file_get_contents($file->getRealPath()));
+
+        // Save file location on qa_ncar (so it's visible/auditable from DB).
+        $update = [];
+        if ($slot === 1 && Schema::hasColumn('qa_ncar', 'pdf_upload_path')) {
+            $update['pdf_upload_path'] = $path;
+        }
+        if ($slot === 2 && Schema::hasColumn('qa_ncar', 'email_upload_path')) {
+            $update['email_upload_path'] = $path;
+        }
+        if (!empty($update)) {
+            DB::table('qa_ncar')->where('id', $id)->update($update);
+        }
 
         return response()->json([
             'success' => true,

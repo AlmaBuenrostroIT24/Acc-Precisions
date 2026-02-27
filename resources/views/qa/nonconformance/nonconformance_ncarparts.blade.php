@@ -7,22 +7,16 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
+{{--
 @section('content_header')
   <div class="d-flex align-items-center justify-content-between">
     <h1 class="mb-0">
       <i class="fas fa-exclamation-triangle text-danger mr-2"></i>
       Non-Conformance Reports
     </h1>
-    <div>
-      <button type="button" class="btn btn-outline-secondary btn-sm mr-2" id="btnManageStages">
-        <i class="fas fa-layer-group mr-1"></i> Stages
-      </button>
-      <button type="button" class="btn btn-dark btn-sm" id="btnCreateNcar">
-        <i class="fas fa-plus mr-1"></i> NCR
-      </button>
-    </div>
   </div>
 @endsection
+--}}
 
 
 @section('content')
@@ -35,142 +29,147 @@
 
 
 <div class="row">
-  {{-- Columna izquierda: KPIs --}}
-  <div class="col-lg-3">
-    <div class="card kpi-card kpi-new mb-3">
-      <div class="card-body d-flex align-items-center">
-        <div class="kpi-icon mr-3"><i class="fas fa-info-circle"></i></div>
-        <div>
-          <div class="small text-muted">New</div>
-          <div class="h3 mb-0" id="kpiNew">0</div>
+  {{-- Tabla arriba (8) --}}
+  <div class="col-lg-9 order-1 order-lg-2" id="ncarTableCol">
+    <div class="card mb-3">
+      <div class="card-body pb-0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="w-100">
+            <div class="erp-filters-layout d-flex align-items-end justify-content-between flex-wrap" style="gap:.5rem">
+              <div class="erp-filters-fields d-flex flex-wrap align-items-end" style="gap:.5rem">
+                <div class="form-group mb-0">
+                  <label for="fltType" class="mb-1 sr-only">Type</label>
+                  <div class="input-group input-group" style="min-width:200px">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text bg-light">
+                        <i class="fas fa-tag text-warning"></i>
+                      </span>
+                    </div>
+                    <select id="fltType" class="form-control form-control-sm erp-filter-control dt-filter">
+                      <option value="">-- All --</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group mb-0">
+                  <label for="fltCustomer" class="mb-1 sr-only">Customer</label>
+                  <div class="input-group input-group" style="min-width:200px">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text bg-light">
+                        <i class="fas fa-user-tag text-primary"></i>
+                      </span>
+                    </div>
+                    <select id="fltCustomer" class="form-control form-control-sm erp-filter-control dt-filter">
+                      <option value="">-- All --</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group mb-0">
+                  <label for="fltStatus" class="mb-1 sr-only">Status</label>
+                  <div class="input-group input-group" style="min-width:190px">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text bg-light">
+                        <i class="fas fa-tasks text-info"></i>
+                      </span>
+                    </div>
+                    <select id="fltStatus" class="form-control form-control-sm erp-filter-control dt-filter">
+                      <option value="">-- All --</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center" style="gap:.5rem">
+                <button type="button" class="ncar-top-action ncar-top-secondary" id="btnManageStages" title="Manage stages">
+                  <i class="fas fa-layer-group"></i><span>Stages</span>
+                </button>
+                <button type="button" class="ncar-top-action ncar-top-primary" id="btnCreateNcar" title="Create NCR">
+                  <i class="fas fa-plus"></i><span>NCR</span>
+                </button>
+                <div class="dt-filter-slot" data-dt-filter-slot="ncr"></div>
+                <button type="button" class="btn btn-light btn-sm ncar-wide-btn" id="btnToggleTableWide" title="Expand table">
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="card kpi-card kpi-qa mb-3">
-      <div class="card-body d-flex align-items-center">
-        <div class="kpi-icon mr-3"><i class="fas fa-user"></i></div>
-        <div>
-          <div class="small text-muted">Quality Review</div>
-          <div class="h3 mb-0" id="kpiQA">0</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card kpi-card kpi-eng mb-3">
-      <div class="card-body d-flex align-items-center">
-        <div class="kpi-icon mr-3"><i class="fas fa-wrench"></i></div>
-        <div>
-          <div class="small text-muted">Engineering Review</div>
-          <div class="h3 mb-0" id="kpiEng">0</div>
+      <div class="card-body p-1"> {{-- ✅ tabla dentro de card-body (poquito padding) --}}
+        <div class="table-responsive position-relative fai-table-shell">
+          <table id="ncrTable" class="table table-sm table-hover align-middle w-100 fai-dt-table">
+            <thead class="table-light">
+              <tr>
+                <th>Code</th>
+                <th class="col-desc-h">Description</th>
+                <th>Title</th>
+                <th>Created</th>
+                <th>Customers</th>
+                <th>Reference Numbers</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
 
-  {{-- Columna derecha: gráficos --}}
-  <div class="col-lg-9"> {{-- o col-lg-12 si quieres todo el ancho --}}
-    <div class="row">
-      <div class="col-md-6 d-flex">
-        <div class="card mb-3 w-100 h-100">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Total By Cause</strong>
-            <span class="h5 mb-0" id="kpiTotalCause">0</span>
-          </div>
-          <div class="card-body">
-            <canvas id="chartByCause" height="110"></canvas>
-          </div>
-        </div>
+  {{-- KPIs + gráficos (donde estaba la columna izquierda) --}}
+  <div class="col-lg-3 order-2 order-lg-1" id="ncarSidebarCol">
+    <div class="card erp-side-card mb-3">
+      <div class="card-header erp-side-card-header">
+        <span class="erp-side-title"><i class="fas fa-chart-line mr-2"></i>Overview</span>
       </div>
-
-      <div class="col-md-6 d-flex">
-        <div class="card mb-3 w-100 h-100">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Total</strong>
-            <button class="btn btn-sm btn-light" disabled>Total</button>
+      <div class="card-body p-0">
+        <div class="erp-kpi-row">
+          <div class="d-flex align-items-center">
+            <span class="erp-kpi-icon erp-kpi-new"><i class="fas fa-info-circle"></i></span>
+            <div class="erp-kpi-label">New</div>
           </div>
-          <div class="card-body">
-            <canvas id="chartTrend" height="110"></canvas>
-          </div>
+          <div class="erp-kpi-value" id="kpiNew">0</div>
         </div>
-      </div>
-    </div>
-  </div>
-</div> {{-- ✅ cerramos el .row grande --}}
 
-{{-- Card de filtros + buscador + tabla --}}
-<div class="card mt-3">
-  <div class="card-body pb-0">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="w-100">
-        <div class="erp-filters-layout d-flex align-items-end justify-content-between flex-wrap" style="gap:.5rem">
-          <div class="erp-filters-fields d-flex flex-wrap align-items-end" style="gap:.5rem">
-            <div class="form-group mb-0">
-              <label for="fltType" class="mb-1 sr-only">Type</label>
-              <div class="input-group input-group" style="min-width:200px">
-                <div class="input-group-prepend">
-                  <span class="input-group-text bg-light">
-                    <i class="fas fa-tag text-warning"></i>
-                  </span>
-                </div>
-                <select id="fltType" class="form-control form-control-sm erp-filter-control dt-filter">
-                  <option value="">-- All --</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group mb-0">
-              <label for="fltCustomer" class="mb-1 sr-only">Customer</label>
-              <div class="input-group input-group" style="min-width:200px">
-                <div class="input-group-prepend">
-                  <span class="input-group-text bg-light">
-                    <i class="fas fa-user-tag text-primary"></i>
-                  </span>
-                </div>
-                <select id="fltCustomer" class="form-control form-control-sm erp-filter-control dt-filter">
-                  <option value="">-- All --</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group mb-0">
-              <label for="fltStatus" class="mb-1 sr-only">Status</label>
-              <div class="input-group input-group" style="min-width:190px">
-                <div class="input-group-prepend">
-                  <span class="input-group-text bg-light">
-                    <i class="fas fa-tasks text-info"></i>
-                  </span>
-                </div>
-                <select id="fltStatus" class="form-control form-control-sm erp-filter-control dt-filter">
-                  <option value="">-- All --</option>
-                </select>
-              </div>
-            </div>
+        <div class="erp-kpi-row">
+          <div class="d-flex align-items-center">
+            <span class="erp-kpi-icon erp-kpi-qa"><i class="fas fa-user"></i></span>
+            <div class="erp-kpi-label">Quality Review</div>
           </div>
+          <div class="erp-kpi-value" id="kpiQA">0</div>
+        </div>
 
-          <div class="dt-filter-slot" data-dt-filter-slot="ncr"></div>
+        <div class="erp-kpi-row">
+          <div class="d-flex align-items-center">
+            <span class="erp-kpi-icon erp-kpi-eng"><i class="fas fa-wrench"></i></span>
+            <div class="erp-kpi-label">Engineering Review</div>
+          </div>
+          <div class="erp-kpi-value" id="kpiEng">0</div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="card-body p-1"> {{-- ✅ tabla dentro de card-body (poquito padding) --}}
-    <div class="table-responsive position-relative fai-table-shell">
-      <table id="ncrTable" class="table table-sm table-hover align-middle w-100 fai-dt-table">
-        <thead class="table-light">
-          <tr>
-            <th>Number</th>
-            <th class="col-desc-h">Description</th>
-            <th>Title</th>
-            <th>Created</th>
-            <th>Customers</th>
-            <th>Reference Numbers</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+
+    <div class="card erp-side-card mb-3 w-100">
+      <div class="card-header erp-side-card-header d-flex justify-content-between align-items-center">
+        <span class="erp-side-title">Total By Cause</span>
+        <span class="erp-side-metric" id="kpiTotalCause">0</span>
+      </div>
+      <div class="card-body">
+        <canvas id="chartByCause" height="130"></canvas>
+      </div>
+    </div>
+
+    <div class="card erp-side-card mb-3 w-100">
+      <div class="card-header erp-side-card-header d-flex justify-content-between align-items-center">
+        <span class="erp-side-title">Total</span>
+        <span class="erp-side-chip">Trend</span>
+      </div>
+      <div class="card-body">
+        <canvas id="chartTrend" height="130"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -182,6 +181,25 @@
  </div>
 
 @include('qa.faisummary.ncr_modal')
+
+{{-- PDF Preview (uploaded PDFs) --}}
+<div class="modal fade" id="ncarPdfPreviewModal" tabindex="-1" role="dialog" aria-labelledby="ncarPdfPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2 ncar-pdf-modal-header">
+        <strong id="ncarPdfPreviewModalLabel">PDF Preview</strong>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="ncar-pdf-preview">
+          <iframe id="ncarPdfPreviewFrame" title="PDF Preview" src="about:blank"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 {{-- Stage Manager (qa_ncar_stage) --}}
 <div class="modal fade" id="ncarStageModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -277,6 +295,94 @@
   .badge-closed { background: #e9f5ee; color:#1b5e20; }
   .badge-open   { background: #fff3f3; color:#b71c1c; }
 
+  /* Sidebar ERP cards */
+  .ncar-page .erp-side-card {
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .ncar-page .erp-side-card-header {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: .02em;
+    padding: 10px 12px;
+  }
+
+  .ncar-page .erp-side-title {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.86rem;
+    text-transform: uppercase;
+  }
+
+  .ncar-page .erp-side-metric {
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: #0f172a;
+  }
+
+  .ncar-page .erp-side-chip {
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    background: rgba(241, 245, 249, 0.95);
+    color: rgba(15, 23, 42, 0.78);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+
+  .ncar-page .erp-kpi-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  }
+
+  .ncar-page .erp-kpi-row:last-child {
+    border-bottom: 0;
+  }
+
+  .ncar-page .erp-kpi-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(241, 245, 249, 0.8);
+    color: #334155;
+  }
+
+  .ncar-page .erp-kpi-new { background: rgba(34, 197, 94, 0.10); border-color: rgba(34, 197, 94, 0.25); color: #15803d; }
+  .ncar-page .erp-kpi-qa { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.28); color: #b45309; }
+  .ncar-page .erp-kpi-eng { background: rgba(124, 58, 237, 0.12); border-color: rgba(124, 58, 237, 0.28); color: #5b21b6; }
+
+  .ncar-page .erp-kpi-label {
+    font-weight: 800;
+    color: rgba(15, 23, 42, 0.70);
+    font-size: 0.78rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  .ncar-page .erp-kpi-value {
+    font-weight: 900;
+    font-size: 1.25rem;
+    color: #0f172a;
+    line-height: 1;
+  }
+
   .dt-filter-slot { display: flex; align-items: center; justify-content: flex-end; flex: 1 1 auto; }
   /* Filtros estilo "schedule yarnell" (sin contenedor) */
   .ncar-page .erp-filter-control {
@@ -363,6 +469,7 @@
     padding: 6px 8px;
     white-space: normal;
     word-break: break-word;
+    line-height: 1.2;
   }
 
   /* Columna Description: ancho fijo pero mostrando todo el texto */
@@ -380,6 +487,28 @@
     display: block;
     max-width: 320px;
     white-space: normal;
+  }
+
+  /* Mantener altura uniforme por fila: limitar a 2 líneas con ellipsis */
+  .ncar-page .cell-desc,
+  .ncar-page .cell-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    max-height: calc(1.2em * 4);
+    min-height: calc(1.2em * 4);
+  }
+
+  .ncar-page .cell-title { max-width: 320px; }
+
+  .ncar-page .cell-refs {
+    display: block;
+    white-space: pre-line;
+    overflow: hidden;
+    max-height: calc(1.2em * 4);
+    min-height: calc(1.2em * 4);
+    max-width: 320px;
   }
 
   .fai-dt-table tbody tr:nth-child(odd) { background: #fff !important; }
@@ -464,6 +593,84 @@
     grid-template-columns: repeat(3, 34px);
     gap: 6px;
     justify-content: center;
+    width: 114px; /* 34*3 + 6*2 */
+    margin: 0 auto;
+  }
+
+  /* Columna Actions: que se compacte al ancho real de botones */
+  .ncar-page td.col-actions,
+  .ncar-page th.col-actions {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  .ncar-page .ncar-wide-btn {
+    height: 34px;
+    width: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    background: rgba(241, 245, 249, 0.95);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  }
+
+  .ncar-page .ncar-wide-btn i,
+  .ncar-page .ncar-wide-btn svg {
+    color: #0f172a;
+    fill: currentColor;
+  }
+
+  .ncar-page .ncar-wide-btn:hover {
+    filter: brightness(0.98);
+  }
+
+  /* Top actions (Stages/NCR) - ERP style */
+  .ncar-page .ncar-top-action {
+    height: 34px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    background: rgba(241, 245, 249, 0.95);
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    white-space: nowrap;
+  }
+
+  .ncar-page .ncar-top-action i,
+  .ncar-page .ncar-top-action svg {
+    color: currentColor;
+    fill: currentColor;
+  }
+
+  .ncar-page .ncar-top-action:hover {
+    filter: brightness(0.98);
+    text-decoration: none;
+  }
+
+  .ncar-page .ncar-top-action.ncar-top-primary {
+    border-color: rgba(11, 94, 215, 0.35);
+    background: rgba(11, 94, 215, 0.08);
+    color: #0b5ed7;
+  }
+
+  .ncar-page .ncar-top-action.ncar-top-secondary {
+    border-color: rgba(71, 85, 105, 0.28);
+    background: rgba(148, 163, 184, 0.10);
+    color: #334155;
   }
 
   .ncar-page .btn-erp-primary,
@@ -478,11 +685,74 @@
     font-weight: 700;
   }
 
-  .ncar-page .btn-erp-primary i { color: #0b5ed7; }
-  .ncar-page .btn-erp-success i { color: #0f5132; }
-  .ncar-page .btn-erp-danger i { color: #b91c1c; }
-  .ncar-page .btn-erp-warning i { color: #f59e0b; }
-  .ncar-page .btn-erp-info i { color: #0ea5e9; }
+  .ncar-page .btn-erp-primary i,
+  .ncar-page .btn-erp-primary svg { color: #0b5ed7; fill: currentColor; }
+  .ncar-page .btn-erp-success i,
+  .ncar-page .btn-erp-success svg { color: #0f5132; fill: currentColor; }
+  .ncar-page .btn-erp-danger i,
+  .ncar-page .btn-erp-danger svg { color: #b91c1c; fill: currentColor; }
+  .ncar-page .btn-erp-warning i,
+  .ncar-page .btn-erp-warning svg { color: #f59e0b; fill: currentColor; }
+  .ncar-page .btn-erp-info i,
+  .ncar-page .btn-erp-info svg { color: #0ea5e9; fill: currentColor; }
+
+  .ncar-page .erp-table-btn.is-uploaded {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: rgba(22, 163, 74, 0.40);
+  }
+
+  .ncar-page .erp-table-btn.is-uploaded i,
+  .ncar-page .erp-table-btn.is-uploaded svg {
+    color: #16a34a !important;
+    fill: currentColor !important;
+  }
+
+  .ncar-page .erp-table-btn.is-uploaded:hover,
+  .ncar-page .erp-table-btn.is-uploaded:focus {
+    background: rgba(22, 163, 74, 0.12) !important;
+    border-color: rgba(22, 163, 74, 0.40) !important;
+  }
+
+  .ncar-page .erp-table-btn.is-uploaded:hover i,
+  .ncar-page .erp-table-btn.is-uploaded:focus i,
+  .ncar-page .erp-table-btn.is-uploaded:hover svg,
+  .ncar-page .erp-table-btn.is-uploaded:focus svg {
+    color: #16a34a !important;
+    fill: currentColor !important;
+  }
+
+  /* PDF Preview modal */
+  #ncarPdfPreviewModal .modal-content {
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+  }
+
+  #ncarPdfPreviewModal .modal-dialog {
+    max-width: 1120px;
+    width: calc(100% - 1rem);
+  }
+
+  #ncarPdfPreviewModal .ncar-pdf-modal-header {
+    background: #fff;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 14px 16px;
+  }
+
+  #ncarPdfPreviewModal .ncar-pdf-preview {
+    height: calc(100vh - 220px);
+    min-height: 520px;
+    background: #f8fafc;
+  }
+
+  #ncarPdfPreviewModal iframe#ncarPdfPreviewFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #fff;
+  }
 
   .ncar-page .btn-erp-primary:hover,
   .ncar-page .btn-erp-success:hover,
@@ -874,7 +1144,7 @@ $(function(){
     columnDefs: [
       { targets: [1], className: 'col-desc', width: '320px' },
       { targets: [2,5], className: 'text-wrap' },
-      { targets: [8], orderable: false, searchable: false, className: 'text-nowrap text-center', width: '260px' }
+      { targets: [8], orderable: false, searchable: false, className: 'text-nowrap text-center col-actions', width: '130px' }
     ],
     dom: "frt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
     columns: [
@@ -882,19 +1152,25 @@ $(function(){
       {data:'description', render:(d)=>{
         const v = (d ?? '').toString();
         const esc = escapeHtml(v);
-        return `<div class="cell-desc">${esc}</div>`;
+        return `<div class="cell-desc" title="${esc}">${esc}</div>`;
       }},
-      {data:'title'},
+      {data:'title', render:(d)=>{
+        const v = (d ?? '').toString();
+        const esc = escapeHtml(v);
+        return `<div class="cell-title" title="${esc}">${esc}</div>`;
+      }},
       {data:'created', render:d=> d? new Date(d).toLocaleDateString():''},
       {data:'customer'},
       {data:'ref_numbers', render:(d)=>{
         const v = (d ?? '').toString().trim();
         if (!v) return '';
-        return v
+        const parts = v
           .split('|')
-          .map(s => escapeHtml(s.trim()))
-          .filter(Boolean)
-          .join('<br>');
+          .map(s => s.trim())
+          .filter(Boolean);
+        const multi = parts.join('\n');
+        const esc = escapeHtml(multi);
+        return `<div class="cell-refs" title="${esc}">${esc}</div>`;
       }},
       {data:'type'},
       {data:'status', render:s=>{
@@ -907,6 +1183,10 @@ $(function(){
         const excelUrl = row?.excel_url || '#';
         const deleteUrl = row?.delete_url || '#';
         const id = row?.id || '';
+        const hasPdfUp = (row?.has_pdf_upload === true) || !!(row?.pdf_upload_path || '').toString().trim();
+        const hasEmailUp = (row?.has_email_upload === true) || !!(row?.email_upload_path || '').toString().trim();
+        const viewPdf1Url = `${UPLOAD_BASE}/${id}/uploaded-pdf/1`;
+        const viewPdf2Url = `${UPLOAD_BASE}/${id}/uploaded-pdf/2`;
         return `
           <div class="ncar-actions-grid" role="group" aria-label="Actions">
             <a class="btn btn-sm btn-erp-warning erp-table-btn" href="${editUrl}" title="Edit">
@@ -915,10 +1195,16 @@ $(function(){
             <a class="btn btn-sm btn-erp-primary erp-table-btn" href="${pdfUrl}" target="_blank" rel="noopener" title="PDF">
               <i class="fas fa-file-pdf"></i>
             </a>
-            <button type="button" class="btn btn-sm btn-erp-info erp-table-btn btn-ncar-upload" data-id="${id}" data-slot="1" data-label="PDF" title="Upload PDF">
+            <button type="button"
+              class="btn btn-sm btn-erp-info erp-table-btn btn-ncar-upload ${hasPdfUp ? 'is-uploaded' : ''}"
+              data-id="${id}" data-slot="1" data-label="PDF" data-has="${hasPdfUp ? 1 : 0}" data-view-url="${viewPdf1Url}"
+              title="${hasPdfUp ? 'View PDF (Shift+click to replace)' : 'Upload PDF'}">
               <i class="fas fa-upload"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-erp-info erp-table-btn btn-ncar-upload" data-id="${id}" data-slot="2" data-label="Email" title="Upload Email">
+            <button type="button"
+              class="btn btn-sm btn-erp-info erp-table-btn btn-ncar-upload ${hasEmailUp ? 'is-uploaded' : ''}"
+              data-id="${id}" data-slot="2" data-label="Email" data-has="${hasEmailUp ? 1 : 0}" data-view-url="${viewPdf2Url}"
+              title="${hasEmailUp ? 'View Email PDF (Shift+click to replace)' : 'Upload Email'}">
               <i class="fas fa-envelope"></i>
             </button>
             <a class="btn btn-sm btn-erp-success erp-table-btn" href="${excelUrl}" title="Excel">
@@ -936,19 +1222,69 @@ $(function(){
   const getCsrf = () => $('meta[name="csrf-token"]').attr('content') || '';
   const UPLOAD_BASE = @json(url('/QA/NonConformace/ncar'));
 
+  // Expand/collapse table to full width (hide sidebar)
+  const $page = $('.ncar-page');
+  const $tableCol = $('#ncarTableCol');
+  const $sidebarCol = $('#ncarSidebarCol');
+  const $wideBtn = $('#btnToggleTableWide');
+
+  const setTableWide = function (wide) {
+    const isWide = !!wide;
+    $page.toggleClass('is-table-wide', isWide);
+
+    if (isWide) {
+      $sidebarCol.addClass('d-none');
+      $tableCol.removeClass('col-lg-9').addClass('col-lg-12');
+      $wideBtn.attr('title', 'Collapse table').find('i').removeClass('fa-expand').addClass('fa-compress');
+    } else {
+      $sidebarCol.removeClass('d-none');
+      $tableCol.removeClass('col-lg-12').addClass('col-lg-9');
+      $wideBtn.attr('title', 'Expand table').find('i').removeClass('fa-compress').addClass('fa-expand');
+    }
+
+    try { localStorage.setItem('ncarTableWide', isWide ? '1' : '0'); } catch (e) {}
+    setTimeout(() => {
+      try { dt.columns.adjust(); } catch (e) {}
+      try { dt.responsive && dt.responsive.recalc && dt.responsive.recalc(); } catch (e) {}
+    }, 80);
+  };
+
+  $wideBtn.on('click', function () {
+    setTableWide(!$page.hasClass('is-table-wide'));
+  });
+
+  try { setTableWide(localStorage.getItem('ncarTableWide') === '1'); } catch (e) {}
+
   const $pdfUpload = $('<input type="file" accept=\"application/pdf\" style=\"position:fixed; left:-9999px; width:1px; height:1px;\" />');
   $(document.body).append($pdfUpload);
-  let pendingUpload = { id: null, slot: null };
+  let pendingUpload = { id: null, slot: null, label: '', $btn: null };
 
   $('#ncrTable').on('click', '.btn-ncar-upload', function (e) {
     e.preventDefault();
+    const $btn = $(this);
     const id = ($(this).data('id') || '').toString();
     const slot = ($(this).data('slot') || '').toString();
     const label = ($(this).data('label') || '').toString();
+    const has = String($(this).data('has') || '') === '1';
+    const viewUrl = ($(this).data('viewUrl') || '').toString();
     if (!id || !slot) return;
-    pendingUpload = { id, slot, label };
+
+    // If already uploaded: click = view. Shift+click = replace (upload again).
+    if (has && !e.shiftKey && viewUrl) {
+      const what = (label || (slot === '2' ? 'Email' : 'PDF')).toString();
+      $('#ncarPdfPreviewModalLabel').text(`${what} Preview`);
+      $('#ncarPdfPreviewFrame').attr('src', viewUrl);
+      $('#ncarPdfPreviewModal').modal('show');
+      return;
+    }
+
+    pendingUpload = { id, slot, label, $btn };
     $pdfUpload.val('');
     $pdfUpload.trigger('click');
+  });
+
+  $('#ncarPdfPreviewModal').on('hidden.bs.modal', function () {
+    $('#ncarPdfPreviewFrame').attr('src', 'about:blank');
   });
 
   $pdfUpload.on('change', function () {
@@ -975,6 +1311,20 @@ $(function(){
           alert(msg);
           return;
         }
+
+        // Update button style immediately and refresh table data (keeps paging).
+        try {
+          if (pendingUpload.$btn && pendingUpload.$btn.length) {
+            const what = (pendingUpload.label || (pendingUpload.slot === '2' ? 'Email' : 'PDF')).toString();
+            pendingUpload.$btn
+              .addClass('is-uploaded')
+              .attr('data-has', '1')
+              .data('has', 1)
+              .attr('title', `View ${what} (Shift+click to replace)`);
+          }
+        } catch (e) {}
+        try { dt.ajax.reload(null, false); } catch (e) {}
+
         const what = (pendingUpload.label || (pendingUpload.slot === '2' ? 'Email' : 'PDF')).toString();
         if (window.Swal) return Swal.fire('Uploaded', `${what} uploaded.`, 'success');
         alert(`${what} uploaded.`);
@@ -985,7 +1335,7 @@ $(function(){
         alert(msg);
       })
       .always(() => {
-        pendingUpload = { id: null, slot: null, label: '' };
+        pendingUpload = { id: null, slot: null, label: '', $btn: null };
       });
   });
 
