@@ -113,7 +113,6 @@
 
                     {{-- Optional: search an Order (used in NonConformance page) --}}
                     <div class="erp-ncr-orderbox mb-2 d-none" id="ncrOrderSearchBox">
-                        <div class="erp-ncr-orderbox-title">Priority</div>
                         <div class="form-row">
                             <div class="form-group col-12 mb-0">
                                 <div class="input-group ncr-order-searchbar">
@@ -222,13 +221,13 @@
 
                         <div class="form-group mb-0">
                             <label class="mb-1 erp-ncr-label" for="ncrDescription">Part Description</label>
-                            <textarea id="ncrDescription" class="form-control form-control-sm erp-ncr-control" rows="2" readonly></textarea>
+                            <textarea id="ncrDescription" class="form-control form-control-sm erp-ncr-control" rows="1" readonly></textarea>
                         </div>
                     </div>
 
                     <div class="form-group mb-0">
                         <label for="ncrNotes" class="mb-1 erp-ncr-label">Notes</label>
-                        <textarea id="ncrNotes" class="form-control form-control-sm erp-ncr-control" rows="3" maxlength="2000" placeholder="Details..."></textarea>
+                        <textarea id="ncrNotes" class="form-control form-control-sm erp-ncr-control erp-ncr-notes" rows="1" maxlength="2000" placeholder="Details..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2 erp-ncr-modal-footer">
@@ -241,3 +240,14 @@
         </div>
     </div>
 </div>
+
+<style>
+  /* Notes: más compacto que otros textareas del modal */
+  #ncrModal textarea#ncrNotes.erp-ncr-control {
+    min-height: 66px !important;
+  }
+
+  #ncrModal textarea#ncrDescription.erp-ncr-control {
+    min-height: 66px !important;
+  }
+</style>

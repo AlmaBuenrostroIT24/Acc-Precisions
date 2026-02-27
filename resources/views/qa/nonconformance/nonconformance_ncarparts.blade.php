@@ -1147,32 +1147,98 @@ $(function(){
         });
     };
 
-    const syncNcarStageOptions = function () {
-      const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
-      const $stage = $('#ncrStage');
-      const $col = $('#ncrStageCol');
-      const $refCol = $('#ncrRefCol');
-      const $ref = $('#ncrRef');
-      const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
-      const currentStage = ($stage.val() || '').toString();
+	    const syncNcarStageOptions = function () {
+	      const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
+	      const $stage = $('#ncrStage');
+	      const $col = $('#ncrStageCol');
+	      const $refCol = $('#ncrRefCol');
+	      const $ref = $('#ncrRef');
+	      const $dateCol = $('#ncrDateCol');
+	      const $customerCol = $('#ncrCustomerCol');
+	      const $numberCol = $('#ncrNumberCol');
+	      const $typeCol = $('#ncrNcarTypeCol');
+	      const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
+	      const currentStage = ($stage.val() || '').toString();
+	      const isCustomer = code === 'CUSTOMER';
 
-      // Customer NCAR: show Reference field
-      if ($refCol.length) {
-        const isCustomer = code === 'CUSTOMER';
-        $refCol.toggleClass('d-none', !isCustomer);
-        if (!isCustomer && $ref.length) $ref.val('');
-      }
+	      const stripMdCols = function ($el) {
+	        $el
+	          .removeClass('col-md-1')
+	          .removeClass('col-md-2')
+	          .removeClass('col-md-3')
+	          .removeClass('col-md-4')
+	          .removeClass('col-md-5')
+	          .removeClass('col-md-6');
+	      };
+
+	      const applyMdCol = function ($el, md) {
+	        if (!$el || !$el.length) return;
+	        stripMdCols($el);
+	        $el.addClass('col-md-' + md);
+	      };
+
+	      const applyTopLayout = function (shouldShowStage) {
+	        // Keep fields on one line:
+	        // - Default (INTERNAL/EXTERNAL): Date2 + Customer3 + NCR2 + Type2 + Stage3 = 12 (Ref hidden)
+	        // - CUSTOMER: Date2 + Customer2 + NCR2 + Type2 + Ref2 + Stage2 = 12
+	        if (shouldShowStage && isCustomer) {
+	          applyMdCol($dateCol, 2);
+	          applyMdCol($customerCol, 2);
+	          applyMdCol($numberCol, 2);
+	          applyMdCol($typeCol, 2);
+	          applyMdCol($refCol, 2);
+	          applyMdCol($col, 2);
+	          return;
+	        }
+
+	        if (shouldShowStage) {
+	          applyMdCol($dateCol, 2);
+	          applyMdCol($customerCol, 3);
+	          applyMdCol($numberCol, 2);
+	          applyMdCol($typeCol, 2);
+	          applyMdCol($refCol, 3);
+	          applyMdCol($col, 3);
+	          return;
+	        }
+
+	        // No stage: give more space to customer/number/type
+	        applyMdCol($dateCol, 2);
+	        applyMdCol($customerCol, 4);
+	        applyMdCol($numberCol, 3);
+	        applyMdCol($typeCol, 3);
+	        applyMdCol($refCol, 3);
+	        applyMdCol($col, 3);
+	      };
+
+	      // Customer NCAR: show Reference field
+	      if ($refCol.length) {
+	        $refCol.toggleClass('d-none', !isCustomer);
+	        if (!isCustomer && $ref.length) $ref.val('');
+	      }
+
+	      // Apply layout immediately when possible (avoid wrapping while async stage list loads).
+	      // - INTERNAL/EXTERNAL/CUSTOMER always show Stage
+	      // - other types: Stage depends on whether there are stages in DB
+	      const wantsStage = !!ncartypeId && (code === 'INTERNAL' || code === 'EXTERNAL' || code === 'CUSTOMER');
+	      if (wantsStage) {
+	        $col.removeClass('d-none');
+	        applyTopLayout(true);
+	      } else {
+	        $col.addClass('d-none');
+	        applyTopLayout(false);
+	      }
 
       // Clear + (re)load stages from DB (qa_ncar_stage). If empty, keep ability to type (tags).
       $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
 
-      if (!ncartypeId) {
-        $col.addClass('d-none');
-        if ($stage.data('select2')) {
-          try { $stage.select2('destroy'); } catch (e) {}
-        }
-        return;
-      }
+	      if (!ncartypeId) {
+	        $col.addClass('d-none');
+	        applyTopLayout(false);
+	        if ($stage.data('select2')) {
+	          try { $stage.select2('destroy'); } catch (e) {}
+	        }
+	        return;
+	      }
 
       fetchStagesForType(ncartypeId, code).then(list => {
         const stages = Array.isArray(list) ? list : [];
@@ -1183,14 +1249,15 @@ $(function(){
           $stage.append($('<option>', { value: val, text: txt }));
         });
 
-        // show stage for INTERNAL/EXTERNAL always; for others only if there are stages
-        const shouldShow = (code === 'INTERNAL' || code === 'EXTERNAL') || stages.length > 0;
-        $col.toggleClass('d-none', !shouldShow);
+	        // show stage for INTERNAL/EXTERNAL/CUSTOMER always; for others only if there are stages
+	        const shouldShow = (code === 'INTERNAL' || code === 'EXTERNAL' || code === 'CUSTOMER') || stages.length > 0;
+	        $col.toggleClass('d-none', !shouldShow);
+	        applyTopLayout(shouldShow);
 
-        if (currentStage) {
-          const exists = $stage.find('option').toArray().some(o => (o.value || '') === currentStage);
-          if (!exists) $stage.append($('<option>', { value: currentStage, text: currentStage }));
-          $stage.val(currentStage);
+	        if (currentStage) {
+	          const exists = $stage.find('option').toArray().some(o => (o.value || '') === currentStage);
+	          if (!exists) $stage.append($('<option>', { value: currentStage, text: currentStage }));
+	          $stage.val(currentStage);
         }
 
         if (shouldShow && $.fn && $.fn.select2 && !$stage.data('select2')) {
