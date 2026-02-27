@@ -1594,6 +1594,7 @@ class Order_ScheduleController extends Controller
     public function search(Request $request)
     {
         $search = trim((string) $request->input('term', ''));
+        $ncarCode = strtoupper(trim((string) $request->input('ncar_code', ''))); // INTERNAL/EXTERNAL/CUSTOMER/etc.
 
         $orders = OrderSchedule::query()
             ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
@@ -1601,6 +1602,18 @@ class Order_ScheduleController extends Controller
             ->whereRaw("LOWER(TRIM(COALESCE(status,''))) != 'sent'");
         // Solo órdenes raíz (evita hijos agrupados)
         $orders->whereNull('parent_id');
+
+        // CUSTOMER NCAR: mostrar orders_schedule con status_order=active y status=sent
+        // (y excluir el branch "no sent")
+        if ($ncarCode === 'CUSTOMER') {
+            $orders
+                ->whereRaw('1=0')
+                ->orWhere(function ($q) {
+                    $q->whereRaw("LOWER(TRIM(status_order)) = 'active'")
+                        ->whereNull('parent_id')
+                        ->whereRaw("LOWER(TRIM(COALESCE(status,''))) = 'sent'");
+                });
+        }
 
         if ($search !== '') {
             $orders->where(function ($query) use ($search) {

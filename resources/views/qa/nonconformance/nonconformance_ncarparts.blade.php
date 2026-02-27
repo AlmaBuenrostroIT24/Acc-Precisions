@@ -1141,7 +1141,7 @@ $(function(){
       const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
       const term = ($('#ncrOrderSearch').val() || '').toString().trim();
 
-      if (code !== 'INTERNAL' && code !== 'EXTERNAL') {
+      if (code !== 'INTERNAL' && code !== 'EXTERNAL' && code !== 'CUSTOMER') {
         renderOrderResults([]);
         return;
       }
@@ -1172,7 +1172,7 @@ $(function(){
         return;
       }
 
-      fetchJson(`/orders/search`, { data: { term } }).then(list => {
+      fetchJson(`/orders/search`, { data: { term, ncar_code: code } }).then(list => {
         renderOrderResults(Array.isArray(list) ? list : []);
       });
     }
