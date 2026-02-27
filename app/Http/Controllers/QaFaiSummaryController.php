@@ -1803,6 +1803,130 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 
+    public function ncarStages(Request $request)
+    {
+        if (!Schema::hasTable('qa_ncar_stage')) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $ncartypeId = (int) $request->query('ncartype_id', 0);
+        $code = strtoupper(trim((string) $request->query('code', '')));
+        $includeInactive = (bool) $request->query('include_inactive', false);
+
+        $q = DB::table('qa_ncar_stage as s')
+            ->select(['s.id', 's.ncartype_id', 's.stage', 's.is_active']);
+
+        if (!$includeInactive) {
+            $q->where('s.is_active', 1);
+        }
+
+        if ($ncartypeId > 0) {
+            $q->where('s.ncartype_id', $ncartypeId);
+        } elseif ($code !== '') {
+            $q->join('qa_ncartype as t', 't.id', '=', 's.ncartype_id')
+                ->whereRaw('UPPER(TRIM(t.code)) = ?', [$code]);
+        } else {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $rows = $q
+            ->orderBy('s.stage')
+            ->get()
+            ->map(fn($r) => [
+                'id' => (int) $r->id,
+                'ncartype_id' => (int) $r->ncartype_id,
+                'stage' => (string) $r->stage,
+                'is_active' => (int) ($r->is_active ?? 0),
+            ])
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    public function storeNcarStage(Request $request)
+    {
+        if (!Schema::hasTable('qa_ncar_stage')) {
+            return response()->json(['success' => false, 'message' => 'qa_ncar_stage table not found.'], 422);
+        }
+
+        $data = $request->validate([
+            'ncartype_id' => ['required', 'integer'],
+            'stage' => ['required', 'string', 'max:120'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $typeId = (int) $data['ncartype_id'];
+        $existsType = Schema::hasTable('qa_ncartype') && DB::table('qa_ncartype')->where('id', $typeId)->exists();
+        if (!$existsType) {
+            return response()->json(['success' => false, 'message' => 'NCAR type not found.'], 422);
+        }
+
+        $stage = trim((string) $data['stage']);
+        $isActive = array_key_exists('is_active', $data) ? (int) ((bool) $data['is_active']) : 1;
+
+        try {
+            $id = DB::table('qa_ncar_stage')->insertGetId([
+                'ncartype_id' => $typeId,
+                'stage' => $stage,
+                'is_active' => $isActive,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['success' => true, 'id' => (int) $id]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            $sqlState = (string) ($e->errorInfo[0] ?? '');
+            if ($sqlState === '23000') {
+                return response()->json(['success' => false, 'message' => 'Stage already exists for this NCAR type.'], 422);
+            }
+            return response()->json(['success' => false, 'message' => 'Could not save stage.'], 500);
+        }
+    }
+
+    public function updateNcarStage(Request $request, $id)
+    {
+        if (!Schema::hasTable('qa_ncar_stage')) {
+            return response()->json(['success' => false, 'message' => 'qa_ncar_stage table not found.'], 422);
+        }
+
+        $stageId = (int) $id;
+        $row = DB::table('qa_ncar_stage')->select(['id', 'ncartype_id'])->where('id', $stageId)->first();
+        if (!$row) {
+            return response()->json(['success' => false, 'message' => 'Stage not found.'], 404);
+        }
+
+        $data = $request->validate([
+            'ncartype_id' => ['nullable', 'integer'],
+            'stage' => ['required', 'string', 'max:120'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        if (!empty($data['ncartype_id']) && (int) $data['ncartype_id'] !== (int) $row->ncartype_id) {
+            return response()->json(['success' => false, 'message' => 'NCAR type mismatch.'], 422);
+        }
+
+        $stage = trim((string) $data['stage']);
+        $isActive = array_key_exists('is_active', $data) ? (int) ((bool) $data['is_active']) : 1;
+
+        try {
+            DB::table('qa_ncar_stage')
+                ->where('id', $stageId)
+                ->update([
+                    'stage' => $stage,
+                    'is_active' => $isActive,
+                    'updated_at' => now(),
+                ]);
+
+            return response()->json(['success' => true]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            $sqlState = (string) ($e->errorInfo[0] ?? '');
+            if ($sqlState === '23000') {
+                return response()->json(['success' => false, 'message' => 'Stage already exists for this NCAR type.'], 422);
+            }
+            return response()->json(['success' => false, 'message' => 'Could not update stage.'], 500);
+        }
+    }
+
     public function storeNcar(Request $request)
     {
 	        $data = $request->validate([

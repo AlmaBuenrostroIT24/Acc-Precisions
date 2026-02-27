@@ -166,10 +166,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
     Route::get('/qa/rejectedfaiorders', [QaFaiSummaryController::class, 'rejectedfaiorders'])->name('faisummary.rejectedfaiorders');
-    Route::get('/qa/ncar/next-number', [QaFaiSummaryController::class, 'nextNcarNumber'])->name('qa.ncar.nextNumber');
-    Route::get('/qa/ncar/types', [QaFaiSummaryController::class, 'ncarTypes'])->name('qa.ncar.types');
-    Route::post('/qa/ncar', [QaFaiSummaryController::class, 'storeNcar'])->name('qa.ncar.store');
-});
+	    Route::get('/qa/ncar/next-number', [QaFaiSummaryController::class, 'nextNcarNumber'])->name('qa.ncar.nextNumber');
+	    Route::get('/qa/ncar/types', [QaFaiSummaryController::class, 'ncarTypes'])->name('qa.ncar.types');
+	    Route::get('/qa/ncar/stages', [QaFaiSummaryController::class, 'ncarStages'])->name('qa.ncar.stages');
+	    Route::post('/qa/ncar/stages', [QaFaiSummaryController::class, 'storeNcarStage'])->name('qa.ncar.stages.store');
+	    Route::put('/qa/ncar/stages/{id}', [QaFaiSummaryController::class, 'updateNcarStage'])->name('qa.ncar.stages.update');
+	    Route::post('/qa/ncar', [QaFaiSummaryController::class, 'storeNcar'])->name('qa.ncar.store');
+	});
 //=========================================================================================================
 // -----------------------------------faisummary-------------------------------------------------------
 //===========================================================================================================

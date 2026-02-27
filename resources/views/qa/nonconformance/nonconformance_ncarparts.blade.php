@@ -1,7 +1,7 @@
 <!-- resources/views/orders/index_schedule.blade.php -->
 @extends('adminlte::page')
 
-@section('title', 'FAI Summary')
+@section('title', 'Non-Conformance Reports')
 
 @section('meta')
   <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -14,6 +14,9 @@
       Non-Conformance Reports
     </h1>
     <div>
+      <button type="button" class="btn btn-outline-secondary btn-sm mr-2" id="btnManageStages">
+        <i class="fas fa-layer-group mr-1"></i> Stages
+      </button>
       <button type="button" class="btn btn-dark btn-sm" id="btnCreateNcar">
         <i class="fas fa-plus mr-1"></i> NCR
       </button>
@@ -179,6 +182,71 @@
  </div>
 
 @include('qa.faisummary.ncr_modal')
+
+{{-- Stage Manager (qa_ncar_stage) --}}
+<div class="modal fade" id="ncarStageModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2 erp-stage-modal-header">
+        <div class="d-flex align-items-center">
+          <span class="erp-stage-title-icon mr-2"><i class="fas fa-layer-group"></i></span>
+          <div>
+            <h5 class="modal-title mb-0">NCAR Stages</h5>
+            <small class="text-muted erp-stage-subtitle">Manage stage options per NCAR type</small>
+          </div>
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body erp-stage-modal-body">
+        <div class="form-row">
+          <div class="form-group col-12 col-md-4">
+            <label class="mb-1 erp-stage-label">NCAR Type</label>
+            <select id="stageNcarType" class="form-control form-control-sm">
+              <option value="">Select...</option>
+            </select>
+          </div>
+          <div class="form-group col-12 col-md-5">
+            <label class="mb-1 erp-stage-label">Stage</label>
+            <input id="stageName" type="text" class="form-control form-control-sm" maxlength="120" placeholder="e.g. Material" autocomplete="off">
+            <input type="hidden" id="stageId" value="">
+          </div>
+          <div class="form-group col-12 col-md-1 d-flex align-items-end justify-content-center" id="stageActiveWrap">
+            <div class="custom-control custom-checkbox mb-1">
+              <input type="checkbox" class="custom-control-input" id="stageActive" checked>
+              <label class="custom-control-label" for="stageActive">Active</label>
+            </div>
+          </div>
+          <div class="form-group col-12 col-md-2 d-flex align-items-end justify-content-end">
+            <button type="button" class="btn btn-primary btn-sm erp-stage-primary" id="btnSaveStage">
+              <i class="fas fa-plus mr-1"></i> Add
+            </button>
+          </div>
+        </div>
+
+        <hr class="my-2">
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 erp-stage-table">
+            <thead class="thead-light">
+              <tr>
+                <th>Stage</th>
+                <th class="text-right">Active</th>
+              </tr>
+            </thead>
+            <tbody id="stageListBody">
+              <tr><td colspan="2" class="text-muted text-center py-2">Select NCAR Type.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer py-2 erp-stage-modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm erp-stage-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 
@@ -615,6 +683,158 @@
     flex: 1 1 auto;
     color: #111827 !important;
   }
+
+  /* Stage manager: hide by default; show only when JS adds .is-visible */
+  #ncarStageModal #stageActiveWrap {
+    display: none !important;
+  }
+  #ncarStageModal #stageActiveWrap.is-visible {
+    display: flex !important;
+  }
+
+  /* Stage modal (ERP style, like NCR modal) */
+  #ncarStageModal .modal-content {
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+  }
+
+  #ncarStageModal .modal-dialog {
+    max-width: 860px;
+    width: calc(100% - 1rem);
+  }
+
+  #ncarStageModal .erp-stage-modal-header {
+    background: #fff !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+    padding: 14px 16px !important;
+  }
+
+  #ncarStageModal .erp-stage-title-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(148, 163, 184, 0.14);
+    color: #334155;
+  }
+
+  #ncarStageModal .erp-stage-title-icon i { font-size: 16px; }
+
+  #ncarStageModal .erp-stage-subtitle {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.82rem;
+    color: #6b7280;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  #ncarStageModal .erp-stage-modal-body {
+    background: #fff;
+    padding: 14px 16px !important;
+    max-height: calc(100vh - 210px) !important;
+    overflow: auto;
+  }
+
+  #ncarStageModal .erp-stage-modal-footer {
+    background: #fff !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+    padding: 14px 16px !important;
+  }
+
+  #ncarStageModal .erp-stage-label {
+    display: block;
+    margin: 0 0 6px !important;
+    color: #6b7280 !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    letter-spacing: .02em !important;
+    text-transform: none !important;
+  }
+
+  #ncarStageModal .form-control,
+  #ncarStageModal .form-control-sm,
+  #ncarStageModal select.form-control-sm,
+  #ncarStageModal input.form-control-sm {
+    height: 38px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
+  }
+
+  #ncarStageModal .form-control:focus {
+    border-color: rgba(59, 130, 246, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+    outline: none !important;
+  }
+
+  #ncarStageModal .custom-control-label {
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+  }
+
+  #ncarStageModal .erp-stage-primary {
+    height: 36px;
+    border-radius: 10px;
+    font-weight: 800;
+    box-shadow: 0 10px 18px rgba(11, 94, 215, 0.18);
+  }
+
+  #ncarStageModal .erp-stage-secondary {
+    height: 36px;
+    border-radius: 10px;
+    font-weight: 800;
+    background: rgba(241, 245, 249, 0.9);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #0f172a;
+  }
+
+  #ncarStageModal .erp-stage-table {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+  }
+
+  #ncarStageModal .erp-stage-table thead th {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    font-size: 0.74rem;
+    color: #334155;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  #ncarStageModal .erp-stage-table tbody td {
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  #ncarStageModal .erp-stage-table tbody tr:hover td {
+    background: rgba(13, 110, 253, 0.04);
+    cursor: pointer;
+  }
+
+  #ncarStageModal .erp-stage-table tbody tr.table-active td {
+    background: rgba(13, 110, 253, 0.10) !important;
+  }
+
+  #ncarStageModal .erp-stage-table tbody tr.table-active td:first-child {
+    box-shadow: inset 3px 0 0 rgba(11, 94, 215, 0.65);
+  }
 </style>
 @endsection
 
@@ -860,12 +1080,15 @@ $(function(){
 });
 </script>
 
-<script>
+  <script>
   $(function () {
     const ROUTES = {
       ncarTypes: `/qa/ncar/types`,
+      ncarStages: `/qa/ncar/stages`,
       nextNcarNumber: `/qa/ncar/next-number`,
       storeNcar: `/qa/ncar`,
+      storeNcarStage: `/qa/ncar/stages`,
+      updateNcarStageBase: `/qa/ncar/stages/`,
     };
 
     const getCsrf = () =>
@@ -883,27 +1106,45 @@ $(function(){
       }, opts)).catch(() => null);
 
     let __ncarTypesPromise = null;
+    const fillNcarTypeSelect = function ($sel, list) {
+      if (!$sel || !$sel.length) return;
+      const current = ($sel.val() || '').toString();
+      $sel.empty().append($('<option>', { value: '', text: 'Select...' }));
+      list.forEach(t => {
+        const id = (t?.id ?? '').toString();
+        if (!id) return;
+        const name = (t?.name ?? t?.code ?? id).toString();
+        const $opt = $('<option>', { value: id, text: name });
+        if (t?.code) $opt.attr('data-code', String(t.code));
+        $sel.append($opt);
+      });
+      if (current) $sel.val(current);
+    };
+
     const loadNcarTypes = function () {
       if (__ncarTypesPromise) return __ncarTypesPromise;
       __ncarTypesPromise = fetchJson(ROUTES.ncarTypes).then(res => {
         const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
-        const $sel = $('#ncrNcarType');
-        if (!$sel.length) return list;
-
-        const current = ($sel.val() || '').toString();
-        $sel.empty().append($('<option>', { value: '', text: 'Select...' }));
-        list.forEach(t => {
-          const id = (t?.id ?? '').toString();
-          if (!id) return;
-          const name = (t?.name ?? t?.code ?? id).toString();
-          const $opt = $('<option>', { value: id, text: name });
-          if (t?.code) $opt.attr('data-code', String(t.code));
-          $sel.append($opt);
-        });
-        if (current) $sel.val(current);
+        fillNcarTypeSelect($('#ncrNcarType'), list);
+        fillNcarTypeSelect($('#stageNcarType'), list);
         return list;
       });
       return __ncarTypesPromise;
+    };
+
+    const STAGE_CACHE = new Map(); // key -> [{stage}]
+    const stageCacheKey = (ncartypeId, includeInactive) => `${String(ncartypeId)}|${includeInactive ? 1 : 0}`;
+    const fetchStagesForType = function (ncartypeId, code = '', includeInactive = false) {
+      const id = (ncartypeId || '').toString().trim();
+      if (!id) return Promise.resolve([]);
+      const key = stageCacheKey(id, includeInactive);
+      if (STAGE_CACHE.has(key)) return Promise.resolve(STAGE_CACHE.get(key));
+      return fetchJson(ROUTES.ncarStages, { data: { ncartype_id: id, code: (code || '').toString().toUpperCase(), include_inactive: includeInactive ? 1 : 0 } })
+        .then(res => {
+          const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+          STAGE_CACHE.set(key, list);
+          return list;
+        });
     };
 
     const syncNcarStageOptions = function () {
@@ -912,29 +1153,8 @@ $(function(){
       const $col = $('#ncrStageCol');
       const $refCol = $('#ncrRefCol');
       const $ref = $('#ncrRef');
-
-      const internalStages = [
-        { value: 'Material', label: 'Material' },
-        { value: 'Equipment', label: 'Equipment' },
-        { value: 'Human', label: 'Human' },
-        { value: 'Customer', label: 'Customer' },
-        { value: 'QA', label: 'QA' }
-      ];
-
-      const externalStages = [
-        { value: 'Plating', label: 'Plating' },
-        { value: 'Handling', label: 'Handling' },
-        { value: 'Other Outside Finish', label: 'Other Outside Finish' }
-      ];
-
-      let stages = [];
-      if (code === 'INTERNAL') stages = internalStages;
-      if (code === 'EXTERNAL') stages = externalStages;
-
-      $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
-      stages.forEach(s => $stage.append($('<option>', { value: s.value, text: s.label })));
-
-      $col.toggleClass('d-none', stages.length === 0);
+      const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
+      const currentStage = ($stage.val() || '').toString();
 
       // Customer NCAR: show Reference field
       if ($refCol.length) {
@@ -943,18 +1163,49 @@ $(function(){
         if (!isCustomer && $ref.length) $ref.val('');
       }
 
-      if (stages.length && $.fn && $.fn.select2 && !$stage.data('select2')) {
-        $stage.select2({
-          tags: true,
-          width: '100%',
-          dropdownParent: $('#ncrModal'),
-          placeholder: 'Select or type...',
-          allowClear: false
+      // Clear + (re)load stages from DB (qa_ncar_stage). If empty, keep ability to type (tags).
+      $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
+
+      if (!ncartypeId) {
+        $col.addClass('d-none');
+        if ($stage.data('select2')) {
+          try { $stage.select2('destroy'); } catch (e) {}
+        }
+        return;
+      }
+
+      fetchStagesForType(ncartypeId, code).then(list => {
+        const stages = Array.isArray(list) ? list : [];
+        stages.forEach(s => {
+          const val = (s?.stage ?? '').toString();
+          if (!val) return;
+          const txt = val;
+          $stage.append($('<option>', { value: val, text: txt }));
         });
-      }
-      if (!stages.length && $stage.data('select2')) {
-        try { $stage.select2('destroy'); } catch (e) {}
-      }
+
+        // show stage for INTERNAL/EXTERNAL always; for others only if there are stages
+        const shouldShow = (code === 'INTERNAL' || code === 'EXTERNAL') || stages.length > 0;
+        $col.toggleClass('d-none', !shouldShow);
+
+        if (currentStage) {
+          const exists = $stage.find('option').toArray().some(o => (o.value || '') === currentStage);
+          if (!exists) $stage.append($('<option>', { value: currentStage, text: currentStage }));
+          $stage.val(currentStage);
+        }
+
+        if (shouldShow && $.fn && $.fn.select2 && !$stage.data('select2')) {
+          $stage.select2({
+            tags: true,
+            width: '100%',
+            dropdownParent: $('#ncrModal'),
+            placeholder: 'Select or type...',
+            allowClear: false
+          });
+        }
+        if (!shouldShow && $stage.data('select2')) {
+          try { $stage.select2('destroy'); } catch (e) {}
+        }
+      });
     };
 
     const applyNextNcarNumber = function (force = false) {
@@ -1017,6 +1268,180 @@ $(function(){
     $('#btnCreateNcar').off('click.ncr').on('click.ncr', function (e) {
       e.preventDefault();
       openNewNcarModal();
+    });
+
+    function updateStageActiveVisibility() {
+      const hasStageText = (($('#stageName').val() || '').toString().trim().length > 0);
+      const isEditing = (($('#stageId').val() || '').toString().trim().length > 0);
+      const show = (hasStageText || isEditing);
+      $('#stageActiveWrap').toggleClass('is-visible', show);
+    }
+
+    // Ensure default hidden on load (avoid flashing visible due to cached DOM/classes)
+    $('#stageActiveWrap').removeClass('is-visible');
+    updateStageActiveVisibility();
+
+    function renderStageList(list) {
+      const $body = $('#stageListBody');
+      if (!$body.length) return;
+      const rows = Array.isArray(list) ? list : [];
+      $body.empty();
+      if (!rows.length) {
+        $body.append('<tr><td colspan="2" class="text-muted text-center py-2">No stages.</td></tr>');
+        return;
+      }
+      rows.forEach(s => {
+        const id = (s?.id ?? '').toString();
+        const ncartypeId = (s?.ncartype_id ?? '').toString();
+        const stage = (s?.stage ?? '').toString();
+        const active = (s?.is_active ?? 1) ? 'Yes' : 'No';
+        const $tr = $(`
+          <tr data-id="${$('<div>').text(id).html()}" data-ncartype-id="${$('<div>').text(ncartypeId).html()}">
+            <td>${$('<div>').text(stage).html()}</td>
+            <td class="text-right">${$('<div>').text(active).html()}</td>
+          </tr>
+        `);
+
+        $tr.on('click', function () {
+          const $row = $(this);
+          const rowId = ($row.data('id') || '').toString();
+          const rowTypeId = ($row.data('ncartype-id') || '').toString();
+          const already = ($('#stageId').val() || '').toString() === rowId;
+
+          // toggle off selection
+          if (already) {
+            $('#stageId').val('');
+            $('#stageName').val('');
+            $('#stageActive').prop('checked', true);
+            $('#btnSaveStage').html('<i class="fas fa-plus mr-1"></i> Add Stage');
+            $row.removeClass('table-active');
+            updateStageActiveVisibility();
+            return;
+          }
+
+          $('#stageListBody tr').removeClass('table-active');
+          $row.addClass('table-active');
+
+          $('#stageId').val(rowId);
+          $('#stageNcarType').val(rowTypeId);
+          $('#stageName').val(stage);
+          $('#stageActive').prop('checked', String(s?.is_active ?? 1) === '1');
+          $('#btnSaveStage').html('<i class="fas fa-save mr-1"></i> Save Stage');
+          updateStageActiveVisibility();
+        });
+
+        $body.append($tr);
+      });
+    }
+
+    function refreshStageManagerList() {
+      const ncartypeId = ($('#stageNcarType').val() || '').toString().trim();
+      const code = ($('#stageNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
+      if (!ncartypeId) {
+        $('#stageListBody').empty().append('<tr><td colspan="2" class="text-muted text-center py-2">Select NCAR Type.</td></tr>');
+        return;
+      }
+      $('#stageId').val('');
+      $('#stageName').val('');
+      $('#stageActive').prop('checked', true);
+      $('#btnSaveStage').html('<i class="fas fa-plus mr-1"></i> Add Stage');
+      updateStageActiveVisibility();
+
+      STAGE_CACHE.delete(stageCacheKey(ncartypeId, true));
+      fetchStagesForType(ncartypeId, code, true).then(renderStageList);
+    }
+
+    $('#btnManageStages').off('click.stages').on('click.stages', function (e) {
+      e.preventDefault();
+      loadNcarTypes().then(() => {
+        $('#stageNcarType').val('');
+        $('#stageName').val('').trigger('input');
+        $('#stageId').val('');
+        $('#stageActive').prop('checked', true);
+        $('#btnSaveStage').html('<i class="fas fa-plus mr-1"></i> Add Stage');
+        $('#stageActiveWrap').removeClass('is-visible');
+        updateStageActiveVisibility();
+        $('#stageListBody').empty().append('<tr><td colspan="2" class="text-muted text-center py-2">Select NCAR Type.</td></tr>');
+        $('#ncarStageModal').modal('show');
+      });
+    });
+
+    $('#ncarStageModal')
+      .off('shown.bs.modal.stages')
+      .on('shown.bs.modal.stages', function () {
+        $('#stageActiveWrap').removeClass('is-visible');
+        updateStageActiveVisibility();
+        // Some browsers may autofill inputs after the modal is shown; re-check once.
+        setTimeout(updateStageActiveVisibility, 0);
+      });
+
+    $('#stageNcarType').off('change.stages').on('change.stages', function () {
+      refreshStageManagerList();
+    });
+
+    $('#stageName').off('input.stages').on('input.stages', function () {
+      updateStageActiveVisibility();
+    });
+
+    $('#btnSaveStage').off('click.stages').on('click.stages', function () {
+      const ncartypeId = ($('#stageNcarType').val() || '').toString().trim();
+      const stage = ($('#stageName').val() || '').toString().trim();
+      const isActive = $('#stageActive').is(':checked') ? 1 : 0;
+      const stageId = ($('#stageId').val() || '').toString().trim();
+
+      if (!ncartypeId) {
+        if (window.Swal) return Swal.fire('Required', 'Select NCAR Type.', 'warning');
+        alert('Select NCAR Type.');
+        return;
+      }
+      if (!stage) {
+        if (window.Swal) return Swal.fire('Required', 'Enter Stage.', 'warning');
+        alert('Enter Stage.');
+        return;
+      }
+
+      const $btn = $('#btnSaveStage');
+      $btn.prop('disabled', true);
+
+      const isEdit = !!stageId;
+      $.ajax({
+        url: isEdit ? (ROUTES.updateNcarStageBase + encodeURIComponent(stageId)) : ROUTES.storeNcarStage,
+        method: isEdit ? 'PUT' : 'POST',
+        dataType: 'json',
+        data: {
+          _token: getCsrf(),
+          ncartype_id: ncartypeId,
+          stage,
+          is_active: isActive
+        }
+      }).done((res) => {
+        if (!res || res.success !== true) {
+          const msg = (res && res.message) ? res.message : 'Could not save stage.';
+          if (window.Swal) return Swal.fire('Error', msg, 'error');
+          alert(msg);
+          return;
+        }
+
+        $('#stageId').val('');
+        $('#stageName').val('');
+        $('#stageActive').prop('checked', true);
+        $('#btnSaveStage').html('<i class="fas fa-plus mr-1"></i> Add Stage');
+        updateStageActiveVisibility();
+
+        refreshStageManagerList();
+
+        // If NCR modal is open and using same type, refresh stage options there too
+        const currentType = ($('#ncrNcarType').val() || '').toString().trim();
+        if (currentType && currentType === ncartypeId) syncNcarStageOptions();
+
+        if (window.Swal) return Swal.fire('Saved', isEdit ? 'Stage updated.' : 'Stage added.', 'success');
+      }).fail((xhr) => {
+        const msg = xhr?.responseJSON?.message || 'Could not save stage.';
+        if (window.Swal) return Swal.fire('Error', msg, 'error');
+        alert(msg);
+      }).always(() => {
+        $btn.prop('disabled', false);
+      });
     });
 
     function clearNcarModalAll() {
