@@ -101,6 +101,38 @@
                         </div>
                     </div>
 
+                    {{-- Optional: search an Order (used in NonConformance page) --}}
+                    <div class="erp-ncr-orderbox mb-2 d-none" id="ncrOrderSearchBox">
+                        <div class="erp-ncr-orderbox-title">Priority</div>
+                        <div class="form-row">
+                            <div class="form-group col-12 mb-0">
+                                <div class="input-group ncr-order-searchbar">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    </div>
+                                    <input id="ncrOrderSearch" type="search" class="form-control erp-ncr-control" placeholder="Search by Work ID, PN, Description, Customer..." autocomplete="off">
+                                </div>
+                                <div id="ncrOrderResults" class="ncr-order-results mt-2">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0 ncr-order-table" aria-label="Order search results">
+                                            <thead>
+                                                <tr>
+                                                    <th>Work ID</th>
+                                                    <th>PN</th>
+                                                    <th>Description</th>
+                                                    <th>Customer</th>
+                                                    <th>Due Date</th>
+                                                    <th class="text-center">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="ncrOrderResultsBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="erp-ncr-orderbox mb-2">
                         <div class="erp-ncr-orderbox-title">Impact</div>
 

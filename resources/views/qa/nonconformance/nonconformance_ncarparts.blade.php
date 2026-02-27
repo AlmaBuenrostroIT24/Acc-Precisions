@@ -499,6 +499,92 @@
     box-shadow: none !important;
   }
 
+  /* Order search (inside NCR modal) */
+  #ncrModal .ncr-order-searchbar .input-group-text {
+    display: flex !important;
+    height: 46px !important;
+    border-radius: 10px 0 0 10px !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    border-right: 0 !important;
+    background: rgba(234, 242, 255, 0.85) !important;
+    color: #0b5ed7 !important;
+  }
+
+  #ncrModal .ncr-order-searchbar input.erp-ncr-control {
+    border-left: 0 !important;
+    border-radius: 0 10px 10px 0 !important;
+    background: rgba(234, 242, 255, 0.55) !important;
+    font-weight: 700 !important;
+  }
+
+  #ncrModal .ncr-order-results {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  #ncrModal .ncr-order-table thead th {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    font-size: 0.74rem;
+    color: #334155;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  #ncrModal .ncr-order-table tbody td {
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  #ncrModal .ncr-order-table tbody tr:hover td {
+    background: rgba(13, 110, 253, 0.04);
+  }
+
+  #ncrModal .ncr-order-table tbody tr.is-selected td {
+    background: rgba(13, 110, 253, 0.10) !important;
+  }
+
+  #ncrModal .ncr-order-table tbody tr.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 rgba(11, 94, 215, 0.65);
+  }
+
+  #ncrModal .ncr-order-desc {
+    max-width: 520px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  #ncrModal .ncr-order-action {
+    height: 30px;
+    width: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: rgba(241, 245, 249, 0.95);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    color: #334155;
+  }
+
+  #ncrModal .ncr-order-action i {
+    color: #16a34a;
+  }
+
+  #ncrModal .ncr-order-action:hover {
+    filter: brightness(0.98);
+  }
+
   #ncrModal textarea.erp-ncr-control {
     height: auto;
     min-height: 86px !important;
@@ -881,6 +967,15 @@ $(function(){
 
     const openNewNcarModal = function () {
       loadNcarTypes().then(() => {
+        $('#ncrOrderSearchBox').removeClass('d-none');
+        $('#ncrOrderId').val('');
+        $('#ncrOrderResultsBody').empty().append(`
+          <tr>
+            <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
+          </tr>
+        `);
+        $('#ncrOrderSearch').val('');
+
         const today = new Date().toISOString().split('T')[0];
         $('#ncrDate').val(today);
 
@@ -914,11 +1009,188 @@ $(function(){
       openNewNcarModal();
     });
 
+    function clearNcarModalAll() {
+      // Reset selection
+      $('#ncrOrderId').val('');
+
+      // Reset Impact fields
+      $('#ncrWorkId, #ncrCo, #ncrCustPo, #ncrPn, #ncrCustomer, #ncrOperation, #ncrQty, #ncrWoQty').val('');
+      $('#ncrDescription').val('');
+      $('#ncrHeaderWorkId').text('—');
+      $('#ncrHeaderCustomer').text('—');
+
+      // Reset Order search UI
+      $('#ncrOrderSearch').val('');
+      $('#ncrOrderResultsBody').empty().append(`
+        <tr>
+          <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
+        </tr>
+      `);
+    }
+
+    function renderOrderResults(list) {
+      const $body = $('#ncrOrderResultsBody');
+      $body.empty();
+      if (!Array.isArray(list) || list.length === 0) {
+        $body.append(`
+          <tr>
+            <td colspan="6" class="text-muted text-center py-2">No results</td>
+          </tr>
+        `);
+        return;
+      }
+
+      list.forEach(o => {
+        const id = o?.id ?? '';
+        const work = (o?.work_id ?? '').toString();
+        const pn = (o?.PN ?? '').toString();
+        const desc = (o?.Part_description ?? '').toString();
+        const cust = (o?.costumer ?? '').toString();
+        const isPri = String(o?.priority || '').toLowerCase() === 'yes';
+        const dueRaw = (o?.due_date ?? '').toString();
+        const due = dueRaw ? new Date(dueRaw) : null;
+        const dueTxt = (due && !Number.isNaN(due.getTime()))
+          ? due.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' })
+          : '';
+
+        const workEsc = $('<div>').text(work).html();
+        const pnEsc = $('<div>').text(pn).html();
+        const descEsc = $('<div>').text(desc).html();
+        const custEsc = $('<div>').text(cust).html();
+
+        const $tr = $(`
+          <tr>
+            <td>${workEsc}${isPri ? ' <span class="badge badge-warning ml-1">Priority</span>' : ''}</td>
+            <td>${pnEsc}</td>
+            <td><span class="ncr-order-desc" title="${descEsc}">${descEsc}</span></td>
+            <td>${custEsc}</td>
+            <td class="text-nowrap">${$('<div>').text(dueTxt).html()}</td>
+            <td class="text-center">
+              <button type="button" class="ncr-order-action" title="Select">
+                <i class="far fa-star"></i>
+              </button>
+            </td>
+          </tr>
+        `);
+
+        $tr.find('.ncr-order-action').on('click', function () {
+          const alreadySelected = $tr.hasClass('is-selected') || ($('#ncrOrderId').val() || '').toString() === String(id);
+
+          // Toggle off
+          if (alreadySelected) {
+            clearNcarModalAll();
+            return;
+          }
+
+          // Select (and keep only this row visible)
+          $('#ncrOrderId').val(String(id));
+          $('#ncrOrderResultsBody tr').removeClass('is-selected');
+          $tr.addClass('is-selected');
+          $tr.find('.ncr-order-action i').removeClass('far').addClass('fas');
+          $tr.siblings('tr').remove();
+
+          $('#ncrWorkId').val(work);
+          $('#ncrPn').val(pn);
+          $('#ncrCustomer').val(cust);
+          $('#ncrDescription').val(desc);
+
+          if (o?.co !== undefined) $('#ncrCo').val((o.co ?? '').toString());
+          if (o?.cust_po !== undefined) $('#ncrCustPo').val((o.cust_po ?? '').toString());
+          if (o?.qty !== undefined) {
+            const total = parseInt(o?.qty_total ?? '', 10);
+            if (Number.isFinite(total) && total > 0) {
+              $('#ncrQty').val(String(total));
+            } else {
+              const parent = parseInt(o?.qty ?? '', 10);
+              const childSum = parseInt(o?.qty_children_sum ?? '', 10);
+              const hasParent = Number.isFinite(parent);
+              const hasChild = Number.isFinite(childSum) && childSum > 0;
+              const qtyVal = (hasParent ? parent : 0) + (hasChild ? childSum : 0);
+              $('#ncrQty').val(qtyVal ? String(qtyVal) : '');
+            }
+          }
+          if (o?.wo_qty !== undefined) $('#ncrWoQty').val((o.wo_qty ?? '').toString());
+          if (o?.operation !== undefined) $('#ncrOperation').val((o.operation ?? '').toString());
+
+          $('#ncrHeaderWorkId').text(work || '—');
+          $('#ncrHeaderCustomer').text(cust || '—');
+
+          // Mantener la tabla visible y el término de búsqueda intacto
+        });
+
+        $body.append($tr);
+      });
+    }
+
+    function debounce(fn, ms = 180) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), ms);
+      };
+    }
+
     $('#ncrNcarType').off('change.ncarparts').on('change.ncarparts', function () {
       syncNcarStageOptions();
       $('#ncrStage').val('');
       applyNextNcarNumber(true);
+      refreshOrderSearchResults();
     });
+
+    function refreshOrderSearchResults() {
+      const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
+      const term = ($('#ncrOrderSearch').val() || '').toString().trim();
+
+      if (code !== 'INTERNAL' && code !== 'EXTERNAL') {
+        renderOrderResults([]);
+        return;
+      }
+
+      // If user clears the search (X in input[type=search]), reset selection + Impact
+      if (term.length === 0) {
+        const selected = ($('#ncrOrderId').val() || '').toString().trim();
+        if (selected) {
+          clearNcarModalAll();
+        } else {
+          $('#ncrOrderResultsBody').empty().append(`
+            <tr>
+              <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
+            </tr>
+          `);
+        }
+        return;
+      }
+
+      if (term.length < 2) {
+        const $body = $('#ncrOrderResultsBody');
+        $body.empty();
+        $body.append(`
+          <tr>
+            <td colspan="6" class="text-muted text-center py-2">Type at least 2 characters to search.</td>
+          </tr>
+        `);
+        return;
+      }
+
+      fetchJson(`/orders/search`, { data: { term } }).then(list => {
+        renderOrderResults(Array.isArray(list) ? list : []);
+      });
+    }
+
+    $('#ncrOrderSearch')
+      .off('input.ncarparts')
+      .on('input.ncarparts', debounce(function () {
+        refreshOrderSearchResults();
+      }, 220));
+
+    // If user closes the modal via "X" or backdrop, clear everything
+    $('#ncrModal')
+      .off('hidden.bs.modal.ncarpartsClear')
+      .on('hidden.bs.modal.ncarpartsClear', function () {
+        clearNcarModalAll();
+        const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
+        $('#ncrReviewer').val(defaultReviewer);
+      });
 
     $('#ncrForm').off('submit.ncarparts').on('submit.ncarparts', function (e) {
       e.preventDefault();
@@ -943,7 +1215,7 @@ $(function(){
         dataType: 'json',
         data: {
           _token: getCsrf(),
-          order_id: null,
+          order_id: (($('#ncrOrderId').val() || '').toString().trim() || null),
           ncartype_id: ncartypeId || null,
           ncar_class: (function () {
             const txt = ($('#ncrNcarType option:selected').text() || '').toString().trim();

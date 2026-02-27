@@ -1593,31 +1593,53 @@ class Order_ScheduleController extends Controller
 
     public function search(Request $request)
     {
-        $search = $request->input('term');
+        $search = trim((string) $request->input('term', ''));
 
         $orders = OrderSchedule::query()
-            ->where(function ($q) {
-                $q->whereNull('status_order')
-                    ->orWhere('status_order', 'active');
-            })
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
             ->whereNull('sent_at') // 🛑 Asegura que no se haya enviado
-            ->where(function ($query) use ($search) {
+            ->whereRaw("LOWER(TRIM(COALESCE(status,''))) != 'sent'");
+        // Solo órdenes raíz (evita hijos agrupados)
+        $orders->whereNull('parent_id');
+
+        if ($search !== '') {
+            $orders->where(function ($query) use ($search) {
                 $query->where('work_id', 'LIKE', "%{$search}%")
                     ->orWhere('PN', 'LIKE', "%{$search}%")
                     ->orWhere('Part_description', 'LIKE', "%{$search}%")
                     ->orWhere('costumer', 'LIKE', "%{$search}%")
                     ->orWhereDate('due_date', $search);
-            })
+            });
+        }
+
+        $orders = $orders
             ->select([
                 'id',
                 'work_id',
+                'co',
+                'cust_po',
                 'PN',
                 'Part_description',
                 'costumer',
+                'qty',
+                // Para modal NCR: suma de qty de hijos (si existen)
+                \Illuminate\Support\Facades\DB::raw(
+                    "(SELECT SUM(COALESCE(c.qty,0)) FROM orders_schedule c
+                      WHERE c.parent_id = orders_schedule.id
+                    ) as qty_children_sum"
+                ),
+                // Total Qty (padre + hijos) para el modal NCR
+                \Illuminate\Support\Facades\DB::raw(
+                    "(COALESCE(orders_schedule.qty,0) + (SELECT SUM(COALESCE(c.qty,0)) FROM orders_schedule c
+                      WHERE c.parent_id = orders_schedule.id
+                    )) as qty_total"
+                ),
+                \Illuminate\Support\Facades\DB::raw('group_wo_qty as wo_qty'),
+                'operation',
                 'due_date',
                 'priority', // ✅ Necesario para saber si ya está priorizado
             ])
-            ->limit(10)
+            ->limit(25)
             ->get();
 
         return response()->json($orders);

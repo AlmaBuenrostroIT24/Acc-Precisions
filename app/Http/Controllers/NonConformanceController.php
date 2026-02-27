@@ -128,7 +128,7 @@ class NonConformanceController extends Controller
     {
         $ordersCols = Schema::hasTable('orders_schedule') ? Schema::getColumnListing('orders_schedule') : [];
         $woQtyCol = null;
-        foreach (['wo_qty', 'WO_Qty', 'WO_QTY', 'WOQty', 'woQty'] as $c) {
+        foreach (['group_wo_qty', 'wo_qty', 'WO_Qty', 'WO_QTY', 'WOQty', 'woQty'] as $c) {
             if (in_array($c, $ordersCols, true)) {
                 $woQtyCol = $c;
                 break;

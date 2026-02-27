@@ -96,7 +96,7 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>CO Qty</label>
-                <input type="text" class="form-control form-control-sm" value="{{ $ncar->order_qty ?? '' }}" readonly>
+                <input type="text" class="form-control form-control-sm" value="{{ $ncar->qty ?? '' }}" readonly>
               </div>
             </div>
             <div class="col-md-6">

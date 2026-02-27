@@ -69,6 +69,16 @@ class QaFaiSummaryController extends Controller
                 }
             }
 
+            $hasQtyCol = Schema::hasColumn('orders_schedule', 'qty');
+            if ($hasQtyCol) {
+                // Para modal NCR: suma de qty de hijos (si existen)
+                $select[] = DB::raw(
+                    "(SELECT SUM(COALESCE(c.qty,0)) FROM orders_schedule c
+                      WHERE c.parent_id = orders_schedule.id
+                    ) as qty_children_sum"
+                );
+            }
+
             $hasNcrCols = Schema::hasColumn('orders_schedule', 'ncr_number') && Schema::hasColumn('orders_schedule', 'ncr_notes');
 
             $rows = OrderSchedule::query()
@@ -157,7 +167,7 @@ class QaFaiSummaryController extends Controller
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, $hasQtyCol, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -220,6 +230,14 @@ class QaFaiSummaryController extends Controller
                     // Si la DB aún no tiene columnas NCR, dejamos el modal en modo "solo vista" (sin URL para guardar).
                     $postUrl = $hasNcrCols ? route('schedule.finished.ncr', $r->id) : '';
 
+                    $qtyVal = '';
+                    if ($hasQtyCol) {
+                        $childSum = (int) ($r->qty_children_sum ?? 0);
+                        $parentQty = is_numeric($r->qty ?? null) ? (int) $r->qty : 0;
+                        $hasAnyQty = ($r->qty !== null) || ($childSum > 0);
+                        $qtyVal = $hasAnyQty ? ($parentQty + $childSum) : '';
+                    }
+
                     $btnOther = ' <button type="button" class="btn btn-sm ' . e($btnClass) . ' ' . e($btnToneClass) . ' erp-table-btn ml-1 btn-ncr ' . ($hasAny ? 'is-active' : '') . '"
                      title="' . e($title) . '"
                      data-id="' . e($r->id) . '"
@@ -231,7 +249,7 @@ class QaFaiSummaryController extends Controller
                      data-pn="' . e($r->PN ?? '') . '"
                      data-part-description="' . e($r->Part_description ?? '') . '"
                      data-customer="' . e($r->costumer ?? '') . '"
-                     data-qty="' . e($r->qty ?? '') . '"
+                     data-qty="' . e($qtyVal) . '"
                      data-wo-qty="' . e($sum) . '"
                      data-ncr-reviewer="' . e($r->ncr_reviewer ?? '') . '"
                      data-ncr-number="' . e($ncarNo) . '"
@@ -1835,8 +1853,14 @@ class QaFaiSummaryController extends Controller
 
         $order = null;
         if (!empty($data['order_id'])) {
+            $orderSelect = ['id', 'work_id', 'location'];
+            foreach (['co', 'cust_po', 'PN', 'Part_description', 'costumer', 'qty'] as $col) {
+                if (\Illuminate\Support\Facades\Schema::hasColumn('orders_schedule', $col)) {
+                    $orderSelect[] = $col;
+                }
+            }
             $order = DB::table('orders_schedule')
-                ->select(['id', 'work_id', 'co', 'cust_po', 'PN', 'Part_description', 'costumer', 'qty', 'location'])
+                ->select($orderSelect)
                 ->where('id', (int) $data['order_id'])
                 ->first();
         }
@@ -1889,9 +1913,19 @@ class QaFaiSummaryController extends Controller
         }
 
         // Guardar qty si viene numérica desde orders_schedule (si no, dejar null)
-        if ($order && isset($order->qty)) {
-            $q = is_numeric($order->qty) ? (int) $order->qty : null;
-            $insert['qty'] = $q > 0 ? $q : null;
+        if (
+            $order &&
+            \Illuminate\Support\Facades\Schema::hasColumn('qa_ncar', 'qty') &&
+            \Illuminate\Support\Facades\Schema::hasColumn('orders_schedule', 'qty')
+        ) {
+            $parentQty = is_numeric($order->qty ?? null) ? (int) $order->qty : 0;
+            $childSum = (int) (DB::table('orders_schedule')
+                ->where('parent_id', (int) $order->id)
+                ->selectRaw('SUM(COALESCE(qty,0)) as s')
+                ->value('s') ?? 0);
+
+            $totalQty = $parentQty + $childSum;
+            $insert['qty'] = $totalQty > 0 ? $totalQty : null;
         }
 
         $id = DB::table('qa_ncar')->insertGetId($insert);

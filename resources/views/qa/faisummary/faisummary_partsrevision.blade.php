@@ -1763,6 +1763,10 @@ body .content {
 
       $('#ordersTableProcess').on('click', '.btn-ncr', function() {
         const $btn = $(this);
+        // En Parts Revision no usamos el buscador de orden (solo mostramos Impact ya poblado).
+        $('#ncrOrderSearchBox').addClass('d-none');
+        $('#ncrOrderResultsBody').empty();
+        $('#ncrOrderSearch').val('');
         // En Parts Revision solo mostramos INTERNAL/EXTERNAL en el select.
         $('#ncrModal').attr('data-ncar-type-filter', 'INTERNAL,EXTERNAL');
         const openNcrModalFromBtn = function(forceNew = false) {
