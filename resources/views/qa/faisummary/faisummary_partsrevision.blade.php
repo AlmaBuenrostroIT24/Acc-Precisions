@@ -1349,12 +1349,13 @@ body .content {
         statusInspection: (id) => `/orders-schedule/${id}/status-inspection`, // PUT
         storeSingle: `/qa/faisummary/store-single`, // POST
         deleteRow: (id) => `/qa/faisummary/delete/${id}`, // DELETE
-        stationsByOrder: (id) => `/stations/by-order/${id}`, // GET
-        operatorsByOrder: (id) => `/operators/by-order/${id}`, // GET
-        ncarTypes: `/qa/ncar/types`, // GET
-        nextNcarNumber: `/qa/ncar/next-number`, // GET ?type=internal|external
-        storeNcar: `/qa/ncar` // POST
-      };
+	        stationsByOrder: (id) => `/stations/by-order/${id}`, // GET
+	        operatorsByOrder: (id) => `/operators/by-order/${id}`, // GET
+	        ncarTypes: `/qa/ncar/types`, // GET
+	        ncarStages: `/qa/ncar/stages`, // GET ?ncartype_id=...
+	        nextNcarNumber: `/qa/ncar/next-number`, // GET ?type=internal|external
+	        storeNcar: `/qa/ncar` // POST
+	      };
 
     const COLLATOR = new Intl.Collator('es', {
       sensitivity: 'base',
@@ -1673,52 +1674,26 @@ body .content {
           });
       };
 
-      const syncNcarStageOptions = function() {
-        const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
-        const $stage = $('#ncrStage');
-        const $col = $('#ncrStageCol');
-        const $refCol = $('#ncrRefCol');
-        const $ref = $('#ncrRef');
-        const $dateCol = $('#ncrDateCol');
-        const $customerCol = $('#ncrCustomerCol');
-        const $numberCol = $('#ncrNumberCol');
-        const $typeCol = $('#ncrNcarTypeCol');
+	      const syncNcarStageOptions = function() {
+	        const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
+	        const $stage = $('#ncrStage');
+	        const $col = $('#ncrStageCol');
+	        const $refCol = $('#ncrRefCol');
+	        const $ref = $('#ncrRef');
+	        const $dateCol = $('#ncrDateCol');
+	        const $customerCol = $('#ncrCustomerCol');
+	        const $numberCol = $('#ncrNumberCol');
+	        const $typeCol = $('#ncrNcarTypeCol');
 
-        const currentStage = ($stage.val() || '').toString();
+	        const currentStage = ($stage.val() || '').toString();
+	        const ncartypeId = ($('#ncrNcarType').val() || '').toString().trim();
 
-        const internalStages = [
-          { value: 'material', label: 'Material' },
-          { value: 'equipment', label: 'Equipment' },
-          { value: 'human', label: 'Human' },
-          { value: 'customer', label: 'Customer' },
-          { value: 'qa', label: 'QA' }
-        ];
-
-        const externalStages = [
-          { value: 'plating', label: 'Plating' },
-          { value: 'handling', label: 'Handling' },
-          { value: 'other_outside_finish', label: 'Other Outside Finish' }
-        ];
-
-        let stages = [];
-        if (code === 'INTERNAL') stages = internalStages;
-        if (code === 'EXTERNAL') stages = externalStages;
-
-        $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
-        stages.forEach(s => $stage.append($('<option>', { value: s.label, text: s.label })));
-
-        const shouldShow = stages.length > 0;
-        $col.toggleClass('d-none', !shouldShow);
-        if (!shouldShow) {
-          $stage.val('');
-        }
-
-        // Customer NCAR: show Reference field (en Parts Revision no debe aparecer normalmente)
-        if ($refCol.length) {
-          const isCustomer = code === 'CUSTOMER';
-          $refCol.toggleClass('d-none', !isCustomer);
-          if (!isCustomer && $ref.length) $ref.val('');
-        }
+	        // Customer NCAR: show Reference field (en Parts Revision no debe aparecer normalmente)
+	        if ($refCol.length) {
+	          const isCustomer = code === 'CUSTOMER';
+	          $refCol.toggleClass('d-none', !isCustomer);
+	          if (!isCustomer && $ref.length) $ref.val('');
+	        }
 
         const stripMdCols = function($el) {
           $el
@@ -1727,39 +1702,77 @@ body .content {
             .removeClass('col-md-4');
         };
 
-        const applyMdCol = function($el, md) {
-          stripMdCols($el);
-          $el.addClass('col-md-' + md);
-        };
+	        const applyMdCol = function($el, md) {
+	          stripMdCols($el);
+	          $el.addClass('col-md-' + md);
+	        };
 
-        if (shouldShow) {
-          applyMdCol($dateCol, 2);
-          applyMdCol($customerCol, 3);
-          applyMdCol($numberCol, 2);
-          applyMdCol($typeCol, 2);
-        } else {
-          applyMdCol($dateCol, 2);
-          applyMdCol($customerCol, 4);
-          applyMdCol($numberCol, 3);
-          applyMdCol($typeCol, 3);
-        }
+	        const applyLayout = function(shouldShow) {
+	          if (shouldShow) {
+	            applyMdCol($dateCol, 2);
+	            applyMdCol($customerCol, 3);
+	            applyMdCol($numberCol, 2);
+	            applyMdCol($typeCol, 2);
+	          } else {
+	            applyMdCol($dateCol, 2);
+	            applyMdCol($customerCol, 4);
+	            applyMdCol($numberCol, 3);
+	            applyMdCol($typeCol, 3);
+	          }
+	        };
 
-        if (currentStage) {
-          const exists = $stage.find('option').toArray().some(o => (o.value || '') === currentStage);
-          if (!exists) $stage.append($('<option>', { value: currentStage, text: currentStage }));
-          $stage.val(currentStage);
-        }
+	        // Reset options before (re)loading
+	        $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
 
-        if (shouldShow && $.fn && $.fn.select2 && !$stage.data('select2')) {
-          $stage.select2({
-            tags: true,
-            width: '100%',
-            dropdownParent: $('#ncrModal'),
-            placeholder: 'Select or type...',
-            allowClear: false
-          });
-        }
-      };
+	        if (!ncartypeId) {
+	          $col.addClass('d-none');
+	          applyLayout(false);
+	          if ($stage.data('select2')) {
+	            try { $stage.select2('destroy'); } catch (e) {}
+	          }
+	          $stage.val('');
+	          return;
+	        }
+
+	        fetchJson(ROUTES.ncarStages, { data: { ncartype_id: ncartypeId, code } })
+	          .then(res => {
+	            const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+	            const stages = Array.isArray(list) ? list : [];
+
+	            $stage.empty().append($('<option>', { value: '', text: 'Select...' }));
+	            stages.forEach(s => {
+	              const label = (s?.stage ?? '').toString().trim();
+	              if (!label) return;
+	              $stage.append($('<option>', { value: label, text: label }));
+	            });
+
+	            // Mostrar Stage siempre para INTERNAL/EXTERNAL (aunque no haya stages, permitimos escribir con tags)
+	            const shouldShow = (code === 'INTERNAL' || code === 'EXTERNAL') || stages.length > 0;
+	            $col.toggleClass('d-none', !shouldShow);
+	            applyLayout(shouldShow);
+
+	            if (!shouldShow) {
+	              $stage.val('');
+	            } else if (currentStage) {
+	              const exists = $stage.find('option').toArray().some(o => (o.value || '') === currentStage);
+	              if (!exists) $stage.append($('<option>', { value: currentStage, text: currentStage }));
+	              $stage.val(currentStage);
+	            }
+
+	            if (shouldShow && $.fn && $.fn.select2 && !$stage.data('select2')) {
+	              $stage.select2({
+	                tags: true,
+	                width: '100%',
+	                dropdownParent: $('#ncrModal'),
+	                placeholder: 'Select or type...',
+	                allowClear: false
+	              });
+	            }
+	            if (!shouldShow && $stage.data('select2')) {
+	              try { $stage.select2('destroy'); } catch (e) {}
+	            }
+	          });
+	      };
 
       const ensureStageOption = function(value) {
         const v = (value ?? '').toString().trim();
