@@ -1927,15 +1927,15 @@ class QaFaiSummaryController extends Controller
         }
     }
 
-    public function storeNcar(Request $request)
-    {
+	    public function storeNcar(Request $request)
+	    {
 	        $data = $request->validate([
 	            'order_id' => ['nullable', 'integer'],
 	            'type' => ['nullable', 'string'],
 	            'ncartype_id' => ['nullable', 'integer'],
-	            'stage' => ['nullable', 'string', 'max:120'],
+	            'stage' => ['required', 'string', 'max:120'],
 	            'ncar_date' => ['nullable', 'date'],
-	            'nc_description' => ['nullable', 'string'],
+	            'nc_description' => ['required', 'string'],
 	            'contact' => ['nullable', 'string', 'max:120'],
 	            'ncar_class' => ['nullable', 'string', 'max:120'],
 	            'ncar_customer' => ['nullable', 'string', 'max:180'],

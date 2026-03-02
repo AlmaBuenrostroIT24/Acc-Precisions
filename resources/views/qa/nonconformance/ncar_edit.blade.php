@@ -165,12 +165,12 @@
                     </div>
                   </div>
 
-                  <div class="mt-2 erp-gray-fields">
-                    <div class="form-group">
-                      <label class="mb-1">Stage</label>
-                      <input name="stage" type="text" class="form-control form-control-sm {{ $errors->has('stage') ? 'is-invalid' : '' }}" value="{{ old('stage', $ncar->stage ?? '') }}">
-                      @if($errors->has('stage'))<div class="invalid-feedback">{{ $errors->first('stage') }}</div>@endif
-                    </div>
+                  <div class="mt-2 erp-gray-fields"> 
+                    <div class="form-group"> 
+                      <label class="mb-1">Stage</label> 
+                      <input name="stage" type="text" class="form-control form-control-sm {{ $errors->has('stage') ? 'is-invalid' : '' }}" value="{{ old('stage', $ncar->stage ?? '') }}"> 
+                      @if($errors->has('stage'))<div class="invalid-feedback">{{ $errors->first('stage') }}</div>@endif 
+                    </div> 
 
                     <div class="form-group mb-0">
                       <label class="mb-1">Location</label>

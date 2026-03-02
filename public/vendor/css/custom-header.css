@@ -81,20 +81,28 @@ body.layout-navbar-fixed .wrapper .main-sidebar {
     margin-top: 0 !important;
 }
 
-/* Sidebar: evitar "doble margen" y alinear con navbar bajo */
-.layout-navbar-fixed .wrapper .brand-link {
-    height: calc(var(--ap-navbar-height) + var(--ap-navbar-border));
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
-    display: flex;
-    align-items: center;
-}
+/* Sidebar: evitar "doble margen" y alinear con navbar bajo */ 
+.layout-navbar-fixed .wrapper .brand-link { 
+    height: calc(var(--ap-navbar-height) + var(--ap-navbar-border)); 
+    padding-top: 0.1rem; 
+    padding-bottom: 0.1rem; 
+    display: flex; 
+    align-items: center; 
+    overflow: hidden;
+} 
 
-.layout-navbar-fixed .wrapper .main-sidebar .sidebar,
-body.layout-navbar-fixed .wrapper .main-sidebar .sidebar,
-.layout-navbar-fixed.layout-fixed .wrapper .sidebar,
-.layout-navbar-fixed.layout-fixed.text-sm .wrapper .sidebar {
-    margin-top: calc(var(--ap-navbar-height) + var(--ap-navbar-border)) !important;
+.layout-navbar-fixed .wrapper .main-sidebar .sidebar,  
+body.layout-navbar-fixed .wrapper .main-sidebar .sidebar,  
+.layout-navbar-fixed.layout-fixed .wrapper .sidebar,  
+.layout-navbar-fixed.layout-fixed.text-sm .wrapper .sidebar { 
+    /* La marca (.brand-link) ya ocupa la altura del navbar; no dupliques el offset. */ 
+    margin-top: 0 !important; 
+    padding-top: 0.65rem; 
+} 
+
+/* Sidebar search: deja un respiro bajo el brand-link */
+.main-sidebar .sidebar [data-widget="sidebar-search"] {
+    margin-top: 0.25rem;
 }
 
 /* Ajusta el input del buscador del header para que encaje */
@@ -117,16 +125,16 @@ body.layout-navbar-fixed .wrapper .main-sidebar .sidebar,
 }
 
 /* 2025-12-17: label del título junto al botón del menú */
-.main-header.navbar .navbar-content-header {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.1rem 0.45rem;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.06);
-    font-weight: 600;
-    font-size: 0.9rem;
-    line-height: 1.1;
-}
+.main-header.navbar .navbar-content-header { 
+    display: inline-flex; 
+    align-items: center; 
+    padding: 0.50rem 0.72rem; 
+    border-radius: 999px; 
+    background: rgba(0, 0, 0, 0.06); 
+    font-weight: 600; 
+    font-size: 0.9rem; 
+    line-height: 1.25; 
+} 
 
 /* 2026-01-12: ERP schedule tabs */
 .erp-tabs-bar {

@@ -135,21 +135,11 @@
     border: 1px solid rgba(15, 23, 42, 0.10) !important;
   }
 
-  /* Base font size */
-  body,
-  .content-wrapper,
-  .content-wrapper .content,
-  .card,
-  .table,
-  .modal-content {
-    font-size: 14px;
-  }
-
-  /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT) */
-  html,
-  body,
-  .wrapper,
-  .content-wrapper,
+  /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT) */ 
+  html, 
+  body, 
+  .wrapper, 
+  .content-wrapper, 
   .content-wrapper .content {
     overflow-x: hidden !important;
   }
@@ -177,24 +167,22 @@
     margin-bottom: 0;
   }
 
-  .fai-dt-table thead th {
-    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%);
-    color: #0f172a;
-    font-weight: 800;
-    font-size: 14px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    border-bottom: 1px solid #d5d8dd !important;
-    vertical-align: middle;
-    padding: 6px 8px;
-  }
-
-  .fai-dt-table tbody td {
-    font-size: 14px;
-    color: #111827;
-    vertical-align: middle;
-    padding: 6px 8px;
-  }
+  .fai-dt-table thead th { 
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%); 
+    color: #0f172a; 
+    font-weight: 800; 
+    letter-spacing: .04em; 
+    text-transform: uppercase; 
+    border-bottom: 1px solid #d5d8dd !important; 
+    vertical-align: middle; 
+    padding: 6px 8px; 
+  } 
+ 
+  .fai-dt-table tbody td { 
+    color: #111827; 
+    vertical-align: middle; 
+    padding: 6px 8px; 
+  } 
 
   .fai-dt-table tbody tr:nth-child(odd) {
     background: #fff !important;
@@ -266,10 +254,8 @@
 
   /* Search tipo ERP (DataTables filter movido al header) */
   /* Evitar "brinco": ocultar filtro en su posición original y mostrarlo solo en el slot */
-  #ordersTableEmpty_wrapper .dataTables_filter,
-  #ordersTableProcess_wrapper .dataTables_filter {
-    display: none;
-  }
+  /* Nota: NO ocultamos .dataTables_filter por CSS.
+     Si por alguna razón no se logra mover al slot (JS), queremos que el search se vea "normal". */
 
   .dt-filter-slot .dataTables_filter {
     display: block !important;
@@ -456,10 +442,10 @@
     min-width: 72px;
   }
 
-  .fai-dt-table .progress .progress-bar {
+  .fai-dt-table .progress .progress-bar { 
     height: 100%;
     box-sizing: border-box;
-    font-size: 12px;
+    font-size: 13px; 
     font-weight: 600;
     border-radius: 8px;
     display: flex;
@@ -475,14 +461,14 @@
     box-shadow: none;
   }
 
-  .fai-dt-table .progress .progress-label {
+  .fai-dt-table .progress .progress-label { 
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 8px;
-    font-size: 12px;
+    font-size: 13px; 
     font-weight: 800;
     color: #0f172a;
     pointer-events: none;
@@ -497,7 +483,7 @@
   }
 
   /* ERP pills (para resumen FAI/IPI) */
-  .fai-pill {
+  .fai-pill { 
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -508,12 +494,12 @@
     background: #f8fafc;
     color: #111827;
     font-weight: 800;
-    font-size: 0.82rem;
-    line-height: 1;
-    white-space: nowrap;
-    box-shadow: none;
-    user-select: none;
-  }
+    font-size: 0.92rem; 
+    line-height: 1; 
+    white-space: nowrap; 
+    box-shadow: none; 
+    user-select: none; 
+  } 
 
   .fai-pill--icon {
     width: 34px;
@@ -689,18 +675,18 @@
     line-height: 1;
   }
 
-  .fai-title-text {
-    font-size: 0.95rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    line-height: 1.1;
-  }
-
-  .fai-title-sub {
-    font-size: 0.78rem;
-    line-height: 1.1;
-  }
+  .fai-title-text { 
+    font-size: 1.05rem; 
+    font-weight: 800; 
+    letter-spacing: 0.02em; 
+    text-transform: uppercase; 
+    line-height: 1.1; 
+  } 
+ 
+  .fai-title-sub { 
+    font-size: 0.9rem; 
+    line-height: 1.15; 
+  } 
 
   /* 2025-12-17: hacer el card-body más compacto en Pending/Process */
   .fai-compact-body {
@@ -1518,8 +1504,10 @@ body .content {
           const $container = $(api.table().container());
           const $filter = $container.find('.dataTables_filter');
           const $slot = $(`.dt-filter-slot[data-dt-filter-slot="${bucket}"]`);
-          if ($slot.length && $filter.length) $filter.appendTo($slot);
-        },
+          if ($slot.length && $filter.length) { 
+            $filter.show().appendTo($slot); 
+          } 
+        }, 
         ajax: {
           url: ROUTES.partsData,
           data: {

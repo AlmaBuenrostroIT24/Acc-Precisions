@@ -30,10 +30,12 @@
             @include('orders.schedule_tab_navbar')
         </div>
     @elseif($isFaiSummaryRoute)
-        <div class="ms-3 d-flex align-items-center navbar-tabs-wrap" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">
+        <div class="ms-3 d-flex align-items-center navbar-tabs-wrap" style="padding-left:.155rem; border-left:1px solid rgba(15, 23, 42, 0.12);">
             @include('qa.faisummary.faisummary_tab_navbar')
         </div>
-    @elseif($navbarTitle !== '')
-        <span class="navbar-content-header ms-3" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12);">{{ $navbarTitle }}</span>
-    @endif
+    @elseif($navbarTitle !== '') 
+        <span class="navbar-content-header ms-3" style="padding-left:.75rem; border-left:1px solid rgba(15, 23, 42, 0.12); font-size:1.2rem; font-weight:900; letter-spacing:.01em; color:#0f172a; line-height:1;"> 
+            {{ $navbarTitle }} 
+        </span> 
+    @endif 
 </li>

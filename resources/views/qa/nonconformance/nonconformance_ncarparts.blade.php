@@ -10,10 +10,12 @@
 {{--
 @section('content_header')
   <div class="d-flex align-items-center justify-content-between">
-    <h1 class="mb-0">
-      <i class="fas fa-exclamation-triangle text-danger mr-2"></i>
-      Non-Conformance Reports
-    </h1>
+    <div class="ncar-title-pill">
+      <span class="ncar-title-pill-icon" aria-hidden="true">
+        <i class="fas fa-clipboard-list"></i>
+      </span>
+      <span class="ncar-title-pill-text">Non-Conformance Reports</span>
+    </div>
   </div>
 @endsection
 --}}
@@ -277,6 +279,40 @@
   .ncar-page,
   .ncar-page * {
     font-size: 14px !important;
+  }
+
+  /* Title pill (like ERP "Summary") */
+  .ncar-title-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(241, 245, 249, 0.92);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  }
+
+  .ncar-title-pill-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    color: #0f172a;
+  }
+
+  .ncar-title-pill-text {
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    color: #0f172a;
+    line-height: 1.1;
+    white-space: nowrap;
   }
 
   /* Mantener iconos con tamaño decente */
@@ -777,9 +813,22 @@
   }
 
   #ncrModal .erp-ncr-modal-header {
-    background: #fff !important;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+    background:
+      linear-gradient(180deg, rgba(148, 163, 184, 0.18) 0%, rgba(148, 163, 184, 0.08) 100%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 6px, rgba(255,255,255,0.16) 6px, rgba(255,255,255,0.16) 12px) !important;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.18) !important;
     padding: 14px 16px !important;
+    position: relative;
+  }
+
+  #ncrModal .erp-ncr-modal-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, rgba(71, 85, 105, 0.95) 0%, rgba(148, 163, 184, 0.95) 100%);
   }
 
   #ncrModal .erp-ncr-title-icon {
@@ -789,19 +838,51 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(245, 158, 11, 0.40);
-    background: rgba(245, 158, 11, 0.12);
-    color: #b45309;
+    border: 1px solid rgba(71, 85, 105, 0.22);
+    background: rgba(148, 163, 184, 0.14);
+    color: #334155;
   }
 
   #ncrModal .erp-ncr-title-icon i { font-size: 16px; }
   #ncrModal .erp-ncr-chip { display: none !important; }
 
+  #ncrModal .modal-title {
+    font-weight: 900;
+    letter-spacing: .01em;
+    color: #0f172a;
+  }
+
+  #ncrModal .close {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(241, 245, 249, 0.95);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    color: rgba(15, 23, 42, 0.75);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    line-height: 1;
+    padding: 0;
+  }
+
+  #ncrModal .close:hover {
+    filter: brightness(0.98);
+    color: rgba(15, 23, 42, 0.85);
+  }
+
+  #ncrModal .close:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+
   #ncrModal .erp-ncr-subtitle {
     display: block !important;
     margin-top: 2px;
     font-size: 0.82rem;
-    color: #6b7280;
+    color: rgba(15, 23, 42, 0.65);
     font-weight: 600;
     line-height: 1.1;
   }
@@ -817,6 +898,34 @@
     background: #fff !important;
     border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
     padding: 14px 16px !important;
+  }
+
+  #ncrModal .erp-ncr-btn {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  }
+
+  #ncrModal .erp-ncr-btn.btn-light {
+    background: rgba(241, 245, 249, 0.95);
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    color: #0f172a;
+  }
+
+  #ncrModal .erp-ncr-btn.btn-primary {
+    background: #0b5ed7;
+    border: 1px solid rgba(11, 94, 215, 0.65);
+  }
+
+  #ncrModal .erp-ncr-btn:hover {
+    filter: brightness(0.98);
+  }
+
+  #ncrModal .erp-ncr-btn:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
   }
 
   #ncrModal .erp-ncr-label {
@@ -855,14 +964,14 @@
     border-radius: 10px 0 0 10px !important;
     border: 1px solid rgba(15, 23, 42, 0.12) !important;
     border-right: 0 !important;
-    background: rgba(234, 242, 255, 0.85) !important;
-    color: #0b5ed7 !important;
+    background: transparent !important;
+    color: rgba(15, 23, 42, 0.70) !important;
   }
 
   #ncrModal .ncr-order-searchbar input.erp-ncr-control {
     border-left: 0 !important;
     border-radius: 0 10px 10px 0 !important;
-    background: rgba(234, 242, 255, 0.55) !important;
+    background: transparent !important;
     font-weight: 700 !important;
   }
 
@@ -1716,14 +1825,18 @@ $(function(){
 
     const openNewNcarModal = function () {
       loadNcarTypes().then(() => {
-        $('#ncrOrderSearchBox').removeClass('d-none');
+        $('#ncrPostImpactFields').addClass('d-none');
+        $('#ncrImpactBox').addClass('d-none');
+
+        // Order search box stays hidden until Stage is selected.
+        $('#ncrOrderSearchBox').addClass('d-none');
         $('#ncrOrderId').val('');
+        $('#ncrOrderSearch').val('');
         $('#ncrOrderResultsBody').empty().append(`
           <tr>
-            <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
+            <td colspan="6" class="text-muted text-center py-2">Select Stage to search an order.</td>
           </tr>
         `);
-        $('#ncrOrderSearch').val('');
 
         const today = new Date().toISOString().split('T')[0];
         $('#ncrDate').val(today);
@@ -1934,6 +2047,9 @@ $(function(){
     });
 
     function clearNcarModalAll() {
+      const stageVal = ($('#ncrStage').val() || '').toString().trim();
+      const prompt = stageVal ? 'Search an order.' : 'Select Stage to search an order.';
+
       // Reset selection
       $('#ncrOrderId').val('');
 
@@ -1946,9 +2062,47 @@ $(function(){
       // Reset Order search UI
       $('#ncrOrderSearch').val('');
       $('#ncrRef').val('');
+      $('#ncrImpactBox').addClass('d-none');
+      setPostImpactVisible(false);
       $('#ncrOrderResultsBody').empty().append(`
         <tr>
-          <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
+          <td colspan="6" class="text-muted text-center py-2">${prompt}</td>
+        </tr>
+      `);
+    }
+
+    function setOrderSearchVisible(show) {
+      const visible = !!show;
+      $('#ncrOrderSearchBox').toggleClass('d-none', !visible);
+      if (!visible) {
+        $('#ncrOrderSearch').val('');
+        $('#ncrOrderResultsBody').empty().append(`
+          <tr>
+            <td colspan="6" class="text-muted text-center py-2">Select Stage to search an order.</td>
+          </tr>
+        `);
+      }
+    }
+
+    function setPostImpactVisible(show) {
+      const visible = !!show;
+      $('#ncrPostImpactFields').toggleClass('d-none', !visible);
+      if (!visible) {
+        $('#ncrNotes').val('');
+      }
+    }
+
+    function clearOrderSelectionAndImpact() {
+      $('#ncrOrderId').val('');
+      $('#ncrWorkId, #ncrCo, #ncrCustPo, #ncrPn, #ncrCustomer, #ncrOperation, #ncrQty, #ncrWoQty').val('');
+      $('#ncrDescription').val('');
+      $('#ncrHeaderWorkId').text('—');
+      $('#ncrHeaderCustomer').text('—');
+      $('#ncrImpactBox').addClass('d-none');
+      setPostImpactVisible(false);
+      $('#ncrOrderResultsBody').empty().append(`
+        <tr>
+          <td colspan="6" class="text-muted text-center py-2">Select Stage to search an order.</td>
         </tr>
       `);
     }
@@ -2040,6 +2194,9 @@ $(function(){
           $('#ncrHeaderWorkId').text(work || '—');
           $('#ncrHeaderCustomer').text(cust || '—');
 
+          $('#ncrImpactBox').removeClass('d-none');
+          setPostImpactVisible(true);
+
           // Mantener la tabla visible y el término de búsqueda intacto
         });
 
@@ -2059,12 +2216,40 @@ $(function(){
       syncNcarStageOptions();
       $('#ncrStage').val('');
       applyNextNcarNumber(true);
-      refreshOrderSearchResults();
+      setOrderSearchVisible(false);
+      clearOrderSelectionAndImpact();
     });
+
+    $('#ncrStage')
+      .off('change.ncarpartsStage')
+      .on('change.ncarpartsStage', function () {
+        const stageVal = ($('#ncrStage').val() || '').toString().trim();
+        const show = stageVal.length > 0;
+        setOrderSearchVisible(show);
+        setPostImpactVisible(false);
+
+        if (!show) {
+          clearOrderSelectionAndImpact();
+          return;
+        }
+
+        // Stage selected: show prompt until user searches.
+        $('#ncrOrderResultsBody').empty().append(`
+          <tr>
+            <td colspan="6" class="text-muted text-center py-2">Search an order.</td>
+          </tr>
+        `);
+      });
 
     function refreshOrderSearchResults() {
       const code = ($('#ncrNcarType option:selected').attr('data-code') || '').toString().toUpperCase();
       const term = ($('#ncrOrderSearch').val() || '').toString().trim();
+      const stageVal = ($('#ncrStage').val() || '').toString().trim();
+
+      if (stageVal.length === 0) {
+        setOrderSearchVisible(false);
+        return;
+      }
 
       if (code !== 'INTERNAL' && code !== 'EXTERNAL' && code !== 'CUSTOMER') {
         renderOrderResults([]);
@@ -2079,7 +2264,7 @@ $(function(){
         } else {
           $('#ncrOrderResultsBody').empty().append(`
             <tr>
-              <td colspan="6" class="text-muted text-center py-2">Select NCAR Type and search an order.</td>
+              <td colspan="6" class="text-muted text-center py-2">Search an order.</td>
             </tr>
           `);
         }
@@ -2113,6 +2298,9 @@ $(function(){
       .off('hidden.bs.modal.ncarpartsClear')
       .on('hidden.bs.modal.ncarpartsClear', function () {
         clearNcarModalAll();
+        setOrderSearchVisible(false);
+        setPostImpactVisible(false);
+        $('#ncrImpactBox').addClass('d-none');
         const defaultReviewer = ($('#ncrReviewer').data('default') || '').toString();
         $('#ncrReviewer').val(defaultReviewer);
       });
@@ -2128,8 +2316,19 @@ $(function(){
       }
 
       const ncarStage = ($('#ncrStage').val() || '').toString().trim();
+      if (!ncarStage) {
+        if (window.Swal) return Swal.fire('Required', 'Select Stage.', 'warning');
+        alert('Select Stage.');
+        return;
+      }
+
       const ncarDate = ($('#ncrDate').val() || '').toString().trim();
       const ncrNotes = ($('#ncrNotes').val() || '').toString().trim();
+      if (!ncrNotes) {
+        if (window.Swal) return Swal.fire('Required', 'Notes are required.', 'warning');
+        alert('Notes are required.');
+        return;
+      }
 
       const $saveBtn = $('#ncrSaveBtn');
       $saveBtn.prop('disabled', true);
@@ -2147,9 +2346,10 @@ $(function(){
             return txt || null;
           })(),
           ref: (($('#ncrRef').val() || '').toString().trim() || null),
-          stage: ncarStage || null,
+          stage: ncarStage,
           ncar_date: ncarDate || null,
-          nc_description: ncrNotes || null,
+          ncar_customer: (($('#ncrCustomer').val() || '').toString().trim() || null),
+          nc_description: ncrNotes,
           contact: (($('#ncrReviewer').val() || '').toString().trim() || null)
         }
       }).done(function (res) {

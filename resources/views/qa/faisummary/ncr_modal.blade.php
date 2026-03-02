@@ -142,7 +142,7 @@
                         </div>
                     </div>
 
-                    <div class="erp-ncr-orderbox mb-2">
+                    <div class="erp-ncr-orderbox mb-2" id="ncrImpactBox">
                         <div class="erp-ncr-orderbox-title">Impact</div>
 
                         <div class="form-row">
@@ -225,15 +225,17 @@
                         </div>
                     </div>
 
-                    <div class="form-group mb-0">
-                        <label for="ncrNotes" class="mb-1 erp-ncr-label">Notes</label>
-                        <textarea id="ncrNotes" class="form-control form-control-sm erp-ncr-control erp-ncr-notes" rows="1" maxlength="2000" placeholder="Details..."></textarea>
+                    <div id="ncrPostImpactFields">
+                        <div class="form-group mb-0">
+                            <label for="ncrNotes" class="mb-1 erp-ncr-label">Notes</label>
+                            <textarea id="ncrNotes" class="form-control form-control-sm erp-ncr-control erp-ncr-notes" rows="1" maxlength="2000" placeholder="Details..."></textarea>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer py-2 erp-ncr-modal-footer">
-                    <button type="button" class="btn btn-light btn-sm erp-ncr-btn" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm erp-ncr-btn" id="ncrSaveBtn">
-                        Create NCR
+                    <button type="button" class="btn btn-light erp-ncr-btn" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary erp-ncr-btn" id="ncrSaveBtn">
+                        <i class="fas fa-check mr-1" aria-hidden="true"></i> Create NCR
                     </button>
                 </div>
             </form>
