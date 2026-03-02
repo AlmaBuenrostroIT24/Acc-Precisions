@@ -81,28 +81,49 @@ body.layout-navbar-fixed .wrapper .main-sidebar {
     margin-top: 0 !important;
 }
 
-/* Sidebar: evitar "doble margen" y alinear con navbar bajo */ 
-.layout-navbar-fixed .wrapper .brand-link { 
-    height: calc(var(--ap-navbar-height) + var(--ap-navbar-border)); 
-    padding-top: 0.1rem; 
-    padding-bottom: 0.1rem; 
-    display: flex; 
-    align-items: center; 
+/* Sidebar: evitar "doble margen" y alinear con navbar bajo */  
+.layout-navbar-fixed .wrapper .brand-link {  
+    height: calc(var(--ap-navbar-height) + var(--ap-navbar-border));  
+    padding-top: 0.1rem;  
+    padding-bottom: 0.1rem;  
+    display: flex;  
+    align-items: center;  
     overflow: hidden;
-} 
+}  
 
 .layout-navbar-fixed .wrapper .main-sidebar .sidebar,  
 body.layout-navbar-fixed .wrapper .main-sidebar .sidebar,  
 .layout-navbar-fixed.layout-fixed .wrapper .sidebar,  
-.layout-navbar-fixed.layout-fixed.text-sm .wrapper .sidebar { 
-    /* La marca (.brand-link) ya ocupa la altura del navbar; no dupliques el offset. */ 
-    margin-top: 0 !important; 
-    padding-top: 0.65rem; 
+.layout-navbar-fixed.layout-fixed.text-sm .wrapper .sidebar {  
+    /* La marca (.brand-link) ya ocupa la altura del navbar; no dupliques el offset. */  
+    margin-top: 0 !important;  
+    padding-top: 0.65rem;  
+}  
+
+/* Sidebar search: deja un respiro bajo el brand-link */ 
+.main-sidebar .sidebar [data-widget="sidebar-search"] { 
+    margin-top: 0.25rem; 
 } 
 
-/* Sidebar search: deja un respiro bajo el brand-link */
-.main-sidebar .sidebar [data-widget="sidebar-search"] {
-    margin-top: 0.25rem;
+/* Sidebar search: asegurar que el input-group se vea completo (input + botón) */
+.main-sidebar .sidebar [data-widget="sidebar-search"] .form-inline,
+.main-sidebar .sidebar [data-widget="sidebar-search"] .input-group {
+    width: 100%;
+}
+
+.main-sidebar .sidebar [data-widget="sidebar-search"] .input-group {
+    flex-wrap: nowrap;
+}
+
+.main-sidebar .sidebar [data-widget="sidebar-search"] .form-control-sidebar {
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+}
+
+.main-sidebar .sidebar [data-widget="sidebar-search"] .input-group-append,
+.main-sidebar .sidebar [data-widget="sidebar-search"] .input-group-prepend {
+    flex: 0 0 auto;
 }
 
 /* Ajusta el input del buscador del header para que encaje */

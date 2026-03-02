@@ -135,14 +135,13 @@
     border: 1px solid rgba(15, 23, 42, 0.10) !important;
   }
 
-  /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT) */ 
-  html, 
-  body, 
-  .wrapper, 
+  /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT)
+     Importante: NO toques .wrapper/body/html aquí porque puede recortar el sidebar-search
+     cuando el sidebar está colapsado (mini) y se expande al hover. */ 
   .content-wrapper, 
-  .content-wrapper .content {
-    overflow-x: hidden !important;
-  }
+  .content-wrapper .content { 
+    overflow-x: hidden !important; 
+  } 
 
   /* DataTables wrappers a veces agregan 1px extra */
   .dataTables_wrapper,
@@ -1596,13 +1595,13 @@ body .content {
       return dt;
     }
 
-    // Init
-    $(function() {
-      ctx.dtEmpty = makeDT('empty', '#badgePending');
-      ctx.dtProcess = makeDT('process', '#badgeProcess');
-
-      // ---------------------- NCR (modal + guardar) ----------------------
-      const decodeHtml = function(v) {
+    // Init 
+    $(function() { 
+      ctx.dtEmpty = makeDT('empty', '#badgePending'); 
+      ctx.dtProcess = makeDT('process', '#badgeProcess'); 
+ 
+      // ---------------------- NCR (modal + guardar) ---------------------- 
+      const decodeHtml = function(v) { 
         const raw = (v ?? '').toString();
         if (!raw) return '';
         try {
