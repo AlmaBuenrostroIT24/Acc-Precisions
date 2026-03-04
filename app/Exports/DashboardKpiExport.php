@@ -48,16 +48,17 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 'Type',
                 'Prcs.',
                 'Name',
-                "Q1 {$yearShort}", '', '',
-                "Q2 {$yearShort}", '', '',
-                "Q3 {$yearShort}", '', '',
-                "Q4 {$yearShort}", '', '',
-                'YTD',
-                'Rolling 12M',
-                'Goal/Per Term',
-                'Trend / NC Doc Ref.',
+                "Q1 {$yearShort}", '', '', '',
+                "Q2 {$yearShort}", '', '', '',
+                "Q3 {$yearShort}", '', '', '',
+                "Q4 {$yearShort}", '', '', '',
+                'YTD', 'Rolling 12M', 'Goal/Per Term', 'Trend / NC Doc Ref.',
             ],
-            array_merge(['', '', ''], array_map('strval', range(1, 12)), ['', '', '', '']),
+            array_merge(
+                ['', '', ''],
+                ['1', '2', '3', 'TOT', '4', '5', '6', 'TOT', '7', '8', '9', 'TOT', '10', '11', '12', 'TOT'],
+                ['', '', '', ''],
+            ),
         ];
     }
 
@@ -69,20 +70,46 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
             $isOtd = ($row['key'] ?? '') === 'customer_otd';
             $values = $row['values'] ?? [];
 
-            $months = [];
+            $periodCells = [];
+            $quarterTotals = [
+                1 => ['on_time' => 0, 'total' => 0],
+                2 => ['on_time' => 0, 'total' => 0],
+                3 => ['on_time' => 0, 'total' => 0],
+                4 => ['on_time' => 0, 'total' => 0],
+            ];
             foreach (range(1, 12) as $m) {
                 $cell = $values[$m] ?? null;
                 if ($isOtd && is_array($cell)) {
                     $pct = $cell['pct'] ?? null;
                     $total = (int) ($cell['total'] ?? 0);
+                    $onTime = (int) ($cell['on_time'] ?? 0);
                     if ($pct === null && !$total) {
-                        $months[] = '';
+                        $periodCells[] = '';
                     } else {
-                        $months[] = ($pct !== null ? number_format((float) $pct, 1) . '%' : '')
+                        $periodCells[] = ($pct !== null ? number_format((float) $pct, 1) . '%' : '')
                             . ($total ? "\n(" . $total . ')' : '');
                     }
+
+                    if ($total > 0) {
+                        $qi = intdiv($m - 1, 3) + 1;
+                        $quarterTotals[$qi]['on_time'] += $onTime;
+                        $quarterTotals[$qi]['total'] += $total;
+                    }
                 } else {
-                    $months[] = is_array($cell) ? '' : (string) ($cell ?? '');
+                    $periodCells[] = is_array($cell) ? '' : (string) ($cell ?? '');
+                }
+
+                if (in_array($m, [3, 6, 9, 12], true)) {
+                    if ($isOtd) {
+                        $qi = intdiv($m - 1, 3) + 1;
+                        $qt = $quarterTotals[$qi] ?? ['on_time' => 0, 'total' => 0];
+                        $t = (int) ($qt['total'] ?? 0);
+                        $o = (int) ($qt['on_time'] ?? 0);
+                        $qpct = $t > 0 ? round(($o / $t) * 100, 1) : null;
+                        $periodCells[] = $this->pctTotalCell($qpct, $t);
+                    } else {
+                        $periodCells[] = '';
+                    }
                 }
             }
 
@@ -99,7 +126,7 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                     (string) ($row['prcs'] ?? ''),
                     $name,
                 ],
-                $months,
+                $periodCells,
                 [
                     $this->pctTotalCell($ytdPct, $ytdTotal),
                     $this->pctTotalCell($r12Pct, $r12Total),
@@ -118,14 +145,14 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
             'A' => 8,  // Type / labels
             'B' => 5,  // Prcs
             'C' => 44, // Name
-            'D' => 7, 'E' => 7, 'F' => 7,
-            'G' => 7, 'H' => 7, 'I' => 7,
-            'J' => 7, 'K' => 7, 'L' => 7,
-            'M' => 7, 'N' => 7, 'O' => 7,
-            'P' => 11, // YTD
-            'Q' => 12, // Rolling
-            'R' => 13, // Goal
-            'S' => 18, // Trend
+            'D' => 7, 'E' => 7, 'F' => 7, 'G' => 7,   // Q1 + TOT
+            'H' => 7, 'I' => 7, 'J' => 7, 'K' => 7,   // Q2 + TOT
+            'L' => 7, 'M' => 7, 'N' => 7, 'O' => 7,   // Q3 + TOT
+            'P' => 7, 'Q' => 7, 'R' => 7, 'S' => 7,   // Q4 + TOT
+            'T' => 11, // YTD
+            'U' => 12, // Rolling
+            'V' => 13, // Goal
+            'W' => 18, // Trend
         ];
     }
 
@@ -171,9 +198,9 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
 
                 // Top header area
                 // Title starts at column C (A reserved for logo).
-                $sheet->mergeCells('C1:S1');
+                $sheet->mergeCells('C1:W1');
                 $sheet->setCellValue('C1', 'Quality Objectives & Key Performance Indicators (KPIs)');
-                $sheet->mergeCells('C2:S2');
+                $sheet->mergeCells('C2:W2');
                 $sheet->setCellValue('C2', 'ACC Precision, Inc.');
                 $sheet->mergeCells('A1:B2');
 
@@ -186,28 +213,28 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 // Put "As of" around mid-sheet like the PDF sample.
                 $sheet->setCellValue('J3', 'As of');
                 $sheet->setCellValue('K3', $asOf);
-                $sheet->mergeCells('K3:S3');
+                $sheet->mergeCells('K3:W3');
 
                 $sheet->setCellValue('A4', 'Notes');
-                $sheet->mergeCells('B4:S4');
+                $sheet->mergeCells('B4:W4');
                 $sheet->setCellValue('B4', 'To achieve the Quality Policy, the following QOs and KPIs are set forth by ACC Precision, Inc. and measured/analyzed/evaluated; they may be updated as needed.');
 
-                $sheet->mergeCells('A6:S6');
+                $sheet->mergeCells('A6:W6');
                 $sheet->setCellValue('A6', 'REPORT');
 
                 // Merge quarter bands and lock non-month headers over 2 rows
                 $sheet->mergeCells("A{$headerRow1}:A{$headerRow2}");
                 $sheet->mergeCells("B{$headerRow1}:B{$headerRow2}");
                 $sheet->mergeCells("C{$headerRow1}:C{$headerRow2}");
-                $sheet->mergeCells("P{$headerRow1}:P{$headerRow2}");
-                $sheet->mergeCells("Q{$headerRow1}:Q{$headerRow2}");
-                $sheet->mergeCells("R{$headerRow1}:R{$headerRow2}");
-                $sheet->mergeCells("S{$headerRow1}:S{$headerRow2}");
+                $sheet->mergeCells("T{$headerRow1}:T{$headerRow2}");
+                $sheet->mergeCells("U{$headerRow1}:U{$headerRow2}");
+                $sheet->mergeCells("V{$headerRow1}:V{$headerRow2}");
+                $sheet->mergeCells("W{$headerRow1}:W{$headerRow2}");
 
-                $sheet->mergeCells("D{$headerRow1}:F{$headerRow1}");
-                $sheet->mergeCells("G{$headerRow1}:I{$headerRow1}");
-                $sheet->mergeCells("J{$headerRow1}:L{$headerRow1}");
-                $sheet->mergeCells("M{$headerRow1}:O{$headerRow1}");
+                $sheet->mergeCells("D{$headerRow1}:G{$headerRow1}");
+                $sheet->mergeCells("H{$headerRow1}:K{$headerRow1}");
+                $sheet->mergeCells("L{$headerRow1}:O{$headerRow1}");
+                $sheet->mergeCells("P{$headerRow1}:S{$headerRow1}");
 
                 // Freeze panes (keep headers + first 3 columns)
                 $sheet->freezePane("D{$dataStartRow}");
@@ -243,10 +270,10 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 $sheet->getRowDimension(4)->setRowHeight(34);
                 $sheet->getRowDimension(6)->setRowHeight(20);
 
-                $sheet->getStyle('A3:S3')->applyFromArray([
+                $sheet->getStyle('A3:W3')->applyFromArray([
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D9E2EF']]],
                 ]);
-                $sheet->getStyle('A4:S4')->applyFromArray([
+                $sheet->getStyle('A4:W4')->applyFromArray([
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D9E2EF']]],
                 ]);
                 $sheet->getStyle('A3')->getFont()->setBold(true);
@@ -258,14 +285,14 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 $sheet->getStyle('J3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EDF2F7');
                 $sheet->getStyle('A4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EDF2F7');
                 $sheet->getStyle('B3:I3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
-                $sheet->getStyle('K3:S3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
-                $sheet->getStyle('B4:S4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
+                $sheet->getStyle('K3:W3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
+                $sheet->getStyle('B4:W4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
 
-                $sheet->getStyle('A3:S3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-                $sheet->getStyle('A3:S4')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('A3:W3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $sheet->getStyle('A3:W4')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
                 $sheet->getStyle('B4')->getAlignment()->setWrapText(true);
                 $sheet->getStyle('B3:I3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-                $sheet->getStyle('K3:S3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $sheet->getStyle('K3:W3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
                 $sheet->getStyle('A6')->applyFromArray([
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => '2B4F86']],
@@ -274,7 +301,7 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 ]);
 
                 // Header rows
-                $headerRange = "A{$headerRow1}:S{$headerRow2}";
+                $headerRange = "A{$headerRow1}:W{$headerRow2}";
                 $sheet->getStyle($headerRange)->applyFromArray([
                     'font' => ['bold' => true, 'size' => 9],
                     'alignment' => [
@@ -287,35 +314,161 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 ]);
 
                 // Month header (white like PDF)
-                $sheet->getStyle("D{$headerRow2}:O{$headerRow2}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFFFF');
+                $sheet->getStyle("D{$headerRow2}:R{$headerRow2}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFFFF');
+                // Quarter TOT header cells (blue like KPI pill)
+                foreach (['G', 'K', 'O', 'S'] as $col) {
+                    $sheet->getStyle("{$col}{$headerRow2}")
+                        ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DBEAFE');
+                    $sheet->getStyle("{$col}{$headerRow2}")->getFont()->getColor()->setRGB('1E40AF');
+                }
 
                 $sheet->getRowDimension($headerRow1)->setRowHeight(22);
                 $sheet->getRowDimension($headerRow2)->setRowHeight(18);
 
                 // Table body range
-                $tableRange = "A{$headerRow1}:S{$lastRow}";
+                $tableRange = "A{$headerRow1}:W{$lastRow}";
                 $sheet->getStyle($tableRange)->getAlignment()->setWrapText(true);
 
                 // Body fills (ERP-ish)
                 if ($dataRowCount) {
                     $sheet->getStyle("A{$dataStartRow}:B{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EDF2F7');
                     $sheet->getStyle("C{$dataStartRow}:C{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5FB');
-                    $sheet->getStyle("D{$dataStartRow}:O{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFFFF');
-                    $sheet->getStyle("P{$dataStartRow}:Q{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
-                    $sheet->getStyle("R{$dataStartRow}:R{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFF7D6');
+                    $sheet->getStyle("D{$dataStartRow}:S{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFFFF');
+                    // Quarter TOT columns subtle blue
+                    foreach (['G', 'K', 'O', 'S'] as $col) {
+                        $sheet->getStyle("{$col}{$dataStartRow}:{$col}{$lastRow}")
+                            ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EEF2FF');
+                    }
+                    $sheet->getStyle("T{$dataStartRow}:U{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F7FAFC');
+                    $sheet->getStyle("V{$dataStartRow}:V{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFF7D6');
                 }
 
                 // Alignments
                 $sheet->getStyle("C{$dataStartRow}:C{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
                 $sheet->getStyle("A{$dataStartRow}:B{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle("D{$dataStartRow}:S{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("D{$dataStartRow}:W{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle("C{$dataStartRow}:C{$lastRow}")->getFont()->setBold(true);
+
+                // Type "pill" styling (QO/KPI) in column A (Excel can't do rounded corners, but we can emulate)
+                if ($dataRowCount) {
+                    for ($r = $dataStartRow; $r <= $lastRow; $r++) {
+                        $type = strtoupper(trim((string) $sheet->getCell("A{$r}")->getValue()));
+                        $isKpi = $type === 'KPI';
+
+                        $style = $sheet->getStyle("A{$r}");
+                        $style->getAlignment()
+                            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                            ->setVertical(Alignment::VERTICAL_CENTER);
+                        $style->getFont()->setBold(true)->setSize(9);
+
+                        $style->getFill()
+                            ->setFillType(Fill::FILL_SOLID)
+                            ->getStartColor()
+                            ->setRGB($isKpi ? 'DBEAFE' : 'EEF2F7');
+
+                        $style->getFont()->getColor()->setRGB($isKpi ? '1E40AF' : '0F172A');
+
+                        $borders = $style->getBorders();
+                        $borders->getOutline()
+                            ->setBorderStyle(Border::BORDER_THIN)
+                            ->getColor()
+                            ->setRGB($isKpi ? '93C5FD' : 'CBD5E1');
+
+                        // Add a little horizontal breathing room to mimic a badge.
+                        $style->getAlignment()->setIndent(1);
+                    }
+                }
+
+                // KPI validation colors (green/yellow/red) for OTD row (match dashboard thresholds)
+                if ($dataRowCount) {
+                    $otdIndex = null;
+                    foreach ($this->rows as $i => $r) {
+                        if (($r['key'] ?? '') === 'customer_otd') {
+                            $otdIndex = (int) $i;
+                            break;
+                        }
+                    }
+
+                    if ($otdIndex !== null) {
+                        $otdRowNum = $dataStartRow + $otdIndex;
+                        $otdValues = $this->rows[$otdIndex]['values'] ?? [];
+
+                        $monthCols = [
+                            1 => 'D', 2 => 'E', 3 => 'F',
+                            4 => 'H', 5 => 'I', 6 => 'J',
+                            7 => 'L', 8 => 'M', 9 => 'N',
+                            10 => 'P', 11 => 'Q', 12 => 'R',
+                        ];
+                        foreach (range(1, 12) as $mi) {
+                            $cell = $otdValues[$mi] ?? null;
+                            $pct = is_array($cell) ? ($cell['pct'] ?? null) : null;
+                            $rgb = $this->toneFillRgb($pct);
+                            if ($rgb) {
+                                $col = $monthCols[$mi] ?? null;
+                                if (!$col) {
+                                    continue;
+                                }
+                                $sheet->getStyle("{$col}{$otdRowNum}")
+                                    ->getFill()
+                                    ->setFillType(Fill::FILL_SOLID)
+                                    ->getStartColor()
+                                    ->setRGB($rgb);
+                            }
+                        }
+
+                        // Quarter TOT cells (G,K,O,S)
+                        $qTotals = [
+                            1 => ['col' => 'G', 'on_time' => 0, 'total' => 0],
+                            2 => ['col' => 'K', 'on_time' => 0, 'total' => 0],
+                            3 => ['col' => 'O', 'on_time' => 0, 'total' => 0],
+                            4 => ['col' => 'S', 'on_time' => 0, 'total' => 0],
+                        ];
+                        foreach (range(1, 12) as $mi) {
+                            $c = $otdValues[$mi] ?? null;
+                            if (!is_array($c) || empty($c['total'])) {
+                                continue;
+                            }
+                            $qi = intdiv($mi - 1, 3) + 1;
+                            $qTotals[$qi]['on_time'] += (int) ($c['on_time'] ?? 0);
+                            $qTotals[$qi]['total'] += (int) ($c['total'] ?? 0);
+                        }
+                        foreach ([1, 2, 3, 4] as $qi) {
+                            $t = (int) ($qTotals[$qi]['total'] ?? 0);
+                            $o = (int) ($qTotals[$qi]['on_time'] ?? 0);
+                            $qpct = $t > 0 ? round(($o / $t) * 100, 1) : null;
+                            $qRgb = $this->toneFillRgb($qpct);
+                            if ($qRgb) {
+                                $qCol = $qTotals[$qi]['col'];
+                                $sheet->getStyle("{$qCol}{$otdRowNum}")
+                                    ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($qRgb);
+                            }
+                        }
+
+                        $ytdRgb = $this->toneFillRgb($this->otdYtd['pct'] ?? null);
+                        if ($ytdRgb) {
+                            $sheet->getStyle("T{$otdRowNum}")
+                                ->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()
+                                ->setRGB($ytdRgb);
+                        }
+
+                        $r12Rgb = $this->toneFillRgb($this->otdR12['pct'] ?? null);
+                        if ($r12Rgb) {
+                            $sheet->getStyle("U{$otdRowNum}")
+                                ->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()
+                                ->setRGB($r12Rgb);
+                        }
+                    }
+                }
 
                 // Borders for the whole table
                 $sheet->getStyle($tableRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D1D9E6');
 
-                // Thicker separators after each quarter (F, I, L, O)
-                foreach (['F', 'I', 'L', 'O'] as $col) {
+                // Thicker separators after each quarter total (G, K, O, S)
+                foreach (['G', 'K', 'O', 'S'] as $col) {
                     $sheet->getStyle("{$col}{$headerRow1}:{$col}{$lastRow}")
                         ->getBorders()
                         ->getRight()
@@ -377,5 +530,21 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
         }
 
         return $line2 === '' ? $line1 : ($line1 . "\n" . $line2);
+    }
+
+    private function toneFillRgb($pct): ?string
+    {
+        if ($pct === null) {
+            return null;
+        }
+
+        $pct = (float) $pct;
+        if ($pct >= 90.0) {
+            return 'DCFCE7'; // light green
+        }
+        if ($pct >= 85.0) {
+            return 'FEF3C7'; // light amber
+        }
+        return 'FEE2E2'; // light red
     }
 }

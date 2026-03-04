@@ -142,25 +142,57 @@
         table.kpi td.col-month { background: #ffffff; }
         table.kpi tbody tr:nth-child(even) td.col-month { background: #ffffff; }
 
-        /* Dompdf can ignore px widths; percentages tend to be more reliable */
-        th.col-type, td.col-type { width: 4% !important; }
+        /* Keep class widths aligned with <colgroup> so Dompdf doesn't collapse TOT columns */
+        th.col-type, td.col-type { width: 5% !important; }
         th.col-prcs, td.col-prcs { width: 4% !important; }
-        th.col-name, td.col-name { width: 25% !important; }
-        th.col-month, td.col-month { width: 2.3% !important; }
-        th.col-ytd, td.col-ytd { width: 8% !important; }
-        th.col-r12, td.col-r12 { width: 8% !important; }
-        th.col-goal, td.col-goal { width: 10% !important; }
-        th.col-trend, td.col-trend { width: 13.4% !important; }
+        th.col-name, td.col-name { width: 14% !important; }
+        th.col-month, td.col-month { width: 4% !important; }
+        th.col-qtotal, td.col-qtotal { width: 4% !important; }
+        th.col-ytd, td.col-ytd { width: 4% !important; }
+        th.col-r12, td.col-r12 { width: 5% !important; }
+        th.col-goal, td.col-goal { width: 6% !important; }
+        th.col-trend, td.col-trend { width: 5% !important; }
 
-        .col-type { text-align: center; font-weight: 900; background: #edf2f7; }
-        .col-prcs { text-align: center; font-weight: 800; background: #edf2f7; }
-        .col-name { background: #f1f5fb; white-space: normal; word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.15; font-weight: 800; }
+        .col-type { text-align: center; font-weight: 900; background: #f1f5f9; }
+        .col-prcs { text-align: center; font-weight: 800; background: #f1f5f9; }
+        .col-name { background: #f1f5f9; white-space: normal; word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.15; font-weight: 800; }
+        table.kpi tbody td.col-type,
+        table.kpi tbody td.col-prcs,
+        table.kpi tbody td.col-name { background: #f1f5f9 !important; }
         td.col-name { font-size: 9px; font-weight: 700; line-height: 1.2; }
 
+        /* Type pill (QO / KPI) */
+        .type-pill{
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: .4px;
+            border: 1px solid #cbd5e1;
+            background: #eef2f7;
+            color: #0f172a;
+        }
+        .type-pill--kpi{
+            border-color: #93c5fd;
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
         .col-month, .col-ytd, .col-r12, .col-goal, .col-trend { text-align: center; }
-        .col-ytd, .col-r12, .col-goal, .col-trend { background: #f7fafc; font-weight: 800; }
+        .col-ytd, .col-r12, .col-trend { background: #f7fafc; font-weight: 800; }
+        .col-goal { background: #fff7d6 !important; font-weight: 900; }
         .col-month { font-size: 9px; }
+        .col-qtotal { background: #eef2ff; font-weight: 900; text-align: center; }
+        thead th.col-qtotal { background: #dbeafe; letter-spacing: 0.10em; color: #1e40af; }
+        .col-qtotal.qtotal-empty { background: #f1f5f9 !important; color: #94a3b8; font-weight: 800; }
         .cell-total { display: block; font-size: 8px; color: #64748b; font-weight: 700; line-height: 1.1; }
+
+        /* KPI validation colors (match dashboard: green/yellow/red) */
+        .tone-good { background: #dcfce7 !important; }
+        .tone-warn { background: #fef3c7 !important; }
+        .tone-bad  { background: #fee2e2 !important; }
     </style>
 </head>
 <body>
@@ -183,6 +215,20 @@
     ];
     $months = range(1, 12);
     $rows = $kpiRows ?? [];
+
+    $toneClass = function ($pct): string {
+        if ($pct === null) {
+            return '';
+        }
+        $pct = (float) $pct;
+        if ($pct >= 90.0) {
+            return 'tone-good';
+        }
+        if ($pct >= 85.0) {
+            return 'tone-warn';
+        }
+        return 'tone-bad';
+    };
 
     $wrapTwoLines = function (?string $text, int $max1 = 48, int $max2 = 48): string {
         $text = trim((string) $text);
@@ -268,16 +314,19 @@
 
 <table class="kpi">
     <colgroup>
-        <col style="width:4%">
-        <col style="width:4%">
-        <col style="width:25%">
+        <col style="width:3%">
+        <col style="width:3%">
+        <col style="width:12%">
         @foreach($months as $m)
-            <col style="width:2.3%">
+            <col style="width:4%">
+            @if(in_array($m, [3, 6, 9, 12], true))
+                <col style="width:4%">
+            @endif
         @endforeach
-        <col style="width:8%">
-        <col style="width:8%">
-        <col style="width:10%">
-        <col style="width:13.4%">
+        <col style="width:4%">
+        <col style="width:4%">
+        <col style="width:5%">
+        <col style="width:5%">
     </colgroup>
     <thead>
         <tr>
@@ -285,7 +334,7 @@
             <th class="col-prcs" rowspan="2">Prcs.</th>
             <th class="col-name" rowspan="2">Name</th>
             @foreach($quarters as $q)
-                <th colspan="{{ count($q['months']) }}">{{ $q['label'] }}</th>
+                <th colspan="{{ count($q['months']) + 1 }}">{{ $q['label'] }}</th>
             @endforeach
             <th class="col-ytd" rowspan="2">YTD</th>
             <th class="col-r12" rowspan="2">Rolling 12M</th>
@@ -295,6 +344,9 @@
         <tr>
             @foreach($months as $m)
                 <th class="col-month">{{ $m }}</th>
+                @if(in_array($m, [3, 6, 9, 12], true))
+                    <th class="col-qtotal">TOT</th>
+                @endif
             @endforeach
         </tr>
     </thead>
@@ -305,9 +357,30 @@
                 $values = $row['values'] ?? [];
                 $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : null;
                 $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : null;
+
+                $quarterTotals = [1 => ['on_time' => 0, 'total' => 0], 2 => ['on_time' => 0, 'total' => 0], 3 => ['on_time' => 0, 'total' => 0], 4 => ['on_time' => 0, 'total' => 0]];
+                if ($isOtd) {
+                    foreach (range(1, 12) as $mm) {
+                        $c = $values[$mm] ?? null;
+                        if (!is_array($c) || empty($c['total'])) {
+                            continue;
+                        }
+                        $qi = intdiv($mm - 1, 3) + 1;
+                        $quarterTotals[$qi]['on_time'] += (int) ($c['on_time'] ?? 0);
+                        $quarterTotals[$qi]['total'] += (int) ($c['total'] ?? 0);
+                    }
+                    foreach ([1, 2, 3, 4] as $qi) {
+                        $t = (int) ($quarterTotals[$qi]['total'] ?? 0);
+                        $o = (int) ($quarterTotals[$qi]['on_time'] ?? 0);
+                        $quarterTotals[$qi]['pct'] = $t > 0 ? round(($o / $t) * 100, 1) : null;
+                    }
+                }
             @endphp
             <tr>
-                <td class="col-type">{{ $row['type'] ?? '' }}</td>
+                <td class="col-type">
+                    @php $t = strtoupper(trim((string) ($row['type'] ?? ''))); @endphp
+                    <span class="type-pill {{ $t === 'KPI' ? 'type-pill--kpi' : '' }}">{{ $t }}</span>
+                </td>
                 <td class="col-prcs">{{ $row['prcs'] ?? '' }}</td>
                 <td class="col-name">{!! $wrapTwoLines($row['name'] ?? '') !!}</td>
                 @foreach($months as $m)
@@ -316,7 +389,7 @@
                         $pct = $isOtd && is_array($cell) ? ($cell['pct'] ?? null) : null;
                         $total = $isOtd && is_array($cell) ? (int) ($cell['total'] ?? 0) : 0;
                     @endphp
-                    <td class="col-month">
+                    <td class="col-month {{ $isOtd ? $toneClass($pct) : '' }}">
                         @if($isOtd)
                             @if($pct !== null)
                                 {{ number_format($pct, 1) . '%' }}
@@ -328,9 +401,28 @@
                             {{ is_array($cell) ? '' : ($cell ?? '') }}
                         @endif
                     </td>
+                    @if(in_array($m, [3, 6, 9, 12], true))
+                        @if($isOtd)
+                            @php
+                                $qi = intdiv($m - 1, 3) + 1;
+                                $qt = $quarterTotals[$qi] ?? ['pct' => null, 'total' => 0];
+                                $qtEmpty = ($qt['pct'] ?? null) === null && empty($qt['total']);
+                            @endphp
+                            <td class="col-qtotal {{ $toneClass($qt['pct'] ?? null) }} {{ $qtEmpty ? 'qtotal-empty' : '' }}">
+                                @if(($qt['pct'] ?? null) !== null)
+                                    {{ number_format((float) $qt['pct'], 1) . '%' }}
+                                @endif
+                                @if(!empty($qt['total']))
+                                    <span class="cell-total">({{ (int) $qt['total'] }})</span>
+                                @endif
+                            </td>
+                        @else
+                            <td class="col-qtotal qtotal-empty"></td>
+                        @endif
+                    @endif
                 @endforeach
-                <td class="col-ytd">{{ $ytdPct !== null ? number_format($ytdPct, 1) . '%' : '' }}@if($isOtd && !empty($otdYtd['total'])) ({{ (int) $otdYtd['total'] }})@endif</td>
-                <td class="col-r12">{{ $r12Pct !== null ? number_format($r12Pct, 1) . '%' : '' }}@if($isOtd && !empty($otdR12['total'])) ({{ (int) $otdR12['total'] }})@endif</td>
+                <td class="col-ytd {{ $isOtd ? $toneClass($ytdPct) : '' }}">{{ $ytdPct !== null ? number_format($ytdPct, 1) . '%' : '' }}@if($isOtd && !empty($otdYtd['total'])) ({{ (int) $otdYtd['total'] }})@endif</td>
+                <td class="col-r12 {{ $isOtd ? $toneClass($r12Pct) : '' }}">{{ $r12Pct !== null ? number_format($r12Pct, 1) . '%' : '' }}@if($isOtd && !empty($otdR12['total'])) ({{ (int) $otdR12['total'] }})@endif</td>
                 <td class="col-goal">{{ $row['goal'] ?? '' }}</td>
                 <td class="col-trend">{{ $row['trend'] ?? '' }}</td>
             </tr>
