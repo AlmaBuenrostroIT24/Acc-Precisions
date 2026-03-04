@@ -143,14 +143,14 @@
         table.kpi tbody tr:nth-child(even) td.col-month { background: #ffffff; }
 
         /* Dompdf can ignore px widths; percentages tend to be more reliable */
-        th.col-type, td.col-type { width: 6% !important; }
-        th.col-prcs, td.col-prcs { width: 6% !important; }
-        th.col-name, td.col-name { width: 20% !important; }
-        th.col-month, td.col-month { width: 5% !important; }
+        th.col-type, td.col-type { width: 4% !important; }
+        th.col-prcs, td.col-prcs { width: 4% !important; }
+        th.col-name, td.col-name { width: 27% !important; }
+        th.col-month, td.col-month { width: 2.3% !important; }
         th.col-ytd, td.col-ytd { width: 7% !important; }
         th.col-r12, td.col-r12 { width: 7% !important; }
-        th.col-goal, td.col-goal { width: 8% !important; }
-        th.col-trend, td.col-trend { width: 14% !important; }
+        th.col-goal, td.col-goal { width: 10% !important; }
+        th.col-trend, td.col-trend { width: 13.4% !important; }
 
         .col-type { text-align: center; font-weight: 900; background: #edf2f7; }
         .col-prcs { text-align: center; font-weight: 800; background: #edf2f7; }
@@ -270,14 +270,14 @@
     <colgroup>
         <col style="width:4%">
         <col style="width:4%">
-        <col style="width:30%">
+        <col style="width:27%">
         @foreach($months as $m)
-            <col style="width:2%">
+            <col style="width:2.3%">
         @endforeach
         <col style="width:7%">
         <col style="width:7%">
         <col style="width:10%">
-        <col style="width:14%">
+        <col style="width:13.4%">
     </colgroup>
     <thead>
         <tr>

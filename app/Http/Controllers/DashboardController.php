@@ -97,6 +97,7 @@ class DashboardController extends Controller
                 $payload['kpiRows'],
                 $payload['otdYtd'],
                 $payload['otdR12'],
+                $payload['dashboardEndDate'],
             ),
             'dashboard-kpis-' . $year . '.xlsx',
         );
