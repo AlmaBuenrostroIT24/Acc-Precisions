@@ -11,6 +11,7 @@ use App\Http\Controllers\NonConformanceController;
 use App\Http\Controllers\CostingController;
 use App\Http\Controllers\Machines\MachCodeController;
 use App\Http\Controllers\Machines\MachMachinaryController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,9 +32,21 @@ Route::get('/login', function () {
     return view('login');
 })->name('login');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+Route::get('/dashboard/otd-details', [DashboardController::class, 'otdDetails'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.otdDetails');
+
+Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.exportPdf');
+
+Route::get('/dashboard/export/excel', [DashboardController::class, 'exportExcel'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.exportExcel');
 
 Route::get('/quote/costing', [CostingController::class, 'index'])->middleware(['auth'])->name('costing');
 Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->middleware(['auth'])->name('costing.pdf');
