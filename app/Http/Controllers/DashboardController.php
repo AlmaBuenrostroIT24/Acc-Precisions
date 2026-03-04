@@ -123,6 +123,11 @@ class DashboardController extends Controller
             ->whereRaw("LOWER(TRIM(status)) = 'sent'")
             ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'");
 
+        $now = now();
+        $endDate = $year === $currentYear ? $now->copy()->endOfDay() : $now->copy()->setDate($year, 12, 31)->endOfDay();
+        $ytdStart = $endDate->copy()->startOfYear();
+        $r12Start = $endDate->copy()->subMonthsNoOverflow(12)->addDay()->startOfDay();
+
         $otdByMonth = (clone $baseQuery)
             ->selectRaw("
                 MONTH(due_date) as m,
@@ -151,12 +156,10 @@ class DashboardController extends Controller
             ];
         }
 
-        $now = now();
-        $endDate = $year === $currentYear ? $now->copy()->endOfDay() : $now->copy()->setDate($year, 12, 31)->endOfDay();
-        $ytdStart = $endDate->copy()->startOfYear();
-        $r12Start = $endDate->copy()->subMonthsNoOverflow(12)->addDay()->startOfDay();
-
-        $otdYtd = $this->computeOtdForRange(clone $baseQuery, $ytdStart, $endDate);
+        // "YTD" on this dashboard means full-year (Jan 1 → Dec 31) for the selected year.
+        $yearStart = $endDate->copy()->startOfYear();
+        $yearEnd = $endDate->copy()->endOfYear();
+        $otdYtd = $this->computeOtdForRange(clone $baseQuery, $yearStart, $yearEnd);
         $otdR12 = $this->computeOtdForRange(clone $baseQuery, $r12Start, $endDate);
         $otdAllYears = $this->computeOtdAllTime(clone $baseQuery);
 

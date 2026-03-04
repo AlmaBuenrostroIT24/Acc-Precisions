@@ -517,8 +517,8 @@
 .kpi-report-scroll::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.55); }
 
 table.kpi-report {
-    width: 100%;
-    min-width: 1240px;
+    width: max-content; /* respect column widths (table will scroll inside col-lg-10) */
+    min-width: 0;
     border-collapse: collapse;
     table-layout: fixed; /* keep month columns equal width */
     background: #fff;
@@ -548,7 +548,7 @@ table.kpi-report {
     z-index: 3;
 }
 
-.kpi-report thead th::after {
+.kpi-report thead tr.kpi-mrow th::after {
     content: '';
     position: absolute;
     left: 0;
@@ -582,22 +582,109 @@ table.kpi-report {
 .kpi-qhdr { font-size: 0.82rem; }
 
 .kpi-report .col-type { width: 62px; text-align: center; font-weight: 800; white-space: nowrap; }
-.kpi-report .col-prcs { width: 58px; text-align: center; font-weight: 700; white-space: nowrap; }
-.kpi-report .col-name { width: 320px; min-width: 320px; max-width: 320px; font-weight: 800; text-align: left; }
-.kpi-report .col-month { width: 46px; max-width: 46px; min-width: 46px; text-align: center; }
+.kpi-report .col-prcs { width: 46px; text-align: center; font-weight: 700; white-space: nowrap; }
+.kpi-report .col-name { width: 210px; min-width: 210px; max-width: 210px; font-weight: 800; text-align: left; }
+.kpi-report .col-month { width: 54px; max-width: 54px; min-width: 54px; text-align: center; }
+.kpi-report .col-qtotal { width: 58px; max-width: 58px; min-width: 58px; text-align: center; font-weight: 900; }
+.kpi-report .col-ytd,
+.kpi-report .col-r12 { width: 60px; text-align: center; white-space: nowrap; font-weight: 900; }
+
+.kpi-report .col-ytd { width: 42px; }
 .kpi-report th.col-month { white-space: nowrap; }
 .kpi-report td.col-month { white-space: normal; overflow: hidden; }
+.kpi-report td.col-month.js-otd-cell { white-space: nowrap; }
 .kpi-report td.col-month .kpi-cell-meta { display: block; font-size: 0.75rem; opacity: 0.78; line-height: 1.1; }
-.kpi-report .col-ytd, .kpi-report .col-r12 { width: 84px; text-align: center; white-space: nowrap; font-weight: 900; }
-.kpi-report .col-goal { width: 96px; text-align: center; font-weight: 900; background: linear-gradient(180deg, #fff7d6 0%, #fde68a 100%); }
-.kpi-report .col-trend { width: 110px; text-align: center; font-weight: 700; }
+.kpi-report td.col-ytd .kpi-cell-meta,
+.kpi-report td.col-r12 .kpi-cell-meta {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.78;
+    line-height: 1.1;
+}
+.kpi-report td.col-qtotal {
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+    font-weight: 900;
+    color: #0f172a;
+    background: linear-gradient(180deg, rgba(226, 232, 240, 0.72) 0%, rgba(241, 245, 249, 0.62) 100%);
+    border-left: 1px solid rgba(15, 23, 42, 0.10) !important;
+    box-shadow: none;
+}
+.kpi-report th.col-qtotal {
+    white-space: nowrap;
+    color: #1e3a8a;
+    letter-spacing: .10em;
+    border-left: 1px solid rgba(15, 23, 42, 0.12) !important;
+    background: linear-gradient(180deg, #e7eefb 0%, #dde7f8 100%);
+    box-shadow: inset 0 -2px 0 rgba(59, 130, 246, 0.10);
+}
+.kpi-report td.col-qtotal .kpi-cell-meta { display: block; font-size: 0.75rem; opacity: 0.78; line-height: 1.1; }
 
-.kpi-sep { border-right-width: 2px !important; border-right-color: rgba(15, 23, 42, 0.22) !important; }
+/* Quarter TOTAL column: use the same border/accent line style as the frozen Name column */
+.kpi-report td.col-qtotal.kpi-sep {
+    border-right-width: 0 !important;
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.14);
+}
+.kpi-report th.col-qtotal.kpi-sep {
+    border-right-width: 0 !important;
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.14), inset 0 -2px 0 rgba(59, 130, 246, 0.10);
+}
+.kpi-report td.col-qtotal.kpi-sep--block {
+    border-right-width: 0 !important;
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.22);
+}
+.kpi-report th.col-qtotal.kpi-sep--block {
+    border-right-width: 0 !important;
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.22), inset 0 -2px 0 rgba(59, 130, 246, 0.10);
+}
+
+/* Keep Month columns white (but don't override KPI tone validation colors) */
+.kpi-report thead th.col-month { background: #ffffff; }
+.kpi-report tbody td.col-month:not(.kpi-tone--good):not(.kpi-tone--warn):not(.kpi-tone--bad) { background: #ffffff; }
+
+/* Light gray background for empty summary columns (YTD / Rolling / Trend) */
+.kpi-report td.kpi-empty.col-ytd,
+.kpi-report td.kpi-empty.col-r12,
+.kpi-report td.kpi-empty.col-trend {
+    background: rgba(241, 245, 249, 0.92) !important;
+    color: #64748b;
+}
+
+/* Keep TOT background consistent (but don't override KPI tone validation colors) */
+.kpi-report tbody td.col-qtotal:not(.kpi-tone--good):not(.kpi-tone--warn):not(.kpi-tone--bad) {
+    background: linear-gradient(180deg, rgba(226, 232, 240, 0.72) 0%, rgba(241, 245, 249, 0.62) 100%);
+}
+.kpi-report tbody tr:nth-child(even) td.col-qtotal:not(.kpi-tone--good):not(.kpi-tone--warn):not(.kpi-tone--bad) {
+    background: linear-gradient(180deg, rgba(226, 232, 240, 0.72) 0%, rgba(241, 245, 249, 0.62) 100%);
+}
+.kpi-report .col-goal { width: 80px; text-align: center; font-weight: 900; }
+.kpi-report thead th.col-goal,
+.kpi-report tbody td.col-goal {
+    background: #fff7d6 !important;
+}
+.kpi-report tbody tr:nth-child(even) td.col-goal { background: #fff7d6 !important; }
+.kpi-report tbody tr:hover td.col-goal { background: #fff7d6 !important; }
+.kpi-report .col-trend { width: 84px; text-align: center; font-weight: 700; }
+
+.kpi-sep { border-right-width: 2px !important; border-right-color: rgba(59, 130, 246, 0.18) !important; }
 .kpi-sep--block { border-right-width: 2px !important; border-right-color: rgba(59, 130, 246, 0.28) !important; }
+
+/* Quarter boundaries: subtle blue accent on the separator columns (TOT) */
+.kpi-report th.kpi-sep,
+.kpi-report td.kpi-sep {
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.14);
+}
+
+.kpi-report th.kpi-sep--block,
+.kpi-report td.kpi-sep--block {
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.22);
+}
 
 .kpi-report .col-ytd,
 .kpi-report .col-r12 {
-    border-left: 2px solid rgba(15, 23, 42, 0.22);
+    /* Keep a subtle divider after the last quarter TOT (avoid the “thick” look) */
+    border-left: 1px solid rgba(15, 23, 42, 0.10);
 }
 
 /* Keep YTD / Rolling columns in the same soft-gray family as the header */
@@ -612,8 +699,8 @@ table.kpi-report {
 }
 
 .kpi-report .row-qo td { background: transparent; }
-.kpi-report .row-qo td.col-goal { background: linear-gradient(180deg, #fff7d6 0%, #fde68a 100%); }
-.kpi-report .goal-warn { background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%); }
+.kpi-report .row-qo td.col-goal { background: #fff7d6 !important; }
+.kpi-report .goal-warn { background: #fff7d6 !important; }
 .kpi-report .muted { color: #6b7280; font-weight: 600; }
 
 .kpi-report tbody tr:nth-child(even) td { background: rgba(248, 250, 252, 0.55); }
@@ -640,10 +727,23 @@ table.kpi-report {
 .kpi-report th.col-name,
 .kpi-report td.col-name {
     position: sticky;
-    left: 120px; /* type (62) + prcs (58) */
+    left: 108px; /* type (62) + prcs (46) */
     z-index: 4;
     background-clip: padding-box;
-    box-shadow: 6px 0 12px rgba(15, 23, 42, 0.08);
+    box-shadow: inset -3px 0 0 rgba(59, 130, 246, 0.14), 6px 0 12px rgba(15, 23, 42, 0.08);
+}
+
+/* Soft gray background for frozen ID columns (ERP style) */
+.kpi-report thead th.col-type,
+.kpi-report thead th.col-prcs,
+.kpi-report thead th.col-name {
+    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%) !important;
+}
+
+.kpi-report tbody td.col-type,
+.kpi-report tbody td.col-prcs,
+.kpi-report tbody td.col-name {
+    background: rgba(241, 245, 249, 0.92) !important;
 }
 
 .kpi-report thead th.col-type,

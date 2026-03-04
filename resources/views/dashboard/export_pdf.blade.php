@@ -145,10 +145,10 @@
         /* Dompdf can ignore px widths; percentages tend to be more reliable */
         th.col-type, td.col-type { width: 4% !important; }
         th.col-prcs, td.col-prcs { width: 4% !important; }
-        th.col-name, td.col-name { width: 27% !important; }
+        th.col-name, td.col-name { width: 25% !important; }
         th.col-month, td.col-month { width: 2.3% !important; }
-        th.col-ytd, td.col-ytd { width: 7% !important; }
-        th.col-r12, td.col-r12 { width: 7% !important; }
+        th.col-ytd, td.col-ytd { width: 8% !important; }
+        th.col-r12, td.col-r12 { width: 8% !important; }
         th.col-goal, td.col-goal { width: 10% !important; }
         th.col-trend, td.col-trend { width: 13.4% !important; }
 
@@ -270,12 +270,12 @@
     <colgroup>
         <col style="width:4%">
         <col style="width:4%">
-        <col style="width:27%">
+        <col style="width:25%">
         @foreach($months as $m)
             <col style="width:2.3%">
         @endforeach
-        <col style="width:7%">
-        <col style="width:7%">
+        <col style="width:8%">
+        <col style="width:8%">
         <col style="width:10%">
         <col style="width:13.4%">
     </colgroup>

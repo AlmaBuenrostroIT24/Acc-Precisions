@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('css')
-    <link rel="stylesheet" href="{{ asset('vendor/css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/css/dashboard.css?v=' . filemtime(public_path('vendor/css/dashboard.css'))) }}">
 @stop
 
 @section('content')
@@ -57,7 +57,7 @@
             return ['text' => 'Below goal', 'class' => 'kpi-badge--bad'];
         };
 
-        $totalCols = 3 + count($months) + 4; // + YTD + R12 + Goal + Trend
+        $totalCols = 3 + count($months) + 4 + 4; // + quarter totals + YTD + R12 + Goal + Trend
 
         $years = range((int) now()->year, 2025);
     @endphp
@@ -390,7 +390,7 @@
                                 <th class="col-prcs" rowspan="2">Prcs.</th>
                                 <th class="col-name" rowspan="2">Name</th>
                                 @foreach($quarters as $q)
-                                    <th colspan="{{ count($q['months']) }}" class="kpi-qhdr {{ $loop->last ? 'kpi-sep--block' : 'kpi-sep' }}">{{ $q['label'] }}</th>
+                                    <th colspan="{{ count($q['months']) + 1 }}" class="kpi-qhdr {{ $loop->last ? 'kpi-sep--block' : 'kpi-sep' }}">{{ $q['label'] }}</th>
                                 @endforeach
                                 <th class="col-ytd" rowspan="2">YTD</th>
                                 <th class="col-r12" rowspan="2">Rolling<br>12M</th>
@@ -399,7 +399,10 @@
                             </tr>
                             <tr class="kpi-mrow">
                                 @foreach($months as $m)
-                                    <th class="col-month {{ in_array($m, [3, 6, 9, 12], true) ? 'kpi-sep' : '' }}">{{ $m }}</th>
+                                    <th class="col-month">{{ $m }}</th>
+                                    @if(in_array($m, [3, 6, 9, 12], true))
+                                        <th class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }}">TOT</th>
+                                    @endif
                                 @endforeach
                             </tr>
                         </thead>
@@ -412,15 +415,35 @@
                                     <td class="col-prcs">{{ $row['prcs'] }}</td>
                                     <td class="col-name">{{ $row['name'] }}</td>
 
+                                    @php
+                                        $isOtd = ($row['key'] ?? '') === 'customer_otd';
+                                        $quarterTotals = [];
+
+                                        if ($isOtd) {
+                                            foreach ($quarters as $qi => $q) {
+                                                $onTime = 0;
+                                                $total = 0;
+                                                foreach ($q['months'] as $qm) {
+                                                    $cellQm = $row['values'][$qm] ?? null;
+                                                    if (is_array($cellQm)) {
+                                                        $onTime += (int) ($cellQm['on_time'] ?? 0);
+                                                        $total += (int) ($cellQm['total'] ?? 0);
+                                                    }
+                                                }
+                                                $pct = $total > 0 ? round(($onTime / $total) * 100, 1) : null;
+                                                $quarterTotals[$qi + 1] = ['pct' => $pct, 'on_time' => $onTime, 'total' => $total];
+                                            }
+                                        }
+                                    @endphp
+
                                     @foreach($months as $m)
                                         @php
-                                            $isOtd = ($row['key'] ?? '') === 'customer_otd';
                                             $cell = $row['values'][$m] ?? null;
                                             $pct = $isOtd && is_array($cell) ? ($cell['pct'] ?? null) : null;
                                             $title = $isOtd && is_array($cell) ? (($cell['on_time'] ?? 0) . '/' . ($cell['total'] ?? 0)) : '';
                                         @endphp
                                         <td
-                                            class="col-month {{ in_array($m, [3, 6, 9, 12], true) ? 'kpi-sep' : '' }} {{ $isOtd ? 'js-otd-cell kpi-clickable ' . $pctTone($pct) : '' }}"
+                                            class="col-month {{ $isOtd ? 'js-otd-cell kpi-clickable ' . $pctTone($pct) : '' }}"
                                             @if($isOtd)
                                                 data-year="{{ (int) $dashboardYear }}"
                                                 data-month="{{ (int) $m }}"
@@ -436,20 +459,42 @@
                                                 {{ is_array($cell) ? '' : ($cell ?? '') }}
                                             @endif
                                         </td>
+
+                                        @if($isOtd && in_array($m, [3, 6, 9, 12], true))
+                                            @php
+                                                $qi = intdiv($m - 1, 3) + 1;
+                                                $qt = $quarterTotals[$qi] ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
+                                                $qpct = $qt['pct'] ?? null;
+                                                $qtitle = ($qt['on_time'] ?? 0) . '/' . ($qt['total'] ?? 0);
+                                            @endphp
+                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ $qpct !== null ? $pctTone($qpct) : '' }}" title="{{ $qtitle }}">
+                                                {{ $qpct !== null ? number_format($qpct, 1) . '%' : '' }}
+                                                @if(!empty($qt['total']))
+                                                    <span class="kpi-cell-meta">({{ (int) $qt['total'] }})</span>
+                                                @endif
+                                            </td>
+                                        @elseif(in_array($m, [3, 6, 9, 12], true))
+                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }}"></td>
+                                        @endif
                                     @endforeach
 
                                     @php
-                                        $isOtd = ($row['key'] ?? '') === 'customer_otd';
                                         $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : null;
                                         $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : null;
                                     @endphp
-                                    <td class="col-ytd {{ $isOtd ? $pctTone($ytdPct) : '' }}" title="{{ $isOtd ? (($otdYtd['on_time'] ?? 0) . '/' . ($otdYtd['total'] ?? 0)) : '' }}">
+                                    @php
+                                        $ytdEmpty = !$isOtd || $ytdPct === null;
+                                    @endphp
+                                    <td class="col-ytd {{ $isOtd ? $pctTone($ytdPct) : '' }} {{ $ytdEmpty ? 'kpi-empty' : '' }}" title="{{ $isOtd ? (($otdYtd['on_time'] ?? 0) . '/' . ($otdYtd['total'] ?? 0)) : '' }}">
                                         {{ $isOtd && $ytdPct !== null ? number_format($ytdPct, 1) . '%' : '' }}
                                         @if($isOtd && !empty($otdYtd['total']))
                                             <span class="kpi-cell-meta">({{ (int) $otdYtd['total'] }})</span>
                                         @endif
                                     </td>
-                                    <td class="col-r12 {{ $isOtd ? $pctTone($r12Pct) : '' }}" title="{{ $isOtd ? (($otdR12['on_time'] ?? 0) . '/' . ($otdR12['total'] ?? 0)) : '' }}">
+                                    @php
+                                        $r12Empty = !$isOtd || $r12Pct === null;
+                                    @endphp
+                                    <td class="col-r12 {{ $isOtd ? $pctTone($r12Pct) : '' }} {{ $r12Empty ? 'kpi-empty' : '' }}" title="{{ $isOtd ? (($otdR12['on_time'] ?? 0) . '/' . ($otdR12['total'] ?? 0)) : '' }}">
                                         {{ $isOtd && $r12Pct !== null ? number_format($r12Pct, 1) . '%' : '' }}
                                         @if($isOtd && !empty($otdR12['total']))
                                             <span class="kpi-cell-meta">({{ (int) $otdR12['total'] }})</span>
@@ -457,7 +502,7 @@
                                     </td>
 
                                     <td class="col-goal {{ $row['goal_class'] ?? '' }}">{{ $row['goal'] }}</td>
-                                    <td class="col-trend">{{ $row['trend'] }}</td>
+                                    <td class="col-trend {{ empty($row['trend']) ? 'kpi-empty' : '' }}">{{ $row['trend'] }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -610,5 +655,5 @@
         window.__DASHBOARD.year = {{ (int) $dashboardYear }};
         window.__DASHBOARD.otdDetailsUrl = @json(route('dashboard.otdDetails'));
     </script>
-    <script src="{{ asset('vendor/js/dashboard.js') }}"></script>
+    <script src="{{ asset('vendor/js/dashboard.js?v=' . filemtime(public_path('vendor/js/dashboard.js'))) }}"></script>
 @stop
