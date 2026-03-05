@@ -68,6 +68,7 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
 
         foreach ($this->rows as $row) {
             $isOtd = ($row['key'] ?? '') === 'customer_otd';
+            $isFaiRej = ($row['key'] ?? '') === 'fai_rej';
             $values = $row['values'] ?? [];
 
             $periodCells = [];
@@ -95,6 +96,22 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                         $quarterTotals[$qi]['on_time'] += $onTime;
                         $quarterTotals[$qi]['total'] += $total;
                     }
+                } elseif ($isFaiRej && is_array($cell)) {
+                    $pct = $cell['pct'] ?? null;
+                    $total = (int) ($cell['total'] ?? 0);
+                    $rejects = (int) ($cell['rejects'] ?? 0);
+                    if ($pct === null && !$total) {
+                        $periodCells[] = '';
+                    } else {
+                        $periodCells[] = ($pct !== null ? number_format((float) $pct, 1) . '%' : '')
+                            . ($total ? "\n(" . $rejects . '/' . $total . ')' : '');
+                    }
+
+                    if ($total > 0) {
+                        $qi = intdiv($m - 1, 3) + 1;
+                        $quarterTotals[$qi]['rejects'] = (int) ($quarterTotals[$qi]['rejects'] ?? 0) + $rejects;
+                        $quarterTotals[$qi]['total'] += $total;
+                    }
                 } else {
                     $periodCells[] = is_array($cell) ? '' : (string) ($cell ?? '');
                 }
@@ -107,6 +124,13 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                         $o = (int) ($qt['on_time'] ?? 0);
                         $qpct = $t > 0 ? round(($o / $t) * 100, 1) : null;
                         $periodCells[] = $this->pctTotalCell($qpct, $t);
+                    } elseif ($isFaiRej) {
+                        $qi = intdiv($m - 1, 3) + 1;
+                        $qt = $quarterTotals[$qi] ?? ['rejects' => 0, 'total' => 0];
+                        $t = (int) ($qt['total'] ?? 0);
+                        $r = (int) ($qt['rejects'] ?? 0);
+                        $qpct = $t > 0 ? round(($r / $t) * 100, 1) : null;
+                        $periodCells[] = $this->pctRejTotalCell($qpct, $r, $t);
                     } else {
                         $periodCells[] = '';
                     }
@@ -464,6 +488,74 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                     }
                 }
 
+                // KPI validation colors for Internal FAI Rejection Rate (lower is better, goal 15%)
+                if ($dataRowCount) {
+                    $faiIndex = null;
+                    foreach ($this->rows as $i => $r) {
+                        if (($r['key'] ?? '') === 'fai_rej') {
+                            $faiIndex = (int) $i;
+                            break;
+                        }
+                    }
+
+                    if ($faiIndex !== null) {
+                        $faiRowNum = $dataStartRow + $faiIndex;
+                        $faiValues = $this->rows[$faiIndex]['values'] ?? [];
+
+                        $monthCols = [
+                            1 => 'D', 2 => 'E', 3 => 'F',
+                            4 => 'H', 5 => 'I', 6 => 'J',
+                            7 => 'L', 8 => 'M', 9 => 'N',
+                            10 => 'P', 11 => 'Q', 12 => 'R',
+                        ];
+
+                        foreach (range(1, 12) as $mi) {
+                            $cell = $faiValues[$mi] ?? null;
+                            $pct = is_array($cell) ? ($cell['pct'] ?? null) : null;
+                            $rgb = $this->toneFillRgbLowerIsBetter($pct, 15.0, 3.0);
+                            if ($rgb) {
+                                $col = $monthCols[$mi] ?? null;
+                                if (!$col) {
+                                    continue;
+                                }
+                                $sheet->getStyle("{$col}{$faiRowNum}")
+                                    ->getFill()
+                                    ->setFillType(Fill::FILL_SOLID)
+                                    ->getStartColor()
+                                    ->setRGB($rgb);
+                            }
+                        }
+
+                        // Quarter TOT cells (G,K,O,S) for FAI Rej
+                        $qTotals = [
+                            1 => ['col' => 'G', 'rejects' => 0, 'total' => 0],
+                            2 => ['col' => 'K', 'rejects' => 0, 'total' => 0],
+                            3 => ['col' => 'O', 'rejects' => 0, 'total' => 0],
+                            4 => ['col' => 'S', 'rejects' => 0, 'total' => 0],
+                        ];
+                        foreach (range(1, 12) as $mi) {
+                            $c = $faiValues[$mi] ?? null;
+                            if (!is_array($c) || empty($c['total'])) {
+                                continue;
+                            }
+                            $qi = intdiv($mi - 1, 3) + 1;
+                            $qTotals[$qi]['rejects'] += (int) ($c['rejects'] ?? 0);
+                            $qTotals[$qi]['total'] += (int) ($c['total'] ?? 0);
+                        }
+                        foreach ([1, 2, 3, 4] as $qi) {
+                            $t = (int) ($qTotals[$qi]['total'] ?? 0);
+                            $r = (int) ($qTotals[$qi]['rejects'] ?? 0);
+                            $qpct = $t > 0 ? round(($r / $t) * 100, 1) : null;
+                            $qRgb = $this->toneFillRgbLowerIsBetter($qpct, 15.0, 3.0);
+                            if ($qRgb) {
+                                $qCol = $qTotals[$qi]['col'];
+                                $sheet->getStyle("{$qCol}{$faiRowNum}")
+                                    ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($qRgb);
+                            }
+                        }
+                    }
+                }
+
                 // Borders for the whole table
                 $sheet->getStyle($tableRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D1D9E6');
 
@@ -495,6 +587,16 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
         }
 
         return $pctText . ($totalNum ? "\n(" . $totalNum . ')' : '');
+    }
+
+    private function pctRejTotalCell($pct, int $rejects, int $total): string
+    {
+        $pctText = $pct !== null ? number_format((float) $pct, 1) . '%' : '';
+        if ($pctText === '' && !$total) {
+            return '';
+        }
+
+        return $pctText . ($total ? "\n(" . $rejects . '/' . $total . ')' : '');
     }
 
     private function wrapTwoLines(string $text, int $max1 = 58, int $max2 = 58): string
@@ -543,6 +645,22 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
             return 'DCFCE7'; // light green
         }
         if ($pct >= 85.0) {
+            return 'FEF3C7'; // light amber
+        }
+        return 'FEE2E2'; // light red
+    }
+
+    private function toneFillRgbLowerIsBetter($pct, float $goal, float $warnDelta): ?string
+    {
+        if ($pct === null) {
+            return null;
+        }
+
+        $pct = (float) $pct;
+        if ($pct <= $goal) {
+            return 'DCFCE7'; // light green
+        }
+        if ($pct <= ($goal + $warnDelta)) {
             return 'FEF3C7'; // light amber
         }
         return 'FEE2E2'; // light red

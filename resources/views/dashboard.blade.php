@@ -18,6 +18,7 @@
         ];
 
         $customerOtdCells = $customerOtdCells ?? [];
+        $faiRejCells = $faiRejCells ?? [];
         $otdYtd = $otdYtd ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $otdR12 = $otdR12 ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $otdAllYears = $otdAllYears ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
@@ -35,7 +36,7 @@
             ['key' => 'planning_ncars', 'type' => 'KPI', 'prcs' => '2', 'name' => 'Planning NCARs', 'values' => [3 => '0'], 'goal' => '< 7', 'goal_class' => 'goal-warn', 'trend' => ''],
             ['key' => 'ext_otd', 'type' => 'KPI', 'prcs' => '3', 'name' => 'External Provider OTD (Tot. Jobs)', 'values' => [3 => '94.5% (217)'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'ext_conf', 'type' => 'KPI', 'prcs' => '3', 'name' => "External Provider Conformance (Rej.'s)", 'values' => [3 => '99.1% (2)'], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'fai_rej', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Internal FAI Rejection Rate (Rej./Tot.)', 'values' => [3 => '17.4%'], 'goal' => '15%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'fai_rej', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Internal FAI Rejection Rate (Rej./Tot.)', 'values' => $faiRejCells, 'goal' => '15%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'work_audit', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Work Audit Conformance', 'values' => [3 => '96.7%'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'audit_findings', 'type' => 'KPI', 'prcs' => '5', 'name' => 'Internal Audit Findings', 'values' => [9 => '3 in 2025'], 'goal' => '< 15', 'goal_class' => '', 'trend' => ''],
         ];
@@ -46,6 +47,15 @@
             if ($pct === null) return '';
             if ($pct >= 90) return 'kpi-tone--good';
             if ($pct >= 85) return 'kpi-tone--warn';
+            return 'kpi-tone--bad';
+        };
+
+        $faiGoal = 15.0;
+        $pctToneLower = function ($pct, float $goal) {
+            if ($pct === null) return '';
+            $pct = (float) $pct;
+            if ($pct <= $goal) return 'kpi-tone--good';
+            if ($pct <= ($goal + 3.0)) return 'kpi-tone--warn';
             return 'kpi-tone--bad';
         };
 
@@ -417,6 +427,7 @@
 
                                     @php
                                         $isOtd = ($row['key'] ?? '') === 'customer_otd';
+                                        $isFaiRej = ($row['key'] ?? '') === 'fai_rej';
                                         $quarterTotals = [];
 
                                         if ($isOtd) {
@@ -433,6 +444,20 @@
                                                 $pct = $total > 0 ? round(($onTime / $total) * 100, 1) : null;
                                                 $quarterTotals[$qi + 1] = ['pct' => $pct, 'on_time' => $onTime, 'total' => $total];
                                             }
+                                        } elseif ($isFaiRej) {
+                                            foreach ($quarters as $qi => $q) {
+                                                $rejects = 0;
+                                                $total = 0;
+                                                foreach ($q['months'] as $qm) {
+                                                    $cellQm = $row['values'][$qm] ?? null;
+                                                    if (is_array($cellQm)) {
+                                                        $rejects += (int) ($cellQm['rejects'] ?? 0);
+                                                        $total += (int) ($cellQm['total'] ?? 0);
+                                                    }
+                                                }
+                                                $pct = $total > 0 ? round(($rejects / $total) * 100, 1) : null;
+                                                $quarterTotals[$qi + 1] = ['pct' => $pct, 'rejects' => $rejects, 'total' => $total];
+                                            }
                                         }
                                     @endphp
 
@@ -441,19 +466,30 @@
                                             $cell = $row['values'][$m] ?? null;
                                             $pct = $isOtd && is_array($cell) ? ($cell['pct'] ?? null) : null;
                                             $title = $isOtd && is_array($cell) ? (($cell['on_time'] ?? 0) . '/' . ($cell['total'] ?? 0)) : '';
+                                            $faiPct = $isFaiRej && is_array($cell) ? ($cell['pct'] ?? null) : null;
+                                            $faiClickable = $isFaiRej && is_array($cell) && !empty($cell['total']);
+                                            $faiTone = $isFaiRej ? $pctToneLower($faiPct, $faiGoal) : '';
                                         @endphp
                                         <td
-                                            class="col-month {{ $isOtd ? 'js-otd-cell kpi-clickable ' . $pctTone($pct) : '' }}"
-                                            @if($isOtd)
+                                            class="col-month
+                                                {{ $isOtd ? 'js-otd-cell kpi-clickable ' . $pctTone($pct) : '' }}
+                                                {{ $faiClickable ? 'js-fai-rej-cell kpi-clickable ' . $faiTone : '' }}
+                                            "
+                                            @if($isOtd || $faiClickable)
                                                 data-year="{{ (int) $dashboardYear }}"
                                                 data-month="{{ (int) $m }}"
-                                                title="{{ $title }}"
+                                                title="{{ $isOtd ? $title : 'FAI no pass details' }}"
                                             @endif
                                         >
                                             @if($isOtd)
                                                 {{ $pct !== null ? number_format($pct, 1) . '%' : '' }}
                                                 @if(is_array($cell) && !empty($cell['total']))
                                                     <span class="kpi-cell-meta">({{ (int) $cell['total'] }})</span>
+                                                @endif
+                                            @elseif($isFaiRej && is_array($cell))
+                                                {{ ($cell['pct'] ?? null) !== null ? number_format((float) $cell['pct'], 1) . '%' : '' }}
+                                                @if(!empty($cell['total']))
+                                                    <span class="kpi-cell-meta">({{ (int) ($cell['rejects'] ?? 0) }}/{{ (int) $cell['total'] }})</span>
                                                 @endif
                                             @else
                                                 {{ is_array($cell) ? '' : ($cell ?? '') }}
@@ -471,6 +507,19 @@
                                                 {{ $qpct !== null ? number_format($qpct, 1) . '%' : '' }}
                                                 @if(!empty($qt['total']))
                                                     <span class="kpi-cell-meta">({{ (int) $qt['total'] }})</span>
+                                                @endif
+                                            </td>
+                                        @elseif($isFaiRej && in_array($m, [3, 6, 9, 12], true))
+                                            @php
+                                                $qi = intdiv($m - 1, 3) + 1;
+                                                $qt = $quarterTotals[$qi] ?? ['pct' => null, 'rejects' => 0, 'total' => 0];
+                                                $qpct = $qt['pct'] ?? null;
+                                                $qtitle = ($qt['rejects'] ?? 0) . '/' . ($qt['total'] ?? 0);
+                                            @endphp
+                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ $qpct !== null ? $pctToneLower($qpct, $faiGoal) : '' }}" title="{{ $qtitle }}">
+                                                {{ $qpct !== null ? number_format((float) $qpct, 1) . '%' : '' }}
+                                                @if(!empty($qt['total']))
+                                                    <span class="kpi-cell-meta">({{ (int) ($qt['rejects'] ?? 0) }}/{{ (int) $qt['total'] }})</span>
                                                 @endif
                                             </td>
                                         @elseif(in_array($m, [3, 6, 9, 12], true))
@@ -647,6 +696,50 @@
             </div>
         </div>
     </div>
+
+    {{-- FAI rejection details modal --}}
+    <div class="modal fade" id="faiRejDetailModal" tabindex="-1" role="dialog" aria-labelledby="faiRejDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="d-flex flex-column">
+                        <h5 class="modal-title mb-0" id="faiRejDetailModalLabel">Internal FAI Rejection Details</h5>
+                        <small class="text-muted" id="faiRejDetailMeta">Select a month.</small>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
+                        <div class="text-muted small">Orders with `status=sent`, `status_order=active` and at least one `qa_faisummary` FAI `no pass`.</div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th class="text-center">Work ID</th>
+                                    <th class="text-center">PN</th>
+                                    <th>Part/Description</th>
+                                    <th class="text-center">Customer</th>
+                                    <th class="text-center">Due</th>
+                                    <th class="text-center">Sent</th>
+                                    <th class="text-center">Fail Ops</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faiRejDetailTbody">
+                                <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('js')
@@ -654,6 +747,7 @@
         window.__DASHBOARD = window.__DASHBOARD || {};
         window.__DASHBOARD.year = {{ (int) $dashboardYear }};
         window.__DASHBOARD.otdDetailsUrl = @json(route('dashboard.otdDetails'));
+        window.__DASHBOARD.faiRejDetailsUrl = @json(route('dashboard.faiRejDetails'));
     </script>
     <script src="{{ asset('vendor/js/dashboard.js?v=' . filemtime(public_path('vendor/js/dashboard.js'))) }}"></script>
 @stop

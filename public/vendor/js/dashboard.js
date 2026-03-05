@@ -55,6 +55,27 @@
             });
     }
 
+    function loadFaiRejDetails(year, month) {
+        if (!DASHBOARD.faiRejDetailsUrl) return;
+
+        $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loading…</td></tr>');
+        $('#faiRejDetailMeta').text(monthName(month) + ' ' + year);
+
+        $.get(DASHBOARD.faiRejDetailsUrl, { year, month })
+            .done(function (res) {
+                $('#faiRejDetailTbody').html(res && res.html ? res.html : '');
+                const rejects = (res && typeof res.rejects === 'number') ? res.rejects : 0;
+                const total = (res && typeof res.total === 'number') ? res.total : 0;
+                const pct = (res && typeof res.pct === 'number') ? res.pct : null;
+                const pctText = pct !== null ? (pct.toFixed(1) + '%') : '-';
+                $('#faiRejDetailMeta').text(monthName(month) + ' ' + year + ' • ' + pctText + ' (' + rejects + '/' + total + ')');
+            })
+            .fail(function (xhr) {
+                const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
+                $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-danger py-3">' + msg + '</td></tr>');
+            });
+    }
+
     $(function () {
         // Year select
         $('#dashboardYearSelect').on('change', function () {
@@ -107,6 +128,26 @@
             selected.month = null;
             selected.filter = 'all';
         });
+
+        // FAI Rejection cell click -> open modal + load details
+        let faiSelected = { year: DASHBOARD.year || null, month: null };
+
+        $(document).on('click', '.js-fai-rej-cell', function () {
+            const year = parseInt($(this).data('year'), 10);
+            const month = parseInt($(this).data('month'), 10);
+            if (!year || !month) return;
+
+            faiSelected.year = year;
+            faiSelected.month = month;
+
+            $('#faiRejDetailModal').modal('show');
+            loadFaiRejDetails(faiSelected.year, faiSelected.month);
+        });
+
+        $('#faiRejDetailModal').on('hidden.bs.modal', function () {
+            $('#faiRejDetailMeta').text('Select a month.');
+            $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>');
+            faiSelected.month = null;
+        });
     });
 })();
-

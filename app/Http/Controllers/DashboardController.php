@@ -75,6 +75,72 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function faiRejDetails(Request $request)
+    {
+        $year = (int) $request->query('year', now()->year);
+        $month = (int) $request->query('month');
+
+        if ($year < 2000 || $year > (int) now()->year) {
+            return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid year'], 422);
+        }
+        if ($month < 1 || $month > 12) {
+            return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month'], 422);
+        }
+
+        $base = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
+            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
+
+        $total = (clone $base)->count();
+
+        $rows = (clone $base)
+            ->join('qa_faisummary as qfs', 'qfs.order_schedule_id', '=', 'orders_schedule.id')
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
+            ->selectRaw('
+                orders_schedule.id,
+                orders_schedule.work_id,
+                orders_schedule.PN,
+                orders_schedule.Part_description,
+                orders_schedule.costumer,
+                orders_schedule.due_date,
+                orders_schedule.sent_at,
+                COUNT(*) as fail_ops,
+                MIN(qfs.operation) as first_operation
+            ')
+            ->groupBy(
+                'orders_schedule.id',
+                'orders_schedule.work_id',
+                'orders_schedule.PN',
+                'orders_schedule.Part_description',
+                'orders_schedule.costumer',
+                'orders_schedule.due_date',
+                'orders_schedule.sent_at',
+            )
+            ->orderBy('orders_schedule.due_date', 'asc')
+            ->limit(2000)
+            ->get();
+
+        $rejects = $rows->count();
+        $pct = $total > 0 ? round(($rejects / $total) * 100, 1) : null;
+
+        $html = view('dashboard.partials.fai_rej_details_rows', [
+            'rows' => $rows,
+        ])->render();
+
+        return response()->json([
+            'html' => $html,
+            'count' => $rows->count(),
+            'total' => $total,
+            'rejects' => $rejects,
+            'pct' => $pct,
+            'year' => $year,
+            'month' => $month,
+        ]);
+    }
+
     public function exportPdf(Request $request)
     {
         $year = $this->normalizeYear((int) $request->query('year', now()->year));
@@ -156,6 +222,46 @@ class DashboardController extends Controller
             ];
         }
 
+        // Internal FAI Rejection Rate (Rej./Tot.)
+        // Denominator: orders_schedule (sent + active). Numerator: orders that have at least one FAI "no pass" in qa_faisummary.
+        $faiBase = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'");
+
+        $faiTotalsByMonth = (clone $faiBase)
+            ->selectRaw('MONTH(due_date) as m, COUNT(*) as total')
+            ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->groupBy('m')
+            ->get()
+            ->keyBy('m');
+
+        $faiRejectsByMonth = (clone $faiBase)
+            ->join('qa_faisummary as qfs', 'qfs.order_schedule_id', '=', 'orders_schedule.id')
+            ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
+            ->selectRaw('MONTH(due_date) as m, COUNT(DISTINCT orders_schedule.id) as rejects')
+            ->groupBy('m')
+            ->get()
+            ->keyBy('m');
+
+        $faiRejCells = [];
+        foreach (range(1, 12) as $month) {
+            $total = (int) (($faiTotalsByMonth->get($month)->total ?? 0));
+            if ($total <= 0) {
+                continue;
+            }
+
+            $rejects = (int) (($faiRejectsByMonth->get($month)->rejects ?? 0));
+            $pct = round(($rejects / $total) * 100, 1);
+            $faiRejCells[$month] = [
+                'pct' => $pct,
+                'rejects' => $rejects,
+                'total' => $total,
+            ];
+        }
+
         // "YTD" on this dashboard means full-year (Jan 1 → Dec 31) for the selected year.
         $yearStart = $endDate->copy()->startOfYear();
         $yearEnd = $endDate->copy()->endOfYear();
@@ -178,11 +284,12 @@ class DashboardController extends Controller
             $lastUpdated = $lastSent;
         }
 
-        $kpiRows = $this->buildKpiRows($customerOtdCells);
+        $kpiRows = $this->buildKpiRows($customerOtdCells, $faiRejCells);
 
         return [
             'dashboardYear' => $year,
             'customerOtdCells' => $customerOtdCells,
+            'faiRejCells' => $faiRejCells,
             'otdYtd' => $otdYtd,
             'otdR12' => $otdR12,
             'otdAllYears' => $otdAllYears,
@@ -194,7 +301,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function buildKpiRows(array $customerOtdCells): array
+    private function buildKpiRows(array $customerOtdCells, array $faiRejCells): array
     {
         return [
             ['key' => 'customer_otd', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer On-Time Delivery (OTD)', 'values' => $customerOtdCells, 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
@@ -206,7 +313,7 @@ class DashboardController extends Controller
             ['key' => 'planning_ncars', 'type' => 'KPI', 'prcs' => '2', 'name' => 'Planning NCARs', 'values' => [3 => '0'], 'goal' => '< 7', 'goal_class' => 'goal-warn', 'trend' => ''],
             ['key' => 'ext_otd', 'type' => 'KPI', 'prcs' => '3', 'name' => 'External Provider OTD (Tot. Jobs)', 'values' => [3 => '94.5% (217)'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'ext_conf', 'type' => 'KPI', 'prcs' => '3', 'name' => "External Provider Conformance (Rej.'s)", 'values' => [3 => '99.1% (2)'], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'fai_rej', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Internal FAI Rejection Rate (Rej./Tot.)', 'values' => [3 => '17.4%'], 'goal' => '15%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'fai_rej', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Internal FAI Rejection Rate (Rej./Tot.)', 'values' => $faiRejCells, 'goal' => '15%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'work_audit', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Work Audit Conformance', 'values' => [3 => '96.7%'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'audit_findings', 'type' => 'KPI', 'prcs' => '5', 'name' => 'Internal Audit Findings', 'values' => [9 => '3 in 2025'], 'goal' => '< 15', 'goal_class' => '', 'trend' => ''],
         ];

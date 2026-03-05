@@ -243,6 +243,20 @@
         return 'tone-bad';
     };
 
+    $toneClassLower = function ($pct, float $goal = 15.0): string {
+        if ($pct === null) {
+            return '';
+        }
+        $pct = (float) $pct;
+        if ($pct <= $goal) {
+            return 'tone-good';
+        }
+        if ($pct <= ($goal + 3.0)) {
+            return 'tone-warn';
+        }
+        return 'tone-bad';
+    };
+
     $wrapTwoLines = function (?string $text, int $max1 = 48, int $max2 = 48): string {
         $text = trim((string) $text);
         if ($text === '') {
@@ -367,6 +381,7 @@
         @foreach($rows as $row)
             @php
                 $isOtd = ($row['key'] ?? '') === 'customer_otd';
+                $isFaiRej = ($row['key'] ?? '') === 'fai_rej';
                 $values = $row['values'] ?? [];
                 $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : null;
                 $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : null;
@@ -387,6 +402,22 @@
                         $o = (int) ($quarterTotals[$qi]['on_time'] ?? 0);
                         $quarterTotals[$qi]['pct'] = $t > 0 ? round(($o / $t) * 100, 1) : null;
                     }
+                } elseif ($isFaiRej) {
+                    $quarterTotals = [1 => ['rejects' => 0, 'total' => 0], 2 => ['rejects' => 0, 'total' => 0], 3 => ['rejects' => 0, 'total' => 0], 4 => ['rejects' => 0, 'total' => 0]];
+                    foreach (range(1, 12) as $mm) {
+                        $c = $values[$mm] ?? null;
+                        if (!is_array($c) || empty($c['total'])) {
+                            continue;
+                        }
+                        $qi = intdiv($mm - 1, 3) + 1;
+                        $quarterTotals[$qi]['rejects'] += (int) ($c['rejects'] ?? 0);
+                        $quarterTotals[$qi]['total'] += (int) ($c['total'] ?? 0);
+                    }
+                    foreach ([1, 2, 3, 4] as $qi) {
+                        $t = (int) ($quarterTotals[$qi]['total'] ?? 0);
+                        $r = (int) ($quarterTotals[$qi]['rejects'] ?? 0);
+                        $quarterTotals[$qi]['pct'] = $t > 0 ? round(($r / $t) * 100, 1) : null;
+                    }
                 }
             @endphp
             <tr>
@@ -401,14 +432,24 @@
                         $cell = $values[$m] ?? null;
                         $pct = $isOtd && is_array($cell) ? ($cell['pct'] ?? null) : null;
                         $total = $isOtd && is_array($cell) ? (int) ($cell['total'] ?? 0) : 0;
+                        $faiPct = $isFaiRej && is_array($cell) ? ($cell['pct'] ?? null) : null;
+                        $faiTotal = $isFaiRej && is_array($cell) ? (int) ($cell['total'] ?? 0) : 0;
+                        $faiRejects = $isFaiRej && is_array($cell) ? (int) ($cell['rejects'] ?? 0) : 0;
                     @endphp
-                    <td class="col-month {{ $isOtd ? $toneClass($pct) : '' }}">
+                    <td class="col-month {{ $isOtd ? $toneClass($pct) : '' }} {{ $isFaiRej ? $toneClassLower($faiPct, 15.0) : '' }}">
                         @if($isOtd)
                             @if($pct !== null)
                                 {{ number_format($pct, 1) . '%' }}
                             @endif
                             @if($total)
                                 <span class="cell-total">({{ $total }})</span>
+                            @endif
+                        @elseif($isFaiRej)
+                            @if($faiPct !== null)
+                                {{ number_format((float) $faiPct, 1) . '%' }}
+                            @endif
+                            @if($faiTotal)
+                                <span class="cell-total">({{ $faiRejects }}/{{ $faiTotal }})</span>
                             @endif
                         @else
                             {{ is_array($cell) ? '' : ($cell ?? '') }}
@@ -427,6 +468,20 @@
                                 @endif
                                 @if(!empty($qt['total']))
                                     <span class="cell-total">({{ (int) $qt['total'] }})</span>
+                                @endif
+                            </td>
+                        @elseif($isFaiRej)
+                            @php
+                                $qi = intdiv($m - 1, 3) + 1;
+                                $qt = $quarterTotals[$qi] ?? ['pct' => null, 'rejects' => 0, 'total' => 0];
+                                $qtEmpty = ($qt['pct'] ?? null) === null && empty($qt['total']);
+                            @endphp
+                            <td class="col-qtotal {{ $toneClassLower($qt['pct'] ?? null, 15.0) }} {{ $qtEmpty ? 'qtotal-empty' : '' }} {{ $m === 12 ? 'qtotal-last' : '' }}">
+                                @if(($qt['pct'] ?? null) !== null)
+                                    {{ number_format((float) $qt['pct'], 1) . '%' }}
+                                @endif
+                                @if(!empty($qt['total']))
+                                    <span class="cell-total">({{ (int) ($qt['rejects'] ?? 0) }}/{{ (int) $qt['total'] }})</span>
                                 @endif
                             </td>
                         @else

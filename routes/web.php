@@ -40,6 +40,10 @@ Route::get('/dashboard/otd-details', [DashboardController::class, 'otdDetails'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard.otdDetails');
 
+Route::get('/dashboard/fai-rej-details', [DashboardController::class, 'faiRejDetails'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.faiRejDetails');
+
 Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard.exportPdf');
