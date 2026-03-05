@@ -383,8 +383,8 @@
                 $isOtd = ($row['key'] ?? '') === 'customer_otd';
                 $isFaiRej = ($row['key'] ?? '') === 'fai_rej';
                 $values = $row['values'] ?? [];
-                $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : null;
-                $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : null;
+                $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : ($isFaiRej ? ($faiRejYtd['pct'] ?? null) : null);
+                $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : ($isFaiRej ? ($faiRejR12['pct'] ?? null) : null);
 
                 $quarterTotals = [1 => ['on_time' => 0, 'total' => 0], 2 => ['on_time' => 0, 'total' => 0], 3 => ['on_time' => 0, 'total' => 0], 4 => ['on_time' => 0, 'total' => 0]];
                 if ($isOtd) {
@@ -489,8 +489,22 @@
                         @endif
                     @endif
                 @endforeach
-                <td class="col-ytd {{ $isOtd ? $toneClass($ytdPct) : '' }}">{{ $ytdPct !== null ? number_format($ytdPct, 1) . '%' : '' }}@if($isOtd && !empty($otdYtd['total'])) ({{ (int) $otdYtd['total'] }})@endif</td>
-                <td class="col-r12 {{ $isOtd ? $toneClass($r12Pct) : '' }}">{{ $r12Pct !== null ? number_format($r12Pct, 1) . '%' : '' }}@if($isOtd && !empty($otdR12['total'])) ({{ (int) $otdR12['total'] }})@endif</td>
+                <td class="col-ytd {{ $isOtd ? $toneClass($ytdPct) : ($isFaiRej ? $toneClassLower($ytdPct, 15.0) : '') }}">
+                    {{ $ytdPct !== null ? number_format((float) $ytdPct, 1) . '%' : '' }}
+                    @if($isOtd && !empty($otdYtd['total']))
+                        <span class="cell-total">({{ (int) $otdYtd['total'] }})</span>
+                    @elseif($isFaiRej && !empty($faiRejYtd['total']))
+                        <span class="cell-total">({{ (int) ($faiRejYtd['rejects'] ?? 0) }}/{{ (int) $faiRejYtd['total'] }})</span>
+                    @endif
+                </td>
+                <td class="col-r12 {{ $isOtd ? $toneClass($r12Pct) : ($isFaiRej ? $toneClassLower($r12Pct, 15.0) : '') }}">
+                    {{ $r12Pct !== null ? number_format((float) $r12Pct, 1) . '%' : '' }}
+                    @if($isOtd && !empty($otdR12['total']))
+                        <span class="cell-total">({{ (int) $otdR12['total'] }})</span>
+                    @elseif($isFaiRej && !empty($faiRejR12['total']))
+                        <span class="cell-total">({{ (int) ($faiRejR12['rejects'] ?? 0) }}/{{ (int) $faiRejR12['total'] }})</span>
+                    @endif
+                </td>
                 <td class="col-goal">{{ $row['goal'] ?? '' }}</td>
                 <td class="col-trend">{{ $row['trend'] ?? '' }}</td>
             </tr>

@@ -163,6 +163,8 @@ class DashboardController extends Controller
                 $payload['kpiRows'],
                 $payload['otdYtd'],
                 $payload['otdR12'],
+                $payload['faiRejYtd'],
+                $payload['faiRejR12'],
                 $payload['dashboardEndDate'],
             ),
             'dashboard-kpis-' . $year . '.xlsx',
@@ -269,6 +271,9 @@ class DashboardController extends Controller
         $otdR12 = $this->computeOtdForRange(clone $baseQuery, $r12Start, $endDate);
         $otdAllYears = $this->computeOtdAllTime(clone $baseQuery);
 
+        $faiRejYtd = $this->computeFaiRejForRange($yearStart, $yearEnd);
+        $faiRejR12 = $this->computeFaiRejForRange($r12Start, $endDate);
+
         $currentMonth = (int) $endDate->month;
         $otdThisMonth = $this->computeOtdForMonth(clone $baseQuery, $year, $currentMonth);
         $sentThisMonth = (clone $baseQuery)
@@ -290,6 +295,8 @@ class DashboardController extends Controller
             'dashboardYear' => $year,
             'customerOtdCells' => $customerOtdCells,
             'faiRejCells' => $faiRejCells,
+            'faiRejYtd' => $faiRejYtd,
+            'faiRejR12' => $faiRejR12,
             'otdYtd' => $otdYtd,
             'otdR12' => $otdR12,
             'otdAllYears' => $otdAllYears,
@@ -345,6 +352,28 @@ class DashboardController extends Controller
         $pct = $total > 0 ? round(($onTime / $total) * 100, 1) : null;
 
         return ['pct' => $pct, 'on_time' => $onTime, 'total' => $total];
+    }
+
+    private function computeFaiRejForRange($startDate, $endDate): array
+    {
+        $base = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
+            ->whereBetween('due_date', [$startDate, $endDate]);
+
+        $total = (int) (clone $base)->count();
+
+        $rejects = (int) (clone $base)
+            ->join('qa_faisummary as qfs', 'qfs.order_schedule_id', '=', 'orders_schedule.id')
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
+            ->selectRaw('COUNT(DISTINCT orders_schedule.id) as rejects')
+            ->value('rejects');
+
+        $pct = $total > 0 ? round(($rejects / $total) * 100, 1) : null;
+
+        return ['pct' => $pct, 'rejects' => $rejects, 'total' => $total];
     }
 
     private function computeOtdAllTime($baseQuery): array

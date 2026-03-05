@@ -19,6 +19,8 @@
 
         $customerOtdCells = $customerOtdCells ?? [];
         $faiRejCells = $faiRejCells ?? [];
+        $faiRejYtd = $faiRejYtd ?? ['pct' => null, 'rejects' => 0, 'total' => 0];
+        $faiRejR12 = $faiRejR12 ?? ['pct' => null, 'rejects' => 0, 'total' => 0];
         $otdYtd = $otdYtd ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $otdR12 = $otdR12 ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $otdAllYears = $otdAllYears ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
@@ -528,25 +530,41 @@
                                     @endforeach
 
                                     @php
-                                        $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : null;
-                                        $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : null;
+                                        $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : ($isFaiRej ? ($faiRejYtd['pct'] ?? null) : null);
+                                        $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : ($isFaiRej ? ($faiRejR12['pct'] ?? null) : null);
                                     @endphp
                                     @php
                                         $ytdEmpty = !$isOtd || $ytdPct === null;
                                     @endphp
-                                    <td class="col-ytd {{ $isOtd ? $pctTone($ytdPct) : '' }} {{ $ytdEmpty ? 'kpi-empty' : '' }}" title="{{ $isOtd ? (($otdYtd['on_time'] ?? 0) . '/' . ($otdYtd['total'] ?? 0)) : '' }}">
-                                        {{ $isOtd && $ytdPct !== null ? number_format($ytdPct, 1) . '%' : '' }}
+                                    @php
+                                        $ytdTone = $isOtd ? $pctTone($ytdPct) : ($isFaiRej ? $pctToneLower($ytdPct, $faiGoal) : '');
+                                        $ytdMeta = $isOtd ? (($otdYtd['on_time'] ?? 0) . '/' . ($otdYtd['total'] ?? 0)) : ($isFaiRej ? (($faiRejYtd['rejects'] ?? 0) . '/' . ($faiRejYtd['total'] ?? 0)) : '');
+                                    @endphp
+                                    <td class="col-ytd {{ $ytdTone }} {{ ($isOtd || $isFaiRej) && $ytdPct === null ? 'kpi-empty' : '' }}" title="{{ $ytdMeta }}">
+                                        @if(($isOtd || $isFaiRej) && $ytdPct !== null)
+                                            {{ number_format((float) $ytdPct, 1) . '%' }}
+                                        @endif
                                         @if($isOtd && !empty($otdYtd['total']))
                                             <span class="kpi-cell-meta">({{ (int) $otdYtd['total'] }})</span>
+                                        @elseif($isFaiRej && !empty($faiRejYtd['total']))
+                                            <span class="kpi-cell-meta">({{ (int) ($faiRejYtd['rejects'] ?? 0) }}/{{ (int) $faiRejYtd['total'] }})</span>
                                         @endif
                                     </td>
                                     @php
                                         $r12Empty = !$isOtd || $r12Pct === null;
                                     @endphp
-                                    <td class="col-r12 {{ $isOtd ? $pctTone($r12Pct) : '' }} {{ $r12Empty ? 'kpi-empty' : '' }}" title="{{ $isOtd ? (($otdR12['on_time'] ?? 0) . '/' . ($otdR12['total'] ?? 0)) : '' }}">
-                                        {{ $isOtd && $r12Pct !== null ? number_format($r12Pct, 1) . '%' : '' }}
+                                    @php
+                                        $r12Tone = $isOtd ? $pctTone($r12Pct) : ($isFaiRej ? $pctToneLower($r12Pct, $faiGoal) : '');
+                                        $r12Meta = $isOtd ? (($otdR12['on_time'] ?? 0) . '/' . ($otdR12['total'] ?? 0)) : ($isFaiRej ? (($faiRejR12['rejects'] ?? 0) . '/' . ($faiRejR12['total'] ?? 0)) : '');
+                                    @endphp
+                                    <td class="col-r12 {{ $r12Tone }} {{ ($isOtd || $isFaiRej) && $r12Pct === null ? 'kpi-empty' : '' }}" title="{{ $r12Meta }}">
+                                        @if(($isOtd || $isFaiRej) && $r12Pct !== null)
+                                            {{ number_format((float) $r12Pct, 1) . '%' }}
+                                        @endif
                                         @if($isOtd && !empty($otdR12['total']))
                                             <span class="kpi-cell-meta">({{ (int) $otdR12['total'] }})</span>
+                                        @elseif($isFaiRej && !empty($faiRejR12['total']))
+                                            <span class="kpi-cell-meta">({{ (int) ($faiRejR12['rejects'] ?? 0) }}/{{ (int) $faiRejR12['total'] }})</span>
                                         @endif
                                     </td>
 

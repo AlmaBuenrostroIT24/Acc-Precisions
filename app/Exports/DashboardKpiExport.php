@@ -24,6 +24,8 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
         private readonly array $rows,
         private readonly array $otdYtd,
         private readonly array $otdR12,
+        private readonly array $faiRejYtd,
+        private readonly array $faiRejR12,
         private readonly Carbon $dashboardEndDate,
     ) {
     }
@@ -139,8 +141,14 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
 
             $ytdPct = $isOtd ? ($this->otdYtd['pct'] ?? null) : null;
             $ytdTotal = $isOtd ? (int) ($this->otdYtd['total'] ?? 0) : null;
+            $ytdFaiPct = $isFaiRej ? ($this->faiRejYtd['pct'] ?? null) : null;
+            $ytdFaiRejects = $isFaiRej ? (int) ($this->faiRejYtd['rejects'] ?? 0) : 0;
+            $ytdFaiTotal = $isFaiRej ? (int) ($this->faiRejYtd['total'] ?? 0) : 0;
             $r12Pct = $isOtd ? ($this->otdR12['pct'] ?? null) : null;
             $r12Total = $isOtd ? (int) ($this->otdR12['total'] ?? 0) : null;
+            $r12FaiPct = $isFaiRej ? ($this->faiRejR12['pct'] ?? null) : null;
+            $r12FaiRejects = $isFaiRej ? (int) ($this->faiRejR12['rejects'] ?? 0) : 0;
+            $r12FaiTotal = $isFaiRej ? (int) ($this->faiRejR12['total'] ?? 0) : 0;
 
             $name = $this->wrapTwoLines((string) ($row['name'] ?? ''), 58, 58);
 
@@ -152,8 +160,8 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 ],
                 $periodCells,
                 [
-                    $this->pctTotalCell($ytdPct, $ytdTotal),
-                    $this->pctTotalCell($r12Pct, $r12Total),
+                    $isOtd ? $this->pctTotalCell($ytdPct, $ytdTotal) : ($isFaiRej ? $this->pctRejTotalCell($ytdFaiPct, $ytdFaiRejects, $ytdFaiTotal) : ''),
+                    $isOtd ? $this->pctTotalCell($r12Pct, $r12Total) : ($isFaiRej ? $this->pctRejTotalCell($r12FaiPct, $r12FaiRejects, $r12FaiTotal) : ''),
                     (string) ($row['goal'] ?? ''),
                     (string) ($row['trend'] ?? ''),
                 ],
@@ -552,6 +560,18 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                                 $sheet->getStyle("{$qCol}{$faiRowNum}")
                                     ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($qRgb);
                             }
+                        }
+
+                        // YTD (T) / Rolling (U) for FAI Rej
+                        $ytdRgb = $this->toneFillRgbLowerIsBetter($this->faiRejYtd['pct'] ?? null, 15.0, 3.0);
+                        if ($ytdRgb) {
+                            $sheet->getStyle("T{$faiRowNum}")
+                                ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($ytdRgb);
+                        }
+                        $r12Rgb = $this->toneFillRgbLowerIsBetter($this->faiRejR12['pct'] ?? null, 15.0, 3.0);
+                        if ($r12Rgb) {
+                            $sheet->getStyle("U{$faiRowNum}")
+                                ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($r12Rgb);
                         }
                     }
                 }
