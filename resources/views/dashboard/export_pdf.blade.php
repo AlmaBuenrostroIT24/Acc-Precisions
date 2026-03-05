@@ -184,9 +184,22 @@
         .col-ytd, .col-r12, .col-trend { background: #f7fafc; font-weight: 800; }
         .col-goal { background: #fff7d6 !important; font-weight: 900; }
         .col-month { font-size: 9px; }
-        .col-qtotal { background: #eef2ff; font-weight: 900; text-align: center; }
-        thead th.col-qtotal { background: #dbeafe; letter-spacing: 0.10em; color: #1e40af; }
-        .col-qtotal.qtotal-empty { background: #f1f5f9 !important; color: #94a3b8; font-weight: 800; }
+        .col-qtotal { background-color: #eef2ff; font-weight: 900; text-align: center; }
+        thead th.col-qtotal { background-color: #dbeafe; letter-spacing: 0.10em; color: #1e40af; }
+        .col-qtotal.qtotal-empty { background-color: #f1f5f9 !important; color: #94a3b8; font-weight: 800; }
+        table.kpi th.col-qtotal, table.kpi td.col-qtotal {
+            border-right: 2px solid #93c5fd !important;
+            /* Reinforce divider without pseudo-elements (Dompdf can mis-position ::after on table cells) */
+            box-shadow: inset -2px 0 0 #93c5fd;
+        }
+        /* Extend the quarter divider "above" TOT across the quarter band row */
+        table.kpi thead tr.qhdr th.qhdr-sep {
+            border-right: 2px solid #93c5fd !important;
+            box-shadow: inset -2px 0 0 #93c5fd;
+        }
+        /* Let the Q4 quarter divider (blue) win in the header; keep a normal divider in the body */
+        table.kpi thead th.col-ytd { border-left: 0 !important; }
+        table.kpi tbody td.col-ytd { border-left: 1px solid #d1d9e6 !important; }
         .cell-total { display: block; font-size: 8px; color: #64748b; font-weight: 700; line-height: 1.1; }
 
         /* KPI validation colors (match dashboard: green/yellow/red) */
@@ -329,12 +342,12 @@
         <col style="width:5%">
     </colgroup>
     <thead>
-        <tr>
+        <tr class="qhdr">
             <th class="col-type" rowspan="2">Type</th>
             <th class="col-prcs" rowspan="2">Prcs.</th>
             <th class="col-name" rowspan="2">Name</th>
             @foreach($quarters as $q)
-                <th colspan="{{ count($q['months']) + 1 }}">{{ $q['label'] }}</th>
+                <th colspan="{{ count($q['months']) + 1 }}" class="qhdr-sep">{{ $q['label'] }}</th>
             @endforeach
             <th class="col-ytd" rowspan="2">YTD</th>
             <th class="col-r12" rowspan="2">Rolling 12M</th>
@@ -345,7 +358,7 @@
             @foreach($months as $m)
                 <th class="col-month">{{ $m }}</th>
                 @if(in_array($m, [3, 6, 9, 12], true))
-                    <th class="col-qtotal">TOT</th>
+                    <th class="col-qtotal {{ $m === 12 ? 'qtotal-last' : '' }}">TOT</th>
                 @endif
             @endforeach
         </tr>
@@ -408,7 +421,7 @@
                                 $qt = $quarterTotals[$qi] ?? ['pct' => null, 'total' => 0];
                                 $qtEmpty = ($qt['pct'] ?? null) === null && empty($qt['total']);
                             @endphp
-                            <td class="col-qtotal {{ $toneClass($qt['pct'] ?? null) }} {{ $qtEmpty ? 'qtotal-empty' : '' }}">
+                            <td class="col-qtotal {{ $toneClass($qt['pct'] ?? null) }} {{ $qtEmpty ? 'qtotal-empty' : '' }} {{ $m === 12 ? 'qtotal-last' : '' }}">
                                 @if(($qt['pct'] ?? null) !== null)
                                     {{ number_format((float) $qt['pct'], 1) . '%' }}
                                 @endif
@@ -417,7 +430,7 @@
                                 @endif
                             </td>
                         @else
-                            <td class="col-qtotal qtotal-empty"></td>
+                            <td class="col-qtotal qtotal-empty {{ $m === 12 ? 'qtotal-last' : '' }}"></td>
                         @endif
                     @endif
                 @endforeach

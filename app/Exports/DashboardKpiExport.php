@@ -467,14 +467,14 @@ class DashboardKpiExport implements FromArray, WithHeadings, WithCustomStartCell
                 // Borders for the whole table
                 $sheet->getStyle($tableRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D1D9E6');
 
-                // Thicker separators after each quarter total (G, K, O, S)
+                // Thicker separators after each quarter total (G, K, O, S) - blue accent like dashboard
                 foreach (['G', 'K', 'O', 'S'] as $col) {
                     $sheet->getStyle("{$col}{$headerRow1}:{$col}{$lastRow}")
                         ->getBorders()
                         ->getRight()
                         ->setBorderStyle(Border::BORDER_MEDIUM)
                         ->getColor()
-                        ->setRGB('94A3B8');
+                        ->setRGB($col === 'S' ? '60A5FA' : '93C5FD');
                 }
 
                 // Row heights for consistent look
