@@ -4,14 +4,20 @@
         $sent = $r->sent_at ? \Carbon\Carbon::parse($r->sent_at)->startOfDay() : null;
         $failOps = (int) ($r->fail_ops ?? 0);
         $failOperations = trim((string) ($r->fail_operations ?? ''));
+        $monthEs = [1 => 'ene', 2 => 'feb', 3 => 'mar', 4 => 'abr', 5 => 'may', 6 => 'jun', 7 => 'jul', 8 => 'ago', 9 => 'sep', 10 => 'oct', 11 => 'nov', 12 => 'dic'];
+        $fmtDate = function ($d) use ($monthEs) {
+            if (!$d) return '';
+            $m = (int) $d->format('n');
+            return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y');
+        };
     @endphp
     <tr class="table-warning">
         <td class="text-left fai-col-workid">{{ $r->work_id }}</td>
         <td class="text-left fai-col-pn">{{ $r->PN }}</td>
         <td class="fai-col-desc">{{ $r->Part_description }}</td>
         <td class="text-left fai-col-customer">{{ $r->costumer }}</td>
-        <td class="text-center fai-col-due">{{ $due ? $due->format('Y-m-d') : '' }}</td>
-        <td class="text-center fai-col-sent">{{ $sent ? $sent->format('Y-m-d') : '' }}</td>
+        <td class="text-center fai-col-due">{{ $fmtDate($due) }}</td>
+        <td class="text-center fai-col-sent">{{ $fmtDate($sent) }}</td>
         <td class="text-left fai-col-failops">
             @if($failOps > 0)
                 <span class="font-weight-bold">{{ $failOps }}</span>
