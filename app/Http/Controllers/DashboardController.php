@@ -108,7 +108,7 @@ class DashboardController extends Controller
                 orders_schedule.due_date,
                 orders_schedule.sent_at,
                 COUNT(*) as fail_ops,
-                MIN(qfs.operation) as first_operation
+                GROUP_CONCAT(DISTINCT NULLIF(TRIM(qfs.operation), \'\') ORDER BY qfs.operation SEPARATOR \', \') as fail_operations
             ')
             ->groupBy(
                 'orders_schedule.id',

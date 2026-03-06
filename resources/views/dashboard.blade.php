@@ -739,36 +739,55 @@
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="d-flex flex-column">
-                        <h5 class="modal-title mb-0" id="faiRejDetailModalLabel">Internal FAI Rejection Details</h5>
-                        <small class="text-muted" id="faiRejDetailMeta">Select a month.</small>
+                    <div class="d-flex align-items-center w-100 pr-2 otd-modal-header-main">
+                        <h5 class="modal-title mb-0 font-weight-bold" id="faiRejDetailModalLabel">
+                            <i class="fas fa-clipboard-check text-primary mr-1"></i> Internal FAI Rejection Details
+                        </h5>
+                        <small class="text-muted mb-0 ml-2 text-nowrap" id="faiRejDetailMeta">Select a month.</small>
                     </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
-                        <div class="text-muted small">Orders with `status=sent`, `status_order=active` and at least one `qa_faisummary` FAI `no pass`.</div>
-                    </div>
+                    <div class="otd-grid-shell">
+                        <div class="d-flex align-items-center justify-content-end flex-wrap px-3 py-2 border-bottom">
+                            <div class="mx-2 my-1">
+                                <div class="otd-search-box" style="min-width: 240px;">
+                                    <span class="otd-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
+                                    <input
+                                        type="text"
+                                        id="faiRejDetailSearch"
+                                        class="form-control form-control-sm"
+                                        placeholder="Search..."
+                                        aria-label="Search FAI rejection details"
+                                    >
+                                    <button type="button" id="faiRejDetailSearchClear" class="otd-search-clear" aria-label="Clear search" title="Clear">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="text-center">Work ID</th>
-                                    <th class="text-center">PN</th>
-                                    <th>Part/Description</th>
-                                    <th class="text-center">Customer</th>
-                                    <th class="text-center">Due</th>
-                                    <th class="text-center">Sent</th>
-                                    <th class="text-center">Fail Ops</th>
-                                </tr>
-                            </thead>
-                            <tbody id="faiRejDetailTbody">
-                                <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left fai-col-workid">Work ID</th>
+                                        <th class="text-left fai-col-pn">PN</th>
+                                        <th class="fai-col-desc">Part/Description</th>
+                                        <th class="text-left fai-col-customer">Customer</th>
+                                        <th class="text-center fai-col-due">Due</th>
+                                        <th class="text-center fai-col-sent">Sent</th>
+                                        <th class="text-left fai-col-failops">Fail Ops</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="faiRejDetailTbody">
+                                    <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="faiRejDetailPagination" class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-top"></div>
                     </div>
                 </div>
                 <div class="modal-footer">

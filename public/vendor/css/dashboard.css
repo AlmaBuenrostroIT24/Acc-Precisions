@@ -923,6 +923,44 @@ table.kpi-report {
     min-width: 140px;
 }
 
+.dashboard-detail-modal .fai-dt-table .fai-col-workid,
+.dashboard-detail-modal .fai-dt-table .fai-col-pn,
+.dashboard-detail-modal .fai-dt-table .fai-col-customer,
+.dashboard-detail-modal .fai-dt-table .fai-col-due,
+.dashboard-detail-modal .fai-dt-table .fai-col-sent,
+.dashboard-detail-modal .fai-dt-table .fai-col-failops {
+    white-space: nowrap !important;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-workid {
+    min-width: 86px;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-pn {
+    min-width: 82px;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-customer {
+    min-width: 110px;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-due,
+.dashboard-detail-modal .fai-dt-table .fai-col-sent {
+    min-width: 92px;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-failops {
+    min-width: 160px;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-desc {
+    min-width: 320px;
+}
+
+.dashboard-detail-modal .fai-failops-inline {
+    white-space: nowrap !important;
+}
+
 .dashboard-detail-modal .fai-dt-table tbody tr:nth-child(odd) td {
     background: #fff;
 }
@@ -945,6 +983,16 @@ table.kpi-report {
 .dashboard-detail-modal .fai-dt-table tbody tr.table-danger:hover td,
 .dashboard-detail-modal .fai-dt-table tbody tr.is-late:hover td {
     background: #efc3bf !important;
+}
+
+.dashboard-detail-modal .fai-dt-table tbody tr.table-warning td {
+    background: #fef3c7 !important;
+    color: #111827 !important;
+    border-color: #d5d8dd !important;
+}
+
+.dashboard-detail-modal .fai-dt-table tbody tr.table-warning:hover td {
+    background: #fde68a !important;
 }
 
 .dashboard-detail-modal .otd-days-badge {
@@ -1062,7 +1110,8 @@ table.kpi-report {
     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25) !important;
 }
 
-.dashboard-detail-modal #otdDetailSearch {
+.dashboard-detail-modal #otdDetailSearch,
+.dashboard-detail-modal #faiRejDetailSearch {
     height: 32px;
     border: 0;
     border-radius: 999px;
@@ -1119,7 +1168,8 @@ table.kpi-report {
     display: inline-flex;
 }
 
-.dashboard-detail-modal #otdDetailSearch:focus {
+.dashboard-detail-modal #otdDetailSearch:focus,
+.dashboard-detail-modal #faiRejDetailSearch:focus {
     box-shadow: none;
     outline: none;
 }
@@ -1129,7 +1179,8 @@ table.kpi-report {
     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
 }
 
-.dashboard-detail-modal #otdDetailPagination {
+.dashboard-detail-modal #otdDetailPagination,
+.dashboard-detail-modal #faiRejDetailPagination {
     background: #f8fafc;
     border-top-color: #d5d8dd !important;
     padding: 0.28rem 0.6rem !important;
@@ -1140,19 +1191,22 @@ table.kpi-report {
     box-sizing: border-box;
 }
 
-.dashboard-detail-modal #otdDetailPagination .small {
+.dashboard-detail-modal #otdDetailPagination .small,
+.dashboard-detail-modal #faiRejDetailPagination .small {
     font-weight: 700;
     color: #475569 !important;
     font-size: 0.76rem;
     margin: 0 !important;
 }
 
-.dashboard-detail-modal #otdDetailPagination .btn-group {
+.dashboard-detail-modal #otdDetailPagination .btn-group,
+.dashboard-detail-modal #faiRejDetailPagination .btn-group {
     gap: 3px;
     margin: 0 !important;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page {
+.dashboard-detail-modal #otdDetailPagination .js-otd-page,
+.dashboard-detail-modal #faiRejDetailPagination .js-fai-page {
     min-width: 30px;
     height: 28px;
     padding: 0 8px;
@@ -1166,18 +1220,21 @@ table.kpi-report {
     box-shadow: none;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page:hover:not(:disabled) {
+.dashboard-detail-modal #otdDetailPagination .js-otd-page:hover:not(:disabled),
+.dashboard-detail-modal #faiRejDetailPagination .js-fai-page:hover:not(:disabled) {
     filter: brightness(0.98);
     color: #111827;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page.btn-primary {
+.dashboard-detail-modal #otdDetailPagination .js-otd-page.btn-primary,
+.dashboard-detail-modal #faiRejDetailPagination .js-fai-page.btn-primary {
     background: #e2e8f0;
     border-color: #94a3b8;
     color: #0f172a;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page:disabled {
+.dashboard-detail-modal #otdDetailPagination .js-otd-page:disabled,
+.dashboard-detail-modal #faiRejDetailPagination .js-fai-page:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }

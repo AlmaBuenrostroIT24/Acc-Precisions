@@ -7,6 +7,7 @@
     const STORAGE_KEY = 'ap_dashboard_year';
     const OTD_PAGE_SIZE = 12;
     const otdUiState = { search: '', page: 1 };
+    const faiUiState = { search: '', page: 1 };
 
     function getQueryParam(name) {
         const url = new URL(window.location.href);
@@ -30,7 +31,7 @@
     }
 
     function renderLoading() {
-        $('#otdDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loadingâ€¦</td></tr>');
+        $('#otdDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loading...</td></tr>');
     }
 
     function renderError(message) {
@@ -38,8 +39,7 @@
         $('#otdDetailTbody').html('<tr><td colspan="7" class="text-center text-danger py-3">' + msg + '</td></tr>');
     }
 
-    function renderOtdPagination(totalRows, totalPages, currentPage) {
-        const $pager = $('#otdDetailPagination');
+    function renderPager($pager, pageClass, totalRows, totalPages, currentPage, ariaLabel) {
         if (!$pager.length) return;
 
         if (!totalRows) {
@@ -54,7 +54,7 @@
         start = Math.max(1, end - maxButtons + 1);
 
         for (let p = start; p <= end; p += 1) {
-            pagesHtml += '<button type="button" class="btn btn-sm ' + (p === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' js-otd-page mx-1" data-page="' + p + '">' + p + '</button>';
+            pagesHtml += '<button type="button" class="btn btn-sm ' + (p === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' ' + pageClass + ' mx-1" data-page="' + p + '">' + p + '</button>';
         }
 
         const prevDisabled = currentPage <= 1 ? 'disabled' : '';
@@ -62,42 +62,39 @@
 
         $pager.html(
             '<div class="small text-muted my-1">Showing ' + totalRows + ' records</div>' +
-            '<div class="btn-group btn-group-sm my-1" role="group" aria-label="OTD pagination">' +
-                '<button type="button" class="btn btn-outline-secondary js-otd-page" data-page="' + (currentPage - 1) + '" ' + prevDisabled + '>Prev</button>' +
+            '<div class="btn-group btn-group-sm my-1" role="group" aria-label="' + ariaLabel + '">' +
+                '<button type="button" class="btn btn-outline-secondary ' + pageClass + '" data-page="' + (currentPage - 1) + '" ' + prevDisabled + '>Prev</button>' +
                 pagesHtml +
-                '<button type="button" class="btn btn-outline-secondary js-otd-page" data-page="' + (currentPage + 1) + '" ' + nextDisabled + '>Next</button>' +
+                '<button type="button" class="btn btn-outline-secondary ' + pageClass + '" data-page="' + (currentPage + 1) + '" ' + nextDisabled + '>Next</button>' +
             '</div>'
         );
     }
 
-    function applyOtdSearch(query, page) {
-        const needle = String(query || '').trim().toLowerCase();
-        otdUiState.search = needle;
-        if (typeof page === 'number' && page > 0) {
-            otdUiState.page = page;
+    function applySearchAndPaginate(opts) {
+        const needle = String(opts.query || '').trim().toLowerCase();
+        const uiState = opts.uiState;
+        uiState.search = needle;
+
+        if (typeof opts.page === 'number' && opts.page > 0) {
+            uiState.page = opts.page;
         }
 
-        const $tbody = $('#otdDetailTbody');
+        const $tbody = $(opts.tbodySelector);
         const $rows = $tbody.find('tr');
-        const noMatchId = 'otdDetailNoMatchRow';
-        $('#' + noMatchId).remove();
+        $('#' + opts.noMatchId).remove();
 
         const dataRows = [];
-
         $rows.each(function () {
             const $row = $(this);
             const $cells = $row.children('td');
-
-            // Placeholder rows ("Loading...", "No results.", etc.) are single colspan rows.
             if ($cells.length <= 1 && $cells.first().attr('colspan')) {
                 return;
             }
-
             dataRows.push($row);
         });
 
         if (!dataRows.length) {
-            renderOtdPagination(0, 0, 1);
+            renderPager($(opts.pagerSelector), opts.pageClass, 0, 0, 1, opts.ariaLabel);
             return;
         }
 
@@ -107,11 +104,11 @@
         });
 
         const totalPages = Math.max(1, Math.ceil(matchedRows.length / OTD_PAGE_SIZE));
-        if (otdUiState.page > totalPages) {
-            otdUiState.page = totalPages;
+        if (uiState.page > totalPages) {
+            uiState.page = totalPages;
         }
 
-        const from = (otdUiState.page - 1) * OTD_PAGE_SIZE;
+        const from = (uiState.page - 1) * OTD_PAGE_SIZE;
         const to = from + OTD_PAGE_SIZE;
         const pagedRows = matchedRows.slice(from, to);
 
@@ -119,12 +116,38 @@
         pagedRows.forEach(function ($row) { $row.show(); });
 
         if (matchedRows.length === 0) {
-            $tbody.append('<tr id="' + noMatchId + '"><td colspan="7" class="text-center text-muted py-3">No matching records.</td></tr>');
-            renderOtdPagination(0, 0, 1);
+            $tbody.append('<tr id="' + opts.noMatchId + '"><td colspan="7" class="text-center text-muted py-3">No matching records.</td></tr>');
+            renderPager($(opts.pagerSelector), opts.pageClass, 0, 0, 1, opts.ariaLabel);
             return;
         }
 
-        renderOtdPagination(matchedRows.length, totalPages, otdUiState.page);
+        renderPager($(opts.pagerSelector), opts.pageClass, matchedRows.length, totalPages, uiState.page, opts.ariaLabel);
+    }
+
+    function applyOtdSearch(query, page) {
+        applySearchAndPaginate({
+            query,
+            page,
+            uiState: otdUiState,
+            tbodySelector: '#otdDetailTbody',
+            pagerSelector: '#otdDetailPagination',
+            noMatchId: 'otdDetailNoMatchRow',
+            pageClass: 'js-otd-page',
+            ariaLabel: 'OTD pagination',
+        });
+    }
+
+    function applyFaiSearch(query, page) {
+        applySearchAndPaginate({
+            query,
+            page,
+            uiState: faiUiState,
+            tbodySelector: '#faiRejDetailTbody',
+            pagerSelector: '#faiRejDetailPagination',
+            noMatchId: 'faiRejDetailNoMatchRow',
+            pageClass: 'js-fai-page',
+            ariaLabel: 'FAI pagination',
+        });
     }
 
     function loadOtdDetails(year, month, filter, searchQuery) {
@@ -132,7 +155,7 @@
 
         renderLoading();
         setFilterActive(filter);
-        $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' â€¢ ' + filter);
+        $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' • ' + filter);
 
         $.get(DASHBOARD.otdDetailsUrl, { year, month, filter })
             .done(function (res) {
@@ -140,7 +163,7 @@
                 otdUiState.page = 1;
                 applyOtdSearch(searchQuery, 1);
                 const count = (res && typeof res.count === 'number') ? res.count : 0;
-                $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' â€¢ ' + filter + ' â€¢ ' + count + ' rows');
+                $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' • ' + filter + ' • ' + count + ' rows');
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : null;
@@ -148,20 +171,22 @@
             });
     }
 
-    function loadFaiRejDetails(year, month) {
+    function loadFaiRejDetails(year, month, searchQuery) {
         if (!DASHBOARD.faiRejDetailsUrl) return;
 
-        $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loadingâ€¦</td></tr>');
+        $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loading...</td></tr>');
         $('#faiRejDetailMeta').text(monthName(month) + ' ' + year);
 
         $.get(DASHBOARD.faiRejDetailsUrl, { year, month })
             .done(function (res) {
                 $('#faiRejDetailTbody').html(res && res.html ? res.html : '');
+                faiUiState.page = 1;
+                applyFaiSearch(searchQuery, 1);
                 const rejects = (res && typeof res.rejects === 'number') ? res.rejects : 0;
                 const total = (res && typeof res.total === 'number') ? res.total : 0;
                 const pct = (res && typeof res.pct === 'number') ? res.pct : null;
                 const pctText = pct !== null ? (pct.toFixed(1) + '%') : '-';
-                $('#faiRejDetailMeta').text(monthName(month) + ' ' + year + ' â€¢ ' + pctText + ' (' + rejects + '/' + total + ')');
+                $('#faiRejDetailMeta').text(monthName(month) + ' ' + year + ' • ' + pctText + ' (' + rejects + '/' + total + ')');
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
@@ -172,6 +197,11 @@
     function toggleOtdSearchClear() {
         const hasValue = String($('#otdDetailSearch').val() || '').length > 0;
         $('#otdDetailSearchClear').toggleClass('is-visible', hasValue);
+    }
+
+    function toggleFaiSearchClear() {
+        const hasValue = String($('#faiRejDetailSearch').val() || '').length > 0;
+        $('#faiRejDetailSearchClear').toggleClass('is-visible', hasValue);
     }
 
     $(function () {
@@ -255,7 +285,7 @@
         });
 
         // FAI Rejection cell click -> open modal + load details
-        let faiSelected = { year: DASHBOARD.year || null, month: null };
+        let faiSelected = { year: DASHBOARD.year || null, month: null, search: '' };
 
         $(document).on('click', '.js-fai-rej-cell', function () {
             const year = parseInt($(this).data('year'), 10);
@@ -266,13 +296,40 @@
             faiSelected.month = month;
 
             $('#faiRejDetailModal').modal('show');
-            loadFaiRejDetails(faiSelected.year, faiSelected.month);
+            loadFaiRejDetails(faiSelected.year, faiSelected.month, faiSelected.search);
+        });
+
+        $('#faiRejDetailSearch').on('input', function () {
+            faiSelected.search = String($(this).val() || '');
+            faiUiState.page = 1;
+            applyFaiSearch(faiSelected.search, 1);
+            toggleFaiSearchClear();
+        });
+
+        $('#faiRejDetailSearchClear').on('click', function () {
+            faiSelected.search = '';
+            $('#faiRejDetailSearch').val('').trigger('focus');
+            faiUiState.page = 1;
+            applyFaiSearch('', 1);
+            toggleFaiSearchClear();
+        });
+
+        $(document).on('click', '.js-fai-page', function () {
+            const page = parseInt($(this).data('page'), 10);
+            if (!page || page < 1) return;
+            faiUiState.page = page;
+            applyFaiSearch(faiSelected.search, page);
         });
 
         $('#faiRejDetailModal').on('hidden.bs.modal', function () {
             $('#faiRejDetailMeta').text('Select a month.');
             $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>');
+            $('#faiRejDetailPagination').html('');
+            $('#faiRejDetailSearch').val('');
             faiSelected.month = null;
+            faiSelected.search = '';
+            faiUiState.page = 1;
+            toggleFaiSearchClear();
         });
     });
 })();
