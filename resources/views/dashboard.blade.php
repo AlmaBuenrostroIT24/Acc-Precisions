@@ -246,9 +246,9 @@
                     [
                         'accent' => 'green',
                         'icon' => 'fas fa-check-circle',
-                        'label' => 'Sent (Month)',
+                        'label' => 'Sent (Year)',
                         'value' => (string) ((int) $sentThisMonth),
-                        'meta' => 'Due date month',
+                        'meta' => 'Due date year',
                         'meta_class' => 'text-muted',
                         'ratio' => '',
                         'badge_text' => 'Sent',
@@ -347,10 +347,10 @@
                         <div class="info-box-content">
                             <div class="dashboard-kpi-top">
                                 <div class="dashboard-kpi-left">
-                                    <div class="dashboard-kpi-label">Sent (Month)</div>
+                                    <div class="dashboard-kpi-label">Sent (Year)</div>
                                     <div class="dashboard-kpi-value">{{ (int) $sentThisMonth }}</div>
                                     <div class="dashboard-kpi-meta">
-                                        <span class="text-muted">Due date month</span>
+                                        <span class="text-muted">Due date year</span>
                                     </div>
                                 </div>
                                 <div class="dashboard-kpi-right">
@@ -664,19 +664,101 @@
                             </div>
                         </div>
 
+                        <div class="info-box dashboard-kpi-box" data-accent="blue">
+                            <span class="info-box-icon"><i class="fas fa-history"></i></span>
+                            <div class="info-box-content">
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">OTD (R12)</div>
+                                        <div class="dashboard-kpi-value">-</div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="text-muted">Pending definition</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <span class="kpi-badge kpi-badge--nodata">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="info-box dashboard-kpi-box" data-accent="green">
                             <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                             <div class="info-box-content">
                                 <div class="dashboard-kpi-top">
                                     <div class="dashboard-kpi-left">
-                                        <div class="dashboard-kpi-label">Sent (Month)</div>
+                                        <div class="dashboard-kpi-label">Sent (Year)</div>
                                         <div class="dashboard-kpi-value">{{ (int) $sentThisMonth }}</div>
                                         <div class="dashboard-kpi-meta">
-                                            <span class="text-muted">Due date month</span>
+                                            <span class="text-muted">Due date year</span>
                                         </div>
                                     </div>
                                     <div class="dashboard-kpi-right">
                                         <span class="kpi-badge kpi-badge--info">Sent</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box dashboard-kpi-box" data-accent="slate">
+                            <span class="info-box-icon"><i class="fas fa-layer-group"></i></span>
+                            <div class="info-box-content">
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">OTD (All Years)</div>
+                                        <div class="dashboard-kpi-value">-</div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="text-muted">Pending definition</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <span class="kpi-badge kpi-badge--nodata">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box dashboard-kpi-box" data-accent="amber">
+                            <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                            <div class="info-box-content">
+                                @php
+                                    $pct = $faiRejYtd['pct'];
+                                    $total = (int) $faiRejYtd['total'];
+                                    $rejects = (int) ($faiRejYtd['rejects'] ?? 0);
+                                    $badgeText = $total ? ($pct !== null && $pct <= $faiGoal ? 'On target' : 'Above goal') : 'No data';
+                                    $badgeClass = !$total ? 'kpi-badge--nodata' : (($pct !== null && $pct <= $faiGoal) ? 'kpi-badge--good' : 'kpi-badge--bad');
+                                @endphp
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">FAI Rej (YTD)</div>
+                                        <div class="dashboard-kpi-value {{ $pct !== null ? $pctToneLower($pct, $faiGoal) : '' }}">
+                                            {{ $pct !== null ? number_format($pct, 1) . '%' : '-' }}
+                                        </div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="dashboard-kpi-goal">Goal {{ number_format($faiGoal, 0) }}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <div class="dashboard-kpi-ratio">{{ $rejects }} / {{ $total }}</div>
+                                        <span class="kpi-badge {{ $badgeClass }}">{{ $badgeText }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box dashboard-kpi-box" data-accent="teal">
+                            <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                            <div class="info-box-content">
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">FAI Rej (R12)</div>
+                                        <div class="dashboard-kpi-value">-</div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="text-muted">Pending definition</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <span class="kpi-badge kpi-badge--nodata">Pending</span>
                                     </div>
                                 </div>
                             </div>

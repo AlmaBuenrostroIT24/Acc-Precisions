@@ -279,7 +279,7 @@ class DashboardController extends Controller
         $currentMonth = (int) $endDate->month;
         $otdThisMonth = $this->computeOtdForMonth(clone $baseQuery, $year, $currentMonth);
         $sentThisMonth = (clone $baseQuery)
-            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $currentMonth])
+            ->whereRaw('YEAR(due_date) = ?', [$year])
             ->count();
 
         $lastUpdated = null;
