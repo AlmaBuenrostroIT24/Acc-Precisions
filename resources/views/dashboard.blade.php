@@ -469,7 +469,7 @@
                                             $pct = $isOtd && is_array($cell) ? ($cell['pct'] ?? null) : null;
                                             $title = $isOtd && is_array($cell) ? (($cell['on_time'] ?? 0) . '/' . ($cell['total'] ?? 0)) : '';
                                             $faiPct = $isFaiRej && is_array($cell) ? ($cell['pct'] ?? null) : null;
-                                            $faiClickable = $isFaiRej && is_array($cell) && !empty($cell['total']);
+                                            $faiClickable = $isFaiRej && is_array($cell) && ((int) ($cell['rejects'] ?? 0) > 0);
                                             $faiTone = $isFaiRej ? $pctToneLower($faiPct, $faiGoal) : '';
                                         @endphp
                                         <td
