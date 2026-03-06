@@ -521,9 +521,28 @@
 .kpi-report-scroll::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.35); border-radius: 999px; }
 .kpi-report-scroll::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.55); }
 
+.kpi-report-layout > [class*="col-"] {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+@media (min-width: 992px) {
+    .kpi-report-layout__main {
+        flex: 0 0 84% !important;
+        max-width: 84% !important;
+        padding-right: 2px !important;
+    }
+
+    .kpi-report-layout__side {
+        flex: 0 0 16% !important;
+        max-width: 16% !important;
+        padding-left: 2px !important;
+    }
+}
+
 table.kpi-report {
-    width: max-content; /* respect column widths (table will scroll inside col-lg-10) */
-    min-width: 0;
+    width: 100%;
+    min-width: max-content;
     border-collapse: collapse;
     table-layout: fixed; /* keep month columns equal width */
     background: #fff;
@@ -670,7 +689,7 @@ table.kpi-report {
 }
 .kpi-report tbody tr:nth-child(even) td.col-goal { background: #fff7d6 !important; }
 .kpi-report tbody tr:hover td.col-goal { background: #fff7d6 !important; }
-.kpi-report .col-trend { width: 84px; text-align: center; font-weight: 700; }
+.kpi-report .col-trend { width: 78px; min-width: 78px; max-width: 78px; text-align: center; font-weight: 700; }
 
 .kpi-sep { border-right-width: 2px !important; border-right-color: rgba(59, 130, 246, 0.18) !important; }
 .kpi-sep--block { border-right-width: 2px !important; border-right-color: rgba(59, 130, 246, 0.28) !important; }

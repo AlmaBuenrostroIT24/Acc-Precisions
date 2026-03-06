@@ -392,7 +392,7 @@
             </div>
 
             <div class="row kpi-report-layout" style="row-gap:.5rem;">
-                <div class="col-12 col-lg-10">
+                <div class="col-12 col-lg-10 kpi-report-layout__main">
             <div class="kpi-report-shell">
                 <div class="kpi-report-scroll">
                     <table class="kpi-report" aria-label="Quality Objectives and KPIs report">
@@ -578,7 +578,7 @@
             </div>
                 </div>
 
-                <div class="col-12 col-lg-2">
+                <div class="col-12 col-lg-2 kpi-report-layout__side">
                     <div class="kpi-sidecards" aria-label="KPI summary">
                         <div class="info-box dashboard-kpi-box" data-accent="blue">
                             <span class="info-box-icon"><i class="fas fa-truck"></i></span>
