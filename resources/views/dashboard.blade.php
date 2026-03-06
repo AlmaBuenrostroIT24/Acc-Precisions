@@ -667,45 +667,64 @@
     </div>
 
     {{-- OTD details modal --}}
-    <div class="modal fade" id="otdDetailModal" tabindex="-1" role="dialog" aria-labelledby="otdDetailModalLabel" aria-hidden="true">
+    <div class="modal fade dashboard-detail-modal" id="otdDetailModal" tabindex="-1" role="dialog" aria-labelledby="otdDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="d-flex flex-column">
-                        <h5 class="modal-title mb-0" id="otdDetailModalLabel">OTD Details</h5>
-                        <small class="text-muted" id="otdDetailMeta">Select a month.</small>
+                    <div class="d-flex align-items-center w-100 pr-2 otd-modal-header-main">
+                        <h5 class="modal-title mb-0 font-weight-bold" id="otdDetailModalLabel">
+                            <i class="fas fa-truck-loading text-primary mr-1"></i> OTD Details
+                        </h5>
+                        <small class="text-muted mb-0 ml-2 text-nowrap" id="otdDetailMeta">Select a month.</small>
                     </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="OTD filter">
-                            <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="all">All</button>
-                            <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
-                            <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
+                    <div class="otd-grid-shell">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="OTD filter">
+                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="all">All</button>
+                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
+                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
+                            </div>
+                            <div class="mx-2 my-1">
+                                <div class="otd-search-box" style="min-width: 240px;">
+                                    <span class="otd-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
+                                    <input
+                                        type="text"
+                                        id="otdDetailSearch"
+                                        class="form-control form-control-sm"
+                                        placeholder="Search..."
+                                        aria-label="Search OTD details"
+                                    >
+                                    <button type="button" id="otdDetailSearchClear" class="otd-search-clear" aria-label="Clear search" title="Clear">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-muted small">Only orders with `status=sent`.</div>
-                    </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="text-center">Work ID</th>
-                                    <th class="text-center">PN</th>
-                                    <th>Part/Description</th>
-                                    <th class="text-center">Customer</th>
-                                    <th class="text-center">Due</th>
-                                    <th class="text-center">Sent</th>
-                                    <th class="text-center">Days</th>
-                                </tr>
-                            </thead>
-                            <tbody id="otdDetailTbody">
-                                <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center otd-col-workid">Work ID</th>
+                                        <th class="text-center otd-col-pn">PN</th>
+                                        <th>Part/Description</th>
+                                        <th class="text-center otd-col-customer">Customer</th>
+                                        <th class="text-center otd-col-due">Due</th>
+                                        <th class="text-center otd-col-sent">Sent</th>
+                                        <th class="text-center">Days</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="otdDetailTbody">
+                                    <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="otdDetailPagination" class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-top"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -716,7 +735,7 @@
     </div>
 
     {{-- FAI rejection details modal --}}
-    <div class="modal fade" id="faiRejDetailModal" tabindex="-1" role="dialog" aria-labelledby="faiRejDetailModalLabel" aria-hidden="true">
+    <div class="modal fade dashboard-detail-modal" id="faiRejDetailModal" tabindex="-1" role="dialog" aria-labelledby="faiRejDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
