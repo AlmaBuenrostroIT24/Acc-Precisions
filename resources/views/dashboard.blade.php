@@ -44,6 +44,17 @@
         ];
 
         $months = range(1, 12);
+        $monthEs = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
+        $fmtEsDate = function ($date) use ($monthEs) {
+            $d = \Carbon\Carbon::parse($date);
+            $m = (int) $d->format('n');
+            return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y');
+        };
+        $fmtEsDateTime = function ($date) use ($monthEs) {
+            $d = \Carbon\Carbon::parse($date);
+            $m = (int) $d->format('n');
+            return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y H:i');
+        };
 
         $pctTone = function ($pct) {
             if ($pct === null) return '';
@@ -351,22 +362,29 @@
                 </div>
             </div>
 
-            <div class="dashboard-toolbar mb-2">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-1">
+            <div class="dashboard-toolbar dashboard-toolbar--integrated mb-2">
+                <div class="d-flex align-items-center flex-wrap gap-2 dashboard-meta-group">
+                    <div class="d-flex align-items-center gap-1 dashboard-meta-item">
                         <span class="dashboard-chip">Year</span>
                         <select id="dashboardYearSelect" class="form-control form-control-sm dashboard-year-select" aria-label="Select year">
                             @foreach($years as $y)
                                 <option value="{{ $y }}" {{ (int) $dashboardYear === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
                             @endforeach
                         </select>
+                        <button type="button" id="dashboardYearReset" class="btn btn-sm btn-outline-secondary dashboard-year-reset" title="Reset to current year">
+                            Current
+                        </button>
                     </div>
 
-                    <span class="dashboard-chip">As of {{ \Carbon\Carbon::parse($dashboardEndDate)->format('Y-m-d') }}</span>
+                    <span class="dashboard-chip dashboard-meta-item">
+                        <i class="far fa-calendar-alt mr-1" aria-hidden="true"></i>
+                        As of {{ $fmtEsDate($dashboardEndDate) }}
+                    </span>
 
                     @if(!empty($lastUpdatedAt))
-                        <span class="dashboard-chip dashboard-chip--info" title="Last update from orders_schedule">
-                            Updated {{ \Carbon\Carbon::parse($lastUpdatedAt)->format('Y-m-d H:i') }}
+                        <span class="dashboard-chip dashboard-chip--info dashboard-meta-item" title="Last update from orders_schedule ({{ config('app.timezone') }}): {{ $fmtEsDateTime($lastUpdatedAt) }}">
+                            <i class="far fa-clock mr-1" aria-hidden="true"></i>
+                            Updated {{ $fmtEsDateTime($lastUpdatedAt) }}
                         </span>
                     @endif
                 </div>
@@ -378,14 +396,18 @@
                             href="{{ route('dashboard.exportPdf', ['year' => (int) $dashboardYear]) }}"
                             target="_blank"
                             rel="noopener"
+                            title="Export PDF"
+                            aria-label="Export PDF"
                         >
-                            <i class="fas fa-file-pdf"></i> PDF
+                            <i class="fas fa-file-pdf"></i>
                         </a>
                         <a
                             class="btn btn-outline-secondary dashboard-export-btn dashboard-export-btn--excel"
                             href="{{ route('dashboard.exportExcel', ['year' => (int) $dashboardYear]) }}"
+                            title="Export Excel"
+                            aria-label="Export Excel"
                         >
-                            <i class="fas fa-file-excel"></i> Excel
+                            <i class="fas fa-file-excel"></i>
                         </a>
                     </div>
                 </div>

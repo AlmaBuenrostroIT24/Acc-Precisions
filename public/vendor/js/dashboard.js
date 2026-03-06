@@ -249,6 +249,12 @@
             refreshDashboardKpiContainer(year);
         });
 
+        $(document).on('click', '#dashboardYearReset', function () {
+            const currentYear = String(new Date().getFullYear());
+            $('#dashboardYearSelect').val(currentYear);
+            refreshDashboardKpiContainer(currentYear);
+        });
+
         // OTD cell click -> open modal + load details
         let selected = { year: DASHBOARD.year || null, month: null, filter: 'all', search: '' };
 
