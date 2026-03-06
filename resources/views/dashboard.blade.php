@@ -189,7 +189,7 @@
         </div>
     </div>
 
-    <div class="card card-outline card-primary mb-2 kpi-card kpi-main-card">
+    <div class="card card-outline card-primary mb-2 kpi-card kpi-main-card" id="dashboardKpiContainer">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
             <div class="w-100">
                 <h3 class="card-title mb-0">

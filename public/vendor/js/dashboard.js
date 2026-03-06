@@ -4,7 +4,6 @@
     'use strict';
 
     const DASHBOARD = window.__DASHBOARD || {};
-    const STORAGE_KEY = 'ap_dashboard_year';
     const OTD_PAGE_SIZE = 12;
     const otdUiState = { search: '', page: 1 };
     const faiUiState = { search: '', page: 1 };
@@ -14,10 +13,46 @@
         return url.searchParams.get(name);
     }
 
-    function setQueryParam(name, value) {
+    function normalizeDashboardUrl() {
         const url = new URL(window.location.href);
-        url.searchParams.set(name, value);
-        window.location.href = url.toString();
+        if (!url.searchParams.has('year')) return;
+        url.searchParams.delete('year');
+        const qs = url.searchParams.toString();
+        const next = url.pathname + (qs ? ('?' + qs) : '') + url.hash;
+        window.history.replaceState({}, '', next);
+    }
+
+    function refreshDashboardKpiContainer(year) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('year', year);
+
+        const $container = $('#dashboardKpiContainer');
+        if (!$container.length) {
+            window.location.href = url.toString();
+            return;
+        }
+
+        $container.addClass('is-loading');
+
+        $.get(url.toString())
+            .done(function (html) {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const next = doc.querySelector('#dashboardKpiContainer');
+                if (!next) {
+                    window.location.href = url.toString();
+                    return;
+                }
+
+                $container.replaceWith(next);
+                DASHBOARD.year = parseInt(year, 10) || DASHBOARD.year;
+                normalizeDashboardUrl();
+            })
+            .fail(function () {
+                window.location.href = url.toString();
+            })
+            .always(function () {
+                $('#dashboardKpiContainer').removeClass('is-loading');
+            });
     }
 
     function monthName(month) {
@@ -155,7 +190,7 @@
 
         renderLoading();
         setFilterActive(filter);
-        $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' • ' + filter);
+        $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' â€¢ ' + filter);
 
         $.get(DASHBOARD.otdDetailsUrl, { year, month, filter })
             .done(function (res) {
@@ -163,7 +198,7 @@
                 otdUiState.page = 1;
                 applyOtdSearch(searchQuery, 1);
                 const count = (res && typeof res.count === 'number') ? res.count : 0;
-                $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' • ' + filter + ' • ' + count + ' rows');
+                $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' â€¢ ' + filter + ' â€¢ ' + count + ' rows');
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : null;
@@ -186,7 +221,7 @@
                 const total = (res && typeof res.total === 'number') ? res.total : 0;
                 const pct = (res && typeof res.pct === 'number') ? res.pct : null;
                 const pctText = pct !== null ? (pct.toFixed(1) + '%') : '-';
-                $('#faiRejDetailMeta').text(monthName(month) + ' ' + year + ' • ' + pctText + ' (' + rejects + '/' + total + ')');
+                $('#faiRejDetailMeta').text(monthName(month) + ' ' + year + ' â€¢ ' + pctText + ' (' + rejects + '/' + total + ')');
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
@@ -205,24 +240,14 @@
     }
 
     $(function () {
+        normalizeDashboardUrl();
+
         // Year select
-        $('#dashboardYearSelect').on('change', function () {
+        $(document).on('change', '#dashboardYearSelect', function () {
             const year = String($(this).val() || '');
             if (!year) return;
-            try { window.localStorage.setItem(STORAGE_KEY, year); } catch (e) {}
-            setQueryParam('year', year);
+            refreshDashboardKpiContainer(year);
         });
-
-        // If URL has no ?year=, try localStorage
-        const hasYearParam = !!getQueryParam('year');
-        if (!hasYearParam) {
-            let stored = null;
-            try { stored = window.localStorage.getItem(STORAGE_KEY); } catch (e) {}
-            if (stored && /^\d{4}$/.test(stored)) {
-                setQueryParam('year', stored);
-                return;
-            }
-        }
 
         // OTD cell click -> open modal + load details
         let selected = { year: DASHBOARD.year || null, month: null, filter: 'all', search: '' };

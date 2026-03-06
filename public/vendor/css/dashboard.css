@@ -490,6 +490,11 @@
     --kpi-icon: #6d28d9;
 }
 
+#dashboardKpiContainer.is-loading {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
 /* Table shell */
 .kpi-report-shell {
     border-radius: 14px;
