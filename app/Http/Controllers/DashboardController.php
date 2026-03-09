@@ -58,7 +58,8 @@ class DashboardController extends Controller
         }
 
         $rows = $query
-            ->orderBy('due_date', 'asc')
+            ->orderBy('sent_at', 'desc')
+            ->orderBy('due_date', 'desc')
             ->limit(2000)
             ->get();
 
@@ -108,7 +109,7 @@ class DashboardController extends Controller
                 orders_schedule.due_date,
                 orders_schedule.sent_at,
                 COUNT(*) as fail_ops,
-                MIN(qfs.operation) as first_operation
+                GROUP_CONCAT(DISTINCT NULLIF(TRIM(qfs.operation), \'\') ORDER BY qfs.operation SEPARATOR \', \') as fail_operations
             ')
             ->groupBy(
                 'orders_schedule.id',
@@ -119,7 +120,8 @@ class DashboardController extends Controller
                 'orders_schedule.due_date',
                 'orders_schedule.sent_at',
             )
-            ->orderBy('orders_schedule.due_date', 'asc')
+            ->orderBy('orders_schedule.sent_at', 'desc')
+            ->orderBy('orders_schedule.due_date', 'desc')
             ->limit(2000)
             ->get();
 
@@ -277,7 +279,7 @@ class DashboardController extends Controller
         $currentMonth = (int) $endDate->month;
         $otdThisMonth = $this->computeOtdForMonth(clone $baseQuery, $year, $currentMonth);
         $sentThisMonth = (clone $baseQuery)
-            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $currentMonth])
+            ->whereRaw('YEAR(due_date) = ?', [$year])
             ->count();
 
         $lastUpdated = null;

@@ -44,6 +44,17 @@
         ];
 
         $months = range(1, 12);
+        $monthEs = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
+        $fmtEsDate = function ($date) use ($monthEs) {
+            $d = \Carbon\Carbon::parse($date);
+            $m = (int) $d->format('n');
+            return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y');
+        };
+        $fmtEsDateTime = function ($date) use ($monthEs) {
+            $d = \Carbon\Carbon::parse($date);
+            $m = (int) $d->format('n');
+            return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y H:i');
+        };
 
         $pctTone = function ($pct) {
             if ($pct === null) return '';
@@ -189,16 +200,13 @@
         </div>
     </div>
 
-    <div class="card card-outline card-primary mb-2 kpi-card kpi-main-card">
+    <div class="card card-outline card-primary mb-2 kpi-card kpi-main-card" id="dashboardKpiContainer">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
             <div class="w-100">
                 <h3 class="card-title mb-0">
                     <i class="fas fa-chart-bar mr-2"></i>
                     Quality Objectives &amp; KPIs
                 </h3>
-                <div class="kpi-main-subtitle">
-                    To achieve the Quality Policy, the following QOs and KPIs are set forth by ACC Precision, Inc. and measured/analyzed/evaluated; they may be updated as needed.
-                </div>
             </div>
         </div>
 
@@ -235,9 +243,9 @@
                     [
                         'accent' => 'green',
                         'icon' => 'fas fa-check-circle',
-                        'label' => 'Sent (Month)',
+                        'label' => 'Sent (Year)',
                         'value' => (string) ((int) $sentThisMonth),
-                        'meta' => 'Due date month',
+                        'meta' => 'Due date year',
                         'meta_class' => 'text-muted',
                         'ratio' => '',
                         'badge_text' => 'Sent',
@@ -336,10 +344,10 @@
                         <div class="info-box-content">
                             <div class="dashboard-kpi-top">
                                 <div class="dashboard-kpi-left">
-                                    <div class="dashboard-kpi-label">Sent (Month)</div>
+                                    <div class="dashboard-kpi-label">Sent (Year)</div>
                                     <div class="dashboard-kpi-value">{{ (int) $sentThisMonth }}</div>
                                     <div class="dashboard-kpi-meta">
-                                        <span class="text-muted">Due date month</span>
+                                        <span class="text-muted">Due date year</span>
                                     </div>
                                 </div>
                                 <div class="dashboard-kpi-right">
@@ -351,22 +359,29 @@
                 </div>
             </div>
 
-            <div class="dashboard-toolbar mb-2">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-1">
+            <div class="dashboard-toolbar dashboard-toolbar--integrated mb-2">
+                <div class="d-flex align-items-center flex-wrap gap-2 dashboard-meta-group">
+                    <div class="d-flex align-items-center gap-1 dashboard-meta-item">
                         <span class="dashboard-chip">Year</span>
                         <select id="dashboardYearSelect" class="form-control form-control-sm dashboard-year-select" aria-label="Select year">
                             @foreach($years as $y)
                                 <option value="{{ $y }}" {{ (int) $dashboardYear === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
                             @endforeach
                         </select>
+                        <button type="button" id="dashboardYearReset" class="btn btn-sm btn-outline-secondary dashboard-year-reset" title="Reset to current year">
+                            Current
+                        </button>
                     </div>
 
-                    <span class="dashboard-chip">As of {{ \Carbon\Carbon::parse($dashboardEndDate)->format('Y-m-d') }}</span>
+                    <span class="dashboard-chip dashboard-meta-item">
+                        <i class="far fa-calendar-alt mr-1" aria-hidden="true"></i>
+                        As of {{ $fmtEsDate($dashboardEndDate) }}
+                    </span>
 
                     @if(!empty($lastUpdatedAt))
-                        <span class="dashboard-chip dashboard-chip--info" title="Last update from orders_schedule">
-                            Updated {{ \Carbon\Carbon::parse($lastUpdatedAt)->format('Y-m-d H:i') }}
+                        <span class="dashboard-chip dashboard-chip--info dashboard-meta-item" title="Last update from orders_schedule ({{ config('app.timezone') }}): {{ $fmtEsDateTime($lastUpdatedAt) }}">
+                            <i class="far fa-clock mr-1" aria-hidden="true"></i>
+                            Updated {{ $fmtEsDateTime($lastUpdatedAt) }}
                         </span>
                     @endif
                 </div>
@@ -378,21 +393,25 @@
                             href="{{ route('dashboard.exportPdf', ['year' => (int) $dashboardYear]) }}"
                             target="_blank"
                             rel="noopener"
+                            title="Export PDF"
+                            aria-label="Export PDF"
                         >
-                            <i class="fas fa-file-pdf"></i> PDF
+                            <i class="fas fa-file-pdf"></i>
                         </a>
                         <a
                             class="btn btn-outline-secondary dashboard-export-btn dashboard-export-btn--excel"
                             href="{{ route('dashboard.exportExcel', ['year' => (int) $dashboardYear]) }}"
+                            title="Export Excel"
+                            aria-label="Export Excel"
                         >
-                            <i class="fas fa-file-excel"></i> Excel
+                            <i class="fas fa-file-excel"></i>
                         </a>
                     </div>
                 </div>
             </div>
 
             <div class="row kpi-report-layout" style="row-gap:.5rem;">
-                <div class="col-12 col-lg-10">
+                <div class="col-12 col-lg-10 kpi-report-layout__main">
             <div class="kpi-report-shell">
                 <div class="kpi-report-scroll">
                     <table class="kpi-report" aria-label="Quality Objectives and KPIs report">
@@ -420,7 +439,7 @@
                         </thead>
                         <tbody>
                             @foreach($rows as $row)
-                                <tr class="{{ $row['type'] === 'QO' ? 'row-qo' : '' }}">
+                                <tr class="{{ $row['type'] === 'QO' ? 'row-qo' : '' }}" data-kpi-row="{{ $row['key'] ?? '' }}">
                                     <td class="col-type">
                                         <span class="kpi-pill {{ $row['type'] === 'QO' ? 'kpi-pill--qo' : 'kpi-pill--kpi' }}">{{ $row['type'] }}</span>
                                     </td>
@@ -469,7 +488,7 @@
                                             $pct = $isOtd && is_array($cell) ? ($cell['pct'] ?? null) : null;
                                             $title = $isOtd && is_array($cell) ? (($cell['on_time'] ?? 0) . '/' . ($cell['total'] ?? 0)) : '';
                                             $faiPct = $isFaiRej && is_array($cell) ? ($cell['pct'] ?? null) : null;
-                                            $faiClickable = $isFaiRej && is_array($cell) && !empty($cell['total']);
+                                            $faiClickable = $isFaiRej && is_array($cell) && ((int) ($cell['rejects'] ?? 0) > 0);
                                             $faiTone = $isFaiRej ? $pctToneLower($faiPct, $faiGoal) : '';
                                         @endphp
                                         <td
@@ -578,7 +597,7 @@
             </div>
                 </div>
 
-                <div class="col-12 col-lg-2">
+                <div class="col-12 col-lg-2 kpi-report-layout__side">
                     <div class="kpi-sidecards" aria-label="KPI summary">
                         <div class="info-box dashboard-kpi-box" data-accent="blue">
                             <span class="info-box-icon"><i class="fas fa-truck"></i></span>
@@ -642,19 +661,101 @@
                             </div>
                         </div>
 
+                        <div class="info-box dashboard-kpi-box" data-accent="blue">
+                            <span class="info-box-icon"><i class="fas fa-history"></i></span>
+                            <div class="info-box-content">
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">OTD (R12)</div>
+                                        <div class="dashboard-kpi-value">-</div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="text-muted">Pending definition</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <span class="kpi-badge kpi-badge--nodata">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="info-box dashboard-kpi-box" data-accent="green">
                             <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                             <div class="info-box-content">
                                 <div class="dashboard-kpi-top">
                                     <div class="dashboard-kpi-left">
-                                        <div class="dashboard-kpi-label">Sent (Month)</div>
+                                        <div class="dashboard-kpi-label">Sent (Year)</div>
                                         <div class="dashboard-kpi-value">{{ (int) $sentThisMonth }}</div>
                                         <div class="dashboard-kpi-meta">
-                                            <span class="text-muted">Due date month</span>
+                                            <span class="text-muted">Due date year</span>
                                         </div>
                                     </div>
                                     <div class="dashboard-kpi-right">
                                         <span class="kpi-badge kpi-badge--info">Sent</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box dashboard-kpi-box" data-accent="slate">
+                            <span class="info-box-icon"><i class="fas fa-layer-group"></i></span>
+                            <div class="info-box-content">
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">OTD (All Years)</div>
+                                        <div class="dashboard-kpi-value">-</div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="text-muted">Pending definition</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <span class="kpi-badge kpi-badge--nodata">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box dashboard-kpi-box" data-accent="amber">
+                            <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                            <div class="info-box-content">
+                                @php
+                                    $pct = $faiRejYtd['pct'];
+                                    $total = (int) $faiRejYtd['total'];
+                                    $rejects = (int) ($faiRejYtd['rejects'] ?? 0);
+                                    $badgeText = $total ? ($pct !== null && $pct <= $faiGoal ? 'On target' : 'Above goal') : 'No data';
+                                    $badgeClass = !$total ? 'kpi-badge--nodata' : (($pct !== null && $pct <= $faiGoal) ? 'kpi-badge--good' : 'kpi-badge--bad');
+                                @endphp
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">FAI Rej (YTD)</div>
+                                        <div class="dashboard-kpi-value {{ $pct !== null ? $pctToneLower($pct, $faiGoal) : '' }}">
+                                            {{ $pct !== null ? number_format($pct, 1) . '%' : '-' }}
+                                        </div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="dashboard-kpi-goal">Goal {{ number_format($faiGoal, 0) }}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <div class="dashboard-kpi-ratio">{{ $rejects }} / {{ $total }}</div>
+                                        <span class="kpi-badge {{ $badgeClass }}">{{ $badgeText }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box dashboard-kpi-box" data-accent="teal">
+                            <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                            <div class="info-box-content">
+                                <div class="dashboard-kpi-top">
+                                    <div class="dashboard-kpi-left">
+                                        <div class="dashboard-kpi-label">FAI Rej (R12)</div>
+                                        <div class="dashboard-kpi-value">-</div>
+                                        <div class="dashboard-kpi-meta">
+                                            <span class="text-muted">Pending definition</span>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-kpi-right">
+                                        <span class="kpi-badge kpi-badge--nodata">Pending</span>
                                     </div>
                                 </div>
                             </div>
@@ -667,45 +768,64 @@
     </div>
 
     {{-- OTD details modal --}}
-    <div class="modal fade" id="otdDetailModal" tabindex="-1" role="dialog" aria-labelledby="otdDetailModalLabel" aria-hidden="true">
+    <div class="modal fade dashboard-detail-modal" id="otdDetailModal" tabindex="-1" role="dialog" aria-labelledby="otdDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="d-flex flex-column">
-                        <h5 class="modal-title mb-0" id="otdDetailModalLabel">OTD Details</h5>
-                        <small class="text-muted" id="otdDetailMeta">Select a month.</small>
+                    <div class="d-flex align-items-center w-100 pr-2 otd-modal-header-main">
+                        <h5 class="modal-title mb-0 font-weight-bold" id="otdDetailModalLabel">
+                            <i class="fas fa-truck-loading text-primary mr-1"></i> OTD Details
+                        </h5>
+                        <small class="text-muted mb-0 ml-2 text-nowrap" id="otdDetailMeta">Select a month.</small>
                     </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="OTD filter">
-                            <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="all">All</button>
-                            <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
-                            <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
+                    <div class="otd-grid-shell">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="OTD filter">
+                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="all">All</button>
+                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
+                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
+                            </div>
+                            <div class="mx-2 my-1">
+                                <div class="otd-search-box" style="min-width: 240px;">
+                                    <span class="otd-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
+                                    <input
+                                        type="text"
+                                        id="otdDetailSearch"
+                                        class="form-control form-control-sm"
+                                        placeholder="Search..."
+                                        aria-label="Search OTD details"
+                                    >
+                                    <button type="button" id="otdDetailSearchClear" class="otd-search-clear" aria-label="Clear search" title="Clear">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-muted small">Only orders with `status=sent`.</div>
-                    </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="text-center">Work ID</th>
-                                    <th class="text-center">PN</th>
-                                    <th>Part/Description</th>
-                                    <th class="text-center">Customer</th>
-                                    <th class="text-center">Due</th>
-                                    <th class="text-center">Sent</th>
-                                    <th class="text-center">Days</th>
-                                </tr>
-                            </thead>
-                            <tbody id="otdDetailTbody">
-                                <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center otd-col-workid">Work ID</th>
+                                        <th class="text-center otd-col-pn">PN</th>
+                                        <th>Part/Description</th>
+                                        <th class="text-center otd-col-customer">Customer</th>
+                                        <th class="text-center otd-col-due">Due</th>
+                                        <th class="text-center otd-col-sent">Sent</th>
+                                        <th class="text-center">Days</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="otdDetailTbody">
+                                    <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="otdDetailPagination" class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-top"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -716,40 +836,59 @@
     </div>
 
     {{-- FAI rejection details modal --}}
-    <div class="modal fade" id="faiRejDetailModal" tabindex="-1" role="dialog" aria-labelledby="faiRejDetailModalLabel" aria-hidden="true">
+    <div class="modal fade dashboard-detail-modal" id="faiRejDetailModal" tabindex="-1" role="dialog" aria-labelledby="faiRejDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="d-flex flex-column">
-                        <h5 class="modal-title mb-0" id="faiRejDetailModalLabel">Internal FAI Rejection Details</h5>
-                        <small class="text-muted" id="faiRejDetailMeta">Select a month.</small>
+                    <div class="d-flex align-items-center w-100 pr-2 otd-modal-header-main">
+                        <h5 class="modal-title mb-0 font-weight-bold" id="faiRejDetailModalLabel">
+                            <i class="fas fa-clipboard-check text-primary mr-1"></i> Internal FAI Rejection Details
+                        </h5>
+                        <small class="text-muted mb-0 ml-2 text-nowrap" id="faiRejDetailMeta">Select a month.</small>
                     </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
-                        <div class="text-muted small">Orders with `status=sent`, `status_order=active` and at least one `qa_faisummary` FAI `no pass`.</div>
-                    </div>
+                    <div class="otd-grid-shell">
+                        <div class="d-flex align-items-center justify-content-end flex-wrap px-3 py-2 border-bottom">
+                            <div class="mx-2 my-1">
+                                <div class="otd-search-box" style="min-width: 240px;">
+                                    <span class="otd-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
+                                    <input
+                                        type="text"
+                                        id="faiRejDetailSearch"
+                                        class="form-control form-control-sm"
+                                        placeholder="Search..."
+                                        aria-label="Search FAI rejection details"
+                                    >
+                                    <button type="button" id="faiRejDetailSearchClear" class="otd-search-clear" aria-label="Clear search" title="Clear">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="text-center">Work ID</th>
-                                    <th class="text-center">PN</th>
-                                    <th>Part/Description</th>
-                                    <th class="text-center">Customer</th>
-                                    <th class="text-center">Due</th>
-                                    <th class="text-center">Sent</th>
-                                    <th class="text-center">Fail Ops</th>
-                                </tr>
-                            </thead>
-                            <tbody id="faiRejDetailTbody">
-                                <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left fai-col-workid">Work ID</th>
+                                        <th class="text-left fai-col-pn">PN</th>
+                                        <th class="fai-col-desc">Part/Description</th>
+                                        <th class="text-left fai-col-customer">Customer</th>
+                                        <th class="text-center fai-col-due">Due</th>
+                                        <th class="text-center fai-col-sent">Sent</th>
+                                        <th class="text-left fai-col-failops">Fail Ops</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="faiRejDetailTbody">
+                                    <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="faiRejDetailPagination" class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-top"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
