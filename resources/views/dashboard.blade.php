@@ -207,9 +207,6 @@
                     <i class="fas fa-chart-bar mr-2"></i>
                     Quality Objectives &amp; KPIs
                 </h3>
-                <div class="kpi-main-subtitle">
-                    To achieve the Quality Policy, the following QOs and KPIs are set forth by ACC Precision, Inc. and measured/analyzed/evaluated; they may be updated as needed.
-                </div>
             </div>
         </div>
 
@@ -442,7 +439,7 @@
                         </thead>
                         <tbody>
                             @foreach($rows as $row)
-                                <tr class="{{ $row['type'] === 'QO' ? 'row-qo' : '' }}">
+                                <tr class="{{ $row['type'] === 'QO' ? 'row-qo' : '' }}" data-kpi-row="{{ $row['key'] ?? '' }}">
                                     <td class="col-type">
                                         <span class="kpi-pill {{ $row['type'] === 'QO' ? 'kpi-pill--qo' : 'kpi-pill--kpi' }}">{{ $row['type'] }}</span>
                                     </td>

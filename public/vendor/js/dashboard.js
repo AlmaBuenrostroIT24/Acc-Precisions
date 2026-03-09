@@ -46,6 +46,7 @@
                 $container.replaceWith(next);
                 DASHBOARD.year = parseInt(year, 10) || DASHBOARD.year;
                 normalizeDashboardUrl();
+                refreshKpiMetaUi();
             })
             .fail(function () {
                 window.location.href = url.toString();
@@ -239,8 +240,48 @@
         $('#faiRejDetailSearchClear').toggleClass('is-visible', hasValue);
     }
 
+    function formatNowEs() {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('es-ES', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).formatToParts(now);
+        const pick = function (t) { return (parts.find(function (p) { return p.type === t; }) || {}).value || ''; };
+        const month = String(pick('month') || '').replace('.', '');
+        const monthCap = month ? (month.charAt(0).toUpperCase() + month.slice(1)) : '';
+        return monthCap + '/' + pick('day') + '/' + pick('year') + ' ' + pick('hour') + ':' + pick('minute');
+    }
+
+    function refreshKpiMetaUi() {
+        // Default tooltip for badges if not explicitly set.
+        $('.kpi-sidecards .kpi-badge').each(function () {
+            const $b = $(this);
+            if (!$b.attr('title')) {
+                $b.attr('title', String($b.text() || '').trim());
+            }
+        });
+    }
+
+    function focusKpiRow(rowKey) {
+        if (!rowKey) return;
+        const $row = $('.kpi-report tbody tr[data-kpi-row="' + rowKey + '"]').first();
+        if (!$row.length) return;
+
+        $row.addClass('kpi-row-focus');
+        const target = $row[0];
+        if (target && typeof target.scrollIntoView === 'function') {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        }
+        setTimeout(function () { $row.removeClass('kpi-row-focus'); }, 1300);
+    }
+
     $(function () {
         normalizeDashboardUrl();
+        refreshKpiMetaUi();
 
         // Year select
         $(document).on('change', '#dashboardYearSelect', function () {
@@ -253,6 +294,17 @@
             const currentYear = String(new Date().getFullYear());
             $('#dashboardYearSelect').val(currentYear);
             refreshDashboardKpiContainer(currentYear);
+        });
+
+        $(document).on('click', '.kpi-sidecards .dashboard-kpi-box', function () {
+            const label = String($(this).find('.dashboard-kpi-label').first().text() || '').toLowerCase();
+            if (label.indexOf('fai rej') !== -1) {
+                focusKpiRow('fai_rej');
+                return;
+            }
+            if (label.indexOf('otd') !== -1) {
+                focusKpiRow('customer_otd');
+            }
         });
 
         // OTD cell click -> open modal + load details
