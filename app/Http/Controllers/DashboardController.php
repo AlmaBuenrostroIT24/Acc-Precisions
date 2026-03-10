@@ -13,9 +13,10 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $year = $this->normalizeYear((int) $request->query('year', now()->year));
+        $availableYears = $this->getDashboardYears();
+        $year = $this->normalizeYear((int) $request->query('year', now()->year), $availableYears);
 
-        return view('dashboard', $this->buildDashboardPayload($year));
+        return view('dashboard', $this->buildDashboardPayload($year, $availableYears));
     }
 
     public function otdDetails(Request $request)
@@ -23,7 +24,7 @@ class DashboardController extends Controller
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month');
 
-        if ($year < 2000 || $year > (int) now()->year) {
+        if ($year < 2000 || $year > 3000) {
             return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid year'], 422);
         }
         if ($month < 1 || $month > 12) {
@@ -98,7 +99,7 @@ class DashboardController extends Controller
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month');
 
-        if ($year < 2000 || $year > (int) now()->year) {
+        if ($year < 2000 || $year > 3000) {
             return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid year'], 422);
         }
         if ($month < 1 || $month > 12) {
@@ -163,8 +164,9 @@ class DashboardController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $year = $this->normalizeYear((int) $request->query('year', now()->year));
-        $payload = $this->buildDashboardPayload($year);
+        $availableYears = $this->getDashboardYears();
+        $year = $this->normalizeYear((int) $request->query('year', now()->year), $availableYears);
+        $payload = $this->buildDashboardPayload($year, $availableYears);
 
         $pdf = Pdf::loadView('dashboard.export_pdf', $payload)
             ->setPaper('letter', 'landscape');
@@ -174,8 +176,9 @@ class DashboardController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $year = $this->normalizeYear((int) $request->query('year', now()->year));
-        $payload = $this->buildDashboardPayload($year);
+        $availableYears = $this->getDashboardYears();
+        $year = $this->normalizeYear((int) $request->query('year', now()->year), $availableYears);
+        $payload = $this->buildDashboardPayload($year, $availableYears);
 
         return Excel::download(
             new DashboardKpiExport(
@@ -191,19 +194,39 @@ class DashboardController extends Controller
         );
     }
 
-    private function normalizeYear(int $year): int
+    private function normalizeYear(int $year, array $availableYears = []): int
     {
-        $currentYear = (int) now()->year;
-        if ($year < 2000 || $year > $currentYear) {
-            return $currentYear;
+        if ($year < 2000 || $year > 3000) {
+            return !empty($availableYears) ? (int) $availableYears[0] : (int) now()->year;
+        }
+
+        if (!empty($availableYears) && !in_array($year, $availableYears, true)) {
+            return (int) $availableYears[0];
         }
 
         return $year;
     }
 
-    private function buildDashboardPayload(int $year): array
+    private function getDashboardYears(): array
+    {
+        $years = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
+            ->selectRaw('DISTINCT YEAR(due_date) as y')
+            ->orderBy('y', 'desc')
+            ->pluck('y')
+            ->map(fn ($y) => (int) $y)
+            ->filter(fn ($y) => $y >= 2000 && $y <= 3000)
+            ->values()
+            ->all();
+        
+        return array_values(array_unique($years));
+    }
+
+    private function buildDashboardPayload(int $year, ?array $availableYears = null): array
     {
         $currentYear = (int) now()->year;
+        $dashboardYears = $availableYears ?? $this->getDashboardYears();
 
         $otdBaseQuery = DB::table('orders_schedule')
             ->whereNotNull('due_date')
@@ -320,6 +343,7 @@ class DashboardController extends Controller
 
         return [
             'dashboardYear' => $year,
+            'dashboardYears' => $dashboardYears,
             'customerOtdCells' => $customerOtdCells,
             'faiRejCells' => $faiRejCells,
             'faiRejYtd' => $faiRejYtd,

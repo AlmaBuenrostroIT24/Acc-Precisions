@@ -82,7 +82,7 @@
 
         $totalCols = 3 + count($months) + 4 + 4; // + quarter totals + YTD + R12 + Goal + Trend
 
-        $years = range((int) now()->year, 2025);
+        $years = $dashboardYears ?? [(int) now()->year];
     @endphp
 
     <div class="row mb-2 dashboard-kpi-5" style="row-gap:.5rem;">
