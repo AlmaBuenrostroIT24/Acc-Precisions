@@ -505,12 +505,12 @@
                                             @if($isOtd)
                                                 {{ $pct !== null ? number_format($pct, 1) . '%' : '' }}
                                                 @if(is_array($cell) && !empty($cell['total']))
-                                                    <span class="kpi-cell-meta">({{ (int) $cell['total'] }})</span>
+                                                    <span class="kpi-cell-meta d-block">({{ (int) $cell['total'] }})</span>
                                                 @endif
                                             @elseif($isFaiRej && is_array($cell))
                                                 {{ ($cell['pct'] ?? null) !== null ? number_format((float) $cell['pct'], 1) . '%' : '' }}
                                                 @if(!empty($cell['total']))
-                                                    <span class="kpi-cell-meta">({{ (int) ($cell['rejects'] ?? 0) }}/{{ (int) $cell['total'] }})</span>
+                                                    <span class="kpi-cell-meta d-block">({{ (int) ($cell['rejects'] ?? 0) }}/{{ (int) $cell['total'] }})</span>
                                                 @endif
                                             @else
                                                 {{ is_array($cell) ? '' : ($cell ?? '') }}
@@ -527,7 +527,7 @@
                                             <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ $qpct !== null ? $pctTone($qpct) : '' }}" title="{{ $qtitle }}">
                                                 {{ $qpct !== null ? number_format($qpct, 1) . '%' : '' }}
                                                 @if(!empty($qt['total']))
-                                                    <span class="kpi-cell-meta">({{ (int) $qt['total'] }})</span>
+                                                    <span class="kpi-cell-meta d-block">({{ (int) $qt['total'] }})</span>
                                                 @endif
                                             </td>
                                         @elseif($isFaiRej && in_array($m, [3, 6, 9, 12], true))
@@ -540,7 +540,7 @@
                                             <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ $qpct !== null ? $pctToneLower($qpct, $faiGoal) : '' }}" title="{{ $qtitle }}">
                                                 {{ $qpct !== null ? number_format((float) $qpct, 1) . '%' : '' }}
                                                 @if(!empty($qt['total']))
-                                                    <span class="kpi-cell-meta">({{ (int) ($qt['rejects'] ?? 0) }}/{{ (int) $qt['total'] }})</span>
+                                                    <span class="kpi-cell-meta d-block">({{ (int) ($qt['rejects'] ?? 0) }}/{{ (int) $qt['total'] }})</span>
                                                 @endif
                                             </td>
                                         @elseif(in_array($m, [3, 6, 9, 12], true))
@@ -564,9 +564,9 @@
                                             {{ number_format((float) $ytdPct, 1) . '%' }}
                                         @endif
                                         @if($isOtd && !empty($otdYtd['total']))
-                                            <span class="kpi-cell-meta">({{ (int) $otdYtd['total'] }})</span>
+                                            <span class="kpi-cell-meta d-block">({{ (int) $otdYtd['total'] }})</span>
                                         @elseif($isFaiRej && !empty($faiRejYtd['total']))
-                                            <span class="kpi-cell-meta">({{ (int) ($faiRejYtd['rejects'] ?? 0) }}/{{ (int) $faiRejYtd['total'] }})</span>
+                                            <span class="kpi-cell-meta d-block">({{ (int) ($faiRejYtd['rejects'] ?? 0) }}/{{ (int) $faiRejYtd['total'] }})</span>
                                         @endif
                                     </td>
                                     @php
@@ -581,9 +581,9 @@
                                             {{ number_format((float) $r12Pct, 1) . '%' }}
                                         @endif
                                         @if($isOtd && !empty($otdR12['total']))
-                                            <span class="kpi-cell-meta">({{ (int) $otdR12['total'] }})</span>
+                                            <span class="kpi-cell-meta d-block">({{ (int) $otdR12['total'] }})</span>
                                         @elseif($isFaiRej && !empty($faiRejR12['total']))
-                                            <span class="kpi-cell-meta">({{ (int) ($faiRejR12['rejects'] ?? 0) }}/{{ (int) $faiRejR12['total'] }})</span>
+                                            <span class="kpi-cell-meta d-block">({{ (int) ($faiRejR12['rejects'] ?? 0) }}/{{ (int) $faiRejR12['total'] }})</span>
                                         @endif
                                     </td>
 

@@ -42,19 +42,36 @@ class DashboardController extends Controller
                 'PN',
                 'Part_description',
                 'costumer',
+                'status',
                 'due_date',
                 'sent_at',
             ])
             ->whereNotNull('due_date')
-            ->whereNotNull('sent_at')
-            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
-            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'")
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
             ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
 
         if ($filter === 'ontime') {
-            $query->whereRaw('DATE(sent_at) <= DATE(due_date)');
+            $query->where(function ($q) {
+                $q->where(function ($q1) {
+                    $q1->whereRaw("LOWER(TRIM(status)) = 'sent'")
+                        ->whereNotNull('sent_at')
+                        ->whereRaw('DATE(sent_at) <= DATE(due_date)');
+                })->orWhere(function ($q2) {
+                    $q2->whereRaw("COALESCE(LOWER(TRIM(status)), '') <> 'sent'")
+                        ->whereRaw('DATE(due_date) >= CURDATE()');
+                });
+            });
         } elseif ($filter === 'late') {
-            $query->whereRaw('DATE(sent_at) > DATE(due_date)');
+            $query->where(function ($q) {
+                $q->where(function ($q1) {
+                    $q1->whereRaw("LOWER(TRIM(status)) = 'sent'")
+                        ->whereNotNull('sent_at')
+                        ->whereRaw('DATE(sent_at) > DATE(due_date)');
+                })->orWhere(function ($q2) {
+                    $q2->whereRaw("COALESCE(LOWER(TRIM(status)), '') <> 'sent'")
+                        ->whereRaw('DATE(due_date) < CURDATE()');
+                });
+            });
         }
 
         $rows = $query
@@ -88,17 +105,15 @@ class DashboardController extends Controller
             return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month'], 422);
         }
 
-        $base = DB::table('orders_schedule')
-            ->whereNotNull('due_date')
-            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
-            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
-            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
+        $base = DB::table('qa_faisummary as qfs')
+            ->join('orders_schedule', 'orders_schedule.id', '=', 'qfs.order_schedule_id')
+            ->whereNotNull('qfs.date')
+            ->whereRaw('YEAR(qfs.date) = ? AND MONTH(qfs.date) = ?', [$year, $month])
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'");
 
-        $total = (clone $base)->count();
+        $total = (int) (clone $base)->count('qfs.id');
 
         $rows = (clone $base)
-            ->join('qa_faisummary as qfs', 'qfs.order_schedule_id', '=', 'orders_schedule.id')
-            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
             ->selectRaw('
                 orders_schedule.id,
@@ -108,6 +123,7 @@ class DashboardController extends Controller
                 orders_schedule.costumer,
                 orders_schedule.due_date,
                 orders_schedule.sent_at,
+                MAX(qfs.date) as fai_date,
                 COUNT(*) as fail_ops,
                 GROUP_CONCAT(DISTINCT NULLIF(TRIM(qfs.operation), \'\') ORDER BY qfs.operation SEPARATOR \', \') as fail_operations
             ')
@@ -120,12 +136,14 @@ class DashboardController extends Controller
                 'orders_schedule.due_date',
                 'orders_schedule.sent_at',
             )
-            ->orderBy('orders_schedule.sent_at', 'desc')
+            ->orderBy('fai_date', 'desc')
             ->orderBy('orders_schedule.due_date', 'desc')
             ->limit(2000)
             ->get();
 
-        $rejects = $rows->count();
+        $rejects = (int) (clone $base)
+            ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
+            ->count('qfs.id');
         $pct = $total > 0 ? round(($rejects / $total) * 100, 1) : null;
 
         $html = view('dashboard.partials.fai_rej_details_rows', [
@@ -187,22 +205,26 @@ class DashboardController extends Controller
     {
         $currentYear = (int) now()->year;
 
-        $baseQuery = DB::table('orders_schedule')
+        $otdBaseQuery = DB::table('orders_schedule')
             ->whereNotNull('due_date')
-            ->whereNotNull('sent_at')
-            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
-            ->whereRaw("LOWER(TRIM(status_order)) != 'inactive'");
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'");
 
         $now = now();
         $endDate = $year === $currentYear ? $now->copy()->endOfDay() : $now->copy()->setDate($year, 12, 31)->endOfDay();
         $ytdStart = $endDate->copy()->startOfYear();
         $r12Start = $endDate->copy()->subMonthsNoOverflow(12)->addDay()->startOfDay();
 
-        $otdByMonth = (clone $baseQuery)
+        $otdByMonth = (clone $otdBaseQuery)
             ->selectRaw("
                 MONTH(due_date) as m,
                 COUNT(*) as total,
-                SUM(CASE WHEN DATE(sent_at) <= DATE(due_date) THEN 1 ELSE 0 END) as on_time
+                SUM(
+                    CASE
+                        WHEN LOWER(TRIM(status)) = 'sent' AND sent_at IS NOT NULL AND DATE(sent_at) <= DATE(due_date) THEN 1
+                        WHEN COALESCE(LOWER(TRIM(status)), '') <> 'sent' AND DATE(due_date) >= CURDATE() THEN 1
+                        ELSE 0
+                    END
+                ) as on_time
             ")
             ->whereRaw('YEAR(due_date) = ?', [$year])
             ->groupBy('m')
@@ -227,25 +249,25 @@ class DashboardController extends Controller
         }
 
         // Internal FAI Rejection Rate (Rej./Tot.)
-        // Denominator: orders_schedule (sent + active). Numerator: orders that have at least one FAI "no pass" in qa_faisummary.
-        $faiBase = DB::table('orders_schedule')
-            ->whereNotNull('due_date')
-            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
-            ->whereRaw("LOWER(TRIM(status_order)) = 'active'");
+        // Denominator: all FAI records in the month.
+        // Numerator: FAI records with "no pass".
+        $faiBase = DB::table('qa_faisummary as qfs')
+            ->join('orders_schedule', 'orders_schedule.id', '=', 'qfs.order_schedule_id')
+            ->whereNotNull('qfs.date')
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'");
 
         $faiTotalsByMonth = (clone $faiBase)
-            ->selectRaw('MONTH(due_date) as m, COUNT(*) as total')
-            ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->selectRaw('MONTH(qfs.date) as m, COUNT(*) as total')
+            ->whereRaw('YEAR(qfs.date) = ?', [$year])
             ->groupBy('m')
             ->get()
             ->keyBy('m');
 
         $faiRejectsByMonth = (clone $faiBase)
-            ->join('qa_faisummary as qfs', 'qfs.order_schedule_id', '=', 'orders_schedule.id')
-            ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->whereRaw('YEAR(qfs.date) = ?', [$year])
             ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
-            ->selectRaw('MONTH(due_date) as m, COUNT(DISTINCT orders_schedule.id) as rejects')
+            ->selectRaw('MONTH(qfs.date) as m, COUNT(*) as rejects')
             ->groupBy('m')
             ->get()
             ->keyBy('m');
@@ -269,16 +291,19 @@ class DashboardController extends Controller
         // "YTD" on this dashboard means full-year (Jan 1 → Dec 31) for the selected year.
         $yearStart = $endDate->copy()->startOfYear();
         $yearEnd = $endDate->copy()->endOfYear();
-        $otdYtd = $this->computeOtdForRange(clone $baseQuery, $yearStart, $yearEnd);
-        $otdR12 = $this->computeOtdForRange(clone $baseQuery, $r12Start, $endDate);
-        $otdAllYears = $this->computeOtdAllTime(clone $baseQuery);
+        $otdYtd = $this->computeOtdForRange(clone $otdBaseQuery, $yearStart, $yearEnd);
+        $otdR12 = $this->computeOtdForRange(clone $otdBaseQuery, $r12Start, $endDate);
+        $otdAllYears = $this->computeOtdAllTime(clone $otdBaseQuery);
 
         $faiRejYtd = $this->computeFaiRejForRange($yearStart, $yearEnd);
         $faiRejR12 = $this->computeFaiRejForRange($r12Start, $endDate);
 
         $currentMonth = (int) $endDate->month;
-        $otdThisMonth = $this->computeOtdForMonth(clone $baseQuery, $year, $currentMonth);
-        $sentThisMonth = (clone $baseQuery)
+        $otdThisMonth = $this->computeOtdForMonth(clone $otdBaseQuery, $year, $currentMonth);
+        $sentThisMonth = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
+            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
             ->whereRaw('YEAR(due_date) = ?', [$year])
             ->count();
 
@@ -331,7 +356,16 @@ class DashboardController extends Controller
     private function computeOtdForMonth($baseQuery, int $year, int $month): array
     {
         $row = $baseQuery
-            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN DATE(sent_at) <= DATE(due_date) THEN 1 ELSE 0 END) as on_time')
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(
+                    CASE
+                        WHEN LOWER(TRIM(status)) = 'sent' AND sent_at IS NOT NULL AND DATE(sent_at) <= DATE(due_date) THEN 1
+                        WHEN COALESCE(LOWER(TRIM(status)), '') <> 'sent' AND DATE(due_date) >= CURDATE() THEN 1
+                        ELSE 0
+                    END
+                ) as on_time
+            ")
             ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month])
             ->first();
 
@@ -345,7 +379,16 @@ class DashboardController extends Controller
     private function computeOtdForRange($baseQuery, $startDate, $endDate): array
     {
         $row = $baseQuery
-            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN DATE(sent_at) <= DATE(due_date) THEN 1 ELSE 0 END) as on_time')
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(
+                    CASE
+                        WHEN LOWER(TRIM(status)) = 'sent' AND sent_at IS NOT NULL AND DATE(sent_at) <= DATE(due_date) THEN 1
+                        WHEN COALESCE(LOWER(TRIM(status)), '') <> 'sent' AND DATE(due_date) >= CURDATE() THEN 1
+                        ELSE 0
+                    END
+                ) as on_time
+            ")
             ->whereBetween('due_date', [$startDate, $endDate])
             ->first();
 
@@ -358,20 +401,17 @@ class DashboardController extends Controller
 
     private function computeFaiRejForRange($startDate, $endDate): array
     {
-        $base = DB::table('orders_schedule')
-            ->whereNotNull('due_date')
-            ->whereRaw("LOWER(TRIM(status)) = 'sent'")
-            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
-            ->whereBetween('due_date', [$startDate, $endDate]);
+        $base = DB::table('qa_faisummary as qfs')
+            ->join('orders_schedule', 'orders_schedule.id', '=', 'qfs.order_schedule_id')
+            ->whereNotNull('qfs.date')
+            ->whereBetween('qfs.date', [$startDate, $endDate])
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'");
 
-        $total = (int) (clone $base)->count();
+        $total = (int) (clone $base)->count('qfs.id');
 
         $rejects = (int) (clone $base)
-            ->join('qa_faisummary as qfs', 'qfs.order_schedule_id', '=', 'orders_schedule.id')
-            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
-            ->selectRaw('COUNT(DISTINCT orders_schedule.id) as rejects')
-            ->value('rejects');
+            ->count('qfs.id');
 
         $pct = $total > 0 ? round(($rejects / $total) * 100, 1) : null;
 
@@ -381,7 +421,16 @@ class DashboardController extends Controller
     private function computeOtdAllTime($baseQuery): array
     {
         $row = $baseQuery
-            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN DATE(sent_at) <= DATE(due_date) THEN 1 ELSE 0 END) as on_time')
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(
+                    CASE
+                        WHEN LOWER(TRIM(status)) = 'sent' AND sent_at IS NOT NULL AND DATE(sent_at) <= DATE(due_date) THEN 1
+                        WHEN COALESCE(LOWER(TRIM(status)), '') <> 'sent' AND DATE(due_date) >= CURDATE() THEN 1
+                        ELSE 0
+                    END
+                ) as on_time
+            ")
             ->first();
 
         $total = (int) ($row->total ?? 0);

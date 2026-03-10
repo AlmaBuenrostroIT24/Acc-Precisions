@@ -2,8 +2,22 @@
     @php
         $due = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->startOfDay() : null;
         $sent = $r->sent_at ? \Carbon\Carbon::parse($r->sent_at)->startOfDay() : null;
-        $delta = ($due && $sent) ? $sent->diffInDays($due, false) : null; // negative => late
-        $isOnTime = $delta !== null ? ($delta >= 0) : false;
+        $status = strtolower(trim((string) ($r->status ?? '')));
+        $today = now()->startOfDay();
+        $isSent = $status === 'sent' && $sent !== null;
+        $delta = null;
+        $isOnTime = false;
+
+        if ($due) {
+            if ($isSent) {
+                $delta = $sent->diffInDays($due, false); // negative => late
+                $isOnTime = $delta >= 0;
+            } else {
+                // Not sent: overdue due_date is late; due today/future is still on time.
+                $delta = $today->diffInDays($due, false); // negative => overdue
+                $isOnTime = $due->gte($today);
+            }
+        }
         $monthEs = [1 => 'ene', 2 => 'feb', 3 => 'mar', 4 => 'abr', 5 => 'may', 6 => 'jun', 7 => 'jul', 8 => 'ago', 9 => 'sep', 10 => 'oct', 11 => 'nov', 12 => 'dic'];
         $fmtDate = function ($d) use ($monthEs) {
             if (!$d) return '';

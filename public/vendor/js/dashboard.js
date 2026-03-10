@@ -107,6 +107,7 @@
     }
 
     function applySearchAndPaginate(opts) {
+        const colspan = Number(opts.colspan || 7);
         const needle = String(opts.query || '').trim().toLowerCase();
         const uiState = opts.uiState;
         uiState.search = needle;
@@ -152,7 +153,7 @@
         pagedRows.forEach(function ($row) { $row.show(); });
 
         if (matchedRows.length === 0) {
-            $tbody.append('<tr id="' + opts.noMatchId + '"><td colspan="7" class="text-center text-muted py-3">No matching records.</td></tr>');
+            $tbody.append('<tr id="' + opts.noMatchId + '"><td colspan="' + colspan + '" class="text-center text-muted py-3">No matching records.</td></tr>');
             renderPager($(opts.pagerSelector), opts.pageClass, 0, 0, 1, opts.ariaLabel);
             return;
         }
@@ -170,6 +171,7 @@
             noMatchId: 'otdDetailNoMatchRow',
             pageClass: 'js-otd-page',
             ariaLabel: 'OTD pagination',
+            colspan: 7,
         });
     }
 
@@ -183,6 +185,7 @@
             noMatchId: 'faiRejDetailNoMatchRow',
             pageClass: 'js-fai-page',
             ariaLabel: 'FAI pagination',
+            colspan: 7,
         });
     }
 
