@@ -742,48 +742,22 @@ class QaFaiSummaryController extends Controller
     {
         $data = $this->getFaiSummaryData($request);
 
-        /** @var \Illuminate\Support\Collection $inspections */
-        $inspections = $data['inspections'];
-
-        // ===============================
-        // SOLO para failedOrders:
-        // excluir órdenes cuya inspección esté COMPLETED
-        // ===============================
-        $failedOrders = $inspections
-
-            // A) Solo inspecciones FAI y con orden asociada
-            ->filter(function ($i) {
-                return $i->orderSchedule
-                    && strcasecmp(trim((string)$i->insp_type), 'FAI') === 0;
+        // ALERTAS: siempre tomar TODOS los pendientes (sin filtrar por fecha de la tabla).
+        $failedOrders = QaFaiSummary::with('orderSchedule')
+            ->whereRaw("UPPER(TRIM(insp_type)) = 'FAI'")
+            ->whereHas('orderSchedule', function ($q) {
+                $q->whereRaw("LOWER(TRIM(COALESCE(status_inspection,''))) <> 'completed'");
             })
-
-            // B) EXCLUIR órdenes COMPLETED (solo para chips)
-            ->filter(function ($i) {
-                return strtolower($i->orderSchedule->status_inspection ?? '') !== 'completed';
-            })
-
-            // C) Agrupar por orden
-            ->groupBy(function ($i) {
-                return $i->order_schedule_id;
-            })
-
-            // D) Último FAI
+            ->orderByDesc('date')
+            ->get()
+            ->groupBy('order_schedule_id')
             ->map(function ($group) {
-                return $group->sortByDesc('date')->first();
+                return $group->first();
             })
-
-            // E) Último FAI sea FAIL/NO PASS
             ->filter(function ($latest) {
                 $result = strtolower(trim((string) $latest->results));
-
-                return in_array($result, [
-                    'fail',
-                    'no pass',
-                    'nopass',
-                    'no_pass'
-                ], true);
+                return in_array($result, ['fail', 'no pass', 'nopass', 'no_pass'], true);
             })
-
             ->values();
 
         $data['failedOrders'] = $failedOrders;
@@ -799,6 +773,12 @@ class QaFaiSummaryController extends Controller
     protected function getFaiSummaryData(Request $request): array
     {
         $query = QaFaiSummary::with('orderSchedule');
+        $focusOrderId = (int) $request->input('focus_order_id', 0);
+        $focusWorkId = trim((string) $request->input('focus_work_id', ''));
+        $focusPn = trim((string) $request->input('focus_pn', ''));
+        $focusMonths = (int) $request->input('focus_months', 12);
+        $focusMonths = max(1, min($focusMonths, 60)); // configurable (1..60)
+        $globalSearch = trim((string) $request->input('q', ''));
 
         // === filtros EXACTOS como los del formulario ===
         if ($request->filled('operator')) {
@@ -813,17 +793,77 @@ class QaFaiSummaryController extends Controller
             $query->where('loc_inspection', $request->location);
         }
 
+        // Filtro proveniente de chips FAILED FAI ALERTS (historial completo de la orden).
+        if ($focusOrderId > 0) {
+            $focusOrder = OrderSchedule::query()
+                ->select('id', 'work_id', 'PN')
+                ->find($focusOrderId);
+
+            if ($focusOrder) {
+                $focusWork = trim((string) $focusOrder->work_id);
+                $focusPart = trim((string) $focusOrder->PN);
+
+                $query->where(function ($q) use ($focusOrderId, $focusWork, $focusPart) {
+                    // Match exacto por id y también por job+part para incluir histórico de meses anteriores.
+                    $q->where('order_schedule_id', $focusOrderId)
+                        ->orWhereHas('orderSchedule', function ($os) use ($focusWork, $focusPart) {
+                            if ($focusWork !== '') {
+                                $os->where('work_id', $focusWork);
+                            }
+                            if ($focusPart !== '') {
+                                $os->where('PN', $focusPart);
+                            }
+                        });
+                });
+            } else {
+                $query->where('order_schedule_id', $focusOrderId);
+            }
+        } elseif ($focusWorkId !== '' || $focusPn !== '') {
+            $query->whereHas('orderSchedule', function ($q) use ($focusWorkId, $focusPn) {
+                if ($focusWorkId !== '') $q->where('work_id', $focusWorkId);
+                if ($focusPn !== '') $q->where('PN', $focusPn);
+            });
+        }
+
+        // Cuando el filtro viene de chip, limitar histórico para mantener rendimiento.
+        if ($focusOrderId > 0 || $focusWorkId !== '' || $focusPn !== '') {
+            $query->where('date', '>=', now()->subMonthsNoOverflow($focusMonths)->startOfDay());
+        }
+
         // Filtros de fecha (year/month/day) según tu lógica actual
-        if ($request->filled('year')) {
-            $query->whereYear('date', $request->year);
-        }
+        if ($globalSearch !== '') {
+            $query->where(function ($q) use ($globalSearch) {
+                $like = '%' . $globalSearch . '%';
+                $q->where('operator', 'like', $like)
+                    ->orWhere('inspector', 'like', $like)
+                    ->orWhere('loc_inspection', 'like', $like)
+                    ->orWhere('operation', 'like', $like)
+                    ->orWhere('insp_type', 'like', $like)
+                    ->orWhere('results', 'like', $like)
+                    ->orWhere('station', 'like', $like)
+                    ->orWhere('method', 'like', $like)
+                    ->orWhere('sb_is', 'like', $like)
+                    ->orWhere('observation', 'like', $like)
+                    ->orWhereHas('orderSchedule', function ($os) use ($like) {
+                        $os->where('work_id', 'like', $like)
+                            ->orWhere('PN', 'like', $like);
+                    });
+            });
+        } else {
+            if ($request->filled('year')) {
+                $query->whereYear('date', $request->year);
+            }
 
-        if ($request->filled('month')) {
-            $query->whereMonth('date', $request->month);
-        }
+            if ($request->filled('month')) {
+                $query->whereMonth('date', $request->month);
+            }
 
-        if ($request->filled('day')) {
-            $query->whereDate('date', $request->day);
+            if ($request->filled('day')) {
+                $query->whereDate('date', $request->day);
+            } elseif (!$request->filled('year') && !$request->filled('month') && $focusOrderId <= 0 && $focusWorkId === '' && $focusPn === '') {
+                // Rendimiento: por defecto limitar al mes actual y evitar cargar todo el historial.
+                $query->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
+            }
         }
 
         $inspections = $query->orderByDesc('date')->get();
@@ -2086,3 +2126,4 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 }
+

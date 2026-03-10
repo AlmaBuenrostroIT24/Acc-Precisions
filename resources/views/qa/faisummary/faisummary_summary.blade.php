@@ -139,6 +139,7 @@
                             <div class="fai-alert-body d-flex flex-wrap mt-2">
                                 @foreach($failedOrders as $fail)
                                 <div class="fai-chip"
+                                    data-order-id="{{ (int) ($fail->order_schedule_id ?? 0) }}"
                                     data-work-id="{{ trim($fail->orderSchedule->work_id ?? '') }}"
                                     data-pn="{{ trim($fail->orderSchedule->PN ?? '') }}"
                                     title="Last FAI: {{ \Carbon\Carbon::parse($fail->date)->format('M d, Y H:i') }}">
@@ -426,7 +427,7 @@
                                     <i class="fas fa-search"></i>
                                 </span>
                             </div>
-                            <input type="text" id="globalSearch" class="form-control" placeholder="Search in table…" autocomplete="off">
+                            <input type="text" id="globalSearch" name="q" class="form-control" placeholder="Search in table..." autocomplete="off" value="{{ request('q') }}">
                             <div class="input-group-append">
                                 <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
                                     <i class="fas fa-times"></i>
@@ -1341,6 +1342,28 @@
 <script src="{{ asset('vendor/js/date-filters.js') }}"></script>
 <script>
     $(document).ready(function() {
+        // En refresh (F5), volver al periodo vigente y limpiar foco de chips.
+        const navEntry = performance.getEntriesByType('navigation')[0];
+        if (navEntry && navEntry.type === 'reload') {
+            const url = new URL(window.location.href);
+            const now = new Date();
+            const yearNow = String(now.getFullYear());
+            const monthNow = String(now.getMonth() + 1);
+
+            const prev = url.toString();
+            url.searchParams.delete('focus_order_id');
+            url.searchParams.delete('focus_work_id');
+            url.searchParams.delete('focus_pn');
+            url.searchParams.delete('focus_months');
+            url.searchParams.delete('day');
+            url.searchParams.set('year', yearNow);
+            url.searchParams.set('month', monthNow);
+
+            if (url.toString() !== prev) {
+                window.location.replace(url.toString());
+                return;
+            }
+        }
 
         // =========================
         //  DataTable
@@ -1367,6 +1390,18 @@
         // Filtro inicial: mes actual (solo si no hay mes ni año) o el mes elegido
         function applyMonthFilter() {
             if (!$.fn.DataTable.isDataTable('#faiTable')) return;
+            const params = new URLSearchParams(window.location.search);
+            const hasFocusFilter =
+                (params.get('focus_order_id') || '').trim() !== '' ||
+                (params.get('focus_work_id') || '').trim() !== '' ||
+                (params.get('focus_pn') || '').trim() !== '';
+            const hasGlobalSearch = (params.get('q') || '').trim() !== '';
+            if (hasFocusFilter || hasGlobalSearch) {
+                // Si estamos filtrando por chip FAILED FAI ALERTS, no limitar por mes en cliente.
+                faiDT.column(0).search('', true, false).draw();
+                return;
+            }
+
             const monthVal = ($('#month').val() || '').trim();
             const yearVal = ($('#year').val() || '').trim();
 
@@ -1407,9 +1442,27 @@
             const $input = $(inputId);
             if (!$input.length) return;
             const handler = debounce(function() {
-                const val = this.value || '';
-                faiDT.search(val).draw();
-            }, 200);
+                const val = (this.value || '').trim();
+                const url = new URL(window.location.href);
+
+                if (val) {
+                    url.searchParams.set('q', val);
+                    // Search global: sin limitar por fecha/foco para buscar en todos los aÃ±os.
+                    url.searchParams.delete('year');
+                    url.searchParams.delete('month');
+                    url.searchParams.delete('day');
+                    url.searchParams.delete('focus_order_id');
+                    url.searchParams.delete('focus_work_id');
+                    url.searchParams.delete('focus_pn');
+                    url.searchParams.delete('focus_months');
+                } else {
+                    url.searchParams.delete('q');
+                }
+
+                if (url.toString() !== window.location.href) {
+                    window.location.assign(url.toString());
+                }
+            }, 400);
             $input.on('input', handler);
             $input.on('keydown', function(e) {
                 if (e.key === 'Enter') e.preventDefault();
@@ -1417,8 +1470,13 @@
             if (clearId) {
                 $(clearId).on('click', function() {
                     $input.val('');
-                    faiDT.search('').draw();
-                    $input.trigger('focus');
+                    const url = new URL(window.location.href);
+                    const now = new Date();
+                    url.searchParams.delete('q');
+                    url.searchParams.delete('day');
+                    url.searchParams.set('year', String(now.getFullYear()));
+                    url.searchParams.set('month', String(now.getMonth() + 1));
+                    window.location.assign(url.toString());
                 });
             }
         }
@@ -1599,56 +1657,62 @@
         // =========================
         //  Click en chips: filtrar historial de esa orden (toggle)
         // =========================
+        (function markActiveChipFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const focusOrderId = String(params.get('focus_order_id') || '').trim();
+            const focusWorkId = (params.get('focus_work_id') || '').trim();
+            const focusPn = (params.get('focus_pn') || '').trim();
+            if (!focusOrderId && !focusWorkId && !focusPn) return;
+
+            $('.fai-chip').each(function() {
+                const $chip = $(this);
+                const chipOrderId = String($chip.data('order-id') || '').trim();
+                const chipWork = String($chip.data('work-id') || '').trim();
+                const chipPn = String($chip.data('pn') || '').trim();
+                const matchOrder = !focusOrderId || chipOrderId === focusOrderId;
+                const matchWork = !focusWorkId || chipWork === focusWorkId;
+                const matchPn = !focusPn || chipPn === focusPn;
+                if (matchOrder && matchWork && matchPn) {
+                    $chip.addClass('fai-chip-active');
+                    return false;
+                }
+            });
+        })();
+
         $(document).on('click', '.fai-chip', function() {
-            if (!$.fn.DataTable.isDataTable('#faiTable')) {
-                return;
-            }
-
-            const dt = $('#faiTable').DataTable(); // instancia segura
             const $chip = $(this);
+            const orderId = parseInt($chip.data('order-id') || 0, 10);
+            const workId = String($chip.data('work-id') || '').trim();
+            const pn = String($chip.data('pn') || '').trim();
+            const url = new URL(window.location.href);
 
-            // 🧲 Si este chip YA está activo ⇒ quitar filtro y salir
             if ($chip.hasClass('fai-chip-active')) {
-                // Limpia búsquedas de DataTables
-                dt.search('');
-                dt.columns().search('');
-                dt.draw();
+                url.searchParams.delete('focus_order_id');
+                url.searchParams.delete('focus_work_id');
+                url.searchParams.delete('focus_pn');
+                url.searchParams.delete('focus_months');
+                url.searchParams.delete('day');
+                const now = new Date();
+                url.searchParams.set('year', String(now.getFullYear()));
+                url.searchParams.set('month', String(now.getMonth() + 1));
+            } else {
+                if (!Number.isNaN(orderId) && orderId > 0) url.searchParams.set('focus_order_id', String(orderId));
+                else url.searchParams.delete('focus_order_id');
 
-                // Quita marcado visual
-                $('.fai-chip').removeClass('fai-chip-active');
-                return;
+                if (workId) url.searchParams.set('focus_work_id', workId);
+                else url.searchParams.delete('focus_work_id');
+
+                if (pn) url.searchParams.set('focus_pn', pn);
+                else url.searchParams.delete('focus_pn');
+
+                // El chip debe mostrar historial completo, sin limitarse al mes/dia actual.
+                url.searchParams.delete('year');
+                url.searchParams.delete('month');
+                url.searchParams.delete('day');
+                url.searchParams.set('focus_months', '12');
             }
 
-            // 🔄 Si es un chip NUEVO ⇒ aplicar filtro
-            let pn = $chip.data('pn') || '';
-            let workId = $chip.data('work-id') || '';
-
-            pn = pn.toString().trim();
-            workId = workId.toString().trim();
-
-            // Limpia búsquedas previas
-            dt.search('');
-            dt.columns().search('');
-
-            // Índices: 0=DATE, 1=PART/REVISION, 2=JOB
-            const PN_COL = 1;
-            const JOB_COL = 2;
-
-            // Filtrar por JOB (work_id)
-            if (workId) {
-                dt.column(JOB_COL).search(workId, false, false);
-            }
-
-            // Filtrar también por PN
-            if (pn) {
-                dt.column(PN_COL).search(pn, false, false);
-            }
-
-            dt.draw();
-
-            // Marcar este chip como activo y limpiar los demás
-            $('.fai-chip').removeClass('fai-chip-active');
-            $chip.addClass('fai-chip-active');
+            window.location.href = url.toString();
         });
 
 
