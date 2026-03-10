@@ -76,8 +76,8 @@ class DashboardController extends Controller
         }
 
         $rows = $query
+            ->orderBy('due_date', 'asc')
             ->orderBy('sent_at', 'desc')
-            ->orderBy('due_date', 'desc')
             ->limit(2000)
             ->get();
 
