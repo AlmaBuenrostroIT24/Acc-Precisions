@@ -41,56 +41,60 @@
                 $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
                 @endphp
 
-                <div class="row mb-1">
+                <div class="row mb-1 kpi-row">
                                         {{-- Total Inspections --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box bg-secondary">
+                        <div class="info-box kpi-card bg-secondary">
                             <span class="info-box-icon">
                                 <i class="fas fa-clipboard-list"></i>
                             </span>
-                            <div class="info-box-content info-box-inline">
+                            <div class="info-box-content info-box-inline inspections-kpi">
                                 <span class="info-box-text mb-0">Inspections</span>
                                 <h3 id="kpi-total" class="mb-0 font-weight-bold">{{ number_format($monthStats['total']) }}</h3>
-                                <small class="text-muted text-uppercase ml-auto">{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <div id="kpi-type-breakdown" class="kpi-type-breakdown">
+                                    <span class="badge badge-light border text-dark">FAI <span id="kpi-fai">{{ number_format($monthStats['fai'] ?? 0) }}</span></span>
+                                    <span class="badge badge-light border text-dark">IPI <span id="kpi-ipi">{{ number_format($monthStats['ipi'] ?? 0) }}</span></span>
+                                </div>
+                                <small class="text-muted text-uppercase inspections-period">{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
 
                     {{-- Pass --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box bg-success">
+                        <div class="info-box kpi-card bg-success">
                             <span class="info-box-icon">
                                 <i class="fas fa-check-circle"></i>
                             </span>
                             <div class="info-box-content info-box-inline">
                                 <span class="info-box-text mb-0">Pass</span>
                                 <h3 id="kpi-pass" class="mb-0 font-weight-bold">{{ number_format($monthStats['pass']) }}</h3>
-                                <small class="text-muted text-uppercase ml-auto">Approved  {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase ml-auto kpi-period">Approved {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
 
                     {{-- No Pass --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box bg-danger">
+                        <div class="info-box kpi-card bg-danger">
                             <span class="info-box-icon">
                                 <i class="fas fa-times-circle"></i>
                             </span>
                             <div class="info-box-content info-box-inline">
                                 <span class="info-box-text mb-0">No Pass</span>
                                 <h3 id="kpi-fail" class="mb-0 font-weight-bold">{{ number_format($monthStats['fail']) }}</h3>
-                                <small class="text-muted text-uppercase ml-auto">Rejected  {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase ml-auto kpi-period">Rejected {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
 
                     {{-- % Pass --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box bg-info">
+                        <div class="info-box kpi-card bg-info">
                             <span class="info-box-icon">
                                 <i class="fas fa-percentage"></i>
                             </span>
-                            <div class="info-box-content">
+                            <div class="info-box-content kpi-rate-content">
                                 @php
                                     $totalVal = $monthStats['total'] ?? 0;
                                     $passVal  = $monthStats['pass'] ?? 0;
@@ -99,10 +103,11 @@
                                         ? number_format(floor((($passVal * 100) / $totalVal) * 100) / 100, 2, '.', '')
                                         : '0.00';
                                 @endphp
-                                <div class="d-flex justify-content-between align-items-baseline">
+                                <span class="info-box-text mb-0">% Pass</span>
+                                <div class="d-flex justify-content-between align-items-baseline kpi-rate-head">
                                     <h3 id="kpi-rate" class="mb-0 font-weight-bold">{{ $rateVal }}%</h3>
-                                    <small class="text-primary">Meta ≥ 95%</small>
                                 </div>
+                                <small class="text-primary kpi-goal">Meta >= 95%</small>
                                 <div class="progress mt-2 kpi-rate-progress" style="height: {{ $progressHeight }};">
                                     <div id="kpi-rate-bar" class="progress-bar kpi-rate-bar" style="width: {{ $rateVal }}%;"></div>
                                 </div>
@@ -811,6 +816,31 @@
         font-size: 0.52rem;
         flex-shrink: 0;
     }
+    .inspections-kpi {
+        align-items: flex-start;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.12rem;
+    }
+    .inspections-kpi .info-box-text {
+        margin-right: 0;
+    }
+    .kpi-type-breakdown {
+        display: flex;
+        align-items: center;
+        gap: 0.22rem;
+    }
+    .kpi-type-breakdown .badge {
+        font-size: 0.58rem;
+        line-height: 1.1;
+        padding: 0.2rem 0.36rem;
+        font-weight: 700;
+    }
+    .inspections-period {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        align-self: flex-start !important;
+    }
 
     /* ===== Caja grande de alertas FAI ===== */
     .fai-alert-box {
@@ -1332,6 +1362,274 @@
         padding: 0.25rem;
     }
 
+    /* ===== KPI cards - ERP style ===== */
+    .kpi-row > [class*="col-"] {
+        display: flex;
+    }
+
+    .kpi-card {
+        width: 100%;
+        min-height: 98px !important;
+        padding: 0.56rem 0.7rem !important;
+        border-radius: 12px !important;
+        border: 1px solid #cfd8e3 !important;
+        box-shadow: none !important;
+        background: #f3f4f6 !important;
+        position: relative;
+        overflow: hidden;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .kpi-card:hover {
+        border-color: #b9c6d6 !important;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .kpi-card::after {
+        content: none !important;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #64748b;
+    }
+
+    .kpi-card.bg-secondary {
+        background: #e9edf1 !important;
+        border-color: #c5d0dc !important;
+    }
+    .kpi-card.bg-secondary::before { background: #64748b; }
+
+    .kpi-card.bg-success {
+        background: #e9f3ee !important;
+        border-color: #b8d8c7 !important;
+    }
+    .kpi-card.bg-success::before { background: #1e8b3f; }
+
+    .kpi-card.bg-danger {
+        background: #f7ecee !important;
+        border-color: #e2b8bf !important;
+    }
+    .kpi-card.bg-danger::before { background: #d83333; }
+
+    .kpi-card.bg-info {
+        background: #e9eef7 !important;
+        border-color: #c2d3ee !important;
+    }
+    .kpi-card.bg-info::before { background: #2a62d9; }
+
+    .kpi-card .info-box-icon {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 10px !important;
+        border: 1px solid #bcc8d7 !important;
+        margin: 0 !important;
+        font-size: 15px !important;
+        line-height: 1 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: #dbe3ec !important;
+        color: #334155 !important;
+    }
+
+    .kpi-card.bg-success .info-box-icon {
+        background: #d8eadf !important;
+        border-color: #b4d1bf !important;
+        color: #1f7a3f !important;
+    }
+    .kpi-card.bg-danger .info-box-icon {
+        background: #f2dfe2 !important;
+        border-color: #ddbcc3 !important;
+        color: #c13247 !important;
+    }
+    .kpi-card.bg-info .info-box-icon {
+        background: #dce6f6 !important;
+        border-color: #bccde8 !important;
+        color: #2d64d6 !important;
+    }
+
+    .kpi-card .info-box-content {
+        width: calc(100% - 38px);
+        padding: 0 !important;
+        margin-top: 0.03rem;
+    }
+
+    .kpi-card .info-box-text {
+        margin: 0 0 0.06rem 0 !important;
+        color: #1e3a5f !important;
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase;
+    }
+
+    .kpi-card h3 {
+        margin: 0 !important;
+        color: #0f172a !important;
+        font-size: 2rem !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+    }
+
+    .kpi-card small {
+        font-size: 0.62rem !important;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #4d6380 !important;
+    }
+
+    .kpi-card .info-box-inline {
+        display: grid !important;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "label period"
+            "value value";
+        row-gap: 0.18rem;
+        column-gap: 0.45rem;
+        align-items: center !important;
+        width: calc(100% - 38px);
+    }
+
+    .kpi-card .info-box-inline .info-box-text {
+        grid-area: label;
+        align-self: center;
+    }
+
+    .kpi-card .info-box-inline h3 {
+        grid-area: value;
+        justify-self: start;
+    }
+
+    .kpi-card .info-box-inline small {
+        grid-area: period;
+        justify-self: end;
+        margin: 0 !important;
+    }
+
+    .kpi-card .inspections-kpi {
+        grid-template-areas:
+            "label period"
+            "value value"
+            "break break";
+        row-gap: 0.16rem;
+    }
+
+    .kpi-card .inspections-kpi #kpi-type-breakdown {
+        grid-area: break;
+    }
+
+    .kpi-card .inspections-kpi .inspections-period {
+        grid-area: period;
+        justify-self: end;
+    }
+
+    .kpi-rate-content {
+        display: grid !important;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "label goal"
+            "value value"
+            "bar bar";
+        row-gap: 0.18rem;
+        align-items: center;
+        width: calc(100% - 38px);
+    }
+
+    .kpi-rate-content .info-box-text {
+        grid-area: label;
+    }
+
+    .kpi-rate-content .kpi-rate-head {
+        grid-area: value;
+        width: 100%;
+        margin: 0 !important;
+    }
+
+    .kpi-rate-content .kpi-goal {
+        grid-area: goal;
+        justify-self: end;
+    }
+
+    .kpi-rate-content .kpi-rate-progress {
+        grid-area: bar;
+        width: 100%;
+        margin-top: 0.08rem !important;
+    }
+
+    .kpi-period,
+    .inspections-period {
+        display: inline-flex !important;
+        align-items: center;
+        padding: 0.13rem 0.42rem;
+        border-radius: 4px;
+        border: 1px solid #c3cfdd;
+        background: #dfe5ec;
+        color: #4d6380 !important;
+        font-weight: 800;
+        text-transform: uppercase;
+        line-height: 1.1;
+    }
+
+    .kpi-goal {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.12rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #b9cced;
+        background: #e3ebfa;
+        color: #2d64d6 !important;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .kpi-type-breakdown .badge {
+        border-radius: 4px !important;
+        padding: 0.1rem 0.32rem !important;
+        font-size: 0.58rem !important;
+        font-weight: 800 !important;
+        border-color: #becbdb !important;
+        background: #eef2f7 !important;
+        color: #334155 !important;
+    }
+
+    .kpi-rate-progress {
+        background: #d2dceb !important;
+        border-radius: 3px !important;
+        height: 4px !important;
+    }
+
+    .kpi-rate-progress .kpi-rate-bar,
+    #kpi-rate-bar {
+        border-radius: 3px !important;
+        background: #2d64d6 !important;
+    }
+
+    .kpi-card.fai-filter-active {
+        border-color: #8eb0df !important;
+        box-shadow: 0 0 0 2px rgba(45, 100, 214, 0.15) !important;
+    }
+
+    @media (max-width: 768px) {
+        .kpi-card {
+            min-height: 90px !important;
+            padding: 0.5rem 0.56rem !important;
+        }
+
+        .kpi-card h3 {
+            font-size: 1.65rem !important;
+        }
+    }
+
 
 </style>
 
@@ -1617,13 +1915,20 @@
             let total = nodes.length;
             let pass = 0;
             let fail = 0;
+            let fai = 0;
+            let ipi = 0;
             nodes.forEach(n => {
+                const typ = ($(n).find('td').eq(COLS.type).text() || '').trim().toLowerCase();
                 const res = ($(n).find('td').eq(COLS.result).text() || '').trim().toLowerCase();
+                if (typ === 'fai') fai++;
+                else if (typ === 'ipi') ipi++;
                 if (res === 'pass') pass++;
                 else if (res === 'no pass' || res === 'nopass' || res === 'no  pass') fail++;
             });
             const rate = total > 0 ? Math.floor((pass / total) * 10000) / 100 : 0;
             $('#kpi-total').text(total.toLocaleString());
+            $('#kpi-fai').text(fai.toLocaleString());
+            $('#kpi-ipi').text(ipi.toLocaleString());
             $('#kpi-pass').text(pass.toLocaleString());
             $('#kpi-fail').text(fail.toLocaleString());
             const rateStr = rate.toFixed(2);
@@ -1802,4 +2107,5 @@
 
 
 @endpush
+
 

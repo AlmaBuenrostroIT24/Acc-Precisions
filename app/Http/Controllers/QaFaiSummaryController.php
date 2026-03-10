@@ -116,10 +116,38 @@ class QaFaiSummaryController extends Controller
                 ->orderByDesc('due_date')
                 ->get();
 
+            $orderIds = ($bucket === 'process')
+                ? $rows->pluck('id')->filter()->map(fn($v) => (int) $v)->values()->all()
+                : [];
+
+            // FAI pendiente por operación (hay No Pass y aún no existe FAI Pass en esa operación)
+            $faiPendingMap = [];
+            if ($bucket === 'process' && !empty($orderIds)) {
+                $faiOpRows = DB::table('qa_faisummary')
+                    ->select([
+                        'order_schedule_id',
+                        'operation',
+                        DB::raw("SUM(CASE WHEN LOWER(TRIM(COALESCE(results,''))) = 'pass' THEN 1 ELSE 0 END) as pass_cnt"),
+                        DB::raw("SUM(CASE WHEN LOWER(TRIM(COALESCE(results,''))) IN ('no pass','nopass','no_pass','fail') THEN 1 ELSE 0 END) as fail_cnt"),
+                    ])
+                    ->whereIn('order_schedule_id', $orderIds)
+                    ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'FAI'")
+                    ->groupBy('order_schedule_id', 'operation')
+                    ->get();
+
+                foreach ($faiOpRows as $fr) {
+                    $oid = (int) ($fr->order_schedule_id ?? 0);
+                    $hasPass = (int) ($fr->pass_cnt ?? 0) > 0;
+                    $hasFail = (int) ($fr->fail_cnt ?? 0) > 0;
+                    if ($oid > 0 && $hasFail && !$hasPass) {
+                        $faiPendingMap[$oid] = true;
+                    }
+                }
+            }
+
             // NCAR status per order (internal/external) for UI indicator in Process table
             $ncarMap = [];
             if ($bucket === 'process' && Schema::hasTable('qa_ncar') && Schema::hasTable('qa_ncartype')) {
-                $orderIds = $rows->pluck('id')->filter()->map(fn($v) => (int) $v)->values()->all();
                 if (!empty($orderIds)) {
                     $ncarRows = DB::table('qa_ncar as n')
                         ->join('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
@@ -167,7 +195,7 @@ class QaFaiSummaryController extends Controller
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, $hasQtyCol, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, $faiPendingMap, $hasQtyCol, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -266,6 +294,7 @@ class QaFaiSummaryController extends Controller
                     'id'             => (int) $r->id,
                     'part'           => $part,
                     'work_id'        => trim((string) $r->work_id),
+                    'has_fai_pending' => !empty($faiPendingMap[(int)($r->id ?? 0)]),
                     'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
                     'ops'            => (int) ($r->operation ?? 0),
                     'wo_qty'         => $sum,
@@ -867,6 +896,12 @@ class QaFaiSummaryController extends Controller
         }
 
         $inspections = $query->orderByDesc('date')->get();
+        $faiCount = $inspections->filter(function ($row) {
+            return strcasecmp(trim((string) $row->insp_type), 'FAI') === 0;
+        })->count();
+        $ipiCount = $inspections->filter(function ($row) {
+            return strcasecmp(trim((string) $row->insp_type), 'IPI') === 0;
+        })->count();
 
         // === monthStats (usa tu lógica actual; aquí solo un ejemplo) ===
         $month = $request->input('month', now()->month);
@@ -886,6 +921,8 @@ class QaFaiSummaryController extends Controller
             'pass'  => $pass,
             'fail'  => $fail,
             'rate'  => $rate,
+            'fai'   => $faiCount,
+            'ipi'   => $ipiCount,
             'month' => $month,
             'year'  => $year,
         ];
@@ -2126,4 +2163,3 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 }
-

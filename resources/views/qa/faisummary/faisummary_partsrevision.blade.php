@@ -424,6 +424,22 @@
     display: inline-block;
   }
 
+  /* Indicador ERP: tiene al menos un FAI No Pass */
+  .fai-flag-nopass {
+    background: #fde8e8;
+    border: 1px solid #f5c2c7;
+    color: #b42318;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 2px 6px;
+    vertical-align: middle;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
   /* Progress tipo ERP (igual que Schedule) */
   .fai-dt-table .progress {
     height: 22px !important;
@@ -917,6 +933,14 @@
   #ordersTableEmpty tbody td:first-child,
   #ordersTableProcess thead th:first-child,
   #ordersTableProcess tbody td:first-child {
+    text-align: left;
+  }
+
+  /* Alinear a la izquierda columna JOB */
+  #ordersTableEmpty thead th:nth-child(2),
+  #ordersTableEmpty tbody td:nth-child(2),
+  #ordersTableProcess thead th:nth-child(2),
+  #ordersTableProcess tbody td:nth-child(2) {
     text-align: left;
   }
 
@@ -1457,7 +1481,13 @@ body .content {
         },
         {
           data: 'work_id',
-          render: TEXT
+          render: function(data, type, row) {
+            const val = data || '';
+            if (type === 'sort' || type === 'type') return val;
+            const safe = TEXT.display(val);
+            if (!row?.has_fai_pending) return safe;
+            return `${safe} <span class="badge fai-flag-nopass ml-1" title="At least one operation has FAI No Pass and no FAI Pass yet"><i class="fas fa-exclamation-triangle mr-1"></i>FAI</span>`;
+          }
         },
         {
           data: 'progress',
