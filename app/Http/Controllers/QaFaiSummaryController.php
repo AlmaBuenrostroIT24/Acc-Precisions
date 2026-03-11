@@ -120,8 +120,9 @@ class QaFaiSummaryController extends Controller
                 ? $rows->pluck('id')->filter()->map(fn($v) => (int) $v)->values()->all()
                 : [];
 
-            // FAI pendiente por operación (hay No Pass y aún no existe FAI Pass en esa operación)
+            // FAI por operación (pass/fail) para estado de timeline y bandera pendiente
             $faiPendingMap = [];
+            $faiOpsMetaMap = [];
             if ($bucket === 'process' && !empty($orderIds)) {
                 $faiOpRows = DB::table('qa_faisummary')
                     ->select([
@@ -137,8 +138,20 @@ class QaFaiSummaryController extends Controller
 
                 foreach ($faiOpRows as $fr) {
                     $oid = (int) ($fr->order_schedule_id ?? 0);
+                    $op = trim((string) ($fr->operation ?? ''));
                     $hasPass = (int) ($fr->pass_cnt ?? 0) > 0;
                     $hasFail = (int) ($fr->fail_cnt ?? 0) > 0;
+                    if ($oid > 0 && $op !== '') {
+                        $status = $hasPass ? 'ok' : ($hasFail ? 'fail' : 'pending');
+                        if (!isset($faiOpsMetaMap[$oid])) {
+                            $faiOpsMetaMap[$oid] = [];
+                        }
+                        $faiOpsMetaMap[$oid][$op] = [
+                            'pass_cnt' => (int) ($fr->pass_cnt ?? 0),
+                            'fail_cnt' => (int) ($fr->fail_cnt ?? 0),
+                            'status' => $status,
+                        ];
+                    }
                     if ($oid > 0 && $hasFail && !$hasPass) {
                         $faiPendingMap[$oid] = true;
                     }
@@ -183,7 +196,7 @@ class QaFaiSummaryController extends Controller
             }
 
 
-            $opName = function (int $i): string {
+            $opKey = function (int $i): string {
                 return match ($i) {
                     1 => '1st Op',
                     2 => '2nd Op',
@@ -192,10 +205,19 @@ class QaFaiSummaryController extends Controller
                 };
             };
 
+            $opLabel = function (int $i): string {
+                return match ($i) {
+                    1 => '1st',
+                    2 => '2nd',
+                    3 => '3rd',
+                    default => "{$i}th"
+                };
+            };
+
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, $faiPendingMap, $hasQtyCol, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opKey, $opLabel, $hasNcrCols, $ncarMap, $faiPendingMap, $faiOpsMetaMap, $hasQtyCol, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -295,6 +317,7 @@ class QaFaiSummaryController extends Controller
                     'part'           => $part,
                     'work_id'        => trim((string) $r->work_id),
                     'has_fai_pending' => !empty($faiPendingMap[(int)($r->id ?? 0)]),
+                    'fai_ops'        => '',
                     'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
                     'ops'            => (int) ($r->operation ?? 0),
                     'wo_qty'         => $sum,
@@ -312,6 +335,7 @@ class QaFaiSummaryController extends Controller
                     if ($ops === 0 && $sampling === 0) {
                         $pct = 100;
 
+                        $row['fai_ops'] = '<span class="text-muted">N/A</span>';
                         $row['progress'] = '<span class="badge badge-info">Done</span>';
                         $row['progress_pct'] = $pct;
 
@@ -358,9 +382,36 @@ class QaFaiSummaryController extends Controller
                         }
 
                         for ($i = 1; $i <= $ops; $i++) {
-                            $name = $opName($i);
-                            $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq);
+                            $key = $opKey($i);
+                            $done += min($fai[$key] ?? 0, 1) + min($ipi[$key] ?? 0, $ipiReq);
                         }
+
+                        $faiOpsNodes = [];
+                        $currentOp = 0;
+                        for ($i = 1; $i <= $ops; $i++) {
+                            $key = $opKey($i);
+                            $label = $opLabel($i);
+                            $meta = $faiOpsMetaMap[(int) ($r->id ?? 0)][$key] ?? null;
+                            $state = (string) ($meta['status'] ?? 'pending');
+                            $passCnt = (int) ($meta['pass_cnt'] ?? 0);
+                            $failCnt = (int) ($meta['fail_cnt'] ?? 0);
+                            if ($state !== 'ok' && $currentOp === 0) {
+                                $currentOp = $i;
+                            }
+
+                            $nodeClass = $state === 'ok' ? 'is-ok' : ($state === 'fail' ? 'is-fail' : 'is-pending');
+                            $stateText = $state === 'ok' ? 'PASS' : ($state === 'fail' ? 'NO PASS' : 'PENDING');
+                            $icon = $state === 'ok' ? '&#10003;' : ($state === 'fail' ? '&#10007;' : '&#9716;');
+                            $isCurrent = ($currentOp > 0 && $currentOp === $i) ? ' is-current' : '';
+                            $tip = $label . ' | ' . $stateText . ' | Pass: ' . $passCnt . ' | No Pass: ' . $failCnt;
+                            $faiOpsNodes[] = '<span class="fai-op-node ' . $nodeClass . $isCurrent . '" title="' . e($tip) . '">'
+                                . '<span class="fai-op-dot">' . $icon . '</span>'
+                                . '<span class="fai-op-label">' . e($label) . '</span>'
+                                . '</span>';
+                        }
+                        $row['fai_ops'] = '<div class="fai-op-timeline">' . implode('', $faiOpsNodes) . '</div>';
+                    } else {
+                        $row['fai_ops'] = '<span class="text-muted">N/A</span>';
                     }
 
                     $pct = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;

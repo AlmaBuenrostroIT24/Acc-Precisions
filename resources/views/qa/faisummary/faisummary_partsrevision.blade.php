@@ -96,6 +96,7 @@
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
                 <th>JOB</th>
+                <th>FAI OPS</th>
                 <th>(WIP) FAI + IPI</th>
                 <th class="actions-col">ACTIONS</th>
               </tr>
@@ -885,11 +886,129 @@
   }
 
   /* Ancho mínimo para la columna de progreso en In Process */
-  #ordersTableProcess thead th:nth-child(3),
-  #ordersTableProcess tbody td:nth-child(3) {
+  #ordersTableProcess thead th:nth-child(4),
+  #ordersTableProcess tbody td:nth-child(4) {
     width: 18%;
     min-width: 140px;
     text-align: center;
+  }
+
+  /* Columna FAI OPS (3ra): secuencia de checks por operación */
+  #ordersTableProcess thead th:nth-child(3),
+  #ordersTableProcess tbody td:nth-child(3) {
+    text-align: left;
+    min-width: 210px;
+    width: 28%;
+  }
+
+  .fai-op-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .fai-op-summary {
+    font-size: 10px;
+    font-weight: 700;
+    color: #334155;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+
+  .fai-op-timeline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .fai-op-node {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .fai-op-node:not(:last-child)::after {
+    content: "";
+    width: 10px;
+    height: 2px;
+    background: #64748b;
+    border-radius: 999px;
+    margin-left: 2px;
+  }
+
+  .fai-op-node.is-ok:not(:last-child)::after {
+    background: #16a34a;
+  }
+
+  .fai-op-node.is-fail:not(:last-child)::after {
+    background: #dc2626;
+  }
+
+  .fai-op-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10);
+  }
+
+  .fai-op-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: #334155;
+  }
+
+  .fai-op-node.is-ok .fai-op-dot {
+    background: #dcfce7;
+    border-color: #16a34a;
+    color: #166534;
+    box-shadow: inset 0 -1px 0 rgba(22, 101, 52, 0.18);
+  }
+
+  .fai-op-node.is-pending .fai-op-dot {
+    background: #fff7ed;
+    border-color: #f59e0b;
+    color: #9a3412;
+    box-shadow: inset 0 -1px 0 rgba(154, 52, 18, 0.16);
+  }
+
+  .fai-op-node.is-fail .fai-op-dot {
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #991b1b;
+    box-shadow: inset 0 -1px 0 rgba(153, 27, 27, 0.16);
+  }
+
+  .fai-op-node.is-current .fai-op-dot {
+    border-width: 2px;
+    transform: scale(1.06);
+  }
+
+  .fai-op-node.is-current .fai-op-label {
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  @media (max-width: 991.98px) {
+    .fai-op-timeline {
+      gap: 8px;
+    }
+
+    .fai-op-dot {
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+    }
   }
 
   /* 2025-12-17: bordes redondeados en el encabezado */
@@ -1488,6 +1607,11 @@ body .content {
             if (!row?.has_fai_pending) return safe;
             return `${safe} <span class="badge fai-flag-nopass ml-1" title="At least one operation has FAI No Pass and no FAI Pass yet"><i class="fas fa-exclamation-triangle mr-1"></i>FAI</span>`;
           }
+        },
+        {
+          data: 'fai_ops',
+          orderable: false,
+          searchable: false
         },
         {
           data: 'progress',
