@@ -1,4 +1,4 @@
-<!-- resources/views/orders/index_schedule.blade.php -->
+﻿<!-- resources/views/orders/index_schedule.blade.php -->
 @extends('adminlte::page')
 
 @section('title', 'FAI Summary')
@@ -28,23 +28,25 @@
 
 <div class="row">
     {{-- === Columna izquierda: TABLA === --}}
-    <div class="col-md-10">
+    <div class="col-md-12">
         <div class="card shadow-sm">
             <div class="card-body">
 
                 {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
                 @php
                 $hasAlerts = isset($failedOrders) && $failedOrders->count() > 0;
-                // Barra de KPI más delgada
+                // Barra de KPI mÃ¡s delgada
                 $progressHeight = $hasAlerts ? '6px' : '7px';
-                // Si hay alertas => KPIs col-lg-2, si no => col-lg-3
+                // Mantener tamaÃ±o fijo de las 4 KPI.
                 $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
+                // ALERT siempre largo y fijo, independiente de jobs.
+                $alertColClass = 'col-sm-12 col-lg-4 mb-2';
                 @endphp
 
                 <div class="row mb-1 kpi-row">
                                         {{-- Total Inspections --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box kpi-card bg-secondary">
+                        <div class="info-box kpi-card kpi-clean bg-secondary">
                             <span class="info-box-icon">
                                 <i class="fas fa-clipboard-list"></i>
                             </span>
@@ -62,35 +64,35 @@
 
                     {{-- Pass --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box kpi-card bg-success">
+                        <div class="info-box kpi-card kpi-clean bg-success">
                             <span class="info-box-icon">
                                 <i class="fas fa-check-circle"></i>
                             </span>
                             <div class="info-box-content info-box-inline">
                                 <span class="info-box-text mb-0">Pass</span>
                                 <h3 id="kpi-pass" class="mb-0 font-weight-bold">{{ number_format($monthStats['pass']) }}</h3>
-                                <small class="text-muted text-uppercase ml-auto kpi-period">Approved {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase kpi-period">Approved {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
 
                     {{-- No Pass --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box kpi-card bg-danger">
+                        <div class="info-box kpi-card kpi-clean bg-danger">
                             <span class="info-box-icon">
                                 <i class="fas fa-times-circle"></i>
                             </span>
                             <div class="info-box-content info-box-inline">
                                 <span class="info-box-text mb-0">No Pass</span>
                                 <h3 id="kpi-fail" class="mb-0 font-weight-bold">{{ number_format($monthStats['fail']) }}</h3>
-                                <small class="text-muted text-uppercase ml-auto kpi-period">Rejected {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase kpi-period">Rejected {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
                     </div>
 
                     {{-- % Pass --}}
                     <div class="{{ $kpiColClass }}">
-                        <div class="info-box kpi-card bg-info">
+                        <div class="info-box kpi-card kpi-clean bg-info">
                             <span class="info-box-icon">
                                 <i class="fas fa-percentage"></i>
                             </span>
@@ -115,55 +117,40 @@
                         </div>
                     </div>
 
-                    {{-- Caja de FAILED FAI ALERTS solo si hay alertas --}}
+                    {{-- Failed FAI Alerts (misma zona de KPIs) --}}
                     @if($hasAlerts)
-                    <div class="col-sm-12 col-lg-4 mb-2">
-                        <div class="fai-alert-box mb-0">
-
-                            {{-- Header --}}
+                    <div class="{{ $alertColClass }}">
+                        <div class="fai-alert-box fai-alert-kpi mb-0">
                             <div class="fai-alert-header d-flex align-items-center">
                                 <div class="fai-alert-icon mr-2">
                                     <i class="fas fa-exclamation-triangle"></i>
                                 </div>
-
                                 <div class="d-flex flex-column">
-                                    <span class="fai-alert-title">
-                                        FAILED FAI ALERTS
-                                    </span>
-                                    <small class="fai-alert-subtitle">
-                                        Click on a chip to filter the inspection history.
-                                    </small>
+                                    <span class="fai-alert-title">FAILED FAI ALERTS</span>
+                                    <small class="fai-alert-subtitle">Click on a chip to filter the inspection history.</small>
                                 </div>
-
-                                <span class="ml-auto fai-alert-count">
-                                    {{ $failedOrders->count() }} jobs
-                                </span>
+                                <span class="ml-auto fai-alert-count">{{ $failedOrders->count() }} jobs</span>
                             </div>
-
-                            {{-- Chips --}}
-                            <div class="fai-alert-body d-flex flex-wrap mt-2">
+                            <div class="fai-alert-body mt-2">
                                 @foreach($failedOrders as $fail)
                                 <div class="fai-chip"
                                     data-order-id="{{ (int) ($fail->order_schedule_id ?? 0) }}"
                                     data-work-id="{{ trim($fail->orderSchedule->work_id ?? '') }}"
                                     data-pn="{{ trim($fail->orderSchedule->PN ?? '') }}"
                                     title="Last FAI: {{ \Carbon\Carbon::parse($fail->date)->format('M d, Y H:i') }}">
-
                                     <i class="fas fa-times-circle mr-1"></i>
                                     <span class="fai-chip-text">
                                         PN: {{ $fail->orderSchedule->PN ?? 'N/A' }}
                                         <br>
-                                        <small class="text-muted">
-                                            JOB: {{ $fail->orderSchedule->work_id ?? '?' }} · OP: {{ $fail->operation }}
-                                        </small>
+                                        <small class="text-muted">JOB: {{ $fail->orderSchedule->work_id ?? '?' }} - {{ $fail->operation }}</small>
                                     </span>
                                 </div>
                                 @endforeach
                             </div>
-
                         </div>
                     </div>
                     @endif
+
                 </div>
 
 
@@ -181,7 +168,7 @@
                                             <i class="fas fa-search"></i>
                                         </span>
                                     </div>
-                                    <input type="text" id="globalSearch" class="form-control" placeholder="Search in table…" autocomplete="off">
+                                    <input type="text" id="globalSearch" class="form-control" placeholder="Search in tableâ€¦" autocomplete="off">
                                     <div class="input-group-append">
                                         <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
                                             <i class="fas fa-times"></i>
@@ -198,7 +185,7 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-user-tag text-primary"></i></span>
                                     </div>
                                     <select id="operatorFilter" class="form-control dt-filter" name="operator">
-                                        <option value="">— All —</option>
+                                        <option value="">â€” All â€”</option>
                                     </select>
                                 </div>
                             </div>
@@ -211,7 +198,7 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-user-check text-success"></i></span>
                                     </div>
                                     <select id="inspectorFilter" class="form-control dt-filter" name="inspector">
-                                        <option value="">— All —</option>
+                                        <option value="">â€” All â€”</option>
                                     </select>
                                 </div>
                             </div>
@@ -224,7 +211,7 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-danger"></i></span>
                                     </div>
                                     <select id="locationFilter" class="form-control dt-filter" name="location">
-                                        <option value="">— All —</option>
+                                        <option value="">â€” All â€”</option>
                                     </select>
                                 </div>
                             </div>
@@ -309,7 +296,7 @@
                                 </a>
                             </div>
 
-                            {{-- Botones de exportación --}}
+                            {{-- Botones de exportaciÃ³n --}}
                             <div class="btn-group btn-group-sm d-flex mb-2">
                                 <a href="{{ route('faisummary.export.excel', request()->query()) }}"
                                     class="btn btn-erp-gray flex-fill">
@@ -326,21 +313,107 @@
                     </div>
                 </div>
                 @endif
-                <div class="d-flex justify-content-end align-items-center mb-1">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="colVisToggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Columns
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right p-2" id="colVisMenu" aria-labelledby="colVisToggle" style="min-width: 220px;">
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="7" checked> SB/IS</label>
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="8" checked> Observation</label>
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="9" checked> Station</label>
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="10" checked> Method</label>
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="11" checked> Qty Insp.</label>
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="12" checked> Inspector</label>
-                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="13" checked> Location</label>
+                <div class="fai-table-toolbar mb-2">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-1">
+                        <div class="d-flex flex-wrap align-items-center">
+                            <div class="input-group input-group-sm mr-2 mb-1 date" id="yearPickerWrapper"
+                                data-target-input="nearest"
+                                data-initial-year="{{ request('year') ?? '' }}"
+                                style="width:132px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-alt text-success"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="year" name="year" class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#yearPickerWrapper"
+                                    value="{{ request('year') }}" placeholder="Year" autocomplete="off">
+                            </div>
+
+                            <div class="input-group input-group-sm mr-2 mb-1 date" id="monthPickerWrapper"
+                                data-target-input="nearest" style="width:132px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-alt text-danger"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="monthDisplay" class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#monthPickerWrapper"
+                                    placeholder="Month" autocomplete="off">
+                            </div>
+                            <input type="hidden" id="month" name="month" value="{{ request('month') }}">
+
+                            <div class="input-group input-group-sm mr-2 mb-1 date" id="dayPickerWrapper"
+                                data-target-input="nearest" style="width:148px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-calendar-day text-warning"></i>
+                                    </span>
+                                </div>
+                                <input type="text" id="day" name="day" class="form-control datetimepicker-input"
+                                    data-toggle="datetimepicker" data-target="#dayPickerWrapper"
+                                    value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
+                                    placeholder="Day" autocomplete="off">
+                            </div>
+
+                            <a href="{{ route('faisummary.general') }}" class="btn btn-sm btn-erp-gray mr-2 mb-1">
+                                <i class="fas fa-eraser mr-1"></i> Clean
+                            </a>
+
+                            <a class="btn btn-sm btn-outline-secondary mr-2 mb-1"
+                                href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                <i class="fas fa-bolt mr-1"></i> Today
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary mr-2 mb-1"
+                                href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                <i class="far fa-calendar-alt mr-1"></i> Month
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary mr-2 mb-1"
+                                href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                <i class="far fa-calendar mr-1"></i> Year
+                            </a>
+
+                            <a href="{{ route('faisummary.export.excel', request()->query()) }}"
+                                class="btn btn-sm btn-erp-gray mr-2 mb-1">
+                                <i class="far fa-file-excel mr-1 text-success"></i> Excel
+                            </a>
+                            <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
+                                class="btn btn-sm btn-erp-gray mr-2 mb-1"
+                                target="_blank">
+                                <i class="far fa-file-pdf mr-1 text-danger"></i> PDF
+                            </a>
+
+                            <div class="dropdown mr-2 mb-1">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="colVisToggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Columns
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right p-2" id="colVisMenu" aria-labelledby="colVisToggle" style="min-width: 220px;">
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="7" checked> SB/IS</label>
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="8" checked> Observation</label>
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="9" checked> Station</label>
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="10" checked> Method</label>
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="11" checked> Qty Insp.</label>
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="12" checked> Inspector</label>
+                                    <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="13" checked> Location</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-group input-group-sm mb-1 ml-md-auto" style="width: 320px;">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                            <input type="text" id="globalSearch" name="q" class="form-control" placeholder="Search in table..." autocomplete="off" value="{{ request('q') }}">
+                            <div class="input-group-append">
+                                <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
+
                 </div>
                 <div class="mt-n1 table-responsive fai-erp-wrap">
                     <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
@@ -395,219 +468,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($inspections as $inspection)
-                            @php
-                            $tz = config('app.timezone', 'UTC'); // cambia si usas otra zona
-                            $dtDate = $inspection->date
-                            ? \Carbon\Carbon::parse($inspection->date)->setTimezone($tz)
-                            : null;
-
-                            $isPass = strcasecmp(trim((string)$inspection->results), 'pass') === 0;
-                            $isFAI = strcasecmp(trim((string)$inspection->insp_type), 'FAI') === 0;
-                            @endphp
-                            <tr>
-                                <td data-order="{{ $dtDate?->format('Y-m-d H:i:s') }}">
-                                    {{ $dtDate?->format('M-d-y') }}
-                                    @if($dtDate)
-                                    <span class="badge badge-light">{{ $dtDate->format('H:i') }}</span>
-                                    @endif
-                                </td>
-                                <td class="truncate" title="{{ $inspection->orderSchedule->PN ?? '' }}">
-                                    {{ $inspection->orderSchedule->PN ?? '' }}
-                                </td>
-                                <td>{{ $inspection->orderSchedule->work_id ?? '' }}</td>
-                                <td>
-                                    <span class="badge {{ $isFAI ? 'badge-info' : 'badge-secondary' }}">
-                                        {{ $inspection->insp_type }}
-                                    </span>
-                                </td>
-                                <td>{{ $inspection->operation }}</td>
-                                <td class="truncate" title="{{ $inspection->operator }}">{{ $inspection->operator }}</td>
-                                <td>
-                                    <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
-                                        {{ ucfirst($inspection->results) }}
-                                    </span>
-                                </td>
-                                <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->sb_is }}">
-                                    {{ $inspection->sb_is }}
-                                </td>
-                                <td class="cell-paragraph" data-toggle="tooltip" title="{{ $inspection->observation }}">
-                                    {{ $inspection->observation }}
-                                </td>
-                                <td>{{ $inspection->station }}</td>
-                                <td>{{ $inspection->method }}</td>
-                                <td>{{ $inspection->qty_pcs }}</td>
-                                <td class="truncate" title="{{ $inspection->inspector }}">{{ $inspection->inspector }}</td>
-                                <td>{{ $inspection->loc_inspection }}</td>
-                            </tr>
-                            @empty
-                            {{-- vacío: DataTables muestra su mensaje --}}
-                            @endforelse
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- === Columna derecha: FILTROS === --}}
-    <div class="col-md-2">
-        <div class="card shadow-sm mb-3 filters-card-fixed fai-filters-erp">
-            <div class="card-body">
-                <form method="GET" action="{{ route('faisummary.general') }}" id="filtersForm">
-                    {{-- Global Search --}}
-                    <div class="form-group mb-2">
-                        <label for="globalSearch">Search</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                            </div>
-                            <input type="text" id="globalSearch" name="q" class="form-control" placeholder="Search in table..." autocomplete="off" value="{{ request('q') }}">
-                            <div class="input-group-append">
-                                <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Operator --}}
-                    <div class="form-group mb-2">
-                        <label for="operatorFilter">Operator</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light"><i class="fas fa-user-tag text-primary"></i></span>
-                            </div>
-                            <select id="operatorFilter" class="form-control dt-filter" name="operator">
-                                <option value="">— All —</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {{-- Inspector --}}
-                    <div class="form-group mb-2">
-                        <label for="inspectorFilter">Inspector</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light"><i class="fas fa-user-check text-success"></i></span>
-                            </div>
-                            <select id="inspectorFilter" class="form-control dt-filter" name="inspector">
-                                <option value="">— All —</option>
-                            </select>
-                        </div>
-                    </div>
-
-
-
-                    {{-- Location --}}
-                    <div class="form-group mb-2">
-                        <label for="locationFilter">Location</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-danger"></i></span>
-                            </div>
-                            <select id="locationFilter" class="form-control dt-filter" name="location">
-                                <option value="">— All —</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {{-- YEAR --}}
-                    <div class="form-group mb-2">
-                        <label for="year">Date</label>
-                        <div class="input-group input-group date" id="yearPickerWrapper"
-                            data-target-input="nearest"
-                            data-initial-year="{{ request('year') ?? '' }}"
-                            style="min-width:160px">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-alt text-success"></i>
-                                </span>
-                            </div>
-                            <input type="text" id="year" name="year" class="form-control datetimepicker-input"
-                                data-toggle="datetimepicker" data-target="#yearPickerWrapper"
-                                value="{{ request('year') }}" placeholder="Year" autocomplete="off">
-                        </div>
-                    </div>
-
-                    {{-- MONTH (display + hidden) --}}
-                    <div class="form-group mb-2">
-                        <label for="monthDisplay" class="mb-1 sr-only">Month</label>
-                        <div class="input-group input-group date" id="monthPickerWrapper"
-                            data-target-input="nearest" style="min-width:160px">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-alt text-danger"></i>
-                                </span>
-                            </div>
-                            <input type="text" id="monthDisplay" class="form-control datetimepicker-input"
-                                data-toggle="datetimepicker" data-target="#monthPickerWrapper"
-                                placeholder="Month" autocomplete="off">
-                        </div>
-                        <input type="hidden" id="month" name="month" value="{{ request('month') }}">
-                    </div>
-
-                    {{-- DAY --}}
-                    <div class="form-group mb-2">
-                        <label for="day" class="mb-1 sr-only">Day</label>
-                        <div class="input-group input-group date" id="dayPickerWrapper"
-                            data-target-input="nearest" style="min-width:180px">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-day text-warning"></i>
-                                </span>
-                            </div>
-                            <input type="text" id="day" name="day" class="form-control datetimepicker-input"
-                                data-toggle="datetimepicker" data-target="#dayPickerWrapper"
-                                value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
-                                placeholder="Day" autocomplete="off">
-                        </div>
-                    </div>
-
-                    {{-- Clean + Total en la misma fila --}}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <a href="{{ route('faisummary.general') }}" class="btn btn-secondary btn-sm btn-erp-gray">
-                            <i class="fas fa-eraser mr-1"></i> Clean
-                        </a>
-
-                        <span class="badge badge-info py-2 px-3" style="font-size: 1rem;">
-                            <i class="fas fa-list-ol mr-1"></i>
-                            Total: <span id="badgeFinished">{{ isset($inspections) ? $inspections->count() : 0 }}</span>
-                        </span>
-                    </div>
-
-                    {{-- Quick actions --}}
-                    <div class="btn-group btn-group-sm d-flex mb-2">
-                        <a class="btn btn-outline-secondary flex-fill"
-                            href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
-                            <i class="fas fa-bolt mr-1"></i> Today
-                        </a>
-                        <a class="btn btn-outline-secondary flex-fill"
-                            href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
-                            <i class="far fa-calendar-alt mr-1"></i> Month
-                        </a>
-                        <a class="btn btn-outline-secondary flex-fill"
-                            href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
-                            <i class="far fa-calendar mr-1"></i> Year
-                        </a>
-                    </div>
-
-                    {{-- Botones de exportación --}}
-                    <div class="btn-group btn-group-sm d-flex mb-2">
-                        <a href="{{ route('faisummary.export.excel', request()->query()) }}"
-                            class="btn btn-erp-gray flex-fill">
-                            <i class="far fa-file-excel mr-1 text-success"></i> Excel
-                        </a>
-
-                        <a href="{{ route('faisummary.export.pdf', request()->query()) }}"
-                            class="btn btn-erp-gray flex-fill"
-                            target="_blank">
-                            <i class="far fa-file-pdf mr-1 text-danger"></i> PDF
-                        </a>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -659,7 +522,7 @@
         height: 3px;
         background: #d65a50;
     }
-    /* Línea plana con el color que antes era el fondo de cada variante */
+    /* LÃ­nea plana con el color que antes era el fondo de cada variante */
     .info-box.bg-success::after {
         background: rgba(25, 135, 84, 0.55);
     }
@@ -673,7 +536,7 @@
         background: rgba(108, 117, 125, 0.55);
     }
 
-    /* Fondo blanco; color solo en la línea inferior */
+    /* Fondo blanco; color solo en la lÃ­nea inferior */
     .info-box.bg-secondary,
     .info-box.bg-success,
     .info-box.bg-danger,
@@ -699,8 +562,8 @@
     }
     
 
-    /* Color de íconos por variante */
-    /* Iconos con color según el contexto */
+    /* Color de Ã­conos por variante */
+    /* Iconos con color segÃºn el contexto */
     .info-box.bg-secondary .info-box-icon { color: #495057 !important; }
     .info-box.bg-success .info-box-icon   { color: #198754 !important; }
     .info-box.bg-danger .info-box-icon    { color: #dc3545 !important; }
@@ -779,7 +642,7 @@
     width: 100%;
 }
 
-/* Alinear info y paginado en una sola línea */
+/* Alinear info y paginado en una sola lÃ­nea */
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate {
     float: none !important;
@@ -963,6 +826,44 @@
         box-shadow: 0 0 4px rgba(200, 35, 51, 0.4);
     }
 
+    /* Variante compacta en la zona KPI: 4 jobs por fila */
+    .fai-alert-kpi .fai-alert-body {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 4px;
+        width: 100%;
+        overflow-x: auto;
+    }
+    .fai-alert-kpi {
+        width: 100%;
+        height: 100%;
+    }
+    .fai-alert-kpi .fai-chip {
+        flex: 0 0 calc(25% - 4px);
+        min-width: 0;
+        margin: 0;
+        padding: 3px 6px;
+        border-radius: 10px;
+    }
+    .fai-alert-kpi .fai-chip-text {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+        font-size: 0.72rem;
+    }
+    .fai-alert-kpi .fai-chip-text small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.62rem;
+    }
+    @media (max-width: 1199.98px) {
+        .fai-alert-kpi .fai-chip { flex-basis: calc(50% - 4px); }
+    }
+
     /* ===================== */
     /* Tabla ERP: faisummary_summary */
     /* ===================== */
@@ -974,7 +875,7 @@
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
     }
 
-    /* Evitar scrollbar horizontal en la página */
+    /* Evitar scrollbar horizontal en la pÃ¡gina */
     body,
     .content-wrapper {
         overflow-x: hidden;
@@ -995,7 +896,7 @@
         word-break: break-word;
     }
 
-    /* Columna OPET ajustada a contenido mínimo */
+    /* Columna OPET ajustada a contenido mÃ­nimo */
     #faiTable col.opet-col {
         width: auto !important;
     }
@@ -1104,7 +1005,7 @@
         gap: 0.35rem;
         position: relative;
     }
-    /* Sin línea inferior, aspecto limpio */
+    /* Sin lÃ­nea inferior, aspecto limpio */
     .info-box::after,
     .info-box.bg-secondary::after,
     .info-box.bg-success::after,
@@ -1173,7 +1074,7 @@
         color: #64748b;
     }
 
-    /* Línea inferior de color (inset shadow) */
+    /* LÃ­nea inferior de color (inset shadow) */
     .info-box {
         overflow: visible !important;
         box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(13, 110, 253, 0.18);
@@ -1204,7 +1105,7 @@
         align-items: center;
     }
 
-    /* Ajuste final de alineación para KPIs (todo a la izquierda y en columna) */
+    /* Ajuste final de alineaciÃ³n para KPIs (todo a la izquierda y en columna) */
     .info-box-inline {
         display: flex !important;
         flex-direction: row !important;
@@ -1317,7 +1218,7 @@
         cursor: default !important;
     }
 
-    /* Forzar mismo tamaÃ±o de paginado que partsrevision */
+    /* Forzar mismo tamaÃƒÂ±o de paginado que partsrevision */
     #faiTable_wrapper .pagination .page-link {
         padding: 0.375rem 0.75rem !important;
         font-size: 1rem !important;
@@ -1339,7 +1240,7 @@
         color: rgba(15, 23, 42, 0.80);
     }
 
-    /* Alinear info y paginado en la misma línea */
+    /* Alinear info y paginado en la misma lÃ­nea */
     .dataTables_wrapper .row:last-child {
         display: flex;
         align-items: center;
@@ -1433,7 +1334,7 @@
     }
 
 
-    /* Contenedor tabla: variante ligera (opción 2) */
+    /* Contenedor tabla: variante ligera (opciÃ³n 2) */
     .fai-erp-wrap {
         background: transparent;
         border: none;
@@ -1698,6 +1599,240 @@
         box-shadow: 0 0 0 2px rgba(45, 100, 214, 0.15) !important;
     }
 
+    /* KPI look like reference card */
+    .kpi-row .kpi-clean {
+        background: #eef2f6 !important;
+        border: 1px solid #cfd8e3 !important;
+        border-radius: 12px !important;
+        min-height: 92px !important;
+        padding: 0.55rem 0.72rem 0.5rem !important;
+        --kpi-accent: #8ad6d1;
+        box-shadow:
+            0 2px 6px rgba(15, 23, 42, 0.08),
+            inset 4px 0 0 var(--kpi-accent),
+            inset 0 -3px 0 var(--kpi-accent) !important;
+    }
+    .kpi-row .kpi-clean.bg-secondary { --kpi-accent: #8ad6d1; }
+    .kpi-row .kpi-clean.bg-success { --kpi-accent: #8ccf98; }
+    .kpi-row .kpi-clean.bg-danger { --kpi-accent: #e6a1aa; }
+    .kpi-row .kpi-clean.bg-info { --kpi-accent: #9dbbf3; }
+
+    .kpi-row .kpi-clean .info-box-icon {
+        width: 58px !important;
+        min-width: 58px !important;
+        height: 58px !important;
+        border-radius: 14px !important;
+        background: #dfe5ec !important;
+        border: 1px solid #c9d2dd !important;
+        color: var(--kpi-accent) !important;
+        margin-right: 12px !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        align-self: center !important;
+        font-size: 1.45rem !important;
+    }
+
+    .kpi-row .kpi-clean .info-box-content {
+        width: 100%;
+        padding-right: 68px;
+        gap: 0.06rem;
+    }
+    .kpi-row .kpi-clean .info-box-text {
+        color: #0f172a !important;
+        font-size: 0.84rem !important;
+        font-weight: 800 !important;
+        letter-spacing: .06em !important;
+        text-transform: uppercase;
+    }
+    .kpi-row .kpi-clean h3 {
+        color: #0f172a !important;
+        font-size: 2rem !important;
+        line-height: 1.02 !important;
+        margin: 0 !important;
+        font-weight: 800 !important;
+    }
+    .kpi-row .kpi-clean .kpi-period,
+    .kpi-row .kpi-clean .inspections-period,
+    .kpi-row .kpi-clean .kpi-goal {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #e2e8f0 !important;
+        border: 1px solid #c7d2df !important;
+        color: #334155 !important;
+        border-radius: 999px;
+        padding: 2px 8px;
+        margin: 0 !important;
+        font-size: 0.64rem !important;
+        font-weight: 800 !important;
+        letter-spacing: .04em;
+        white-space: nowrap;
+        text-transform: uppercase;
+    }
+
+    /* Final override: estilo KPI suave tipo referencia */
+    .kpi-row .kpi-card.kpi-clean {
+        --kpi-accent: #8ad6d1;
+        border: 1px solid #cfd8e3 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+        background:
+            linear-gradient(var(--kpi-accent), var(--kpi-accent)) left center / 3px calc(100% - 18px) no-repeat,
+            linear-gradient(var(--kpi-accent), var(--kpi-accent)) left bottom / 100% 3px no-repeat,
+            #eef2f6 !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.bg-secondary { --kpi-accent: #8ad6d1; }
+    .kpi-row .kpi-card.kpi-clean.bg-success { --kpi-accent: #8ccf98; }
+    .kpi-row .kpi-card.kpi-clean.bg-danger { --kpi-accent: #e6a1aa; }
+    .kpi-row .kpi-card.kpi-clean.bg-info { --kpi-accent: #9dbbf3; }
+    .kpi-row .kpi-card.kpi-clean::before,
+    .kpi-row .kpi-card.kpi-clean::after {
+        content: none !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.fai-filter-active {
+        box-shadow: 0 0 0 1px rgba(13, 110, 253, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    /* KPI visual tipo ERP (referencia) */
+    .kpi-row .kpi-clean {
+        position: relative;
+        background: #f3f4f6 !important;
+        border: 1px solid #d6dde7 !important;
+        border-radius: 12px !important;
+        min-height: 96px !important;
+        padding: 0.6rem 0.72rem 0.58rem !important;
+        --kpi-accent: #7f90a6;
+        box-shadow:
+            0 2px 8px rgba(15, 23, 42, 0.08),
+            inset 4px 0 0 var(--kpi-accent),
+            inset 0 -4px 0 var(--kpi-accent) !important;
+    }
+    .kpi-row .kpi-clean::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 10px;
+        bottom: 10px;
+        width: 4px;
+        border-radius: 4px;
+        background: #8b98ab;
+    }
+    .kpi-row .kpi-clean::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 4px;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        background: #8b98ab;
+    }
+    .kpi-row .kpi-clean.bg-success::before { background: #28a745; }
+    .kpi-row .kpi-clean.bg-danger::before { background: #d63a45; }
+    .kpi-row .kpi-clean.bg-info::before { background: #2f67da; }
+    .kpi-row .kpi-clean.bg-secondary::before { background: #7f90a6; }
+    .kpi-row .kpi-clean.bg-success::after { background: #28a745; }
+    .kpi-row .kpi-clean.bg-danger::after { background: #d63a45; }
+    .kpi-row .kpi-clean.bg-info::after { background: #2f67da; }
+    .kpi-row .kpi-clean.bg-secondary::after { background: #7f90a6; }
+    .kpi-row .kpi-clean.bg-success { --kpi-accent: #28a745; }
+    .kpi-row .kpi-clean.bg-danger { --kpi-accent: #d63a45; }
+    .kpi-row .kpi-clean.bg-info { --kpi-accent: #2f67da; }
+    .kpi-row .kpi-clean.bg-secondary { --kpi-accent: #7f90a6; }
+
+    .kpi-row .kpi-clean .info-box-icon {
+        width: 36px !important;
+        min-width: 36px !important;
+        height: 36px !important;
+        border-radius: 9px !important;
+        background: #e5e7eb !important;
+        border: 1px solid #cfd5df !important;
+        margin-right: 10px !important;
+        box-shadow: none !important;
+    }
+    .kpi-row .kpi-clean .info-box-content {
+        padding-right: 86px;
+    }
+    .kpi-row .kpi-clean .info-box-text {
+        font-size: 0.79rem !important;
+        letter-spacing: .08em !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        text-transform: uppercase;
+    }
+    .kpi-row .kpi-clean h3 {
+        font-size: 2.05rem !important;
+        font-weight: 800 !important;
+        color: #0b1e3a !important;
+    }
+    .kpi-row .kpi-clean .kpi-period,
+    .kpi-row .kpi-clean .inspections-period,
+    .kpi-row .kpi-clean .kpi-goal {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        margin: 0 !important;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid #c7d0dc;
+        background: #e7ebf1;
+        color: #334155 !important;
+        font-size: 0.64rem !important;
+        font-weight: 800 !important;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .kpi-row .kpi-clean .kpi-rate-progress {
+        margin-top: 0.28rem !important;
+    }
+    .kpi-row .kpi-clean .kpi-type-breakdown .badge {
+        background: #e7ebf1 !important;
+        border-color: #c7d0dc !important;
+        color: #334155 !important;
+        font-size: 0.58rem !important;
+    }
+
+    /* Acomodo uniforme para las 4 KPI principales */
+    .kpi-row > [class*="col-"] {
+        display: flex;
+    }
+    .kpi-row > [class*="col-"] > .kpi-card,
+    .kpi-row > [class*="col-"] > .fai-alert-box {
+        width: 100%;
+    }
+    .kpi-card .info-box-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 0.14rem;
+        width: 100%;
+    }
+    .kpi-card .info-box-inline {
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-direction: column;
+        gap: 0.14rem;
+        width: 100%;
+    }
+    .kpi-card .info-box-inline .info-box-text,
+    .kpi-card .info-box-text {
+        margin: 0 !important;
+    }
+    .kpi-card .kpi-period,
+    .kpi-card .inspections-period {
+        margin: 0 !important;
+        align-self: flex-start !important;
+    }
+    .kpi-card h3 {
+        margin: 0 !important;
+        line-height: 1.05;
+    }
+
     @media (max-width: 768px) {
         .kpi-card {
             min-height: 90px !important;
@@ -1751,9 +1886,26 @@
             window.faiDT = $('#faiTable').DataTable({
                 scrollX: false,
                 autoWidth: false,
+                processing: true,
+                serverSide: true,
+                searchDelay: 350,
                 pageLength: savedPageLen,
                 dom: "rt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>", // <- sin buscador global nativo, con info
                 orderCellsTop: true,
+                ajax: {
+                    url: "{{ route('faisummary.general.data') }}",
+                    type: 'GET',
+                    data: function(d) {
+                        d.year = ($('#year').val() || '').trim();
+                        d.month = ($('#month').val() || '').trim();
+                        d.day = ($('#day').val() || '').trim();
+                        const p = new URLSearchParams(window.location.search);
+                        ['focus_order_id', 'focus_work_id', 'focus_pn', 'focus_months', 'operator', 'inspector', 'location'].forEach(k => {
+                            const v = (p.get(k) || '').trim();
+                            if (v !== '') d[k] = v;
+                        });
+                    }
+                },
                 fixedHeader: hasFixedHeader ? {
                     header: true,
                     headerOffset: 56
@@ -1761,18 +1913,35 @@
                 order: [
                     [0, 'desc']
                 ],
-                columnDefs: [{
-                    targets: [7, 8],
-                    orderable: false
-                }, ],
+                columns: [
+                    { data: 'date', name: 'date', render: { _: 'display', sort: 'sort', filter: 'filter' } },
+                    { data: 'part_revision', name: 'part_revision' },
+                    { data: 'job', name: 'job' },
+                    { data: 'type', name: 'type' },
+                    { data: 'opet', name: 'opet' },
+                    { data: 'operator', name: 'operator' },
+                    { data: 'result', name: 'result' },
+                    { data: 'sb_is', name: 'sb_is' },
+                    { data: 'observation', name: 'observation' },
+                    { data: 'station', name: 'station' },
+                    { data: 'method', name: 'method' },
+                    { data: 'qty_insp', name: 'qty_insp' },
+                    { data: 'inspector', name: 'inspector' },
+                    { data: 'location', name: 'location' }
+                ],
+                columnDefs: [
+                    { targets: [7, 8], orderable: false },
+                    { targets: [3, 6], orderable: true, searchable: true }
+                ],
             });
         } else {
             window.faiDT = $('#faiTable').DataTable();
         }
 
-        // Filtro inicial: mes actual (solo si no hay mes ni año) o el mes elegido
+        // Filtro inicial: mes actual (solo si no hay mes ni aÃ±o) o el mes elegido
         function applyMonthFilter() {
             if (!$.fn.DataTable.isDataTable('#faiTable')) return;
+            if (faiDT.settings()[0]?.oFeatures?.bServerSide) return;
             const params = new URLSearchParams(window.location.search);
             const hasFocusFilter =
                 (params.get('focus_order_id') || '').trim() !== '' ||
@@ -1788,7 +1957,7 @@
             const monthVal = ($('#month').val() || '').trim();
             const yearVal = ($('#year').val() || '').trim();
 
-            // Si se filtra por año pero no se eligió mes, no aplicar filtro de mes
+            // Si se filtra por aÃ±o pero no se eligiÃ³ mes, no aplicar filtro de mes
             if (!monthVal && yearVal) {
                 faiDT.column(0).search('', true, false).draw();
                 return;
@@ -1799,7 +1968,7 @@
                 faiDT.column(0).search('', true, false).draw();
                 return;
             }
-            // Si no había mes ni año, fija el hidden al mes actual para consistencia
+            // Si no habÃ­a mes ni aÃ±o, fija el hidden al mes actual para consistencia
             if (!monthVal && !yearVal) {
                 $('#month').val(monthNum);
                 $('#year').val(new Date().getFullYear());
@@ -1826,40 +1995,15 @@
             if (!$input.length) return;
             const handler = debounce(function() {
                 const val = (this.value || '').trim();
-                const url = new URL(window.location.href);
-
-                if (val) {
-                    url.searchParams.set('q', val);
-                    // Search global: sin limitar por fecha/foco para buscar en todos los aÃ±os.
-                    url.searchParams.delete('year');
-                    url.searchParams.delete('month');
-                    url.searchParams.delete('day');
-                    url.searchParams.delete('focus_order_id');
-                    url.searchParams.delete('focus_work_id');
-                    url.searchParams.delete('focus_pn');
-                    url.searchParams.delete('focus_months');
-                } else {
-                    url.searchParams.delete('q');
-                }
-
-                if (url.toString() !== window.location.href) {
-                    window.location.assign(url.toString());
-                }
-            }, 400);
+                faiDT.search(val).draw();
+            }, 300);
             $input.on('input', handler);
             $input.on('keydown', function(e) {
                 if (e.key === 'Enter') e.preventDefault();
             });
             if (clearId) {
                 $(clearId).on('click', function() {
-                    $input.val('');
-                    const url = new URL(window.location.href);
-                    const now = new Date();
-                    url.searchParams.delete('q');
-                    url.searchParams.delete('day');
-                    url.searchParams.set('year', String(now.getFullYear()));
-                    url.searchParams.set('month', String(now.getMonth() + 1));
-                    window.location.assign(url.toString());
+                    $input.val('').trigger('input');
                 });
             }
         }
@@ -1887,6 +2031,10 @@
             if (typeof v === 'string') {
                 // DataTables can return HTML from badge cells; convert to plain text for filter options
                 return $('<div>').html(v).text();
+            }
+            if (v && typeof v === 'object') {
+                if (typeof v.filter === 'string') return $('<div>').html(v.filter).text();
+                if (typeof v.display === 'string') return $('<div>').html(v.display).text();
             }
             try {
                 return $(v).text();
@@ -1964,11 +2112,7 @@
             if (!el) return;
             el.addEventListener('change', function() {
                 const v = (this.value || '').trim();
-                if (!v) {
-                    faiDT.column(colIndex).search('', true, false).draw();
-                } else {
-                    faiDT.column(colIndex).search(exactTextRegex(v), true, false).draw();
-                }
+                faiDT.column(colIndex).search(v).draw();
             });
         }
 
@@ -1977,12 +2121,7 @@
             if (!el) return;
             el.addEventListener('change', function() {
                 const v = (this.value || '').trim();
-                if (!v) {
-                    faiDT.column(0).search('', true, false).draw();
-                } else {
-                    const esc = $.fn.dataTable.util.escapeRegex(v);
-                    faiDT.column(0).search('^' + esc + '\\b', true, false).draw();
-                }
+                faiDT.column(0).search(v).draw();
             });
         }
 
@@ -2061,11 +2200,8 @@
             const el = document.getElementById(selectId);
             if (!el) return;
             el.addEventListener('change', function() {
-                const val = this.value;
-                if (!val) faiDT.column(colIndex).search('', true, false).draw();
-                else {
-                    faiDT.column(colIndex).search(exactTextRegex(val), true, false).draw();
-                }
+                const val = (this.value || '').trim();
+                faiDT.column(colIndex).search(val).draw();
             });
         }
 
@@ -2115,16 +2251,9 @@
             repopulateHeaderFilters();
         });
 
-        // Badge Total
-        const $badge = $('#badgeFinished');
-
-        function refreshBadge() {
-            $badge.text(faiDT.rows({
-                search: 'applied'
-            }).count());
-        }
         function updateKpisFromDT() {
             if (!$('#kpi-total').length) return;
+            if (faiDT.settings()[0]?.oFeatures?.bServerSide) return;
             const nodes = faiDT.rows({ search: 'applied' }).nodes().toArray();
             let total = nodes.length;
             let pass = 0;
@@ -2150,7 +2279,6 @@
             $('#kpi-rate-bar').css('width', rateStr + '%');
         }
         function refreshUIFromDT() {
-            refreshBadge();
             updateKpisFromDT();
         }
         refreshUIFromDT();
@@ -2172,6 +2300,49 @@
                 initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
             });
         }
+
+        // Pickers visibles del toolbar: aplicar filtro por URL (year/month/day)
+        (function bindToolbarDateFilters() {
+            const $year = $('#year');
+            const $month = $('#month');
+            const $day = $('#day');
+            if (!$year.length || !$month.length || !$day.length) return;
+
+            let lastKey = null;
+            const apply = function() {
+                const y = String($year.val() || '').trim();
+                const m = String($month.val() || '').trim();
+                const d = String($day.val() || '').trim();
+                const key = [y, m, d].join('|');
+                if (key === lastKey) return;
+                lastKey = key;
+
+                const url = new URL(window.location.href);
+                url.searchParams.delete('page');
+                url.searchParams.delete('focus_order_id');
+                url.searchParams.delete('focus_work_id');
+                url.searchParams.delete('focus_pn');
+                url.searchParams.delete('focus_months');
+
+                if (y) url.searchParams.set('year', y);
+                else url.searchParams.delete('year');
+
+                if (m) url.searchParams.set('month', m);
+                else url.searchParams.delete('month');
+
+                if (d) url.searchParams.set('day', d);
+                else url.searchParams.delete('day');
+
+                const next = url.toString();
+                if (next !== window.location.href) window.location.assign(next);
+            };
+
+            const debouncedApply = debounce(apply, 150);
+            $('#yearPickerWrapper,#monthPickerWrapper,#dayPickerWrapper').on('change.datetimepicker', debouncedApply);
+            $year.on('change blur', debouncedApply);
+            $month.on('change', debouncedApply);
+            $day.on('change blur', debouncedApply);
+        })();
 
         // =========================
         //  Click en chips: filtrar historial de esa orden (toggle)
@@ -2305,7 +2476,7 @@
         });
 
         // =========================
-        //  Click en KPI "Inspections": cargar todo el año actual (limpia filtros de fecha)
+        //  Click en KPI "Inspections": cargar todo el aÃ±o actual (limpia filtros de fecha)
         // =========================
         const $kpiTotal = $('.info-box.bg-secondary');
         const initialFilters = {

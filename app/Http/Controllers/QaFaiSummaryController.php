@@ -845,6 +845,232 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.faisummary_summary', $data);
     }
 
+    public function generalData(Request $request)
+    {
+        $draw = (int) $request->input('draw', 1);
+        $start = max(0, (int) $request->input('start', 0));
+        $length = (int) $request->input('length', 14);
+        if ($length < 1) $length = 14;
+        if ($length > 200) $length = 200;
+
+        $globalSearch = trim((string) $request->input('search.value', ''));
+        $focusOrderId = (int) $request->input('focus_order_id', 0);
+        $focusWorkId = trim((string) $request->input('focus_work_id', ''));
+        $focusPn = trim((string) $request->input('focus_pn', ''));
+        $focusMonths = (int) $request->input('focus_months', 12);
+        $focusMonths = max(1, min($focusMonths, 60));
+
+        $buildBase = function () {
+            return DB::table('qa_faisummary as qfs')
+                ->leftJoin('orders_schedule as os', 'os.id', '=', 'qfs.order_schedule_id');
+        };
+
+        $applyBaseFilters = function ($q, bool $ignoreDateForSearch = false) use (
+            $request,
+            $focusOrderId,
+            $focusWorkId,
+            $focusPn,
+            $focusMonths
+        ) {
+            if ($request->filled('operator')) {
+                $q->where('qfs.operator', $request->input('operator'));
+            }
+            if ($request->filled('inspector')) {
+                $q->where('qfs.inspector', $request->input('inspector'));
+            }
+            if ($request->filled('location')) {
+                $q->where('qfs.loc_inspection', $request->input('location'));
+            }
+
+            if ($focusOrderId > 0) {
+                $focusOrder = OrderSchedule::query()->select('id', 'work_id', 'PN')->find($focusOrderId);
+                if ($focusOrder) {
+                    $focusWork = trim((string) $focusOrder->work_id);
+                    $focusPart = trim((string) $focusOrder->PN);
+                    $q->where(function ($w) use ($focusOrderId, $focusWork, $focusPart) {
+                        $w->where('qfs.order_schedule_id', $focusOrderId);
+                        if ($focusWork !== '' || $focusPart !== '') {
+                            $w->orWhere(function ($x) use ($focusWork, $focusPart) {
+                                if ($focusWork !== '') $x->where('os.work_id', $focusWork);
+                                if ($focusPart !== '') $x->where('os.PN', $focusPart);
+                            });
+                        }
+                    });
+                } else {
+                    $q->where('qfs.order_schedule_id', $focusOrderId);
+                }
+            } elseif ($focusWorkId !== '' || $focusPn !== '') {
+                $q->where(function ($w) use ($focusWorkId, $focusPn) {
+                    if ($focusWorkId !== '') $w->where('os.work_id', $focusWorkId);
+                    if ($focusPn !== '') $w->where('os.PN', $focusPn);
+                });
+            }
+
+            if ($focusOrderId > 0 || $focusWorkId !== '' || $focusPn !== '') {
+                $q->where('qfs.date', '>=', now()->subMonthsNoOverflow($focusMonths)->startOfDay());
+            }
+
+            if ($ignoreDateForSearch) {
+                return;
+            }
+
+            if ($request->filled('day')) {
+                $q->whereDate('qfs.date', $request->input('day'));
+                return;
+            }
+
+            if ($request->filled('year')) {
+                $q->whereYear('qfs.date', (int) $request->input('year'));
+            }
+            if ($request->filled('month')) {
+                $q->whereMonth('qfs.date', (int) $request->input('month'));
+            }
+
+            if (!$request->filled('year') && !$request->filled('month') && $focusOrderId <= 0 && $focusWorkId === '' && $focusPn === '') {
+                $q->whereBetween('qfs.date', [now()->startOfMonth(), now()->endOfMonth()]);
+            }
+        };
+
+        $recordsTotalQuery = $buildBase();
+        $applyBaseFilters($recordsTotalQuery, false);
+        $recordsTotal = (int) $recordsTotalQuery->count('qfs.id');
+
+        $filteredQuery = $buildBase();
+        $applyBaseFilters($filteredQuery, $globalSearch !== '');
+
+        if ($globalSearch !== '') {
+            $like = '%' . $globalSearch . '%';
+            $filteredQuery->where(function ($w) use ($like) {
+                $w->where('qfs.operator', 'like', $like)
+                    ->orWhere('qfs.inspector', 'like', $like)
+                    ->orWhere('qfs.loc_inspection', 'like', $like)
+                    ->orWhere('qfs.operation', 'like', $like)
+                    ->orWhere('qfs.insp_type', 'like', $like)
+                    ->orWhere('qfs.results', 'like', $like)
+                    ->orWhere('qfs.station', 'like', $like)
+                    ->orWhere('qfs.method', 'like', $like)
+                    ->orWhere('qfs.sb_is', 'like', $like)
+                    ->orWhere('qfs.observation', 'like', $like)
+                    ->orWhere('os.work_id', 'like', $like)
+                    ->orWhere('os.PN', 'like', $like);
+            });
+        }
+
+        $columnFilters = (array) $request->input('columns', []);
+        $colMap = [
+            0 => 'qfs.date',
+            1 => 'os.PN',
+            2 => 'os.work_id',
+            3 => 'qfs.insp_type',
+            4 => 'qfs.operation',
+            5 => 'qfs.operator',
+            6 => 'qfs.results',
+            9 => 'qfs.station',
+            10 => 'qfs.method',
+            12 => 'qfs.inspector',
+            13 => 'qfs.loc_inspection',
+        ];
+        foreach ($columnFilters as $idx => $meta) {
+            $idx = (int) $idx;
+            $val = trim((string) data_get($meta, 'search.value', ''));
+            if ($val === '' || !isset($colMap[$idx])) continue;
+
+            if ($idx === 0) {
+                $filteredQuery->whereRaw("DATE_FORMAT(qfs.date, '%b-%d-%y') = ?", [$val]);
+                continue;
+            }
+            if ($idx === 6) {
+                $result = strtolower(trim(strip_tags($val)));
+                if ($result !== '') {
+                    $filteredQuery->whereRaw('LOWER(TRIM(qfs.results)) = ?', [$result]);
+                }
+                continue;
+            }
+            $filteredQuery->where($colMap[$idx], $val);
+        }
+
+        $recordsFiltered = (int) (clone $filteredQuery)->count('qfs.id');
+
+        $orderColIdx = (int) data_get($request->input('order', []), '0.column', 0);
+        $orderDir = strtolower((string) data_get($request->input('order', []), '0.dir', 'desc'));
+        $orderDir = $orderDir === 'asc' ? 'asc' : 'desc';
+        $orderMap = [
+            0 => 'qfs.date',
+            1 => 'os.PN',
+            2 => 'os.work_id',
+            3 => 'qfs.insp_type',
+            4 => 'qfs.operation',
+            5 => 'qfs.operator',
+            6 => 'qfs.results',
+            7 => 'qfs.sb_is',
+            8 => 'qfs.observation',
+            9 => 'qfs.station',
+            10 => 'qfs.method',
+            11 => 'qfs.qty_pcs',
+            12 => 'qfs.inspector',
+            13 => 'qfs.loc_inspection',
+        ];
+        $orderCol = $orderMap[$orderColIdx] ?? 'qfs.date';
+
+        $rows = $filteredQuery
+            ->select([
+                'qfs.id',
+                'qfs.date',
+                'qfs.insp_type',
+                'qfs.operation',
+                'qfs.operator',
+                'qfs.results',
+                'qfs.sb_is',
+                'qfs.observation',
+                'qfs.station',
+                'qfs.method',
+                'qfs.qty_pcs',
+                'qfs.inspector',
+                'qfs.loc_inspection',
+                'os.PN as part_number',
+                'os.work_id as work_id',
+            ])
+            ->orderBy($orderCol, $orderDir)
+            ->offset($start)
+            ->limit($length)
+            ->get();
+
+        $data = $rows->map(function ($r) {
+            $dt = $r->date ? Carbon::parse($r->date) : null;
+            $dateDisplay = $dt ? $dt->format('M-d-y') . ' <span class="badge badge-light">' . $dt->format('H:i') . '</span>' : '';
+            $isFAI = strcasecmp(trim((string) $r->insp_type), 'FAI') === 0;
+            $isPass = strcasecmp(trim((string) $r->results), 'pass') === 0;
+
+            return [
+                'date' => [
+                    'display' => $dateDisplay,
+                    'sort' => $dt ? $dt->format('Y-m-d H:i:s') : '',
+                    'filter' => $dt ? $dt->format('M-d-y H:i') : '',
+                ],
+                'part_revision' => e((string) ($r->part_number ?? '')),
+                'job' => e((string) ($r->work_id ?? '')),
+                'type' => '<span class="badge ' . ($isFAI ? 'badge-info' : 'badge-secondary') . '">' . e((string) $r->insp_type) . '</span>',
+                'opet' => e((string) ($r->operation ?? '')),
+                'operator' => e((string) ($r->operator ?? '')),
+                'result' => '<span class="badge ' . ($isPass ? 'badge-success' : 'badge-danger') . '">' . e(ucfirst((string) $r->results)) . '</span>',
+                'sb_is' => e((string) ($r->sb_is ?? '')),
+                'observation' => e((string) ($r->observation ?? '')),
+                'station' => e((string) ($r->station ?? '')),
+                'method' => e((string) ($r->method ?? '')),
+                'qty_insp' => (string) ($r->qty_pcs ?? ''),
+                'inspector' => e((string) ($r->inspector ?? '')),
+                'location' => e((string) ($r->loc_inspection ?? '')),
+            ];
+        })->values();
+
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
+    }
+
 
 
     /**
@@ -954,16 +1180,32 @@ class QaFaiSummaryController extends Controller
             return strcasecmp(trim((string) $row->insp_type), 'IPI') === 0;
         })->count();
 
-        // === monthStats (usa tu lógica actual; aquí solo un ejemplo) ===
-        $month = $request->input('month', now()->month);
-        $year  = $request->input('year', now()->year);
+        // === KPIs (respetar filtros de fecha: day / month / year) ===
+        $month = (int) $request->input('month', now()->month);
+        $year  = (int) $request->input('year', now()->year);
+        $day   = trim((string) $request->input('day', ''));
 
-        $monthQuery = QaFaiSummary::whereYear('date', $year)
-            ->whereMonth('date', $month);
+        $statsQuery = QaFaiSummary::query();
+        if ($day !== '') {
+            $statsQuery->whereDate('date', Carbon::parse($day)->toDateString());
+            $year = (int) Carbon::parse($day)->year;
+            $month = (int) Carbon::parse($day)->month;
+        } elseif ($request->filled('year') && $request->filled('month')) {
+            $statsQuery->whereYear('date', $year)->whereMonth('date', $month);
+        } elseif ($request->filled('year')) {
+            $statsQuery->whereYear('date', $year);
+        } elseif ($request->filled('month')) {
+            $statsQuery->whereYear('date', now()->year)->whereMonth('date', $month);
+            $year = (int) now()->year;
+        } else {
+            $statsQuery->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
+            $year = (int) now()->year;
+            $month = (int) now()->month;
+        }
 
-        $total = (clone $monthQuery)->count();
-        $pass  = (clone $monthQuery)->where('results', 'pass')->count();
-        $fail  = (clone $monthQuery)->where('results', 'no pass')->count();
+        $total = (clone $statsQuery)->count();
+        $pass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
+        $fail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
 
         $rate = $total > 0 ? number_format(($pass * 100) / $total, 2, '.', '') : '0.00';
 
