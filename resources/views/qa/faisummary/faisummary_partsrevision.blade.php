@@ -1196,15 +1196,18 @@ body .content {
     box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
   }
 
+  .dataTables_wrapper .dataTables_paginate .paginate_button.active,
   .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: #94a3b8 !important;
-    border-color: #94a3b8 !important;
+    background: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
     color: #fff !important;
     font-weight: 700;
   }
 
+  .dataTables_wrapper .dataTables_paginate .paginate_button.active .page-link,
   .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
     color: #fff !important;
+    background: transparent !important;
   }
 
   /* 2025-12-17: hacer más pequeño el texto de "Showing X to Y..." */
