@@ -326,6 +326,22 @@
                     </div>
                 </div>
                 @endif
+                <div class="d-flex justify-content-end align-items-center mb-1">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="colVisToggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Columns
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right p-2" id="colVisMenu" aria-labelledby="colVisToggle" style="min-width: 220px;">
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="7" checked> SB/IS</label>
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="8" checked> Observation</label>
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="9" checked> Station</label>
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="10" checked> Method</label>
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="11" checked> Qty Insp.</label>
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="12" checked> Inspector</label>
+                            <label class="dropdown-item mb-0 py-1"><input type="checkbox" data-col="13" checked> Location</label>
+                        </div>
+                    </div>
+                </div>
                 <div class="mt-n1 table-responsive fai-erp-wrap">
                     <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
                         <colgroup>
@@ -360,6 +376,22 @@
                                 <th>Qty Insp.</th>
                                 <th>Inspector</th>
                                 <th>Location</th>
+                            </tr>
+                            <tr class="dt-head-filters">
+                                <th><select id="headDayFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th></th>
+                                <th></th>
+                                <th><select id="headTypeFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th></th>
+                                <th></th>
+                                <th><select id="headResultFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th></th>
+                                <th></th>
+                                <th><select id="headStationFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th><select id="headMethodFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th></th>
+                                <th><select id="headInspectorFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th><select id="headLocationFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -995,6 +1027,21 @@
         border-top-right-radius: 10px;
     }
 
+    /* Header filters row */
+    #faiTable thead tr.dt-head-filters th {
+        background: #eef2f7 !important;
+        padding: 0.25rem 0.3rem;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    #faiTable thead tr.dt-head-filters .form-control {
+        height: 28px;
+        min-height: 28px;
+        font-size: 0.78rem;
+        padding: 0.1rem 0.35rem;
+        border-radius: 6px;
+    }
+
     #faiTable tbody td {
         padding: 0.45rem 0.7rem;
         vertical-align: middle;
@@ -1200,10 +1247,15 @@
     }
 
     /* Paginado estilo ERP (igual que partsrevision) */
+    .erp-dt-footer {
+        margin-top: 2px;
+        padding: 0 0 8px;
+    }
+
     .dataTables_wrapper .dataTables_paginate {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        border-top: 0 !important; /* sin línea separadora */
+        margin: 0 !important;
+        padding: 0 !important;
+        border-top: 0 !important;
     }
 
     .dataTables_wrapper .dataTables_paginate .pagination {
@@ -1214,16 +1266,16 @@
         border: 1px solid rgba(15, 23, 42, 0.18) !important;
         background: rgba(241, 245, 249, 0.95) !important;
         color: #0f172a !important;
-        margin: 0 0.16rem !important;
+        margin: 0 0.12rem !important;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
         transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
-        border-radius: 0.65rem !important;
+        border-radius: 0.55rem !important;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
-        padding: 0.22rem 0.72rem !important;
-        font-size: 0.95rem !important;
-        line-height: 1.15 !important;
+        padding: 0.375rem 0.75rem !important;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
         border: none !important;
         background: transparent !important;
         color: inherit !important;
@@ -1236,15 +1288,25 @@
         box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
     }
 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.active,
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #94a3b8 !important;
-        border-color: #94a3b8 !important;
+        background: #0b5ed7 !important;
+        border-color: #0b5ed7 !important;
         color: #fff !important;
         font-weight: 700;
     }
 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.active .page-link,
     .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
         color: #fff !important;
+        background: transparent !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.active:hover,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #0a58ca !important;
+        border-color: #0a58ca !important;
+        transform: none;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
@@ -1255,9 +1317,26 @@
         cursor: default !important;
     }
 
+    /* Forzar mismo tamaÃ±o de paginado que partsrevision */
+    #faiTable_wrapper .pagination .page-link {
+        padding: 0.375rem 0.75rem !important;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        border-radius: 8px !important;
+    }
+
+    #faiTable_wrapper .pagination .page-item.active .page-link {
+        background: #0b5ed7 !important;
+        border-color: #0b5ed7 !important;
+        color: #fff !important;
+    }
+
     .dataTables_wrapper .dataTables_info {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 0.82rem !important;
+        line-height: 1.2 !important;
+        color: rgba(15, 23, 42, 0.80);
     }
 
     /* Alinear info y paginado en la misma línea */
@@ -1668,11 +1747,17 @@
         // =========================
         const savedPageLen = 14;
         if (!$.fn.DataTable.isDataTable('#faiTable')) {
+            const hasFixedHeader = !!($.fn.dataTable && $.fn.dataTable.FixedHeader);
             window.faiDT = $('#faiTable').DataTable({
                 scrollX: false,
                 autoWidth: false,
                 pageLength: savedPageLen,
-                dom: 'rtip', // <- sin buscador global nativo, con info
+                dom: "rt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>", // <- sin buscador global nativo, con info
+                orderCellsTop: true,
+                fixedHeader: hasFixedHeader ? {
+                    header: true,
+                    headerOffset: 56
+                } : false,
                 order: [
                     [0, 'desc']
                 ],
@@ -1799,7 +1884,10 @@
         //  Helpers filtros exactos
         // =========================
         function getText(v) {
-            if (typeof v === 'string') return v;
+            if (typeof v === 'string') {
+                // DataTables can return HTML from badge cells; convert to plain text for filter options
+                return $('<div>').html(v).text();
+            }
             try {
                 return $(v).text();
             } catch {
@@ -1812,6 +1900,129 @@
             return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b, undefined, {
                 sensitivity: 'base'
             }));
+        }
+
+        function extractDayLabel(v) {
+            const txt = getText(v).replace(/\s+/g, ' ').trim();
+            if (!txt) return '';
+            // First token from "Mar-11-26 07:27" -> "Mar-11-26"
+            return txt.split(' ')[0] || '';
+        }
+
+        // Regex exacto tolerante a HTML (ej. badges <span>Pass</span>)
+        function exactTextRegex(val) {
+            const esc = $.fn.dataTable.util.escapeRegex(val);
+            return '^\\s*(?:<[^>]+>\\s*)*' + esc + '\\s*(?:<[^>]+>\\s*)*$';
+        }
+
+        // =========================
+        //  Column visibility (dropdown)
+        // =========================
+        (function initColumnVisibilityMenu() {
+            const $menu = $('#colVisMenu');
+            if (!$menu.length) return;
+
+            $menu.find('input[data-col]').each(function() {
+                const idx = parseInt(this.getAttribute('data-col') || '-1', 10);
+                if (idx >= 0) this.checked = faiDT.column(idx).visible();
+            });
+
+            $menu.off('change.colvis').on('change.colvis', 'input[data-col]', function() {
+                const idx = parseInt(this.getAttribute('data-col') || '-1', 10);
+                if (idx < 0) return;
+                faiDT.column(idx).visible(this.checked, false);
+                faiDT.columns.adjust().draw(false);
+            });
+        })();
+
+        // =========================
+        //  Header column filters (Type/Result/Location)
+        // =========================
+        function populateHeaderSelect(selectId, colIndex) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+
+            const applied = faiDT.column(colIndex, { search: 'applied' }).data().toArray();
+            const removed = faiDT.column(colIndex, { search: 'removed' }).data().toArray();
+            const unique = uniqueSorted(applied.concat(removed).map(getText));
+            const current = sel.value || '';
+
+            while (sel.options.length > 1) sel.remove(1);
+            const frag = document.createDocumentFragment();
+            unique.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                frag.appendChild(opt);
+            });
+            sel.appendChild(frag);
+            if (current && unique.includes(current)) sel.value = current;
+        }
+
+        function bindHeaderExactFilter(selectId, colIndex) {
+            const el = document.getElementById(selectId);
+            if (!el) return;
+            el.addEventListener('change', function() {
+                const v = (this.value || '').trim();
+                if (!v) {
+                    faiDT.column(colIndex).search('', true, false).draw();
+                } else {
+                    faiDT.column(colIndex).search(exactTextRegex(v), true, false).draw();
+                }
+            });
+        }
+
+        function bindHeaderDayFilter() {
+            const el = document.getElementById('headDayFilter');
+            if (!el) return;
+            el.addEventListener('change', function() {
+                const v = (this.value || '').trim();
+                if (!v) {
+                    faiDT.column(0).search('', true, false).draw();
+                } else {
+                    const esc = $.fn.dataTable.util.escapeRegex(v);
+                    faiDT.column(0).search('^' + esc + '\\b', true, false).draw();
+                }
+            });
+        }
+
+        function populateHeaderDayFilter() {
+            const sel = document.getElementById('headDayFilter');
+            if (!sel) return;
+            const applied = faiDT.column(0, { search: 'applied' }).data().toArray();
+            const removed = faiDT.column(0, { search: 'removed' }).data().toArray();
+            const unique = uniqueSorted(applied.concat(removed).map(extractDayLabel));
+            const current = sel.value || '';
+
+            while (sel.options.length > 1) sel.remove(1);
+            const frag = document.createDocumentFragment();
+            unique.forEach(v => {
+                if (!v) return;
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                frag.appendChild(opt);
+            });
+            sel.appendChild(frag);
+            if (current && unique.includes(current)) sel.value = current;
+        }
+
+        bindHeaderDayFilter();
+        bindHeaderExactFilter('headTypeFilter', COLS.type);
+        bindHeaderExactFilter('headResultFilter', COLS.result);
+        bindHeaderExactFilter('headStationFilter', COLS.station);
+        bindHeaderExactFilter('headMethodFilter', COLS.method);
+        bindHeaderExactFilter('headInspectorFilter', COLS.inspector);
+        bindHeaderExactFilter('headLocationFilter', COLS.location);
+
+        function repopulateHeaderFilters() {
+            populateHeaderDayFilter();
+            populateHeaderSelect('headTypeFilter', COLS.type);
+            populateHeaderSelect('headResultFilter', COLS.result);
+            populateHeaderSelect('headStationFilter', COLS.station);
+            populateHeaderSelect('headMethodFilter', COLS.method);
+            populateHeaderSelect('headInspectorFilter', COLS.inspector);
+            populateHeaderSelect('headLocationFilter', COLS.location);
         }
 
         function populateSelectFromDT(selectId, colIndex) {
@@ -1853,8 +2064,7 @@
                 const val = this.value;
                 if (!val) faiDT.column(colIndex).search('', true, false).draw();
                 else {
-                    const esc = $.fn.dataTable.util.escapeRegex(val);
-                    faiDT.column(colIndex).search('^' + esc + '$', true, false).draw();
+                    faiDT.column(colIndex).search(exactTextRegex(val), true, false).draw();
                 }
             });
         }
@@ -1899,7 +2109,11 @@
             FILTERS.forEach(f => populateSelectFromDT(f.id, f.col));
         }
         repopulateAllFilters();
-        faiDT.on('draw', repopulateAllFilters);
+        repopulateHeaderFilters();
+        faiDT.on('draw', function() {
+            repopulateAllFilters();
+            repopulateHeaderFilters();
+        });
 
         // Badge Total
         const $badge = $('#badgeFinished');
@@ -2107,5 +2321,7 @@
 
 
 @endpush
+
+
 
 
