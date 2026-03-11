@@ -97,6 +97,7 @@
                 <th>PART/DESCRIPCIÓN</th>
                 <th>JOB</th>
                 <th>FAI OPS</th>
+                <th>DUE DATE</th>
                 <th>(WIP) FAI + IPI</th>
                 <th class="actions-col">ACTIONS</th>
               </tr>
@@ -134,6 +135,26 @@
   /* Card container neutral (sin borde amarillo/verde) */
   .fai-card {
     border: 1px solid rgba(15, 23, 42, 0.10) !important;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Mantener ambas tarjetas con la misma altura */
+  .row.row-cols-1.row-cols-md-2 > .col {
+    display: flex;
+  }
+
+  /* En desktop: hacer In Process un poco más ancho que Pending */
+  @media (min-width: 768px) {
+    .row.row-cols-1.row-cols-md-2 > .col:first-child {
+      flex: 0 0 38%;
+      max-width: 38%;
+    }
+
+    .row.row-cols-1.row-cols-md-2 > .col:last-child {
+      flex: 0 0 62%;
+      max-width: 62%;
+    }
   }
 
   /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT)
@@ -820,6 +841,15 @@
     font-variant-numeric: tabular-nums;
   }
 
+  #ordersTableProcess td:nth-child(4),
+  #ordersTableProcess th:nth-child(4) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    min-width: 110px;
+    width: 12%;
+    white-space: nowrap;
+  }
+
   /* Columna ACTIONS centrada */
   #ordersTableEmpty td:last-child,
   #ordersTableProcess td:last-child {
@@ -886,8 +916,8 @@
   }
 
   /* Ancho mínimo para la columna de progreso en In Process */
-  #ordersTableProcess thead th:nth-child(4),
-  #ordersTableProcess tbody td:nth-child(4) {
+  #ordersTableProcess thead th:nth-child(5),
+  #ordersTableProcess tbody td:nth-child(5) {
     width: 18%;
     min-width: 140px;
     text-align: center;
@@ -1181,9 +1211,9 @@ body .content {
 
   .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
     /* 2025-12-17: botones de paginación un poco más grandes */
-    padding: 0.375rem 0.75rem !important;
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
+    padding: 0.26rem 0.56rem !important;
+    font-size: 0.88rem !important;
+    line-height: 1.25 !important;
     border: none !important;
     background: transparent !important;
     color: inherit !important;
@@ -1617,6 +1647,13 @@ body .content {
           searchable: false
         },
         {
+          data: 'due_date',
+          render: function (data, type, row) {
+            if (type === 'sort' || type === 'type') return row?.due_date_sort || data || '';
+            return data || '';
+          }
+        },
+        {
           data: 'progress',
           orderable: false,
           searchable: false
@@ -1646,8 +1683,8 @@ body .content {
           emptyTable: 'No orders found.',
           zeroRecords: 'No matching orders.'
         },
-        // 2025-12-17: ordenar por due_date en Pending (bucket=empty), mantener JOB en Process
-        order: bucket === 'empty' ? [[2, 'asc']] : [[1, 'desc']],
+        // Orden inicial por DUE DATE (ascendente)
+        order: bucket === 'empty' ? [[2, 'asc']] : [[3, 'asc']],
         rowId: 'id',
         // 2025-12-17: truncar Part/Descripción y dejar tooltip con el texto completo
         createdRow: function(row, data) {
@@ -3927,3 +3964,5 @@ body .content {
     </div>
   </div>
 </div>
+
+
