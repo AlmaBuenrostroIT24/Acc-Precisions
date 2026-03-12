@@ -431,6 +431,7 @@
                     </div>
 
                 </div>
+                <div id="activeFilterChips" class="fai-active-filters mb-2 d-none"></div>
                 <div class="mt-n1 table-responsive fai-erp-wrap">
                     <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
                         <colgroup>
@@ -471,14 +472,14 @@
                                 <th></th>
                                 <th></th>
                                 <th><select id="headTypeFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
-                                <th></th>
-                                <th></th>
+                                <th><select id="headOperationFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
+                                <th><select id="headOperatorFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                                 <th><select id="headResultFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                                 <th></th>
                                 <th></th>
                                 <th><select id="headStationFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                                 <th><select id="headMethodFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
-                                <th></th>
+                                <th><select id="headQtyFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                                 <th><select id="headInspectorFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                                 <th><select id="headLocationFilter" class="form-control form-control-sm"><option value="">All</option></select></th>
                             </tr>
@@ -1072,6 +1073,11 @@
         font-size: 0.9rem;
         text-transform: uppercase;
     }
+    #faiTable thead tr:first-child th {
+        position: sticky;
+        top: 0;
+        z-index: 8;
+    }
 
     #faiTable thead th:first-child {
         border-top-left-radius: 10px;
@@ -1086,14 +1092,37 @@
         background: #eef2f7 !important;
         padding: 0.25rem 0.3rem;
         border-top: 1px solid rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 42px;
+        z-index: 7;
     }
 
     #faiTable thead tr.dt-head-filters .form-control {
-        height: 28px;
-        min-height: 28px;
-        font-size: 0.78rem;
-        padding: 0.1rem 0.35rem;
-        border-radius: 6px;
+        height: 34px;
+        min-height: 34px;
+        font-size: 0.82rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 7px;
+    }
+    #faiTable thead tr.dt-head-filters select.form-control {
+        border: 1px solid #c2cedb;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-weight: 600;
+        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.05);
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 1.6rem;
+        background-image: linear-gradient(45deg, transparent 50%, #64748b 50%), linear-gradient(135deg, #64748b 50%, transparent 50%);
+        background-position: calc(100% - 12px) calc(50% - 1px), calc(100% - 8px) calc(50% - 1px);
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+    }
+    #faiTable thead tr.dt-head-filters select.form-control:focus {
+        border-color: #5b8ee6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.16);
+        outline: 0;
     }
 
     #faiTable tbody td {
@@ -1105,6 +1134,52 @@
 
     #faiTable tbody tr:hover {
         background: rgba(13, 110, 253, 0.05);
+    }
+
+    /* Chips de filtros activos */
+    .fai-active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        padding: 0.25rem 0;
+    }
+    .fai-filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #eef2f7;
+        border: 1px solid #cdd7e3;
+        border-radius: 999px;
+        padding: 6px 12px;
+        min-height: 30px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #334155;
+        line-height: 1;
+    }
+    .fai-filter-chip .chip-remove {
+        border: 0;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.92rem;
+        line-height: 1;
+        padding: 0;
+        cursor: pointer;
+    }
+    .fai-filter-chip .chip-remove:hover {
+        color: #0f172a;
+    }
+    .fai-clear-filters {
+        border: 1px dashed #9fb0c5;
+        background: #f8fafc;
+        color: #334155;
+        border-radius: 999px;
+        padding: 6px 12px;
+        min-height: 30px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        cursor: pointer;
     }
 
     /* Zebra suave */
@@ -2239,25 +2314,38 @@
         // =========================
         //  Header column filters (Type/Result/Location)
         // =========================
-        function populateHeaderSelect(selectId, colIndex) {
+        let serverHeaderOptions = null;
+
+        function setHeaderSelectOptions(selectId, values, formatter) {
             const sel = document.getElementById(selectId);
             if (!sel) return;
-
-            const applied = faiDT.column(colIndex, { search: 'applied' }).data().toArray();
-            const removed = faiDT.column(colIndex, { search: 'removed' }).data().toArray();
-            const unique = uniqueSorted(applied.concat(removed).map(getText));
             const current = sel.value || '';
+            const isObjectList = Array.isArray(values) && values.length > 0 && typeof values[0] === 'object' && values[0] !== null;
+            const list = isObjectList
+                ? values
+                    .map(v => ({
+                        value: String((v && v.value) || '').trim(),
+                        count: Number((v && v.count) || 0),
+                    }))
+                    .filter(v => v.value !== '')
+                : uniqueSorted((values || []).map(v => String(v || '').trim()).filter(Boolean)).map(v => ({
+                    value: v,
+                    count: null,
+                }));
 
             while (sel.options.length > 1) sel.remove(1);
             const frag = document.createDocumentFragment();
-            unique.forEach(v => {
+            list.forEach(item => {
                 const opt = document.createElement('option');
-                opt.value = v;
-                opt.textContent = v;
+                opt.value = item.value;
+                const labelBase = typeof formatter === 'function' ? formatter(item.value) : item.value;
+                opt.textContent = (item.count !== null && !Number.isNaN(item.count))
+                    ? `${labelBase} (${item.count})`
+                    : labelBase;
                 frag.appendChild(opt);
             });
             sel.appendChild(frag);
-            if (current && unique.includes(current)) sel.value = current;
+            if (current && list.some(x => x.value === current)) sel.value = current;
         }
 
         function bindHeaderExactFilter(selectId, colIndex) {
@@ -2279,42 +2367,74 @@
         }
 
         function populateHeaderDayFilter() {
-            const sel = document.getElementById('headDayFilter');
-            if (!sel) return;
+            if (faiDT.settings()[0]?.oFeatures?.bServerSide && serverHeaderOptions) {
+                setHeaderSelectOptions('headDayFilter', serverHeaderOptions.date || []);
+                return;
+            }
             const applied = faiDT.column(0, { search: 'applied' }).data().toArray();
             const removed = faiDT.column(0, { search: 'removed' }).data().toArray();
-            const unique = uniqueSorted(applied.concat(removed).map(extractDayLabel));
-            const current = sel.value || '';
-
-            while (sel.options.length > 1) sel.remove(1);
-            const frag = document.createDocumentFragment();
-            unique.forEach(v => {
-                if (!v) return;
-                const opt = document.createElement('option');
-                opt.value = v;
-                opt.textContent = v;
-                frag.appendChild(opt);
-            });
-            sel.appendChild(frag);
-            if (current && unique.includes(current)) sel.value = current;
+            setHeaderSelectOptions('headDayFilter', applied.concat(removed).map(extractDayLabel));
         }
 
         bindHeaderDayFilter();
         bindHeaderExactFilter('headTypeFilter', COLS.type);
+        bindHeaderExactFilter('headOperationFilter', COLS.operation);
+        bindHeaderExactFilter('headOperatorFilter', COLS.operator);
         bindHeaderExactFilter('headResultFilter', COLS.result);
         bindHeaderExactFilter('headStationFilter', COLS.station);
         bindHeaderExactFilter('headMethodFilter', COLS.method);
+        bindHeaderExactFilter('headQtyFilter', 11);
         bindHeaderExactFilter('headInspectorFilter', COLS.inspector);
         bindHeaderExactFilter('headLocationFilter', COLS.location);
 
         function repopulateHeaderFilters() {
+            if (faiDT.settings()[0]?.oFeatures?.bServerSide && serverHeaderOptions) {
+                setHeaderSelectOptions('headDayFilter', serverHeaderOptions.date || []);
+                setHeaderSelectOptions('headTypeFilter', serverHeaderOptions.type || []);
+                setHeaderSelectOptions('headOperationFilter', serverHeaderOptions.operation || []);
+                setHeaderSelectOptions('headOperatorFilter', serverHeaderOptions.operator || []);
+                setHeaderSelectOptions('headResultFilter', ['pass', 'no pass'], function(v) {
+                    const s = String(v || '').trim().toLowerCase();
+                    if (!s) return '';
+                    return s === 'pass' ? 'Pass' : (s === 'no pass' ? 'No pass' : s.charAt(0).toUpperCase() + s.slice(1));
+                });
+                setHeaderSelectOptions('headStationFilter', serverHeaderOptions.station || []);
+                setHeaderSelectOptions('headMethodFilter', serverHeaderOptions.method || []);
+                setHeaderSelectOptions('headQtyFilter', serverHeaderOptions.qty_insp || []);
+                setHeaderSelectOptions('headInspectorFilter', serverHeaderOptions.inspector || []);
+                setHeaderSelectOptions('headLocationFilter', serverHeaderOptions.location || []);
+                return;
+            }
+
             populateHeaderDayFilter();
-            populateHeaderSelect('headTypeFilter', COLS.type);
-            populateHeaderSelect('headResultFilter', COLS.result);
-            populateHeaderSelect('headStationFilter', COLS.station);
-            populateHeaderSelect('headMethodFilter', COLS.method);
-            populateHeaderSelect('headInspectorFilter', COLS.inspector);
-            populateHeaderSelect('headLocationFilter', COLS.location);
+            setHeaderSelectOptions('headTypeFilter', faiDT.column(COLS.type, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.type, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headOperationFilter', faiDT.column(COLS.operation, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.operation, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headOperatorFilter', faiDT.column(COLS.operator, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.operator, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headResultFilter', ['pass', 'no pass'], function(v) {
+                const s = String(v || '').trim().toLowerCase();
+                return s === 'pass' ? 'Pass' : (s === 'no pass' ? 'No pass' : s);
+            });
+            setHeaderSelectOptions('headStationFilter', faiDT.column(COLS.station, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.station, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headMethodFilter', faiDT.column(COLS.method, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.method, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headQtyFilter', faiDT.column(11, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(11, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headInspectorFilter', faiDT.column(COLS.inspector, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.inspector, { search: 'removed' }).data().toArray()
+            ).map(getText));
+            setHeaderSelectOptions('headLocationFilter', faiDT.column(COLS.location, { search: 'applied' }).data().toArray().concat(
+                faiDT.column(COLS.location, { search: 'removed' }).data().toArray()
+            ).map(getText));
         }
 
         function populateSelectFromDT(selectId, colIndex) {
@@ -2399,9 +2519,115 @@
         }
         repopulateAllFilters();
         repopulateHeaderFilters();
+        faiDT.on('xhr.dt', function(e, settings, json) {
+            serverHeaderOptions = (json && json.filterOptions) ? json.filterOptions : null;
+            repopulateHeaderFilters();
+        });
         faiDT.on('draw', function() {
             repopulateAllFilters();
             repopulateHeaderFilters();
+            renderActiveFilterChips();
+        });
+
+        function renderActiveFilterChips() {
+            const box = document.getElementById('activeFilterChips');
+            if (!box) return;
+
+            const chips = [];
+            const pushIf = (id, label) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const raw = (el.value || '').trim();
+                if (!raw) return;
+                const val = (id === 'headResultFilter')
+                    ? (raw.toLowerCase() === 'pass' ? 'Pass' : (raw.toLowerCase() === 'no pass' ? 'No pass' : raw))
+                    : raw;
+                chips.push({ id, label, value: val });
+            };
+
+            pushIf('headDayFilter', 'Date');
+            pushIf('headTypeFilter', 'Type');
+            pushIf('headOperationFilter', 'Operation');
+            pushIf('headOperatorFilter', 'Operator');
+            pushIf('headResultFilter', 'Result');
+            pushIf('headStationFilter', 'Station');
+            pushIf('headMethodFilter', 'Method');
+            pushIf('headQtyFilter', 'Qty');
+            pushIf('headInspectorFilter', 'Inspector');
+            pushIf('headLocationFilter', 'Location');
+
+            const q = (document.getElementById('globalSearch')?.value || '').trim();
+            if (q) chips.push({ id: 'globalSearch', label: 'Search', value: q });
+
+            if (!chips.length) {
+                box.classList.add('d-none');
+                box.innerHTML = '';
+                return;
+            }
+
+            const html = chips.map(c => (
+                `<span class="fai-filter-chip" data-id="${c.id}">
+                    ${c.label}: ${$('<div>').text(c.value).html()}
+                    <button type="button" class="chip-remove" data-id="${c.id}" title="Remove">x</button>
+                </span>`
+            )).join('') + `<button type="button" class="fai-clear-filters" id="clearAllTableFilters">Clear filters</button>`;
+
+            box.classList.remove('d-none');
+            box.innerHTML = html;
+        }
+
+        $(document).on('click', '.fai-filter-chip .chip-remove', function() {
+            const id = String($(this).data('id') || '').trim();
+            if (!id) return;
+            const el = document.getElementById(id);
+            const colById = {
+                headDayFilter: 0,
+                headTypeFilter: COLS.type,
+                headOperationFilter: COLS.operation,
+                headOperatorFilter: COLS.operator,
+                headResultFilter: COLS.result,
+                headStationFilter: COLS.station,
+                headMethodFilter: COLS.method,
+                headQtyFilter: 11,
+                headInspectorFilter: COLS.inspector,
+                headLocationFilter: COLS.location
+            };
+
+            if (id === 'globalSearch') {
+                $('#globalSearch').val('');
+                faiDT.search('').draw();
+                return;
+            }
+            if (!el) return;
+            if (typeof el.selectedIndex === 'number') {
+                el.selectedIndex = 0;
+            }
+            el.value = '';
+            if (Object.prototype.hasOwnProperty.call(colById, id)) {
+                faiDT.column(colById[id]).search('').draw();
+            } else {
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+
+        $(document).on('click', '#clearAllTableFilters', function() {
+            const ids = [
+                'headDayFilter', 'headTypeFilter', 'headOperationFilter', 'headOperatorFilter', 'headResultFilter',
+                'headStationFilter', 'headMethodFilter', 'headQtyFilter',
+                'headInspectorFilter', 'headLocationFilter'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.value = '';
+            });
+            $('#globalSearch').val('');
+
+            faiDT.columns().every(function() {
+                this.search('');
+            });
+            faiDT.search('').draw();
+            renderActiveFilterChips();
         });
 
         function updateKpisFromDT() {

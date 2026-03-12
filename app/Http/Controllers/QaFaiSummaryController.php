@@ -967,27 +967,41 @@ class QaFaiSummaryController extends Controller
             6 => 'qfs.results',
             9 => 'qfs.station',
             10 => 'qfs.method',
+            11 => 'qfs.qty_pcs',
             12 => 'qfs.inspector',
             13 => 'qfs.loc_inspection',
         ];
-        foreach ($columnFilters as $idx => $meta) {
-            $idx = (int) $idx;
-            $val = trim((string) data_get($meta, 'search.value', ''));
-            if ($val === '' || !isset($colMap[$idx])) continue;
+        $applyColumnFilters = function ($q, ?int $skipIdx = null) use ($columnFilters, $colMap) {
+            foreach ($columnFilters as $idx => $meta) {
+                $idx = (int) $idx;
+                if ($skipIdx !== null && $idx === $skipIdx) continue;
 
-            if ($idx === 0) {
-                $filteredQuery->whereRaw("DATE_FORMAT(qfs.date, '%b-%d-%y') = ?", [$val]);
-                continue;
-            }
-            if ($idx === 6) {
-                $result = strtolower(trim(strip_tags($val)));
-                if ($result !== '') {
-                    $filteredQuery->whereRaw('LOWER(TRIM(qfs.results)) = ?', [$result]);
+                $val = trim((string) data_get($meta, 'search.value', ''));
+                if ($val === '' || !isset($colMap[$idx])) continue;
+
+                if ($idx === 0) {
+                    $q->whereRaw("DATE_FORMAT(qfs.date, '%b-%d-%y') = ?", [$val]);
+                    continue;
                 }
-                continue;
+                if ($idx === 6) {
+                    $result = strtolower(trim(strip_tags($val)));
+                    if ($result === '') continue;
+
+                    $passVals = ['pass', 'ok', 'p'];
+                    $failVals = ['no pass', 'nopass', 'no_pass', 'fail', 'np', 'no', 'f'];
+                    if (in_array($result, $passVals, true)) {
+                        $q->whereIn(DB::raw("LOWER(TRIM(COALESCE(qfs.results,'')))"), $passVals);
+                    } elseif (in_array($result, $failVals, true)) {
+                        $q->whereIn(DB::raw("LOWER(TRIM(COALESCE(qfs.results,'')))"), $failVals);
+                    } else {
+                        $q->whereRaw('LOWER(TRIM(COALESCE(qfs.results, ""))) = ?', [$result]);
+                    }
+                    continue;
+                }
+                $q->where($colMap[$idx], $val);
             }
-            $filteredQuery->where($colMap[$idx], $val);
-        }
+        };
+        $applyColumnFilters($filteredQuery);
 
         $recordsFiltered = (int) (clone $filteredQuery)->count('qfs.id');
 
@@ -1063,11 +1077,152 @@ class QaFaiSummaryController extends Controller
             ];
         })->values();
 
+        // Header filter options must come from the full filtered dataset (not current page).
+        $buildOptionsQuery = function (?int $skipIdx = null) use (
+            $buildBase,
+            $applyBaseFilters,
+            $globalSearch,
+            $applyColumnFilters
+        ) {
+            $q = $buildBase();
+            $applyBaseFilters($q, $globalSearch !== '');
+
+            if ($globalSearch !== '') {
+                $like = '%' . $globalSearch . '%';
+                $q->where(function ($w) use ($like) {
+                    $w->where('qfs.operator', 'like', $like)
+                        ->orWhere('qfs.inspector', 'like', $like)
+                        ->orWhere('qfs.loc_inspection', 'like', $like)
+                        ->orWhere('qfs.operation', 'like', $like)
+                        ->orWhere('qfs.insp_type', 'like', $like)
+                        ->orWhere('qfs.results', 'like', $like)
+                        ->orWhere('qfs.station', 'like', $like)
+                        ->orWhere('qfs.method', 'like', $like)
+                        ->orWhere('qfs.sb_is', 'like', $like)
+                        ->orWhere('qfs.observation', 'like', $like)
+                        ->orWhere('os.work_id', 'like', $like)
+                        ->orWhere('os.PN', 'like', $like);
+                });
+            }
+
+            $applyColumnFilters($q, $skipIdx);
+            return $q;
+        };
+
+        $toOptionRows = function ($rows) {
+            return collect($rows)->map(function ($r) {
+                return [
+                    'value' => (string) ($r->v ?? ''),
+                    'count' => (int) ($r->c ?? 0),
+                ];
+            })->filter(fn($x) => trim((string) $x['value']) !== '')->values();
+        };
+
+        $filterOptions = [
+            'date' => $toOptionRows(
+                (clone $buildOptionsQuery(0))
+                    ->selectRaw("DATE_FORMAT(qfs.date, '%b-%d-%y') as v, COUNT(*) as c")
+                    ->whereNotNull('qfs.date')
+                    ->groupBy('v')
+                    ->orderByRaw('MAX(qfs.date) DESC')
+                    ->get()
+            ),
+
+            'type' => $toOptionRows(
+                (clone $buildOptionsQuery(3))
+                    ->selectRaw("TRIM(COALESCE(qfs.insp_type,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.insp_type,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'operation' => $toOptionRows(
+                (clone $buildOptionsQuery(4))
+                    ->selectRaw("TRIM(COALESCE(qfs.operation,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.operation,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderByRaw("CAST(v AS UNSIGNED) ASC, v ASC")
+                    ->get()
+            ),
+
+            'result' => $toOptionRows(
+                (clone $buildOptionsQuery(6))
+                    ->selectRaw("
+                        CASE
+                            WHEN LOWER(TRIM(COALESCE(qfs.results,''))) IN ('pass','ok','p') THEN 'pass'
+                            WHEN LOWER(TRIM(COALESCE(qfs.results,''))) IN ('no pass','nopass','no_pass','fail','np','no','f') THEN 'no pass'
+                            ELSE LOWER(TRIM(COALESCE(qfs.results,'')))
+                        END as v,
+                        COUNT(*) as c
+                    ")
+                    ->whereRaw("TRIM(COALESCE(qfs.results,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderByRaw("FIELD(v, 'pass', 'no pass'), v")
+                    ->get()
+            ),
+
+            'station' => $toOptionRows(
+                (clone $buildOptionsQuery(9))
+                    ->selectRaw("TRIM(COALESCE(qfs.station,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.station,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'operator' => $toOptionRows(
+                (clone $buildOptionsQuery(5))
+                    ->selectRaw("TRIM(COALESCE(qfs.operator,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.operator,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'method' => $toOptionRows(
+                (clone $buildOptionsQuery(10))
+                    ->selectRaw("TRIM(COALESCE(qfs.method,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.method,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'qty_insp' => $toOptionRows(
+                (clone $buildOptionsQuery(11))
+                    ->selectRaw("TRIM(COALESCE(CAST(qfs.qty_pcs AS CHAR),'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(CAST(qfs.qty_pcs AS CHAR),'')) <> ''")
+                    ->groupBy('v')
+                    ->orderByRaw('CAST(v AS UNSIGNED) ASC, v ASC')
+                    ->get()
+            ),
+
+            'inspector' => $toOptionRows(
+                (clone $buildOptionsQuery(12))
+                    ->selectRaw("TRIM(COALESCE(qfs.inspector,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.inspector,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'location' => $toOptionRows(
+                (clone $buildOptionsQuery(13))
+                    ->selectRaw("TRIM(COALESCE(qfs.loc_inspection,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.loc_inspection,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+        ];
+
         return response()->json([
             'draw' => $draw,
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'data' => $data,
+            'filterOptions' => $filterOptions,
         ]);
     }
 
