@@ -360,15 +360,31 @@
                                 <i class="fas fa-eraser mr-1"></i> Clean
                             </a>
 
-                            <a class="btn btn-sm btn-outline-secondary mr-2 mb-1"
+                            @php
+                                $reqDay = trim((string) request('day', ''));
+                                $reqMonth = trim((string) request('month', ''));
+                                $reqYear = trim((string) request('year', ''));
+                                $nowDate = now()->toDateString();
+                                $nowMonth = (string) now()->month;
+                                $nowYear = (string) now()->year;
+                                $isTodayActive = ($reqDay !== '' && $reqDay === $nowDate);
+                                // Month activo solo cuando es mes actual (o estado clean/default), sin dia.
+                                $isCleanDefault = ($reqDay === '' && $reqMonth === '' && $reqYear === '');
+                                $isCurrentMonthFilter = ($reqDay === '' && $reqMonth === $nowMonth && $reqYear === $nowYear);
+                                $isMonthActive = ($isCleanDefault || $isCurrentMonthFilter);
+                                // Year activo solo cuando es anio actual (sin mes, sin dia).
+                                $isYearActive = ($reqDay === '' && $reqMonth === '' && $reqYear === $nowYear);
+                            @endphp
+
+                            <a class="btn btn-sm {{ $isTodayActive ? 'btn-erp-active' : 'btn-outline-secondary' }} mr-2 mb-1"
                                 href="{{ route('faisummary.general', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
                                 <i class="fas fa-bolt mr-1"></i> Today
                             </a>
-                            <a class="btn btn-sm btn-outline-secondary mr-2 mb-1"
+                            <a class="btn btn-sm {{ $isMonthActive ? 'btn-erp-active' : 'btn-outline-secondary' }} mr-2 mb-1"
                                 href="{{ route('faisummary.general', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
                                 <i class="far fa-calendar-alt mr-1"></i> Month
                             </a>
-                            <a class="btn btn-sm btn-outline-secondary mr-2 mb-1"
+                            <a class="btn btn-sm {{ $isYearActive ? 'btn-erp-active' : 'btn-outline-secondary' }} mr-2 mb-1"
                                 href="{{ route('faisummary.general', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
                                 <i class="far fa-calendar mr-1"></i> Year
                             </a>
@@ -399,7 +415,7 @@
                             </div>
                         </div>
 
-                        <div class="input-group input-group-sm mb-1 ml-md-auto" style="width: 320px;">
+                        <div class="input-group input-group-sm mb-1 ml-md-auto fai-search-erp" style="width: 320px;">
                             <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">
                                     <i class="fas fa-search"></i>
@@ -685,6 +701,143 @@
     .btn-erp-gray:focus {
         box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
     }
+
+    /* Boton activo estilo ERP (verde suave) */
+    .fai-table-toolbar .btn-erp-active {
+        background: linear-gradient(180deg, #e7f6ee 0%, #d4eddf 100%) !important;
+        border: 1px solid #9fd0b1 !important;
+        color: #1f5d3f !important;
+        box-shadow: 0 1px 3px rgba(31, 93, 63, 0.14);
+    }
+    .fai-table-toolbar .btn-erp-active:hover {
+        background: linear-gradient(180deg, #dcf1e5 0%, #cbe7d8 100%) !important;
+        color: #174b32 !important;
+    }
+    .fai-table-toolbar .btn-erp-active:focus,
+    .fai-table-toolbar .btn-erp-active:active {
+        box-shadow: 0 0 0 2px rgba(52, 168, 83, 0.2) !important;
+    }
+
+    /* Year / Month / Day mas altos en toolbar */
+    .fai-table-toolbar #yearPickerWrapper,
+    .fai-table-toolbar #monthPickerWrapper,
+    .fai-table-toolbar #dayPickerWrapper {
+        height: 36px;
+        border: 1px solid #bfc9d6;
+        border-radius: 10px;
+        overflow: visible;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        align-items: stretch;
+        padding: 0;
+    }
+    .fai-table-toolbar #yearPickerWrapper:focus-within,
+    .fai-table-toolbar #monthPickerWrapper:focus-within,
+    .fai-table-toolbar #dayPickerWrapper:focus-within {
+        border-color: #5b8ee6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.16);
+    }
+    .fai-table-toolbar #yearPickerWrapper .input-group-text,
+    .fai-table-toolbar #monthPickerWrapper .input-group-text,
+    .fai-table-toolbar #dayPickerWrapper .input-group-text {
+        border: 0 !important;
+        border-right: 1px solid #d8e0ea !important;
+        background: #eef2f7 !important;
+        min-width: 36px;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        display: inline-flex;
+        margin: 0 !important;
+        border-radius: 10px 0 0 10px !important;
+    }
+    .fai-table-toolbar #yearPickerWrapper .form-control,
+    .fai-table-toolbar #monthPickerWrapper .form-control,
+    .fai-table-toolbar #dayPickerWrapper .form-control {
+        border: 0 !important;
+        box-shadow: none !important;
+        height: 100% !important;
+        padding: .3rem .55rem;
+        font-weight: 600;
+        line-height: 1.2;
+        background: #fff !important;
+        margin: 0 !important;
+        border-radius: 0 10px 10px 0 !important;
+        outline: none !important;
+    }
+    .fai-table-toolbar #year,
+    .fai-table-toolbar #monthDisplay,
+    .fai-table-toolbar #day {
+        border: 0 !important;
+        border-top: 0 !important;
+        border-bottom: 0 !important;
+        box-shadow: none !important;
+        background-image: none !important;
+        -webkit-appearance: none;
+    }
+
+    /* Botones del toolbar mas altos */
+    .fai-table-toolbar .btn.btn-sm {
+        min-height: 36px;
+        padding: .3rem .68rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        line-height: 1.1;
+    }
+
+    /* Search ERP (solo visual, misma funcionalidad) */
+    .fai-table-toolbar .fai-search-erp {
+        border: 1px solid #bfc9d6;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        transition: border-color .15s ease, box-shadow .15s ease;
+        min-height: 36px;
+    }
+    .fai-table-toolbar .fai-search-erp:focus-within {
+        border-color: #5b8ee6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.16);
+    }
+    .fai-table-toolbar .fai-search-erp .input-group-text {
+        border: 0 !important;
+        border-right: 1px solid #d8e0ea !important;
+        background: #eef2f7 !important;
+        color: #334155 !important;
+        min-width: 36px;
+        min-height: 36px;
+        justify-content: center;
+    }
+    .fai-table-toolbar .fai-search-erp .form-control {
+        border: 0 !important;
+        box-shadow: none !important;
+        font-weight: 600;
+        color: #0f172a;
+        padding: .3rem .58rem;
+        min-height: 36px;
+        background: #fff !important;
+    }
+    .fai-table-toolbar .fai-search-erp .form-control::placeholder {
+        color: #64748b;
+        font-weight: 500;
+    }
+    .fai-table-toolbar .fai-search-erp #clearGlobalSearch {
+        border: 0 !important;
+        border-left: 1px solid #d8e0ea !important;
+        background: #f8fafc !important;
+        color: #475569 !important;
+        min-width: 36px;
+        min-height: 36px;
+        padding: .28rem .52rem;
+    }
+    .fai-table-toolbar .fai-search-erp #clearGlobalSearch:hover {
+        background: #eef2f7 !important;
+        color: #0f172a !important;
+    }
+
     /* Layout en linea para KPIs */
     .info-box-inline {
         flex: 1 1 auto;
