@@ -1361,6 +1361,22 @@ class QaFaiSummaryController extends Controller
         $total = (clone $statsQuery)->count();
         $pass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
         $fail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
+        $passFai = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'FAI'")
+            ->count();
+        $passIpi = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'IPI'")
+            ->count();
+        $failFai = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'FAI'")
+            ->count();
+        $failIpi = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'IPI'")
+            ->count();
 
         $rate = $total > 0 ? number_format(($pass * 100) / $total, 2, '.', '') : '0.00';
 
@@ -1368,6 +1384,10 @@ class QaFaiSummaryController extends Controller
             'total' => $total,
             'pass'  => $pass,
             'fail'  => $fail,
+            'pass_fai' => $passFai,
+            'pass_ipi' => $passIpi,
+            'fail_fai' => $failFai,
+            'fail_ipi' => $failIpi,
             'rate'  => $rate,
             'fai'   => $faiCount,
             'ipi'   => $ipiCount,

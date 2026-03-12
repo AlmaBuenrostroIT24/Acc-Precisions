@@ -68,9 +68,13 @@
                             <span class="info-box-icon">
                                 <i class="fas fa-check-circle"></i>
                             </span>
-                            <div class="info-box-content info-box-inline">
+                            <div class="info-box-content passfail-kpi-stack">
                                 <span class="info-box-text mb-0">Pass</span>
                                 <h3 id="kpi-pass" class="mb-0 font-weight-bold">{{ number_format($monthStats['pass']) }}</h3>
+                                <div class="kpi-type-breakdown">
+                                    <span class="badge badge-light border text-dark">FAI <span>{{ number_format($monthStats['pass_fai'] ?? 0) }}</span></span>
+                                    <span class="badge badge-light border text-dark">IPI <span>{{ number_format($monthStats['pass_ipi'] ?? 0) }}</span></span>
+                                </div>
                                 <small class="text-muted text-uppercase kpi-period">Approved {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
@@ -82,9 +86,13 @@
                             <span class="info-box-icon">
                                 <i class="fas fa-times-circle"></i>
                             </span>
-                            <div class="info-box-content info-box-inline">
+                            <div class="info-box-content passfail-kpi-stack">
                                 <span class="info-box-text mb-0">No Pass</span>
                                 <h3 id="kpi-fail" class="mb-0 font-weight-bold">{{ number_format($monthStats['fail']) }}</h3>
+                                <div class="kpi-type-breakdown">
+                                    <span class="badge badge-light border text-dark">FAI <span>{{ number_format($monthStats['fail_fai'] ?? 0) }}</span></span>
+                                    <span class="badge badge-light border text-dark">IPI <span>{{ number_format($monthStats['fail_ipi'] ?? 0) }}</span></span>
+                                </div>
                                 <small class="text-muted text-uppercase kpi-period">Rejected {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
                             </div>
                         </div>
@@ -1014,6 +1022,45 @@
         white-space: nowrap;
         font-size: 0.62rem;
     }
+    /* Compactar card FAILED FAI ALERTS */
+    .fai-alert-kpi {
+        padding: 0.36rem 0.58rem 0.3rem !important;
+        min-height: 78px !important;
+    }
+    .fai-alert-kpi .fai-alert-header {
+        padding-bottom: 0.18rem;
+    }
+    .fai-alert-kpi .fai-alert-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 1.25rem;
+    }
+    .fai-alert-kpi .fai-alert-title {
+        font-size: 0.8rem;
+        line-height: 1.05;
+    }
+    .fai-alert-kpi .fai-alert-subtitle {
+        font-size: 0.66rem;
+        line-height: 1.05;
+    }
+    .fai-alert-kpi .fai-alert-count {
+        font-size: 0.68rem;
+        padding: 1px 7px;
+    }
+    .fai-alert-kpi .fai-alert-body {
+        padding-top: 0.18rem;
+        gap: 3px;
+    }
+    .fai-alert-kpi .fai-chip {
+        padding: 2px 5px;
+        border-radius: 8px;
+    }
+    .fai-alert-kpi .fai-chip-text {
+        font-size: 0.68rem;
+    }
+    .fai-alert-kpi .fai-chip-text small {
+        font-size: 0.58rem;
+    }
     @media (max-width: 1199.98px) {
         .fai-alert-kpi .fai-chip { flex-basis: calc(50% - 4px); }
     }
@@ -1633,8 +1680,8 @@
 
     .kpi-card {
         width: 100%;
-        min-height: 98px !important;
-        padding: 0.56rem 0.7rem !important;
+        min-height: 86px !important;
+        padding: 0.42rem 0.62rem !important;
         border-radius: 12px !important;
         border: 1px solid #cfd8e3 !important;
         box-shadow: none !important;
@@ -2112,9 +2159,46 @@
         margin: 0 !important;
         align-self: flex-start !important;
     }
+    .passfail-kpi-stack {
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-start !important;
+        justify-content: flex-start;
+        gap: 0.12rem;
+        width: 100%;
+    }
+    .passfail-kpi-stack .kpi-type-breakdown {
+        margin-top: 0.02rem;
+    }
     .kpi-card h3 {
         margin: 0 !important;
         line-height: 1.05;
+    }
+
+    /* Override final: KPI mas compactas (visible) */
+    .kpi-row .kpi-clean,
+    .kpi-row .kpi-card.kpi-clean {
+        min-height: 78px !important;
+        padding: 0.38rem 0.58rem !important;
+    }
+    .kpi-row .kpi-clean .info-box-icon,
+    .kpi-row .kpi-card.kpi-clean .info-box-icon {
+        width: 46px !important;
+        min-width: 46px !important;
+        height: 46px !important;
+        margin-right: 9px !important;
+        font-size: 1.1rem !important;
+    }
+    .kpi-row .kpi-clean h3,
+    .kpi-row .kpi-card.kpi-clean h3 {
+        font-size: 1.72rem !important;
+    }
+    .kpi-row {
+        align-items: flex-start !important;
+    }
+    .kpi-row > [class*="col-"] > .kpi-card {
+        height: auto !important;
+        align-self: flex-start !important;
     }
 
     @media (max-width: 768px) {
@@ -2886,7 +2970,7 @@
                 faiDT.column(COLS.result).search('', true, false).draw();
                 $(this).removeClass('fai-filter-active');
             } else {
-                faiDT.column(COLS.result).search('^\\s*pass\\s*$', true, false).draw();
+                faiDT.column(COLS.result).search('pass').draw();
                 $('.info-box').removeClass('fai-filter-active');
                 $(this).addClass('fai-filter-active');
             }
@@ -2904,7 +2988,7 @@
                 faiDT.column(COLS.result).search('', true, false).draw();
                 $(this).removeClass('fai-filter-active');
             } else {
-                faiDT.column(COLS.result).search('^\\s*no\\s*pass\\s*$', true, false).draw();
+                faiDT.column(COLS.result).search('no pass').draw();
                 $('.info-box').removeClass('fai-filter-active');
                 $(this).addClass('fai-filter-active');
             }
