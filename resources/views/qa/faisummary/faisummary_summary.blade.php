@@ -463,7 +463,7 @@
                                 <th>Observation</th>
                                 <th>Station</th>
                                 <th>Method</th>
-                                <th>Qty Insp.</th>
+                                <th>Qty</th>
                                 <th>Inspector</th>
                                 <th>Location</th>
                             </tr>
@@ -1375,6 +1375,54 @@
     /* Clickable result column */
     #faiTable tbody td:nth-child(7) {
         cursor: pointer;
+    }
+    /* Result badge estilo ERP (solo visual) */
+    #faiTable .erp-result-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 74px;
+        padding: 0.25rem 0.58rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: .01em;
+        border: 1px solid transparent;
+    }
+    #faiTable .erp-result-pass {
+        background: #e8f6ee;
+        border-color: #9fd7b3;
+        color: #1f6a43;
+    }
+    #faiTable .erp-result-fail {
+        background: #fdeaea;
+        border-color: #efb6b6;
+        color: #9f1f1f;
+    }
+    /* Type badge estilo ERP (FAI / IPI) */
+    #faiTable .erp-type-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 52px;
+        padding: 0.18rem 0.46rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+        box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.05);
+    }
+    #faiTable .erp-type-fai {
+        background: #dbeafe;
+        border-color: #60a5fa;
+        color: #0b3a75;
+    }
+    #faiTable .erp-type-ipi {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+        color: #334155;
     }
 
     /* Fila activa al filtrar por PN/JOB */
