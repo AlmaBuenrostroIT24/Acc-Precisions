@@ -43,7 +43,7 @@
                 $alertColClass = 'col-sm-12 col-lg-4 mb-2';
                 @endphp
 
-                <div class="row mb-1 kpi-row">
+                <div class="row mb-1 kpi-row mt-n3">
                                         {{-- Total Inspections --}}
                     <div class="{{ $kpiColClass }}">
                         <div class="info-box kpi-card kpi-clean bg-secondary">
@@ -432,7 +432,7 @@
 
                 </div>
                 <div id="activeFilterChips" class="fai-active-filters mb-2 d-none"></div>
-                <div class="mt-n1 table-responsive fai-erp-wrap">
+                <div class="mt-n2 table-responsive fai-erp-wrap">
                     <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
                         <colgroup>
                             <col style="width:135px">  {{-- Date --}}
@@ -1458,9 +1458,9 @@
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
-        padding: 0.375rem 0.75rem !important;
-        font-size: 1rem !important;
-        line-height: 1.5 !important;
+        padding: 0.18rem 0.5rem !important;
+        font-size: 0.84rem !important;
+        line-height: 1.2 !important;
         border: none !important;
         background: transparent !important;
         color: inherit !important;
@@ -1502,12 +1502,12 @@
         cursor: default !important;
     }
 
-    /* Forzar mismo tamaÃƒÂ±o de paginado que partsrevision */
+    /* Paginado compacto */
     #faiTable_wrapper .pagination .page-link {
-        padding: 0.375rem 0.75rem !important;
-        font-size: 1rem !important;
-        line-height: 1.5 !important;
-        border-radius: 8px !important;
+        padding: 0.26rem 0.64rem !important;
+        font-size: 0.96rem !important;
+        line-height: 1.2 !important;
+        border-radius: 6px !important;
     }
 
     #faiTable_wrapper .pagination .page-item.active .page-link {
