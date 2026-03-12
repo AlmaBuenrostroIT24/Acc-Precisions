@@ -435,20 +435,20 @@
                 <div class="mt-n1 table-responsive fai-erp-wrap">
                     <table id="faiTable" class="table table-sm align-middle mb-0 fai-erp-table">
                         <colgroup>
-                            <col style="width:140px">
-                            <col style="width:150px">
-                            <col style="width:90px">
-                            <col style="width:70px">
-                            <col class="opet-col">
-                            <col style="width:110px">
-                            <col style="width:80px">
-                            <col style="width:130px">
-                            <col style="width:140px">
-                            <col style="width:90px">
-                            <col style="width:90px">
-                            <col style="width:90px">
-                            <col style="width:110px">
-                            <col style="width:110px">
+                            <col style="width:135px">  {{-- Date --}}
+                            <col style="width:185px">  {{-- Part/Revision --}}
+                            <col style="width:110px">  {{-- Job --}}
+                            <col style="width:80px">   {{-- Type --}}
+                            <col style="width:90px">   {{-- Operation --}}
+                            <col style="width:130px">  {{-- Operator --}}
+                            <col style="width:105px">  {{-- Result --}}
+                            <col style="width:100px">  {{-- SB/IS --}}
+                            <col style="width:200px">  {{-- Observation --}}
+                            <col style="width:100px">  {{-- Station --}}
+                            <col style="width:145px">  {{-- Method --}}
+                            <col style="width:90px">   {{-- Qty Insp. --}}
+                            <col style="width:160px">  {{-- Inspector --}}
+                            <col style="width:120px">  {{-- Location --}}
                         </colgroup>
                         <thead class="thead-light sticky-thead">
                             <tr class="text-uppercase ">
@@ -1047,7 +1047,21 @@
 
     #faiTable th,
     #faiTable td {
-        word-break: break-word;
+        word-break: normal;
+    }
+    /* Regla base: una linea por celda para mantener estabilidad ERP */
+    #faiTable tbody td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Columnas de texto largo: permitir salto de linea */
+    #faiTable tbody td:nth-child(2),
+    #faiTable tbody td:nth-child(8),
+    #faiTable tbody td:nth-child(9) {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
     }
 
     /* Columna OPET ajustada a contenido mÃ­nimo */
@@ -1070,7 +1084,7 @@
         border-bottom: 1px solid rgba(15, 23, 42, 0.14);
         padding: 0.55rem 0.7rem;
         vertical-align: middle;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         text-transform: uppercase;
     }
     #faiTable thead tr:first-child th {
@@ -1100,7 +1114,7 @@
     #faiTable thead tr.dt-head-filters .form-control {
         height: 34px;
         min-height: 34px;
-        font-size: 0.82rem;
+        font-size: 0.86rem;
         padding: 0.2rem 0.5rem;
         border-radius: 7px;
     }
@@ -1128,7 +1142,7 @@
     #faiTable tbody td {
         padding: 0.45rem 0.7rem;
         vertical-align: middle;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
@@ -1189,14 +1203,8 @@
 
     /* Alineaciones: fechas/nums centrados, textos a la izquierda */
     #faiTable tbody td:nth-child(1),
-    #faiTable tbody td:nth-child(3),
     #faiTable tbody td:nth-child(4),
-    #faiTable tbody td:nth-child(6),
-    #faiTable tbody td:nth-child(7),
-    #faiTable tbody td:nth-child(10),
-    #faiTable tbody td:nth-child(11),
-    #faiTable tbody td:nth-child(12),
-    #faiTable tbody td:nth-child(13) {
+    #faiTable tbody td:nth-child(12) {
         text-align: center;
     }
 
@@ -2871,7 +2879,3 @@
 
 
 @endpush
-
-
-
-
