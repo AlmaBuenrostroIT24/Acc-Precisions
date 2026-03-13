@@ -170,17 +170,18 @@
   } 
 
   /* DataTables wrappers a veces agregan 1px extra */
-  .dataTables_wrapper,
-  .dataTables_wrapper .row,
-  .dataTables_wrapper .col-sm-12,
-  .dataTables_wrapper .col-md-6,
-  .dataTables_wrapper .col-md-12 {
+  #ordersTableEmpty_wrapper,
+  #ordersTableEmpty_wrapper .row,
+  #ordersTableEmpty_wrapper .col-sm-12,
+  #ordersTableEmpty_wrapper .col-md-6,
+  #ordersTableEmpty_wrapper .col-md-12,
+  #ordersTableProcess_wrapper,
+  #ordersTableProcess_wrapper .row,
+  #ordersTableProcess_wrapper .col-sm-12,
+  #ordersTableProcess_wrapper .col-md-6,
+  #ordersTableProcess_wrapper .col-md-12 {
     max-width: 100% !important;
     overflow-x: hidden !important;
-  }
-
-  .table thead th {
-    white-space: normal; /* permitir salto y evitar overflow */
   }
 
   /* Tabla tipo ERP + filas alternadas (gris/blanco) */
@@ -192,16 +193,6 @@
     margin-bottom: 0;
   }
 
-  .fai-dt-table thead th { 
-    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%); 
-    color: #0f172a; 
-    font-weight: 800; 
-    letter-spacing: .04em; 
-    text-transform: uppercase; 
-    border-bottom: 1px solid #d5d8dd !important; 
-    vertical-align: middle; 
-    padding: 6px 8px; 
-  } 
  
   .fai-dt-table tbody td { 
     color: #111827; 
@@ -633,47 +624,6 @@
     color: #0f172a;
   }
 
-  /* Footer/paginación ERP (DataTables) */
-  #ordersTableEmpty_wrapper .dataTables_info,
-  #ordersTableProcess_wrapper .dataTables_info {
-    color: #475569;
-    font-weight: 600;
-    font-size: 0.80rem;
-    line-height: 1.1;
-  }
-
-  #ordersTableEmpty_wrapper .erp-dt-footer,
-  #ordersTableProcess_wrapper .erp-dt-footer {
-    margin-top: 2px; /* pegarlo a la tabla */
-    padding: 0 0 8px;
-  }
-
-  #ordersTableEmpty_wrapper .pagination .page-link,
-  #ordersTableProcess_wrapper .pagination .page-link {
-    border-radius: 8px;
-    margin: 0 2px;
-    border: 1px solid #d5d8dd;
-    background: #f8fafc;
-    color: #1f2937;
-    font-weight: 700;
-    box-shadow: none;
-    font-size: 1rem; /* paginado normal (Bootstrap) */
-    line-height: 1.5;
-    padding: 0.375rem 0.75rem;
-  }
-
-  #ordersTableEmpty_wrapper .pagination .page-item.active .page-link,
-  #ordersTableProcess_wrapper .pagination .page-item.active .page-link {
-    background: #0b5ed7;
-    border-color: #0b5ed7;
-    color: #fff;
-  }
-
-  #ordersTableEmpty_wrapper .pagination .page-item.disabled .page-link,
-  #ordersTableProcess_wrapper .pagination .page-item.disabled .page-link {
-    opacity: .6;
-  }
-
   .card-title-mini {
     font-size: .95rem;
     font-weight: 700;
@@ -725,6 +675,7 @@
   /* 2025-12-17: hacer el card-body más compacto en Pending/Process */
   .fai-compact-body {
     padding: 0.6rem 0.6rem 0.2rem;
+    margin-bottom: 0;
   }
 
   .fai-compact-body .card-title-mini {
@@ -746,28 +697,6 @@
   .badge:empty {
     display: none !important;
   }
-
-  /* 2025-12-17: Search alineado con el título del card */
-  .fai-dt-tools .dt-search-input {
-    width: 180px;
-  }
-
-  /* 2025-12-17: evitar que el título se “apachurre” cuando el search ocupa espacio */
-  .card-title-mini > span {
-    white-space: nowrap;
-  }
-
-  .fai-dt-tools {
-    flex: 1 1 auto;
-    justify-content: flex-end;
-    gap: 0.4rem;
-  }
-
-  .dt-filter-slot {
-    display: flex;
-    align-items: center;
-  }
-
   @media (max-width: 575.98px) {
     .fai-dt-tools {
       width: 100%;
@@ -781,7 +710,7 @@
   }
 
   /* 2025-12-17: mejoras visuales de tablas (AdminLTE/BS4 + DataTables) */
-  .table-responsive {
+  .fai-table-shell.table-responsive {
     /* 2025-12-17: quitar efecto "cuadro" alrededor de la tabla */
     border: 0;
     border-radius: 0;
@@ -794,12 +723,11 @@
 
   /* En pantallas chicas sí permitir scroll horizontal real */
   @media (max-width: 991.98px) {
-    .table-responsive {
+  .fai-table-shell.table-responsive {
       overflow-x: auto;
     }
   }
-
-  .table {
+  .fai-dt-table {
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
@@ -846,31 +774,33 @@
   }
 
   /* 2025-12-17: líneas suaves (sin borde pesado) */
-  .table thead th,
-  .table tbody td {
+  .fai-dt-table thead th,
+  .fai-dt-table tbody td {
     border-top: 0;
     border-left: 0;
     border-right: 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
-
-  .table thead th {
-    font-size: 0.72rem;
+  .fai-dt-table thead th {
+    white-space: normal; /* permitir salto y evitar overflow */
+    font-size: 0.86rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #334155;
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+    letter-spacing: 0.02em;
+    color: #0b0b0b !important;
+    padding: 0.48rem 0.68rem;
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.12);
     vertical-align: middle;
+    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
   }
-
-  .table tbody td {
+  .fai-dt-table tbody td {
     font-size: 0.85rem;
     color: #0f172a;
   }
 
   /* Sticky header dentro del contenedor scroll */
-  .table-responsive thead th {
+  .fai-table-shell.table-responsive thead th {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -891,18 +821,6 @@
     box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
   }
 
-  /* 2025-12-17: encabezado estilo ERP (más contraste y sombra inferior) */
-  .fai-dt-table thead th {
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    color: #1f2937;
-    font-size: 0.86rem;
-    padding: 0.48rem 0.68rem;
-    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-    border-bottom-color: rgba(15, 23, 42, 0.12);
-    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
-    text-transform: uppercase;
-  }
 
   /* Ancho mínimo para la columna de progreso en In Process */
   #ordersTableProcess thead th:nth-child(5),
@@ -1042,7 +960,7 @@
   }
 
   /* 2025-12-17: hover elegante */
-  .table tbody tr:hover {
+  .fai-dt-table tbody tr:hover {
     background: rgba(13, 110, 253, 0.04);
   }
 
@@ -1083,76 +1001,80 @@
   }
 
   /* Tabla: ancho completo sin forzar overflow */
-  .table {
+  .fai-dt-table {
     width: 100% !important;
     min-width: 0;
   }
 
   /* Compactar el footer de DataTables para evitar huecos */
-  .dataTables_wrapper .row:last-child {
+#ordersTableEmpty_wrapper .row:last-child,
+#ordersTableProcess_wrapper .row:last-child {
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
   }
-  .dataTables_wrapper .dataTables_info {
+#ordersTableEmpty_wrapper .dataTables_info,
+#ordersTableProcess_wrapper .dataTables_info {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin-top: 0 !important;
   }
-  .dataTables_wrapper .dataTables_paginate {
+#ordersTableEmpty_wrapper .dataTables_paginate,
+#ordersTableProcess_wrapper .dataTables_paginate {
     margin-top: 0 !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
 
   /* 2025-12-17: botones en ACTIONS */
-  .table .btn {
+  .fai-dt-table .btn {
     border-radius: 0.5rem;
     box-shadow: 0 1px 1px rgba(16, 24, 40, 0.06);
     transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
   }
-
-  .table .btn.btn-sm {
+  .fai-dt-table .btn.btn-sm {
     padding: 0.2rem 0.45rem;
   }
 
   /* 2025-12-17: icon-buttons cuadrados (más pro y consistentes) */
-  .table .btn:hover {
+  .fai-dt-table .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
     filter: brightness(1.02);
   }
-
-  .table .btn:active {
+  .fai-dt-table .btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 6px rgba(16, 24, 40, 0.10);
   }
-
-  .table .btn:focus {
+  .fai-dt-table .btn:focus {
     outline: none;
     box-shadow: 0 0 0 .2rem rgba(13, 110, 253, 0.18), 0 2px 10px rgba(16, 24, 40, 0.10);
   }
 
   /* 2025-12-17: iconos centrados dentro del botón */
-  .table .btn i,
-  .table .btn .fas,
-  .table .btn .far {
+  .fai-dt-table .btn i,
+  .fai-dt-table .btn .fas,
+  .fai-dt-table .btn .far {
     display: inline-block;
     line-height: 1;
     vertical-align: middle;
   }
 
   /* 2025-12-17: íconos de acciones un poco más grandes */
-  .table .btn i,
-  .table .btn .fas,
-  .table .btn .far {
+  .fai-dt-table .btn i,
+  .fai-dt-table .btn .fas,
+  .fai-dt-table .btn .far {
     font-size: 1.05rem;
   }
 
-/* Controles DataTables */
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate {
+/* Controles DataTables (solo esta vista) */
+#ordersTableEmpty_wrapper .dataTables_length,
+#ordersTableEmpty_wrapper .dataTables_filter,
+#ordersTableEmpty_wrapper .dataTables_info,
+#ordersTableEmpty_wrapper .dataTables_paginate,
+#ordersTableProcess_wrapper .dataTables_length,
+#ordersTableProcess_wrapper .dataTables_filter,
+#ordersTableProcess_wrapper .dataTables_info,
+#ordersTableProcess_wrapper .dataTables_paginate {
   font-size: 0.85rem;
 }
 
@@ -1162,8 +1084,10 @@ body .content {
   background: #f5f7fa !important;
 }
 
-  .dataTables_wrapper .dataTables_filter input,
-  .dataTables_wrapper .dataTables_length select {
+#ordersTableEmpty_wrapper .dataTables_filter input,
+#ordersTableEmpty_wrapper .dataTables_length select,
+#ordersTableProcess_wrapper .dataTables_filter input,
+#ordersTableProcess_wrapper .dataTables_length select {
     border-radius: 0.5rem !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     padding: 0.25rem 0.5rem !important;
@@ -1171,12 +1095,14 @@ body .content {
     background: #fff;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button {
     border-radius: 0.55rem !important;
   }
 
   /* 2025-12-17: paginado más llamativo / moderno */
-  .dataTables_wrapper .dataTables_paginate {
+#ordersTableEmpty_wrapper .dataTables_paginate,
+#ordersTableProcess_wrapper .dataTables_paginate {
     /* 2025-12-17: footer (info + paginate) más compacto */
     margin-top: 0.1rem !important;
     padding-top: 0.1rem !important;
@@ -1184,12 +1110,14 @@ body .content {
   }
 
   /* 2025-12-17: compactar el contenedor UL de paginación (Bootstrap) */
-  .dataTables_wrapper .dataTables_paginate .pagination {
+#ordersTableEmpty_wrapper .dataTables_paginate .pagination,
+#ordersTableProcess_wrapper .dataTables_paginate .pagination {
     margin: 0 !important;
   }
 
   /* Nota: con integración Bootstrap4, el padding real vive en .page-link */
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button {
     border: 1px solid rgba(15, 23, 42, 0.18) !important;
     background: rgba(241, 245, 249, 0.95) !important;
     color: #0f172a !important;
@@ -1198,7 +1126,8 @@ body .content {
     transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button .page-link,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button .page-link {
     /* 2025-12-17: botones de paginación un poco más grandes */
     padding: 0.26rem 0.56rem !important;
     font-size: 0.88rem !important;
@@ -1209,38 +1138,47 @@ body .content {
     border-radius: 0.5rem;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button:hover,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button:hover {
     background: rgba(226, 232, 240, 1) !important;
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button.active,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.active,
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.current,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.active,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.current {
     background: #0b5ed7 !important;
     border-color: #0b5ed7 !important;
     color: #fff !important;
     font-weight: 700;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button.active .page-link,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.active .page-link,
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.current .page-link,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.active .page-link,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.current .page-link {
     color: #fff !important;
     background: transparent !important;
   }
 
   /* 2025-12-17: hacer más pequeño el texto de "Showing X to Y..." */
-  .dataTables_wrapper .dataTables_info {
+#ordersTableEmpty_wrapper .dataTables_info,
+#ordersTableProcess_wrapper .dataTables_info {
     padding: 0 !important;
     margin: 0 !important;
     /* 2025-12-17: footer más pequeño (texto info) */
     font-size: 0.82rem !important;
     line-height: 1.2 !important;
     color: rgba(15, 23, 42, 0.80);
+    font-weight: 600;
   }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.disabled,
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.disabled,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.disabled:hover {
   opacity: 0.5;
   transform: none;
   box-shadow: none;
@@ -1259,18 +1197,6 @@ body .content {
 
 /* (se removieron overrides de content-wrapper para evitar saltos de fondo) */
 
-.fai-compact-body {
-  /* ya se redujo padding; evitar agregar espacio extra abajo */
-  margin-bottom: 0;
-}
-
-/* Ajuste: encabezados con texto negro definido */
-#ordersTableEmpty thead th,
-#ordersTableProcess thead th,
-.fai-dt-table thead th,
-.table thead th {
-  color: #0b0b0b !important;
-}
 
 /* NCR modal (ERP style) */
 #ncrModal .modal-content {
@@ -1596,14 +1522,17 @@ body .content {
     const COLUMNS = {
       empty: [{
           data: 'part',
+          width: '56%',
           render: TEXT
         },
         {
           data: 'work_id',
+          width: '16%',
           render: TEXT
         },
         {
           data: 'due_date',
+          width: '18%',
           // 2025-12-17: ordenar por YYYY-MM-DD desde el backend (due_date_sort)
           render: function (data, type, row) {
             if (type === 'sort' || type === 'type') return row?.due_date_sort || data || '';
@@ -1612,16 +1541,19 @@ body .content {
         },
         {
           data: 'actions',
+          width: '10%',
           orderable: false,
           searchable: false
         }
       ],
       process: [{
           data: 'part',
+          width: '34%',
           render: TEXT
         },
         {
           data: 'work_id',
+          width: '12%',
           render: function(data, type, row) {
             const val = data || '';
             if (type === 'sort' || type === 'type') return val;
@@ -1632,11 +1564,13 @@ body .content {
         },
         {
           data: 'fai_ops',
+          width: '24%',
           orderable: false,
           searchable: false
         },
         {
           data: 'due_date',
+          width: '12%',
           render: function (data, type, row) {
             if (type === 'sort' || type === 'type') return row?.due_date_sort || data || '';
             return data || '';
@@ -1644,11 +1578,13 @@ body .content {
         },
         {
           data: 'progress',
+          width: '12%',
           orderable: false,
           searchable: false
         },
         {
           data: 'actions',
+          width: '6%',
           orderable: false,
           searchable: false
         }
@@ -1659,6 +1595,7 @@ body .content {
       const $table = $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process'));
       const dt = $table.DataTable({
         responsive: true,
+        autoWidth: false,
         deferRender: true,
         pageLength: 15,
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
