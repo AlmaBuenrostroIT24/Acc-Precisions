@@ -973,6 +973,12 @@
     background: rgba(13, 110, 253, 0.05);
   }
 
+  /* Resaltar fila recién editada al volver del modal */
+  .fai-dt-table tbody tr.row-just-updated {
+    background: #e8f6ee !important;
+    box-shadow: inset 4px 0 0 #22a06b;
+  }
+
   .fai-dt-table tbody td {
     padding: 0.42rem 0.6rem;
   }
@@ -1076,6 +1082,12 @@
 #ordersTableProcess_wrapper .dataTables_info,
 #ordersTableProcess_wrapper .dataTables_paginate {
   font-size: 0.85rem;
+}
+
+/* Ocultar indicador "processing" (spinner/puntos azules) al buscar */
+#ordersTableEmpty_wrapper .dataTables_processing,
+#ordersTableProcess_wrapper .dataTables_processing {
+  display: none !important;
 }
 
 /* Fondo gris suave en toda la vista */
@@ -1514,8 +1526,45 @@ body .content {
         $woqty: null
       },
       faiDoneOps: new Set(),
-      ipiCountMap: new Map()
+      ipiCountMap: new Map(),
+      justUpdatedOrderId: null,
+      rowHighlightTimer: null
     };
+
+    function setJustUpdatedOrder(orderId) {
+      const id = parseInt(orderId, 10);
+      ctx.justUpdatedOrderId = Number.isFinite(id) && id > 0 ? id : null;
+    }
+
+    function applyJustUpdatedHighlight(api) {
+      const targetId = parseInt(ctx.justUpdatedOrderId, 10);
+      if (!Number.isFinite(targetId) || targetId <= 0) return;
+
+      let targetNode = null;
+      api.rows({ page: 'current' }).every(function() {
+        const rowData = this.data() || {};
+        const rowId = parseInt(rowData.id, 10);
+        if (rowId === targetId) {
+          targetNode = this.node();
+          return false;
+        }
+      });
+
+      if (!targetNode) return;
+
+      const $row = $(targetNode);
+      $row.addClass('row-just-updated');
+      try {
+        targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) {
+        // no-op in browsers that don't support smooth scroll options
+      }
+      if (ctx.rowHighlightTimer) clearTimeout(ctx.rowHighlightTimer);
+      ctx.rowHighlightTimer = setTimeout(() => {
+        $row.removeClass('row-just-updated');
+      }, 2600);
+      ctx.justUpdatedOrderId = null;
+    }
 
     // ================== DataTables ==================
     const TEXT = $.fn.dataTable.render.text();
@@ -1594,9 +1643,12 @@ body .content {
     function makeDT(bucket, badgeSelector) {
       const $table = $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process'));
       const dt = $table.DataTable({
-        responsive: true,
+        responsive: false,
         autoWidth: false,
         deferRender: true,
+        processing: true,
+        serverSide: true,
+        searchDelay: 220,
         pageLength: 15,
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
         lengthChange: false,
@@ -1633,15 +1685,15 @@ body .content {
         }, 
         ajax: {
           url: ROUTES.partsData,
-          data: {
-            bucket
+          data: function(d) {
+            d.bucket = bucket;
           },
           dataType: 'json',
           headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
           },
-          dataSrc: (json) => (Array.isArray(json?.data) ? json.data : [])
+          dataSrc: 'data'
         },
         columns: COLUMNS[bucket],
         drawCallback: function() {
@@ -1684,6 +1736,8 @@ body .content {
             if (!$wrap.length) return;
             applyProgressUI($wrap, pct);
           });
+
+          applyJustUpdatedHighlight(api);
         }
       });
 
@@ -1730,8 +1784,10 @@ body .content {
 
     // Init 
     $(function() { 
-      ctx.dtEmpty = makeDT('empty', '#badgePending'); 
       ctx.dtProcess = makeDT('process', '#badgeProcess'); 
+      setTimeout(() => {
+        ctx.dtEmpty = makeDT('empty', '#badgePending'); 
+      }, 160);
  
       // ---------------------- NCR (modal + guardar) ---------------------- 
       const decodeHtml = function(v) { 
@@ -2447,6 +2503,7 @@ body .content {
 
 
     $('#editModal').on('hidden.bs.modal', function() {
+      setJustUpdatedOrder($('#order-id').val());
       if (ctx.dtEmpty) ctx.dtEmpty.ajax.reload(null, false);
       if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
 

@@ -39,8 +39,14 @@ class QaFaiSummaryController extends Controller
     {
         try {
             $bucket = $request->query('bucket');
+            $draw = (int) $request->input('draw', 0);
             if (!in_array($bucket, ['empty', 'process'], true)) {
-                return response()->json(['data' => []]);
+                return response()->json([
+                    'draw' => $draw,
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0,
+                    'data' => [],
+                ]);
             }
 
             $user = auth()->user();
@@ -81,7 +87,16 @@ class QaFaiSummaryController extends Controller
 
             $hasNcrCols = Schema::hasColumn('orders_schedule', 'ncr_number') && Schema::hasColumn('orders_schedule', 'ncr_notes');
 
-            $rows = OrderSchedule::query()
+            $start = max(0, (int) $request->input('start', 0));
+            $length = (int) $request->input('length', 15);
+            if ($length <= 0) {
+                $length = 15;
+            }
+            $searchValue = trim((string) data_get($request->all(), 'search.value', ''));
+            $orderColIndex = (int) data_get($request->all(), 'order.0.column', ($bucket === 'empty' ? 2 : 3));
+            $orderDir = strtolower((string) data_get($request->all(), 'order.0.dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+            $baseQuery = OrderSchedule::query()
                 ->select($select)
                 ->where('status', '<>', 'sent')
                 ->where('status_order', '!=', 'inactive')
@@ -112,8 +127,32 @@ class QaFaiSummaryController extends Controller
                             ->orWhere('status_inspection', 'pending')
                     ),
                     fn($q) => $q->where('status_inspection', 'in_progress')
-                )
-                ->orderByDesc('due_date')
+                );
+
+            $recordsTotal = (clone $baseQuery)->count();
+
+            if ($searchValue !== '') {
+                $searchLike = '%' . $searchValue . '%';
+                $baseQuery->where(function ($q) use ($searchLike) {
+                    $q->where('PN', 'like', $searchLike)
+                        ->orWhere('Part_description', 'like', $searchLike)
+                        ->orWhere('work_id', 'like', $searchLike)
+                        ->orWhereRaw("DATE_FORMAT(due_date, '%b/%d/%Y') like ?", [$searchLike])
+                        ->orWhereRaw("DATE_FORMAT(due_date, '%Y-%m-%d') like ?", [$searchLike]);
+                });
+            }
+
+            $recordsFiltered = (clone $baseQuery)->count();
+
+            $orderMap = $bucket === 'empty'
+                ? [0 => 'PN', 1 => 'work_id', 2 => 'due_date']
+                : [0 => 'PN', 1 => 'work_id', 3 => 'due_date'];
+            $orderColumn = $orderMap[$orderColIndex] ?? 'due_date';
+
+            $rows = $baseQuery
+                ->orderBy($orderColumn, $orderDir)
+                ->offset($start)
+                ->limit($length)
                 ->get();
 
             $orderIds = ($bucket === 'process')
@@ -472,6 +511,9 @@ class QaFaiSummaryController extends Controller
             }
 
             return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => $recordsTotal,
+                'recordsFiltered' => $recordsFiltered,
                 'data' => $data->values()->all(),
             ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (\Throwable $e) {
