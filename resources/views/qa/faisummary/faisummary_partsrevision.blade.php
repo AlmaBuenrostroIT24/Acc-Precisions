@@ -1241,10 +1241,10 @@ body .content {
 
 #ordersTableEmpty_wrapper .dataTables_paginate .paginate_button .page-link,
 #ordersTableProcess_wrapper .dataTables_paginate .paginate_button .page-link {
-    /* 2025-12-17: botones de paginación un poco más grandes */
-    padding: var(--sp-1) var(--sp-2) !important;
-    font-size: 0.88rem !important;
-    line-height: 1.25 !important;
+    /* Tamaño normal (bootstrap-like), conservando estilo ERP */
+    padding: 0.34rem 0.68rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
     border: none !important;
     background: transparent !important;
     color: inherit !important;

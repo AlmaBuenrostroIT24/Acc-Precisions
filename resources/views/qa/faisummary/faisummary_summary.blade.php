@@ -1184,9 +1184,9 @@
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
-        padding: 0.18rem 0.5rem !important;
-        font-size: 0.84rem !important;
-        line-height: 1.2 !important;
+        padding: 0.34rem 0.68rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.4 !important;
         border: none !important;
         background: transparent !important;
         color: inherit !important;
@@ -1228,11 +1228,11 @@
         cursor: default !important;
     }
 
-    /* Paginado compacto */
+    /* Paginado (faiTable) mismo tamaño que partsrevision */
     #faiTable_wrapper .pagination .page-link {
-        padding: 0.26rem 0.64rem !important;
-        font-size: 0.96rem !important;
-        line-height: 1.2 !important;
+        padding: 0.34rem 0.68rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.4 !important;
         border-radius: 6px !important;
     }
 
