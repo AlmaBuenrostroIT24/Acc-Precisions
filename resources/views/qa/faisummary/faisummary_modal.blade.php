@@ -323,7 +323,9 @@
         background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
         color: #1f2937;
         border: 0;
-        font-size: 0.78rem;
+        font-size: 0.88rem;
+        padding: 0.62rem 0.52rem;
+        line-height: 1.2;
         text-transform: uppercase;
         letter-spacing: 0.02em;
     }

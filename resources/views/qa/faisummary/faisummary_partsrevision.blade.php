@@ -43,14 +43,9 @@
             </div>
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
-          <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="btn fai-chip fai-chip--gray mr-2" id="badgePending" style="pointer-events:none;">
-              Total <span class="fai-chip-count">0</span>
-            </span>
-            <div class="dt-filter-slot" data-dt-filter-slot="empty">
-              <input type="search" class="dt-search-input form-control form-control-sm" placeholder="Search..." autocomplete="off" />
-            </div>
-          </div>
+          <span class="btn fai-chip fai-chip--gray ml-auto" id="badgePending" style="pointer-events:none;">
+            Total <span class="fai-chip-count">0</span>
+          </span>
         </div>
         <div class="table-responsive position-relative fai-table-shell">
           <div class="fai-skeleton is-hidden" data-skeleton-for="ordersTableEmpty" aria-hidden="true">
@@ -93,14 +88,9 @@
             </div>
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
-          <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="btn fai-chip fai-chip--gray mr-2" id="badgeProcess" style="pointer-events:none;">
-              Total <span class="fai-chip-count">0</span>
-            </span>
-            <div class="dt-filter-slot" data-dt-filter-slot="process">
-              <input type="search" class="dt-search-input form-control form-control-sm" placeholder="Search..." autocomplete="off" />
-            </div>
-          </div>
+          <span class="btn fai-chip fai-chip--gray ml-auto" id="badgeProcess" style="pointer-events:none;">
+            Total <span class="fai-chip-count">0</span>
+          </span>
         </div>
         <div class="table-responsive position-relative fai-table-shell">
           <div class="fai-skeleton is-hidden" data-skeleton-for="ordersTableProcess" aria-hidden="true">
@@ -747,6 +737,7 @@
     margin-bottom: var(--sp-1);
     padding-bottom: var(--sp-1);
   }
+
 
   .fai-title-icon {
     width: 34px;
@@ -1759,7 +1750,7 @@ body .content {
         processing: true,
         serverSide: true,
         searchDelay: 220,
-        pageLength: 15,
+        pageLength: 13,
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
         lengthChange: false,
         // Footer/paginación ERP (igual que Schedule)
@@ -1779,20 +1770,6 @@ body .content {
           const partText = String(data?.part || '').trim();
           if (partText) $('td:eq(0)', row).attr('title', partText).addClass('fai-cell-ellipsis');
         },
-        // 2026-03-13: search fijo en slot para evitar salto visual de layout
-        initComplete: function() {
-          const api = this.api();
-          const $slot = $(`.dt-filter-slot[data-dt-filter-slot="${bucket}"]`);
-          const $input = $slot.find('.dt-search-input');
-          if ($input.length) {
-            const doSearch = debounce((val) => {
-              api.search(val || '').draw();
-            }, 150);
-            $input.off(`input.dtsearch_${bucket}`).on(`input.dtsearch_${bucket}`, function() {
-              doSearch(this.value);
-            });
-          }
-        }, 
         ajax: {
           url: ROUTES.partsData,
           data: function(d) {
