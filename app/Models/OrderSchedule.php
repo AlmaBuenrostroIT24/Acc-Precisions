@@ -63,6 +63,7 @@ class OrderSchedule extends Model
         'status_inspection',
         'sampling_check',
         'inspection_date',
+        'inspection_note',
         'group_wo_qty',
         'inspection_progress',
         'was_endsentat_modified',

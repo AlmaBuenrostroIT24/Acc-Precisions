@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\QaFaiSummary;
+use App\Models\OrderScheduleLog;
 use Illuminate\Http\Request;
 use App\Models\OrderSchedule;
 use Illuminate\Support\Facades\Log;
@@ -1790,6 +1791,35 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.completed', [
             'order' => $order,
             'summary' => $summary,
+        ]);
+    }
+
+    public function completedOrderEvents(OrderSchedule $order)
+    {
+        $order->load([
+            'faiSummaries' => function ($q) {
+                $q->orderByDesc('date')->orderByDesc('id');
+            }
+        ]);
+
+        $noteLogs = OrderScheduleLog::query()
+            ->with('user:id,name')
+            ->where('order_id', $order->id)
+            ->whereIn('field', ['inspection_note', 'notes'])
+            ->orderByDesc('id')
+            ->get();
+
+        $summary = app(InspectionSummary::class)->summarize(
+            $order,
+            (int) ($order->operation ?? 0),
+            (int) ($order->sampling ?? 0)
+        );
+
+        return view('qa.faisummary.faisummary_completed_order_events', [
+            'order' => $order,
+            'events' => $order->faiSummaries,
+            'summary' => $summary,
+            'noteLogs' => $noteLogs,
         ]);
     }
 
