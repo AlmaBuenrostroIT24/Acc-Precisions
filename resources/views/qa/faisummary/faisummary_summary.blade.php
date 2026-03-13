@@ -1,4 +1,4 @@
-﻿<!-- resources/views/orders/index_schedule.blade.php -->
+<!-- resources/views/orders/index_schedule.blade.php -->
 @extends('adminlte::page')
 
 @section('title', 'FAI Summary')
@@ -35,9 +35,9 @@
                 {{-- ===== Dashboard KPI Cards (Full width) ===== --}}
                 @php
                 $hasAlerts = isset($failedOrders) && $failedOrders->count() > 0;
-                // Barra de KPI mÃ¡s delgada
+                // Barra de KPI más delgada
                 $progressHeight = $hasAlerts ? '6px' : '7px';
-                // Mantener tamaÃ±o fijo de las 4 KPI.
+                // Mantener tamaño fijo de las 4 KPI.
                 $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
                 // ALERT siempre largo y fijo, independiente de jobs.
                 $alertColClass = 'col-sm-12 col-lg-4 mb-2';
@@ -176,7 +176,7 @@
                                             <i class="fas fa-search"></i>
                                         </span>
                                     </div>
-                                    <input type="text" id="globalSearch" class="form-control" placeholder="Search in tableâ€¦" autocomplete="off">
+                                    <input type="text" id="globalSearch" class="form-control" placeholder="Search in table…" autocomplete="off">
                                     <div class="input-group-append">
                                         <button type="button" id="clearGlobalSearch" class="btn btn-outline-secondary" title="Clear">
                                             <i class="fas fa-times"></i>
@@ -193,7 +193,7 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-user-tag text-primary"></i></span>
                                     </div>
                                     <select id="operatorFilter" class="form-control dt-filter" name="operator">
-                                        <option value="">â€” All â€”</option>
+                                        <option value="">— All —</option>
                                     </select>
                                 </div>
                             </div>
@@ -206,7 +206,7 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-user-check text-success"></i></span>
                                     </div>
                                     <select id="inspectorFilter" class="form-control dt-filter" name="inspector">
-                                        <option value="">â€” All â€”</option>
+                                        <option value="">— All —</option>
                                     </select>
                                 </div>
                             </div>
@@ -219,7 +219,7 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-danger"></i></span>
                                     </div>
                                     <select id="locationFilter" class="form-control dt-filter" name="location">
-                                        <option value="">â€” All â€”</option>
+                                        <option value="">— All —</option>
                                     </select>
                                 </div>
                             </div>
@@ -304,7 +304,7 @@
                                 </a>
                             </div>
 
-                            {{-- Botones de exportaciÃ³n --}}
+                            {{-- Botones de exportación --}}
                             <div class="btn-group btn-group-sm d-flex mb-2">
                                 <a href="{{ route('faisummary.export.excel', request()->query()) }}"
                                     class="btn btn-erp-gray flex-fill">
@@ -520,154 +520,7 @@
 
 @section('css')
 <style>
-    /* Tarjeta KPI estilo ERP (similar a referencia) */
-    .info-box {
-        min-height: 36px;
-        padding: .2rem .35rem;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        background: #fff;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        gap: .25rem;
-        margin-bottom: 0.15rem;
-    }
-
-    /* Estado activo al filtrar */
-    /* Acento inferior */
-    .info-box::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 3px;
-        background: #d65a50;
-    }
-    /* LÃ­nea plana con el color que antes era el fondo de cada variante */
-    .info-box.bg-success::after {
-        background: rgba(25, 135, 84, 0.55);
-    }
-    .info-box.bg-danger::after {
-        background: rgba(220, 53, 69, 0.55);
-    }
-    .info-box.bg-info::after {
-        background: rgba(13, 110, 253, 0.55);
-    }
-    .info-box.bg-secondary::after {
-        background: rgba(108, 117, 125, 0.55);
-    }
-
-    /* Fondo blanco; color solo en la lÃ­nea inferior */
-    .info-box.bg-secondary,
-    .info-box.bg-success,
-    .info-box.bg-danger,
-    .info-box.bg-info {
-        background: #fff !important;
-        border-color: #e5e7eb !important;
-        color: #1f2937 !important;
-    }
-
-    .info-box .info-box-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 18px;
-        line-height: 32px;
-        border-radius: 10px;
-        background: #f2f4f7;
-        color: #cbd5e1;
-        box-shadow: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: .12rem;
-    }
-    
-
-    /* Color de Ã­conos por variante */
-    /* Iconos con color segÃºn el contexto */
-    .info-box.bg-secondary .info-box-icon { color: #495057 !important; }
-    .info-box.bg-success .info-box-icon   { color: #198754 !important; }
-    .info-box.bg-danger .info-box-icon    { color: #dc3545 !important; }
-    .info-box.bg-info .info-box-icon      { color: #0d6efd !important; }
-
-    .info-box .info-box-content {
-        flex: 1 1 auto;
-        display: flex;
-        align-items: center;
-        gap: .12rem;
-        line-height: 1;
-    }
-
-    .info-box .info-box-text {
-        font-size: .60rem;
-        font-weight: 800;
-        letter-spacing: .02em;
-        white-space: nowrap;
-    }
-
-    .info-box .info-box-number {
-        font-size: 0.68rem;
-        font-weight: 800;
-        line-height: 1.05;
-        margin: 0;
-    }
-
-    /* Color destacado para la barra de progreso en los KPIs */
-    .info-box .progress-bar {
-        background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%) !important;
-        height: 100%;
-    }
-
-    .info-box .progress {
-        background: rgba(255, 255, 255, 0.4);
-    }
-
-    .info-box .progress,
-    .info-box .progress * {
-        color: #0f172a;
-    }
-
-/* KPI % progress bar */
-.kpi-rate-progress {
-    display: block !important;
-    visibility: visible !important;
-    height: 6px !important;
-    min-height: 4px !important;
-    background: #edf0f4 !important;
-    border-radius: 6px !important;
-    overflow: hidden !important;
-    width: 100% !important;
-    flex: 1 1 100%;
-    margin-top: 2px;
-    position: relative;
-    border: none;
-}
-.kpi-rate-progress .kpi-rate-bar,
-#kpi-rate-bar {
-    background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%) !important;
-    min-width: 12px !important;
-    height: 100% !important;
-    opacity: 1 !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    display: block !important;
-    border-radius: 6px;
-}
-
-/* Alinear contenido del KPI % en columna para dar espacio a la barra */
-.info-box.bg-info .info-box-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.2rem;
-    width: 100%;
-}
-
-/* Alinear info y paginado en una sola lÃ­nea */
+    /* Alinear info y paginado en una sola linea */
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate {
     float: none !important;
@@ -846,59 +699,6 @@
         background: #eef2f7 !important;
         color: #0f172a !important;
     }
-
-    /* Layout en linea para KPIs */
-    .info-box-inline {
-        flex: 1 1 auto;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.08rem;
-        flex-wrap: nowrap;
-    }
-    .info-box-inline .info-box-text {
-        margin-right: 0.14rem;
-    }
-    .info-box-inline h3 {
-        margin-bottom: 0;
-    }
-    .info-box-inline small {
-        white-space: nowrap;
-        margin-left: 0.18rem !important;
-        margin-right: 0 !important;
-        display: inline-flex;
-        align-items: center;
-        align-self: center;
-        line-height: 1;
-        font-size: 0.52rem;
-        flex-shrink: 0;
-    }
-    .inspections-kpi {
-        align-items: flex-start;
-        justify-content: center;
-        flex-direction: column;
-        gap: 0.12rem;
-    }
-    .inspections-kpi .info-box-text {
-        margin-right: 0;
-    }
-    .kpi-type-breakdown {
-        display: flex;
-        align-items: center;
-        gap: 0.22rem;
-    }
-    .kpi-type-breakdown .badge {
-        font-size: 0.58rem;
-        line-height: 1.1;
-        padding: 0.2rem 0.36rem;
-        font-weight: 700;
-    }
-    .inspections-period {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        align-self: flex-start !important;
-    }
-
     /* ===== Caja grande de alertas FAI ===== */
     .fai-alert-box {
         background: #fff;
@@ -1076,7 +876,7 @@
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
     }
 
-    /* Evitar scrollbar horizontal en la pÃ¡gina */
+    /* Evitar scrollbar horizontal en la página */
     body,
     .content-wrapper {
         overflow-x: hidden;
@@ -1111,7 +911,7 @@
         text-overflow: clip;
     }
 
-    /* Columna OPET ajustada a contenido mÃ­nimo */
+    /* Columna OPET ajustada a contenido mínimo */
     #faiTable col.opet-col {
         width: auto !important;
     }
@@ -1274,151 +1074,6 @@
         background: rgba(13, 110, 253, 0.05);
         box-shadow: inset 4px 0 0 0 rgba(13, 110, 253, 0.85);
     }
-
-    /* === KPIs estilo tarjeta referencia (compacto, alineado a la izquierda) === */
-    .info-box {
-        min-height: 58px;
-        padding: 0.45rem 0.65rem;
-        border-radius: 12px;
-        border: 1px solid #d7e3f7;
-        background: #ffffff;
-        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-        position: relative;
-    }
-    /* Sin lÃ­nea inferior, aspecto limpio */
-    .info-box::after,
-    .info-box.bg-secondary::after,
-    .info-box.bg-success::after,
-    .info-box.bg-danger::after,
-    .info-box.bg-info::after {
-        content: none !important;
-    }
-
-    .info-box .info-box-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        background: #f0f2f5;
-        color: #3aa76d;
-        border: 1px solid #e4eaf6;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .info-box.bg-secondary .info-box-icon { background: #f0f2f5 !important; color: #9ca3af !important; }
-    .info-box.bg-success   .info-box-icon { background: #f0f2f5 !important; color: #3aa76d !important; }
-    .info-box.bg-danger    .info-box-icon { background: #f0f2f5 !important; color: #ef4444 !important; }
-    .info-box.bg-info      .info-box-icon { background: #f0f2f5 !important; color: #3b82f6 !important; }
-
-    .info-box .info-box-content,
-    .info-box-inline {
-        flex: 1 1 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.08rem;
-        line-height: 1.2;
-        padding: 0;
-        margin: 0;
-    }
-
-    .info-box .info-box-text {
-        font-size: 0.90rem;
-        font-weight: 700;
-        letter-spacing: 0.01em;
-        color: #111827;
-        margin: 0;
-    }
-
-    .info-box .info-box-number,
-    .info-box h3 {
-        font-size: 1.18rem;
-        font-weight: 800;
-        line-height: 1.1;
-        margin: 0;
-        color: #111827;
-    }
-
-    .info-box-inline small,
-    .info-box small {
-        white-space: nowrap;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        display: inline-flex;
-        align-items: center;
-        line-height: 1.1;
-        font-size: 0.82rem;
-        color: #64748b;
-    }
-
-    /* LÃ­nea inferior de color (inset shadow) */
-    .info-box {
-        overflow: visible !important;
-        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(13, 110, 253, 0.18);
-    }
-    .info-box::after { content: none !important; }
-    .info-box.bg-secondary { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(108, 117, 125, 0.25); }
-    .info-box.bg-success   { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(40, 167, 69, 0.25); }
-    .info-box.bg-danger    { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(220, 53, 69, 0.25); }
-    .info-box.bg-info      { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06), inset 0 -3px rgba(13, 110, 253, 0.25); }
-
-    /* Estado seleccionado al filtrar (Pass / No Pass) */
-    .info-box.fai-filter-active {
-        box-shadow: 0 3px 12px rgba(13, 110, 253, 0.18), inset 0 -3px rgba(13, 110, 253, 0.28) !important;
-        background: #f4f7ff !important;
-    }
-    .info-box.fai-filter-active.bg-success {
-        box-shadow: 0 3px 12px rgba(40, 167, 69, 0.18), inset 0 -3px rgba(40, 167, 69, 0.28) !important;
-        background: #f2fbf6 !important;
-    }
-    .info-box.fai-filter-active.bg-danger {
-        box-shadow: 0 3px 12px rgba(220, 53, 69, 0.18), inset 0 -3px rgba(220, 53, 69, 0.28) !important;
-        background: #fff5f5 !important;
-    }
-
-    /* Igualar altura/espacio de los 4 KPI boxes */
-    .info-box {
-        min-height: 50px;
-        align-items: center;
-    }
-
-    /* Ajuste final de alineaciÃ³n para KPIs (todo a la izquierda y en columna) */
-    .info-box-inline {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        align-items: baseline !important;
-        justify-content: flex-start !important;
-        gap: 0.25rem;
-        width: 100%;
-    }
-    .info-box-inline .info-box-text {
-        flex: 0 0 100%;
-        margin: 0;
-        line-height: 1.1;
-        text-align: left;
-    }
-    .info-box-inline h3,
-    .info-box-inline small {
-        margin: 0;
-        line-height: 1.1;
-        text-align: left;
-        flex: 0 0 auto;
-    }
-    .info-box-inline h3 {
-        margin-right: 0.35rem;
-    }
-    .info-box-inline small {
-        margin-left: auto;
-        text-align: right;
-    }
-
     /* Clickable result column */
     #faiTable tbody td:nth-child(7) {
         cursor: pointer;
@@ -1571,7 +1226,7 @@
         color: rgba(15, 23, 42, 0.80);
     }
 
-    /* Alinear info y paginado en la misma lÃ­nea */
+    /* Alinear info y paginado en la misma línea */
     .dataTables_wrapper .row:last-child {
         display: flex;
         align-items: center;
@@ -1665,7 +1320,7 @@
     }
 
 
-    /* Contenedor tabla: variante ligera (opciÃ³n 2) */
+    /* Contenedor tabla: variante ligera (opción 2) */
     .fai-erp-wrap {
         background: transparent;
         border: none;
@@ -1673,461 +1328,7 @@
         padding: 0.25rem;
     }
 
-    /* ===== KPI cards - ERP style ===== */
-    .kpi-row > [class*="col-"] {
-        display: flex;
-    }
-
-    .kpi-card {
-        width: 100%;
-        min-height: 86px !important;
-        padding: 0.42rem 0.62rem !important;
-        border-radius: 12px !important;
-        border: 1px solid #cfd8e3 !important;
-        box-shadow: none !important;
-        background: #f3f4f6 !important;
-        position: relative;
-        overflow: hidden;
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .kpi-card:hover {
-        border-color: #b9c6d6 !important;
-        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08) !important;
-    }
-
-    .kpi-card::after {
-        content: none !important;
-    }
-
-    .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: #64748b;
-    }
-
-    .kpi-card.bg-secondary {
-        background: #e9edf1 !important;
-        border-color: #c5d0dc !important;
-    }
-    .kpi-card.bg-secondary::before { background: #64748b; }
-
-    .kpi-card.bg-success {
-        background: #e9f3ee !important;
-        border-color: #b8d8c7 !important;
-    }
-    .kpi-card.bg-success::before { background: #1e8b3f; }
-
-    .kpi-card.bg-danger {
-        background: #f7ecee !important;
-        border-color: #e2b8bf !important;
-    }
-    .kpi-card.bg-danger::before { background: #d83333; }
-
-    .kpi-card.bg-info {
-        background: #e9eef7 !important;
-        border-color: #c2d3ee !important;
-    }
-    .kpi-card.bg-info::before { background: #2a62d9; }
-
-    .kpi-card .info-box-icon {
-        width: 32px !important;
-        height: 32px !important;
-        border-radius: 10px !important;
-        border: 1px solid #bcc8d7 !important;
-        margin: 0 !important;
-        font-size: 15px !important;
-        line-height: 1 !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        background: #dbe3ec !important;
-        color: #334155 !important;
-    }
-
-    .kpi-card.bg-success .info-box-icon {
-        background: #d8eadf !important;
-        border-color: #b4d1bf !important;
-        color: #1f7a3f !important;
-    }
-    .kpi-card.bg-danger .info-box-icon {
-        background: #f2dfe2 !important;
-        border-color: #ddbcc3 !important;
-        color: #c13247 !important;
-    }
-    .kpi-card.bg-info .info-box-icon {
-        background: #dce6f6 !important;
-        border-color: #bccde8 !important;
-        color: #2d64d6 !important;
-    }
-
-    .kpi-card .info-box-content {
-        width: calc(100% - 38px);
-        padding: 0 !important;
-        margin-top: 0.03rem;
-    }
-
-    .kpi-card .info-box-text {
-        margin: 0 0 0.06rem 0 !important;
-        color: #1e3a5f !important;
-        font-size: 0.74rem !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase;
-    }
-
-    .kpi-card h3 {
-        margin: 0 !important;
-        color: #0f172a !important;
-        font-size: 2rem !important;
-        font-weight: 800 !important;
-        line-height: 1 !important;
-    }
-
-    .kpi-card small {
-        font-size: 0.62rem !important;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        color: #4d6380 !important;
-    }
-
-    .kpi-card .info-box-inline {
-        display: grid !important;
-        grid-template-columns: 1fr auto;
-        grid-template-areas:
-            "label period"
-            "value value";
-        row-gap: 0.18rem;
-        column-gap: 0.45rem;
-        align-items: center !important;
-        width: calc(100% - 38px);
-    }
-
-    .kpi-card .info-box-inline .info-box-text {
-        grid-area: label;
-        align-self: center;
-    }
-
-    .kpi-card .info-box-inline h3 {
-        grid-area: value;
-        justify-self: start;
-    }
-
-    .kpi-card .info-box-inline small {
-        grid-area: period;
-        justify-self: end;
-        margin: 0 !important;
-    }
-
-    .kpi-card .inspections-kpi {
-        grid-template-areas:
-            "label period"
-            "value value"
-            "break break";
-        row-gap: 0.16rem;
-    }
-
-    .kpi-card .inspections-kpi #kpi-type-breakdown {
-        grid-area: break;
-    }
-
-    .kpi-card .inspections-kpi .inspections-period {
-        grid-area: period;
-        justify-self: end;
-    }
-
-    .kpi-rate-content {
-        display: grid !important;
-        grid-template-columns: 1fr auto;
-        grid-template-areas:
-            "label goal"
-            "value value"
-            "bar bar";
-        row-gap: 0.18rem;
-        align-items: center;
-        width: calc(100% - 38px);
-    }
-
-    .kpi-rate-content .info-box-text {
-        grid-area: label;
-    }
-
-    .kpi-rate-content .kpi-rate-head {
-        grid-area: value;
-        width: 100%;
-        margin: 0 !important;
-    }
-
-    .kpi-rate-content .kpi-goal {
-        grid-area: goal;
-        justify-self: end;
-    }
-
-    .kpi-rate-content .kpi-rate-progress {
-        grid-area: bar;
-        width: 100%;
-        margin-top: 0.08rem !important;
-    }
-
-    .kpi-period,
-    .inspections-period {
-        display: inline-flex !important;
-        align-items: center;
-        padding: 0.13rem 0.42rem;
-        border-radius: 4px;
-        border: 1px solid #c3cfdd;
-        background: #dfe5ec;
-        color: #4d6380 !important;
-        font-weight: 800;
-        text-transform: uppercase;
-        line-height: 1.1;
-    }
-
-    .kpi-goal {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.12rem 0.4rem;
-        border-radius: 4px;
-        border: 1px solid #b9cced;
-        background: #e3ebfa;
-        color: #2d64d6 !important;
-        font-weight: 800;
-        line-height: 1.1;
-    }
-
-    .kpi-type-breakdown .badge {
-        border-radius: 4px !important;
-        padding: 0.1rem 0.32rem !important;
-        font-size: 0.58rem !important;
-        font-weight: 800 !important;
-        border-color: #becbdb !important;
-        background: #eef2f7 !important;
-        color: #334155 !important;
-    }
-
-    .kpi-rate-progress {
-        background: #d2dceb !important;
-        border-radius: 3px !important;
-        height: 4px !important;
-    }
-
-    .kpi-rate-progress .kpi-rate-bar,
-    #kpi-rate-bar {
-        border-radius: 3px !important;
-        background: #2d64d6 !important;
-    }
-
-    .kpi-card.fai-filter-active {
-        border-color: #8eb0df !important;
-        box-shadow: 0 0 0 2px rgba(45, 100, 214, 0.15) !important;
-    }
-
-    /* KPI look like reference card */
-    .kpi-row .kpi-clean {
-        background: #eef2f6 !important;
-        border: 1px solid #cfd8e3 !important;
-        border-radius: 12px !important;
-        min-height: 92px !important;
-        padding: 0.55rem 0.72rem 0.5rem !important;
-        --kpi-accent: #8ad6d1;
-        box-shadow:
-            0 2px 6px rgba(15, 23, 42, 0.08),
-            inset 4px 0 0 var(--kpi-accent),
-            inset 0 -3px 0 var(--kpi-accent) !important;
-    }
-    .kpi-row .kpi-clean.bg-secondary { --kpi-accent: #8ad6d1; }
-    .kpi-row .kpi-clean.bg-success { --kpi-accent: #8ccf98; }
-    .kpi-row .kpi-clean.bg-danger { --kpi-accent: #e6a1aa; }
-    .kpi-row .kpi-clean.bg-info { --kpi-accent: #9dbbf3; }
-
-    .kpi-row .kpi-clean .info-box-icon {
-        width: 58px !important;
-        min-width: 58px !important;
-        height: 58px !important;
-        border-radius: 14px !important;
-        background: #dfe5ec !important;
-        border: 1px solid #c9d2dd !important;
-        color: var(--kpi-accent) !important;
-        margin-right: 12px !important;
-        box-shadow: none !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        align-self: center !important;
-        font-size: 1.45rem !important;
-    }
-
-    .kpi-row .kpi-clean .info-box-content {
-        width: 100%;
-        padding-right: 68px;
-        gap: 0.06rem;
-    }
-    .kpi-row .kpi-clean .info-box-text {
-        color: #0f172a !important;
-        font-size: 0.84rem !important;
-        font-weight: 800 !important;
-        letter-spacing: .06em !important;
-        text-transform: uppercase;
-    }
-    .kpi-row .kpi-clean h3 {
-        color: #0f172a !important;
-        font-size: 2rem !important;
-        line-height: 1.02 !important;
-        margin: 0 !important;
-        font-weight: 800 !important;
-    }
-    .kpi-row .kpi-clean .kpi-period,
-    .kpi-row .kpi-clean .inspections-period,
-    .kpi-row .kpi-clean .kpi-goal {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #e2e8f0 !important;
-        border: 1px solid #c7d2df !important;
-        color: #334155 !important;
-        border-radius: 999px;
-        padding: 2px 8px;
-        margin: 0 !important;
-        font-size: 0.64rem !important;
-        font-weight: 800 !important;
-        letter-spacing: .04em;
-        white-space: nowrap;
-        text-transform: uppercase;
-    }
-
-    /* Final override: estilo KPI suave tipo referencia */
-    .kpi-row .kpi-card.kpi-clean {
-        --kpi-accent: #8ad6d1;
-        border: 1px solid #cfd8e3 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
-        background:
-            linear-gradient(var(--kpi-accent), var(--kpi-accent)) left center / 3px calc(100% - 18px) no-repeat,
-            linear-gradient(var(--kpi-accent), var(--kpi-accent)) left bottom / 100% 3px no-repeat,
-            #eef2f6 !important;
-    }
-    .kpi-row .kpi-card.kpi-clean.bg-secondary { --kpi-accent: #8ad6d1; }
-    .kpi-row .kpi-card.kpi-clean.bg-success { --kpi-accent: #8ccf98; }
-    .kpi-row .kpi-card.kpi-clean.bg-danger { --kpi-accent: #e6a1aa; }
-    .kpi-row .kpi-card.kpi-clean.bg-info { --kpi-accent: #9dbbf3; }
-    .kpi-row .kpi-card.kpi-clean::before,
-    .kpi-row .kpi-card.kpi-clean::after {
-        content: none !important;
-    }
-    .kpi-row .kpi-card.kpi-clean.fai-filter-active {
-        box-shadow: 0 0 0 1px rgba(13, 110, 253, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08) !important;
-    }
-
-    /* KPI visual tipo ERP (referencia) */
-    .kpi-row .kpi-clean {
-        position: relative;
-        background: #f3f4f6 !important;
-        border: 1px solid #d6dde7 !important;
-        border-radius: 12px !important;
-        min-height: 96px !important;
-        padding: 0.6rem 0.72rem 0.58rem !important;
-        --kpi-accent: #7f90a6;
-        box-shadow:
-            0 2px 8px rgba(15, 23, 42, 0.08),
-            inset 4px 0 0 var(--kpi-accent),
-            inset 0 -4px 0 var(--kpi-accent) !important;
-    }
-    .kpi-row .kpi-clean::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 10px;
-        bottom: 10px;
-        width: 4px;
-        border-radius: 4px;
-        background: #8b98ab;
-    }
-    .kpi-row .kpi-clean::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 4px;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-        background: #8b98ab;
-    }
-    .kpi-row .kpi-clean.bg-success::before { background: #28a745; }
-    .kpi-row .kpi-clean.bg-danger::before { background: #d63a45; }
-    .kpi-row .kpi-clean.bg-info::before { background: #2f67da; }
-    .kpi-row .kpi-clean.bg-secondary::before { background: #7f90a6; }
-    .kpi-row .kpi-clean.bg-success::after { background: #28a745; }
-    .kpi-row .kpi-clean.bg-danger::after { background: #d63a45; }
-    .kpi-row .kpi-clean.bg-info::after { background: #2f67da; }
-    .kpi-row .kpi-clean.bg-secondary::after { background: #7f90a6; }
-    .kpi-row .kpi-clean.bg-success { --kpi-accent: #28a745; }
-    .kpi-row .kpi-clean.bg-danger { --kpi-accent: #d63a45; }
-    .kpi-row .kpi-clean.bg-info { --kpi-accent: #2f67da; }
-    .kpi-row .kpi-clean.bg-secondary { --kpi-accent: #7f90a6; }
-
-    .kpi-row .kpi-clean .info-box-icon {
-        width: 36px !important;
-        min-width: 36px !important;
-        height: 36px !important;
-        border-radius: 9px !important;
-        background: #e5e7eb !important;
-        border: 1px solid #cfd5df !important;
-        margin-right: 10px !important;
-        box-shadow: none !important;
-    }
-    .kpi-row .kpi-clean .info-box-content {
-        padding-right: 86px;
-    }
-    .kpi-row .kpi-clean .info-box-text {
-        font-size: 0.79rem !important;
-        letter-spacing: .08em !important;
-        font-weight: 800 !important;
-        color: #0f172a !important;
-        text-transform: uppercase;
-    }
-    .kpi-row .kpi-clean h3 {
-        font-size: 2.05rem !important;
-        font-weight: 800 !important;
-        color: #0b1e3a !important;
-    }
-    .kpi-row .kpi-clean .kpi-period,
-    .kpi-row .kpi-clean .inspections-period,
-    .kpi-row .kpi-clean .kpi-goal {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        margin: 0 !important;
-        padding: 2px 8px;
-        border-radius: 999px;
-        border: 1px solid #c7d0dc;
-        background: #e7ebf1;
-        color: #334155 !important;
-        font-size: 0.64rem !important;
-        font-weight: 800 !important;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-        white-space: nowrap;
-    }
-    .kpi-row .kpi-clean .kpi-rate-progress {
-        margin-top: 0.28rem !important;
-    }
-    .kpi-row .kpi-clean .kpi-type-breakdown .badge {
-        background: #e7ebf1 !important;
-        border-color: #c7d0dc !important;
-        color: #334155 !important;
-        font-size: 0.58rem !important;
-    }
-
-    /* Acomodo uniforme para las 4 KPI principales */
+    /* ===== KPI cards (clean single source of truth) ===== */
     .kpi-row > [class*="col-"] {
         display: flex;
     }
@@ -2135,72 +1336,148 @@
     .kpi-row > [class*="col-"] > .fai-alert-box {
         width: 100%;
     }
-    .kpi-card .info-box-content {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        gap: 0.14rem;
-        width: 100%;
-    }
-    .kpi-card .info-box-inline {
-        align-items: flex-start;
-        justify-content: flex-start;
-        flex-direction: column;
-        gap: 0.14rem;
-        width: 100%;
-    }
-    .kpi-card .info-box-inline .info-box-text,
-    .kpi-card .info-box-text {
-        margin: 0 !important;
-    }
-    .kpi-card .kpi-period,
-    .kpi-card .inspections-period {
-        margin: 0 !important;
-        align-self: flex-start !important;
-    }
-    .passfail-kpi-stack {
-        display: flex !important;
-        flex-direction: column;
-        align-items: flex-start !important;
-        justify-content: flex-start;
-        gap: 0.12rem;
-        width: 100%;
-    }
-    .passfail-kpi-stack .kpi-type-breakdown {
-        margin-top: 0.02rem;
-    }
-    .kpi-card h3 {
-        margin: 0 !important;
-        line-height: 1.05;
-    }
-
-    /* Override final: KPI mas compactas (visible) */
-    .kpi-row .kpi-clean,
-    .kpi-row .kpi-card.kpi-clean {
-        min-height: 78px !important;
-        padding: 0.38rem 0.58rem !important;
-    }
-    .kpi-row .kpi-clean .info-box-icon,
-    .kpi-row .kpi-card.kpi-clean .info-box-icon {
-        width: 46px !important;
-        min-width: 46px !important;
-        height: 46px !important;
-        margin-right: 9px !important;
-        font-size: 1.1rem !important;
-    }
-    .kpi-row .kpi-clean h3,
-    .kpi-row .kpi-card.kpi-clean h3 {
-        font-size: 1.72rem !important;
-    }
     .kpi-row {
         align-items: flex-start !important;
     }
-    .kpi-row > [class*="col-"] > .kpi-card {
-        height: auto !important;
+
+    .kpi-row .kpi-card.kpi-clean {
+        --kpi-accent: #69cbc6;
+        background: #ffffff !important;
+        border: 1px solid #ccd6e2 !important;
+        border-radius: 14px !important;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08) !important;
+        min-height: 86px !important;
+        padding: 0.42rem 0.62rem 0.34rem 0.72rem !important;
+        position: relative !important;
+        overflow: hidden !important;
         align-self: flex-start !important;
+        height: auto !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.bg-secondary { --kpi-accent: #63c9c4 !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-success { --kpi-accent: #45b467 !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-danger { --kpi-accent: #df6f75 !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-info { --kpi-accent: #6a98ef !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-secondary,
+    .kpi-row .kpi-card.kpi-clean.bg-success,
+    .kpi-row .kpi-card.kpi-clean.bg-danger,
+    .kpi-row .kpi-card.kpi-clean.bg-info {
+        background: #ffffff !important;
+        background-image: none !important;
+        border-color: #ccd6e2 !important;
+        color: #0f172a !important;
+    }
+    .kpi-row .kpi-card.kpi-clean::before {
+        content: "" !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 12px !important;
+        bottom: 12px !important;
+        width: 4px !important;
+        border-radius: 0 999px 999px 0 !important;
+        background: var(--kpi-accent) !important;
+        display: block !important;
+        z-index: 2 !important;
+    }
+    .kpi-row .kpi-card.kpi-clean::after {
+        content: "" !important;
+        position: absolute !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 3px !important;
+        border-radius: 0 0 14px 14px !important;
+        background: var(--kpi-accent) !important;
+        display: block !important;
     }
 
+    .kpi-row .kpi-card.kpi-clean .info-box-icon {
+        width: 42px !important;
+        min-width: 42px !important;
+        height: 42px !important;
+        border-radius: 10px !important;
+        margin-right: 10px !important;
+        background: #e8edf3 !important;
+        border: 1px solid #d1d9e3 !important;
+        box-shadow: none !important;
+        color: #0f766e !important;
+        font-size: 1.1rem !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.bg-secondary .info-box-icon { color: #0f766e !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-success .info-box-icon { color: #198754 !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-danger .info-box-icon { color: #dc3545 !important; }
+    .kpi-row .kpi-card.kpi-clean.bg-info .info-box-icon { color: #0d6efd !important; }
+    .kpi-row .kpi-card.kpi-clean .info-box-content,
+    .kpi-row .kpi-card.kpi-clean .info-box-inline,
+    .kpi-row .kpi-card.kpi-clean .inspections-kpi,
+    .passfail-kpi-stack {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        width: calc(100% - 52px) !important;
+        padding-right: 62px !important;
+        gap: 0.12rem !important;
+        margin: 0 !important;
+    }
+    .kpi-row .kpi-card.kpi-clean .info-box-text {
+        margin: 0 !important;
+        font-size: 0.74rem !important;
+        letter-spacing: .05em !important;
+        color: #0f172a !important;
+        white-space: normal !important;
+        text-transform: uppercase !important;
+    }
+    .kpi-row .kpi-card.kpi-clean h3 {
+        margin: 0 !important;
+        font-size: 1.74rem !important;
+        line-height: 1 !important;
+        color: #0f172a !important;
+    }
+    .kpi-row .kpi-card.kpi-clean .kpi-period,
+    .kpi-row .kpi-card.kpi-clean .inspections-period,
+    .kpi-row .kpi-card.kpi-clean .kpi-goal {
+        position: absolute !important;
+        top: 8px !important;
+        right: 10px !important;
+        margin: 0 !important;
+        padding: 2px 8px !important;
+        border-radius: 999px !important;
+        border: 1px solid #cfd8e3 !important;
+        background: #e8edf3 !important;
+        color: #334155 !important;
+        font-size: 0.64rem !important;
+        font-weight: 800 !important;
+        letter-spacing: .04em !important;
+        white-space: nowrap !important;
+        text-transform: uppercase !important;
+    }
+    .kpi-row .kpi-card.kpi-clean .kpi-type-breakdown {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.2rem !important;
+    }
+    .kpi-row .kpi-card.kpi-clean .kpi-type-breakdown .badge {
+        border-radius: 4px !important;
+        font-size: 0.58rem !important;
+        font-weight: 800 !important;
+    }
+    .kpi-row .kpi-card.kpi-clean .kpi-rate-progress {
+        height: 4px !important;
+        border-radius: 3px !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.fai-filter-active {
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22), 0 3px 8px rgba(15, 23, 42, 0.08) !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.bg-success.fai-filter-active {
+        background: #edf8f1 !important;
+        border-color: #8fcda5 !important;
+        box-shadow: 0 0 0 2px rgba(69, 180, 103, 0.25), 0 3px 8px rgba(15, 23, 42, 0.08) !important;
+    }
+    .kpi-row .kpi-card.kpi-clean.bg-danger.fai-filter-active {
+        background: #fdf0f1 !important;
+        border-color: #e4a1a7 !important;
+        box-shadow: 0 0 0 2px rgba(223, 111, 117, 0.24), 0 3px 8px rgba(15, 23, 42, 0.08) !important;
+    }
     @media (max-width: 768px) {
         .kpi-card {
             min-height: 90px !important;
@@ -2211,7 +1488,6 @@
             font-size: 1.65rem !important;
         }
     }
-
 
 </style>
 
@@ -2306,7 +1582,7 @@
             window.faiDT = $('#faiTable').DataTable();
         }
 
-        // Filtro inicial: mes actual (solo si no hay mes ni aÃ±o) o el mes elegido
+        // Filtro inicial: mes actual (solo si no hay mes ni año) o el mes elegido
         function applyMonthFilter() {
             if (!$.fn.DataTable.isDataTable('#faiTable')) return;
             if (faiDT.settings()[0]?.oFeatures?.bServerSide) return;
@@ -2325,7 +1601,7 @@
             const monthVal = ($('#month').val() || '').trim();
             const yearVal = ($('#year').val() || '').trim();
 
-            // Si se filtra por aÃ±o pero no se eligiÃ³ mes, no aplicar filtro de mes
+            // Si se filtra por año pero no se eligió mes, no aplicar filtro de mes
             if (!monthVal && yearVal) {
                 faiDT.column(0).search('', true, false).draw();
                 return;
@@ -2336,7 +1612,7 @@
                 faiDT.column(0).search('', true, false).draw();
                 return;
             }
-            // Si no habÃ­a mes ni aÃ±o, fija el hidden al mes actual para consistencia
+            // Si no había mes ni año, fija el hidden al mes actual para consistencia
             if (!monthVal && !yearVal) {
                 $('#month').val(monthNum);
                 $('#year').val(new Date().getFullYear());
@@ -2995,7 +2271,7 @@
         });
 
         // =========================
-        //  Click en KPI "Inspections": cargar todo el aÃ±o actual (limpia filtros de fecha)
+        //  Click en KPI "Inspections": cargar todo el año actual (limpia filtros de fecha)
         // =========================
         const $kpiTotal = $('.info-box.bg-secondary');
         const initialFilters = {
