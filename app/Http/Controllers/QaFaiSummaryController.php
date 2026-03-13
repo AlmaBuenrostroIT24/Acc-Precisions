@@ -522,7 +522,14 @@ class QaFaiSummaryController extends Controller
             'file' => $e->getFile(),
             'line' => $e->getLine(),
         ]); */
-            return response()->json(['data' => [], 'error' => 'Server error'], 500);
+            $draw = (int) $request->input('draw', 0);
+            return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Server error',
+            ], 500);
         }
     }
 

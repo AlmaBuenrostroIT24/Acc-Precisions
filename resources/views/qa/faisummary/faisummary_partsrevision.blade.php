@@ -9,7 +9,7 @@
 
 @section('content')
 
-<div class="row mx-0 mb-2">
+<div class="row mx-0 mb-2 fai-layout-row">
   <div class="col-12 px-0">
     <div class="fai-global-search-wrap d-flex justify-content-end">
       <div class="input-group fai-global-search">
@@ -27,7 +27,7 @@
   </div>
 </div>
 
-<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0 mx-0">
+<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0 mx-0 fai-grid-row">
   <!-- Pending -->
   <div class="col">
     <div class="card shadow-sm rounded-3 fai-card">
@@ -143,6 +143,11 @@
 <link rel="stylesheet" href="{{ asset('vendor/select2/dist/css/select2.min.css') }}">
 <style>
   :root {
+    /* Spacing system: 4/8/12/16 */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
     /* Colores ERP (sólidos, derivados de .erp-pill en #orders_endscheduleTable) */
     --erp-warn-border: #eab308;
     --erp-warn-bg: #facc15;
@@ -159,6 +164,13 @@
     border: 1px solid rgba(15, 23, 42, 0.10) !important;
     width: 100%;
     height: 100%;
+  }
+  .fai-layout-row {
+    margin-bottom: var(--sp-2) !important;
+  }
+  .fai-grid-row {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   .fai-global-search-wrap {
@@ -187,21 +199,70 @@
     height: 36px;
   }
 
+  /* Evitar doble "X" en inputs search (nativa del navegador + botón clear del diseño) */
+  #globalTablesSearch::-webkit-search-cancel-button,
+  .dt-search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+
   /* Mantener ambas tarjetas con la misma altura */
   .row.row-cols-1.row-cols-md-2 > .col {
     display: flex;
   }
 
-  /* En desktop: hacer In Process un poco más ancho que Pending */
-  @media (min-width: 768px) {
-    .row.row-cols-1.row-cols-md-2 > .col:first-child {
+  /* Solo en pantallas amplias: Pending/In Process en la misma fila (38/62) */
+  @media (min-width: 1200px) {
+    .fai-grid-row > .col:first-child {
       flex: 0 0 38%;
       max-width: 38%;
     }
 
-    .row.row-cols-1.row-cols-md-2 > .col:last-child {
+    .fai-grid-row > .col:last-child {
       flex: 0 0 62%;
       max-width: 62%;
+    }
+  }
+
+  /* Mitad de pantalla / laptop: bajar In Process debajo de Pending */
+  @media (max-width: 1199.98px) {
+    .fai-grid-row > .col {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+
+    /* Mantener ancho de tabla y mostrar barra horizontal (no comprimir columnas) */
+    .fai-table-shell.table-responsive {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+    }
+
+    #ordersTableEmpty_wrapper {
+      min-width: 760px;
+    }
+
+    #ordersTableProcess_wrapper {
+      min-width: 1080px;
+    }
+
+    .fai-card-title {
+      align-items: flex-start;
+      gap: var(--sp-2);
+    }
+
+    .fai-dt-tools {
+      margin-left: 0 !important;
+      width: 100%;
+      min-height: auto;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .dt-filter-slot {
+      min-width: 0;
+      flex: 1 1 240px;
     }
   }
 
@@ -225,7 +286,7 @@
   #ordersTableProcess_wrapper .col-md-6,
   #ordersTableProcess_wrapper .col-md-12 {
     max-width: 100% !important;
-    overflow-x: hidden !important;
+    overflow-x: visible !important;
   }
 
   /* Tabla tipo ERP + filas alternadas (gris/blanco) */
@@ -241,7 +302,7 @@
   .fai-dt-table tbody td { 
     color: #111827; 
     vertical-align: middle; 
-    padding: 6px 8px; 
+    padding: var(--sp-2) var(--sp-2); 
   } 
 
   .fai-dt-table tbody tr:nth-child(odd) {
@@ -267,7 +328,7 @@
     right: 0;
     top: 44px; /* deja visible el thead */
     bottom: 0;
-    padding: 10px 10px 12px;
+    padding: var(--sp-2) var(--sp-2) var(--sp-3);
     background: transparent;
     border-radius: 10px;
     z-index: 3;
@@ -280,9 +341,9 @@
   .fai-skeleton-row {
     display: grid;
     grid-template-columns: 1.6fr 0.6fr 0.9fr 0.35fr;
-    gap: 10px;
+    gap: var(--sp-2);
     align-items: center;
-    padding: 10px 8px;
+    padding: var(--sp-2) var(--sp-2);
     border-radius: 10px;
   }
 
@@ -329,7 +390,7 @@
     height: 34px;
     border-radius: 10px;
     border: 1px solid #d5d8dd;
-    padding: 6px 10px;
+    padding: var(--sp-2) var(--sp-3);
     background: #fff;
     box-shadow: none;
     color: #0f172a;
@@ -351,16 +412,16 @@
     background: rgba(148, 163, 184, 0.16);
     border: 1px solid rgba(51, 65, 85, 0.18);
     border-radius: 12px;
-    padding: 6px 8px;
-    gap: 0.35rem;
-    min-height: 46px; /* reserva alto para chip + search (evita salto) */
+    padding: var(--sp-2) var(--sp-2);
+    gap: var(--sp-2);
+    min-height: calc(var(--sp-4) * 3); /* reserva alto para chip + search (evita salto) */
   }
 
   .fai-chip {
     height: 34px;
     min-width: 88px;
     border-radius: 999px;
-    padding: 6px 10px;
+    padding: var(--sp-2) var(--sp-3);
     border: 1px solid rgba(51, 65, 85, 0.35);
     background: rgba(51, 65, 85, 0.10);
     color: #0f172a;
@@ -375,9 +436,9 @@
     justify-content: center;
     min-width: 26px;
     height: 22px;
-    margin-left: 6px;
+    margin-left: var(--sp-1);
     border-radius: 999px;
-    padding: 0 6px;
+    padding: 0 var(--sp-2);
     background: rgba(51, 65, 85, 0.18);
     color: #0f172a;
     font-weight: 900;
@@ -488,7 +549,7 @@
     letter-spacing: .02em;
     text-transform: uppercase;
     border-radius: 4px;
-    padding: 2px 6px;
+    padding: var(--sp-1) var(--sp-2);
     vertical-align: middle;
     line-height: 1.15;
     white-space: nowrap;
@@ -520,7 +581,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 8px;
+    padding: 0 var(--sp-2);
     white-space: nowrap;
     font-family: inherit;
     letter-spacing: 0;
@@ -536,7 +597,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 8px;
+    padding: 0 var(--sp-2);
     font-size: 13px; 
     font-weight: 800;
     color: #0f172a;
@@ -557,7 +618,7 @@
     align-items: center;
     justify-content: center;
     height: 24px;
-    padding: 2px 10px;
+    padding: var(--sp-1) var(--sp-3);
     border-radius: 999px;
     border: 1px solid #d5d8dd;
     background: #f8fafc;
@@ -631,7 +692,7 @@
     text-transform: uppercase;
     border-bottom: 1px solid #d5d8dd !important;
     vertical-align: middle;
-    padding: 6px 8px;
+    padding: var(--sp-2) var(--sp-2);
     white-space: nowrap;
   }
 
@@ -639,7 +700,7 @@
     font-size: 14px;
     color: #111827;
     vertical-align: middle;
-    padding: 6px 8px;
+    padding: var(--sp-2) var(--sp-2);
     border-top: 1px solid rgba(15, 23, 42, 0.08);
   }
 
@@ -671,20 +732,20 @@
   .card-title-mini {
     font-size: .95rem;
     font-weight: 700;
-    margin-bottom: .45rem;
+    margin-bottom: var(--sp-2);
     display: flex;
     align-items: center;
-    gap: .4rem;
+    gap: var(--sp-2);
     flex-wrap: wrap;
-    padding-bottom: .28rem;
+    padding-bottom: var(--sp-1);
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   /* 2025-12-17: encabezado moderno para Pending/In Process */
   .fai-card-title {
     justify-content: space-between;
-    margin-bottom: 0.25rem;
-    padding-bottom: 0.22rem;
+    margin-bottom: var(--sp-1);
+    padding-bottom: var(--sp-1);
   }
 
   .fai-title-icon {
@@ -718,12 +779,12 @@
 
   /* 2025-12-17: hacer el card-body más compacto en Pending/Process */
   .fai-compact-body {
-    padding: 0.6rem 0.6rem 0.2rem;
+    padding: var(--sp-3) var(--sp-3) var(--sp-1);
     margin-bottom: 0;
   }
 
   .fai-compact-body .card-title-mini {
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--sp-1);
   }
 
   .actions-col {
@@ -733,7 +794,7 @@
 
   .card-title-mini .badge {
     border-radius: 999px;
-    padding: 0.35rem 0.55rem;
+    padding: var(--sp-1) var(--sp-2);
     font-weight: 700;
   }
 
@@ -747,9 +808,14 @@
       justify-content: flex-start;
     }
 
+    .dt-filter-slot {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+
     .fai-dt-tools .dt-search-input {
       width: 100%;
-      max-width: 220px;
+      max-width: none;
     }
   }
 
@@ -832,7 +898,7 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
     color: #0b0b0b !important;
-    padding: 0.48rem 0.68rem;
+    padding: var(--sp-2) var(--sp-3);
     background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
     border-bottom: 1px solid rgba(15, 23, 42, 0.12);
     vertical-align: middle;
@@ -885,7 +951,7 @@
   .fai-op-wrap {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: var(--sp-1);
   }
 
   .fai-op-summary {
@@ -899,7 +965,7 @@
   .fai-op-timeline {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--sp-2);
     flex-wrap: wrap;
   }
 
@@ -907,17 +973,17 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--sp-2);
     white-space: nowrap;
   }
 
   .fai-op-node:not(:last-child)::after {
     content: "";
-    width: 10px;
+    width: var(--sp-2);
     height: 2px;
     background: #64748b;
     border-radius: 999px;
-    margin-left: 2px;
+    margin-left: var(--sp-1);
   }
 
   .fai-op-node.is-ok:not(:last-child)::after {
@@ -1024,7 +1090,7 @@
   }
 
   .fai-dt-table tbody td {
-    padding: 0.42rem 0.6rem;
+    padding: var(--sp-2) var(--sp-3);
   }
 
   /* Centrar contenido y alinear verticalmente */
@@ -1082,7 +1148,7 @@
     transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
   }
   .fai-dt-table .btn.btn-sm {
-    padding: 0.2rem 0.45rem;
+    padding: var(--sp-1) var(--sp-2);
   }
 
   /* 2025-12-17: icon-buttons cuadrados (más pro y consistentes) */
@@ -1146,7 +1212,7 @@ body .content {
 #ordersTableProcess_wrapper .dataTables_length select {
     border-radius: 0.5rem !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
-    padding: 0.25rem 0.5rem !important;
+    padding: var(--sp-1) var(--sp-2) !important;
     height: auto !important;
     background: #fff;
   }
@@ -1177,7 +1243,7 @@ body .content {
     border: 1px solid rgba(15, 23, 42, 0.18) !important;
     background: rgba(241, 245, 249, 0.95) !important;
     color: #0f172a !important;
-    margin: 0 0.12rem !important;
+    margin: 0 var(--sp-1) !important;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
     transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
   }
@@ -1185,7 +1251,7 @@ body .content {
 #ordersTableEmpty_wrapper .dataTables_paginate .paginate_button .page-link,
 #ordersTableProcess_wrapper .dataTables_paginate .paginate_button .page-link {
     /* 2025-12-17: botones de paginación un poco más grandes */
-    padding: 0.26rem 0.56rem !important;
+    padding: var(--sp-1) var(--sp-2) !important;
     font-size: 0.88rem !important;
     line-height: 1.25 !important;
     border: none !important;
@@ -1270,7 +1336,7 @@ body .content {
 #ncrModal .erp-ncr-modal-header {
   background: #fff !important;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
-  padding: 14px 16px !important;
+  padding: var(--sp-3) var(--sp-4) !important;
 }
 
 #ncrModal .erp-ncr-title-icon {
@@ -1295,7 +1361,7 @@ body .content {
 
 #ncrModal .erp-ncr-subtitle {
   display: block !important;
-  margin-top: 2px;
+  margin-top: var(--sp-1);
   font-size: 0.82rem;
   color: #6b7280;
   font-weight: 600;
@@ -1304,7 +1370,7 @@ body .content {
 
 #ncrModal .erp-ncr-modal-body {
   background: #fff;
-  padding: 14px 16px !important;
+  padding: var(--sp-3) var(--sp-4) !important;
   max-height: calc(100vh - 190px) !important;
   overflow: auto;
 }
@@ -1312,12 +1378,12 @@ body .content {
 #ncrModal .erp-ncr-modal-footer {
   background: #fff !important;
   border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
-  padding: 14px 16px !important;
+  padding: var(--sp-3) var(--sp-4) !important;
 }
 
 #ncrModal .erp-ncr-label {
   display: block !important;
-  margin: 0 0 6px !important;
+  margin: 0 0 var(--sp-1) !important;
   color: #6b7280 !important;
   font-weight: 700 !important;
   font-size: 0.78rem !important;
@@ -1337,7 +1403,7 @@ body .content {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
   color: #111827 !important;
   font-weight: 600 !important;
-  padding: 10px 12px !important;
+  padding: var(--sp-2) var(--sp-3) !important;
 }
 
 #ncrModal .erp-ncr-control:focus {
@@ -1363,7 +1429,7 @@ body .content {
   border: 1px solid rgba(15, 23, 42, 0.10) !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
   border-radius: 10px !important;
-  padding: 12px 12px 10px !important;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2) !important;
 }
 
 #ncrModal .erp-ncr-orderbox-title {
@@ -1372,13 +1438,13 @@ body .content {
   font-size: 1.1rem !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  margin-bottom: 10px !important;
+  margin-bottom: var(--sp-2) !important;
 }
 
 #ncrModal .erp-ncr-btn {
   height: 40px !important;
   border-radius: 8px !important;
-  padding: 8px 14px !important;
+  padding: var(--sp-2) var(--sp-3) !important;
   font-weight: 700 !important;
 }
 
@@ -1448,13 +1514,13 @@ body .content {
 #ncrModal .select2-search--dropdown .select2-search__field {
   border: 1px solid rgba(15, 23, 42, 0.12) !important;
   border-radius: 8px !important;
-  padding: 8px 10px !important;
+  padding: var(--sp-2) var(--sp-3) !important;
   height: 40px !important;
   outline: none !important;
 }
 
 #ncrModal .select2-results__option {
-  padding: 8px 10px;
+  padding: var(--sp-2) var(--sp-3);
 }
 
 #ncrModal .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
