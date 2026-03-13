@@ -9,6 +9,24 @@
 
 @section('content')
 
+<div class="row mx-0 mb-2">
+  <div class="col-12 px-0">
+    <div class="fai-global-search-wrap d-flex justify-content-end">
+      <div class="input-group fai-global-search">
+        <div class="input-group-prepend">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+        </div>
+        <input id="globalTablesSearch" type="search" class="form-control" placeholder="Search in both tables..." autocomplete="off">
+        <div class="input-group-append">
+          <button id="clearGlobalTablesSearch" class="btn btn-outline-secondary" type="button" title="Clear">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0 mx-0">
   <!-- Pending -->
   <div class="col">
@@ -141,6 +159,32 @@
     border: 1px solid rgba(15, 23, 42, 0.10) !important;
     width: 100%;
     height: 100%;
+  }
+
+  .fai-global-search-wrap {
+    width: 100%;
+  }
+  .fai-global-search {
+    max-width: 360px;
+  }
+  .fai-global-search .input-group-text {
+    border-radius: 10px 0 0 10px;
+    border: 1px solid #d5d8dd;
+    background: #eef2f7;
+    color: #334155;
+  }
+  .fai-global-search .form-control {
+    border-top: 1px solid #d5d8dd;
+    border-bottom: 1px solid #d5d8dd;
+    border-left: 0;
+    border-right: 0;
+    height: 36px;
+    font-weight: 600;
+  }
+  .fai-global-search .btn {
+    border-radius: 0 10px 10px 0;
+    border: 1px solid #d5d8dd;
+    height: 36px;
   }
 
   /* Mantener ambas tarjetas con la misma altura */
@@ -1787,7 +1831,26 @@ body .content {
       ctx.dtProcess = makeDT('process', '#badgeProcess'); 
       setTimeout(() => {
         ctx.dtEmpty = makeDT('empty', '#badgePending'); 
+        const globalVal = String($('#globalTablesSearch').val() || '').trim();
+        if (globalVal && ctx.dtEmpty) {
+          ctx.dtEmpty.search(globalVal).draw();
+        }
       }, 160);
+
+      const applyGlobalTablesSearch = debounce((term) => {
+        const q = String(term || '').trim();
+        if (ctx.dtProcess) ctx.dtProcess.search(q).draw();
+        if (ctx.dtEmpty) ctx.dtEmpty.search(q).draw();
+      }, 160);
+
+      $('#globalTablesSearch').on('input', function() {
+        applyGlobalTablesSearch(this.value);
+      });
+
+      $('#clearGlobalTablesSearch').on('click', function() {
+        $('#globalTablesSearch').val('');
+        applyGlobalTablesSearch('');
+      });
  
       // ---------------------- NCR (modal + guardar) ---------------------- 
       const decodeHtml = function(v) { 
