@@ -41,6 +41,30 @@
                 $kpiColClass = $hasAlerts ? 'col-sm-6 col-lg-2 mb-2' : 'col-sm-6 col-lg-3 mb-2';
                 // ALERT siempre largo y fijo, independiente de jobs.
                 $alertColClass = 'col-sm-12 col-lg-4 mb-2';
+
+                // Etiqueta de periodo según filtros seleccionados (month/year/day).
+                $now = now();
+                $reqYearRaw = trim((string) request('year', ''));
+                $reqMonthRaw = trim((string) request('month', ''));
+                $reqDayRaw = trim((string) request('day', ''));
+                $periodYear = ctype_digit($reqYearRaw) ? (int) $reqYearRaw : (int) $now->year;
+                $periodMonth = (ctype_digit($reqMonthRaw) && (int) $reqMonthRaw >= 1 && (int) $reqMonthRaw <= 12)
+                    ? (int) $reqMonthRaw
+                    : null;
+
+                if ($reqDayRaw !== '') {
+                    try {
+                        $periodLabel = \Carbon\Carbon::parse($reqDayRaw)->format('M d, Y');
+                    } catch (\Throwable $e) {
+                        $periodLabel = ($periodMonth !== null)
+                            ? \Carbon\Carbon::createFromDate($periodYear, $periodMonth, 1)->format('M Y')
+                            : (string) $periodYear;
+                    }
+                } else {
+                    $periodLabel = ($periodMonth !== null)
+                        ? \Carbon\Carbon::createFromDate($periodYear, $periodMonth, 1)->format('M Y')
+                        : (string) $periodYear;
+                }
                 @endphp
 
                 <div class="row mb-1 kpi-row mt-n3">
@@ -57,7 +81,7 @@
                                     <span class="badge badge-light border text-dark">FAI <span id="kpi-fai">{{ number_format($monthStats['fai'] ?? 0) }}</span></span>
                                     <span class="badge badge-light border text-dark">IPI <span id="kpi-ipi">{{ number_format($monthStats['ipi'] ?? 0) }}</span></span>
                                 </div>
-                                <small class="text-muted text-uppercase inspections-period">{{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase inspections-period">{{ $periodLabel }}</small>
                             </div>
                         </div>
                     </div>
@@ -75,7 +99,7 @@
                                     <span class="badge badge-light border text-dark">FAI <span>{{ number_format($monthStats['pass_fai'] ?? 0) }}</span></span>
                                     <span class="badge badge-light border text-dark">IPI <span>{{ number_format($monthStats['pass_ipi'] ?? 0) }}</span></span>
                                 </div>
-                                <small class="text-muted text-uppercase kpi-period">Approved {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase kpi-period">Approved {{ $periodLabel }}</small>
                             </div>
                         </div>
                     </div>
@@ -93,7 +117,7 @@
                                     <span class="badge badge-light border text-dark">FAI <span>{{ number_format($monthStats['fail_fai'] ?? 0) }}</span></span>
                                     <span class="badge badge-light border text-dark">IPI <span>{{ number_format($monthStats['fail_ipi'] ?? 0) }}</span></span>
                                 </div>
-                                <small class="text-muted text-uppercase kpi-period">Rejected {{ \Carbon\Carbon::create()->month($monthStats['month'])->format('M') }} {{ $monthStats['year'] }}</small>
+                                <small class="text-muted text-uppercase kpi-period">Rejected {{ $periodLabel }}</small>
                             </div>
                         </div>
                     </div>
