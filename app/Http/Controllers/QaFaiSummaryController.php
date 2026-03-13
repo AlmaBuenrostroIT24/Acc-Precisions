@@ -123,7 +123,15 @@ class QaFaiSummaryController extends Controller
             // FAI por operación (pass/fail) para estado de timeline y bandera pendiente
             $faiPendingMap = [];
             $faiOpsMetaMap = [];
+            $passAggMap = [];
+            $qaQtyExpr = '1';
             if ($bucket === 'process' && !empty($orderIds)) {
+                $qaQtyExpr = Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                    ? 'qty_pcs'
+                    : (Schema::hasColumn('qa_faisummary', 'sample_idx')
+                        ? 'sample_idx'
+                        : '1');
+
                 $faiOpRows = DB::table('qa_faisummary')
                     ->select([
                         'order_schedule_id',
@@ -155,6 +163,38 @@ class QaFaiSummaryController extends Controller
                     if ($oid > 0 && $hasFail && !$hasPass) {
                         $faiPendingMap[$oid] = true;
                     }
+                }
+
+                // Agregado de PASS por orden/op/tipo para evitar query por cada fila (N+1)
+                $passAggRows = DB::table('qa_faisummary')
+                    ->select([
+                        'order_schedule_id',
+                        'operation',
+                        'insp_type',
+                        DB::raw("SUM(COALESCE($qaQtyExpr,1)) as qty"),
+                    ])
+                    ->whereIn('order_schedule_id', $orderIds)
+                    ->whereRaw('LOWER(results) = ?', ['pass'])
+                    ->groupBy('order_schedule_id', 'operation', 'insp_type')
+                    ->get();
+
+                foreach ($passAggRows as $pr) {
+                    $oid = (int) ($pr->order_schedule_id ?? 0);
+                    $op = trim((string) ($pr->operation ?? ''));
+                    if ($oid <= 0 || $op === '') {
+                        continue;
+                    }
+                    $type = strtoupper(trim((string) ($pr->insp_type ?? '')));
+                    if ($type !== 'FAI' && $type !== 'IPI') {
+                        continue;
+                    }
+                    if (!isset($passAggMap[$oid])) {
+                        $passAggMap[$oid] = [];
+                    }
+                    if (!isset($passAggMap[$oid][$op])) {
+                        $passAggMap[$oid][$op] = ['FAI' => 0, 'IPI' => 0];
+                    }
+                    $passAggMap[$oid][$op][$type] += (int) ($pr->qty ?? 0);
                 }
             }
 
@@ -217,7 +257,7 @@ class QaFaiSummaryController extends Controller
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opKey, $opLabel, $hasNcrCols, $ncarMap, $faiPendingMap, $faiOpsMetaMap, $hasQtyCol, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opKey, $opLabel, $hasNcrCols, $ncarMap, $faiPendingMap, $faiOpsMetaMap, $passAggMap, $hasQtyCol, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -358,32 +398,13 @@ class QaFaiSummaryController extends Controller
                     $done     = 0;
 
                     if ($ops > 0) {
-                        $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
-                            ? 'qty_pcs'
-                            : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx')
-                                ? 'sample_idx'
-                                : '1');
-
-                        $pass = DB::table('qa_faisummary')
-                            ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
-                            ->where('order_schedule_id', $r->id)
-                            ->whereRaw('LOWER(results) = ?', ['pass'])
-                            ->groupBy('operation', 'insp_type')
-                            ->get();
-
-                        $fai = [];
-                        $ipi = [];
-                        foreach ($pass as $p) {
-                            $name = (string) $p->operation;
-                            $q    = (int) $p->qty;
-                            $type = strtoupper((string) $p->insp_type);
-                            if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
-                            if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
-                        }
+                        $orderPass = $passAggMap[(int) ($r->id ?? 0)] ?? [];
 
                         for ($i = 1; $i <= $ops; $i++) {
                             $key = $opKey($i);
-                            $done += min($fai[$key] ?? 0, 1) + min($ipi[$key] ?? 0, $ipiReq);
+                            $faiQty = (int) ($orderPass[$key]['FAI'] ?? 0);
+                            $ipiQty = (int) ($orderPass[$key]['IPI'] ?? 0);
+                            $done += min($faiQty, 1) + min($ipiQty, $ipiReq);
                         }
 
                         $faiOpsNodes = [];

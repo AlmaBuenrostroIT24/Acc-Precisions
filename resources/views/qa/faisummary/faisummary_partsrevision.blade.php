@@ -26,10 +26,12 @@
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
           <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="btn fai-chip fai-chip--gray mr-2 d-none" id="badgePending" style="pointer-events:none;">
+            <span class="btn fai-chip fai-chip--gray mr-2" id="badgePending" style="pointer-events:none;">
               Total <span class="fai-chip-count">0</span>
             </span>
-            <div class="dt-filter-slot" data-dt-filter-slot="empty"></div>
+            <div class="dt-filter-slot" data-dt-filter-slot="empty">
+              <input type="search" class="dt-search-input form-control form-control-sm" placeholder="Search..." autocomplete="off" />
+            </div>
           </div>
         </div>
         <div class="table-responsive position-relative fai-table-shell">
@@ -74,10 +76,12 @@
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
           <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="btn fai-chip fai-chip--gray mr-2 d-none" id="badgeProcess" style="pointer-events:none;">
+            <span class="btn fai-chip fai-chip--gray mr-2" id="badgeProcess" style="pointer-events:none;">
               Total <span class="fai-chip-count">0</span>
             </span>
-            <div class="dt-filter-slot" data-dt-filter-slot="process"></div>
+            <div class="dt-filter-slot" data-dt-filter-slot="process">
+              <input type="search" class="dt-search-input form-control form-control-sm" placeholder="Search..." autocomplete="off" />
+            </div>
           </div>
         </div>
         <div class="table-responsive position-relative fai-table-shell">
@@ -229,7 +233,7 @@
     top: 44px; /* deja visible el thead */
     bottom: 0;
     padding: 10px 10px 12px;
-    background: rgba(255, 255, 255, 0.88);
+    background: transparent;
     border-radius: 10px;
     z-index: 3;
   }
@@ -278,22 +282,14 @@
   /* Nota: NO ocultamos .dataTables_filter por CSS.
      Si por alguna razón no se logra mover al slot (JS), queremos que el search se vea "normal". */
 
-  .dt-filter-slot .dataTables_filter {
-    display: block !important;
-    margin: 0;
-  }
-
-  .dt-filter-slot .dataTables_filter label {
-    margin: 0;
-    width: 260px;
-  }
-
   .dt-filter-slot {
     min-width: 260px;
     min-height: 34px;
+    display: flex;
+    align-items: center;
   }
 
-  .dt-filter-slot .dataTables_filter input {
+  .dt-filter-slot .dt-search-input {
     width: 100% !important;
     height: 34px;
     border-radius: 10px;
@@ -306,7 +302,7 @@
     line-height: 1.2;
   }
 
-  .dt-filter-slot .dataTables_filter input:focus {
+  .dt-filter-slot .dt-search-input:focus {
     border-color: #94a3b8;
     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
     outline: none;
@@ -327,6 +323,7 @@
 
   .fai-chip {
     height: 34px;
+    min-width: 88px;
     border-radius: 999px;
     padding: 6px 10px;
     border: 1px solid rgba(51, 65, 85, 0.35);
@@ -751,15 +748,7 @@
   }
 
   /* 2025-12-17: Search alineado con el título del card */
-  .fai-dt-tools .dataTables_filter {
-    margin: 0 !important;
-  }
-
-  .fai-dt-tools .dataTables_filter label {
-    margin: 0 !important;
-  }
-
-  .fai-dt-tools .dataTables_filter input {
+  .fai-dt-tools .dt-search-input {
     width: 180px;
   }
 
@@ -785,7 +774,7 @@
       justify-content: flex-start;
     }
 
-    .fai-dt-tools .dataTables_filter input {
+    .fai-dt-tools .dt-search-input {
       width: 100%;
       max-width: 220px;
     }
@@ -1675,7 +1664,7 @@ body .content {
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
         lengthChange: false,
         // Footer/paginación ERP (igual que Schedule)
-        dom: "frt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
+        dom: "rt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
         // 2025-12-17: search sin label y placeholder elegante
         language: {
           search: '',
@@ -1691,15 +1680,19 @@ body .content {
           const partText = String(data?.part || '').trim();
           if (partText) $('td:eq(0)', row).attr('title', partText).addClass('fai-cell-ellipsis');
         },
-        // 2025-12-17: mover el search al header del card (a la altura de PENDING / IN PROCESS)
+        // 2026-03-13: search fijo en slot para evitar salto visual de layout
         initComplete: function() {
           const api = this.api();
-          const $container = $(api.table().container());
-          const $filter = $container.find('.dataTables_filter');
           const $slot = $(`.dt-filter-slot[data-dt-filter-slot="${bucket}"]`);
-          if ($slot.length && $filter.length) { 
-            $filter.show().appendTo($slot); 
-          } 
+          const $input = $slot.find('.dt-search-input');
+          if ($input.length) {
+            const doSearch = debounce((val) => {
+              api.search(val || '').draw();
+            }, 150);
+            $input.off(`input.dtsearch_${bucket}`).on(`input.dtsearch_${bucket}`, function() {
+              doSearch(this.value);
+            });
+          }
         }, 
         ajax: {
           url: ROUTES.partsData,
@@ -1720,7 +1713,6 @@ body .content {
           // Mostrar badge solo cuando haya datos; ocultar si es 0 o vacío
           const $chip = $(badgeSelector);
           if ($chip.length) {
-            $chip.toggleClass('d-none', !total);
             $chip.find('.fai-chip-count').text(total > 0 ? total : 0);
           }
 
@@ -1762,6 +1754,7 @@ body .content {
       const tableId = dt.table().node()?.id;
       const $skeleton = tableId ? $(`[data-skeleton-for="${tableId}"]`) : $();
       let skTimer = null;
+      let hasLoadedOnce = false;
 
       function hideSkeleton() {
         if (skTimer) {
@@ -1779,9 +1772,18 @@ body .content {
         }, 250);
       }
 
-      $table.on('preXhr.dt', maybeShowSkeleton);
-      $table.on('xhr.dt', hideSkeleton);
-      $table.on('error.dt', hideSkeleton);
+      $table.on('preXhr.dt', function() {
+        // En la primera carga evitamos overlay para quitar "pantalla gris / salto".
+        if (hasLoadedOnce) maybeShowSkeleton();
+      });
+      $table.on('xhr.dt', function() {
+        hasLoadedOnce = true;
+        hideSkeleton();
+      });
+      $table.on('error.dt', function() {
+        hasLoadedOnce = true;
+        hideSkeleton();
+      });
 
       // Asegurar oculto al cargar inicialmente
       hideSkeleton();
@@ -3964,5 +3966,3 @@ body .content {
     </div>
   </div>
 </div>
-
-
