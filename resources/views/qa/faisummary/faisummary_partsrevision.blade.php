@@ -738,6 +738,14 @@
     padding-bottom: var(--sp-1);
   }
 
+  /* Pending + In Process: subir ligeramente el bloque de título/subtítulo */
+  .fai-grid-row > .col .fai-card-title > .d-flex {
+    transform: translateY(-4px);
+  }
+  .fai-grid-row > .col .fai-card-title > .fai-chip {
+    transform: translateY(-4px);
+  }
+
 
   .fai-title-icon {
     width: 34px;

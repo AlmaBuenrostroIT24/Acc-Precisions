@@ -517,11 +517,18 @@ class QaFaiSummaryController extends Controller
                 'data' => $data->values()->all(),
             ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (\Throwable $e) {
-            /* Log::error('partsrevisionData error', [
-            'msg' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-        ]); */
+            Log::error('partsrevisionData error', [
+                'msg' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'bucket' => $request->query('bucket'),
+                'draw' => (int) $request->input('draw', 0),
+                'start' => (int) $request->input('start', 0),
+                'length' => (int) $request->input('length', 0),
+                'search' => (string) data_get($request->all(), 'search.value', ''),
+                'order' => $request->input('order', []),
+                'user_id' => optional(auth()->user())->id,
+            ]);
             $draw = (int) $request->input('draw', 0);
             return response()->json([
                 'draw' => $draw,
