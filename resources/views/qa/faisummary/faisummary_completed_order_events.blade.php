@@ -98,7 +98,7 @@
     <div class="prh-line"></div>
 </div>
 
-<div class="card shadow-sm mb-3">
+<div class="card shadow-sm mb-3 evt-page-card">
     <div class="modal-header-like d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
             <span class="evt-title-icon mr-2"><i class="fas fa-clipboard-check"></i></span>
@@ -108,6 +108,9 @@
             </div>
         </div>
         <div>
+            <button type="button" class="btn btn-sm btn-erp btn-erp-primary mr-2" id="btnAddInspectionTop">
+                <i class="fas fa-plus mr-1"></i> Inspection
+            </button>
             <button type="button" class="btn btn-sm btn-erp btn-erp-danger mr-2" id="btnPrintOrderEvents">
                 <i class="fas fa-print mr-1"></i> Print
             </button>
@@ -245,18 +248,18 @@
             <table class="table table-sm table-hover mb-0 evt-table" id="orderEventsTable">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Operation</th>
-                        <th>Operator</th>
-                        <th>Results</th>
-                        <th>SB/IS</th>
-                        <th>Observation</th>
-                        <th>Station</th>
-                        <th>Method</th>
-                        <th>Inspector</th>
-                        <th>Qty Insp</th>
-                        <th>Qty Process</th>
+                        <th class="col-date">Date</th>
+                        <th class="col-type">Type</th>
+                        <th class="col-operation">Operation</th>
+                        <th class="col-operator">Operator</th>
+                        <th class="col-results">Results</th>
+                        <th class="col-sbis">SB/IS</th>
+                        <th class="col-observation">Observation</th>
+                        <th class="col-station">Station</th>
+                        <th class="col-method">Method</th>
+                        <th class="col-qty-insp">Qty Insp</th>
+                        <th class="col-qty-process">Qty Process</th>
+                        <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -265,24 +268,83 @@
                             $res = strtolower(trim((string) $e->results));
                             if (in_array($res, ['nopass', 'no_pass', 'fail'], true)) $res = 'no pass';
                             $isPass = $res === 'pass';
+                            $fmtDate = $e->date ? \Illuminate\Support\Carbon::parse($e->date)->format('m/d/Y H:i') : '';
+                            $typeLabel = strtoupper((string) $e->insp_type);
+                            $resultLabel = $isPass ? 'Pass' : 'No Pass';
+                            $eventAt = $e->date ? \Illuminate\Support\Carbon::parse($e->date) : null;
+                            $completedAt = $order->inspection_endate ? \Illuminate\Support\Carbon::parse($order->inspection_endate) : null;
+                            $addedAfterCompleted = $eventAt && $completedAt && $eventAt->greaterThan($completedAt);
                         @endphp
-                        <tr>
-                            <td>{{ $e->date ? \Illuminate\Support\Carbon::parse($e->date)->format('m/d/Y H:i') : '' }}</td>
-                            <td>{{ strtoupper((string) $e->insp_type) }}</td>
-                            <td>{{ $e->operation }}</td>
-                            <td>{{ $e->operator }}</td>
+                        <tr class="{{ $addedAfterCompleted ? 'evt-row-post-complete' : '' }}"
+                            data-id="{{ $e->id }}"
+                            data-date="{{ $e->date ? \Illuminate\Support\Carbon::parse($e->date)->format('Y-m-d') : '' }}"
+                            data-insp-type="{{ strtoupper((string) $e->insp_type) }}"
+                            data-operation="{{ $e->operation }}"
+                            data-operator="{{ $e->operator }}"
+                            data-results="{{ $resultLabel }}"
+                            data-sb-is="{{ $e->sb_is }}"
+                            data-observation="{{ $e->observation }}"
+                            data-station="{{ $e->station }}"
+                            data-method="{{ $e->method }}"
+                            data-qty-pcs="{{ (int) ($e->qty_pcs ?? 0) }}"
+                            data-qty-process="{{ (int) ($e->qty_process ?? 0) }}"
+                            data-post-complete="{{ $addedAfterCompleted ? '1' : '0' }}">
                             <td>
-                                <span class="badge {{ $isPass ? 'badge-success' : 'badge-danger' }}">
-                                    {{ $isPass ? 'Pass' : 'No Pass' }}
-                                </span>
+                                <div class="evt-field evt-field-text {{ $addedAfterCompleted ? 'evt-field-post-complete' : '' }}">
+                                    <span>{{ $fmtDate }}</span>
+                                </div>
                             </td>
-                            <td>{{ $e->sb_is }}</td>
-                            <td class="evt-obs">{{ $e->observation }}</td>
-                            <td>{{ $e->station }}</td>
-                            <td>{{ $e->method }}</td>
-                            <td>{{ $e->inspector }}</td>
-                            <td>{{ (int) ($e->qty_pcs ?? 0) }}</td>
-                            <td>{{ (int) ($e->qty_process ?? 0) }}</td>
+                            <td>
+                                <div class="evt-field evt-field-select">{{ $typeLabel }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-text">{{ $e->operation }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-text">{{ $e->operator }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-select">{{ $resultLabel }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-text">{{ $e->sb_is }}</div>
+                            </td>
+                            <td class="evt-obs">
+                                <div class="evt-field evt-field-textarea">{{ $e->observation }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-text">{{ $e->station }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-select">{{ $e->method }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-number">{{ (int) ($e->qty_pcs ?? 0) }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-field evt-field-number">{{ (int) ($e->qty_process ?? 0) }}</div>
+                            </td>
+                            <td>
+                                <div class="evt-actions">
+                                    <span class="evt-action-btn evt-action-ok" title="Done">
+                                        <i class="fas fa-check"></i>
+                                    </span>
+                                    <button type="button"
+                                        class="evt-action-btn evt-action-edit {{ $addedAfterCompleted ? '' : 'evt-action-disabled' }}"
+                                        title="{{ $addedAfterCompleted ? 'Edit' : 'Locked' }}"
+                                        data-row-id="{{ $e->id }}"
+                                        {{ $addedAfterCompleted ? '' : 'disabled' }}>
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button"
+                                        class="evt-action-btn evt-action-delete {{ $addedAfterCompleted ? '' : 'evt-action-disabled' }}"
+                                        title="{{ $addedAfterCompleted ? 'Delete' : 'Locked' }}"
+                                        data-row-id="{{ $e->id }}"
+                                        {{ $addedAfterCompleted ? '' : 'disabled' }}>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -300,28 +362,44 @@
 @section('css')
 <style>
     .modal-header-like {
-        background: #f8fafc;
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f6fc 100%);
         border-bottom: 1px solid rgba(15,23,42,.08);
-        border-radius: 12px 12px 0 0;
-        padding: .65rem .9rem;
+        border-radius: 14px 14px 0 0;
+        padding: .55rem .8rem;
+    }
+    .evt-page-card {
+        border-radius: 14px;
+        border: 1px solid #dbe4ee;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
     }
     .evt-title-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        border: 1px solid rgba(59,130,246,.28);
-        background: rgba(59,130,246,.12);
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid rgba(59,130,246,.26);
+        background: linear-gradient(180deg, rgba(59,130,246,.18) 0%, rgba(59,130,246,.12) 100%);
         color: #0d6efd;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
+    }
+    .modal-header-like h5 {
+        font-size: 1.12rem;
+        font-weight: 500;
+        color: #1f2937;
+    }
+    .modal-header-like small {
+        font-size: .84rem;
+        color: #64748b !important;
     }
     .evt-doc-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        background: #eef2f7;
-        border: 1px solid #d5dbe3;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #eef3f8 0%, #e7edf5 100%);
+        border: 1px solid #d5dde7;
         color: #475569;
         display: inline-flex;
         align-items: center;
@@ -335,44 +413,49 @@
         background: #e2e8f0;
     }
     .evt-label {
-        font-size: .78rem;
+        font-size: .86rem;
         text-transform: uppercase;
-        font-weight: 700;
-        color: #334155;
-        margin-bottom: 0.18rem;
+        font-weight: 800;
+        color: #223048;
+        margin-bottom: .26rem;
     }
     .evt-readonly {
-        background: #f1f5f9;
-        border: 1px solid #d5dbe3;
+        background: linear-gradient(180deg, #edf2f8 0%, #e5ebf3 100%);
+        border: 1px solid #d2dbe6;
         font-weight: 600;
-        height: 38px;
+        height: 42px;
+        border-radius: 8px;
+        color: #334155;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+        font-size: 1rem;
     }
     .evt-note-view {
-        min-height: 72px;
+        min-height: 80px;
         height: auto;
         resize: vertical;
         white-space: pre-wrap;
     }
     .packet-head {
         border-bottom: 1px solid rgba(15,23,42,.08);
-        padding-bottom: .35rem;
+        padding-bottom: .45rem;
     }
     .packet-table-wrap {
-        border: 1px solid #d5dbe3;
-        border-radius: 10px;
+        border: 1px solid #d8e0ea;
+        border-radius: 14px;
         overflow: auto;
+        background: #fff;
     }
     .packet-table thead th {
         background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
         color: #0f172a;
-        font-size: .78rem;
+        font-size: .84rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: .02em;
         white-space: nowrap;
     }
     .packet-table tbody td {
-        font-size: .82rem;
+        font-size: .9rem;
         vertical-align: middle;
         white-space: nowrap;
     }
@@ -399,7 +482,7 @@
         background: rgba(34,197,94,.12);
         color: #14532d;
         font-weight: 700;
-        font-size: .78rem;
+        font-size: .84rem;
     }
     .pkt-pill-ipi {
         border-color: rgba(14,165,233,.45);
@@ -407,15 +490,15 @@
         color: #0c4a6e;
     }
     .donut-card {
-        border: 1px solid #dbe2ea;
-        border-radius: 10px;
-        background: #f8fafc;
-        padding: .4rem;
+        border: 1px solid #d8e0ea;
+        border-radius: 14px;
+        background: #fbfdff;
+        padding: .55rem;
         text-align: center;
     }
     .donut-title {
         font-weight: 800;
-        font-size: .8rem;
+        font-size: .9rem;
         color: #0f172a;
         margin-bottom: .25rem;
         letter-spacing: .03em;
@@ -441,40 +524,158 @@
         place-items: center;
         font-weight: 800;
         color: #0f172a;
-        font-size: .82rem;
+        font-size: .92rem;
     }
     .donut-sub {
-        font-size: .72rem;
+        font-size: .82rem;
         color: #334155;
         line-height: 1.15;
     }
 
     .evt-table-wrap {
-        border: 1px solid #d5dbe3;
-        border-radius: 10px;
+        border: 1px solid #d8e0ea;
+        border-radius: 14px;
         overflow: auto;
+        background: #fff;
+    }
+    .evt-table {
+        table-layout: fixed;
+        min-width: 1520px;
     }
     .evt-table thead th {
         background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
         color: #0f172a;
         font-weight: 800;
-        font-size: .83rem;
+        font-size: .9rem;
         text-transform: uppercase;
         letter-spacing: .02em;
         border-bottom: 1px solid rgba(15, 23, 42, 0.12);
         white-space: nowrap;
     }
     .evt-table tbody td {
-        font-size: .84rem;
+        font-size: .92rem;
         vertical-align: middle;
         border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        padding: .38rem .45rem;
     }
+    .evt-table th.col-date,
+    .evt-table td:nth-child(1) { width: 148px; min-width: 148px; }
+    .evt-table th.col-type,
+    .evt-table td:nth-child(2) { width: 92px; min-width: 92px; }
+    .evt-table th.col-operation,
+    .evt-table td:nth-child(3) { width: 108px; min-width: 108px; }
+    .evt-table th.col-operator,
+    .evt-table td:nth-child(4) { width: 108px; min-width: 108px; }
+    .evt-table th.col-results,
+    .evt-table td:nth-child(5) { width: 106px; min-width: 106px; }
+    .evt-table th.col-sbis,
+    .evt-table td:nth-child(6) { width: 240px; min-width: 240px; }
+    .evt-table th.col-observation,
+    .evt-table td:nth-child(7) { width: 240px; min-width: 240px; }
+    .evt-table th.col-station,
+    .evt-table td:nth-child(8) { width: 96px; min-width: 96px; }
+    .evt-table th.col-method,
+    .evt-table td:nth-child(9) { width: 132px; min-width: 132px; }
+    .evt-table th.col-qty-insp,
+    .evt-table td:nth-child(10) { width: 96px; min-width: 96px; }
+    .evt-table th.col-qty-process,
+    .evt-table td:nth-child(11) { width: 108px; min-width: 108px; }
+    .evt-table th.col-actions,
+    .evt-table td:nth-child(12) { width: 132px; min-width: 132px; }
     .evt-table tbody tr:nth-child(even) {
         background: rgba(248, 250, 252, 0.9);
     }
     .evt-obs {
-        min-width: 220px;
+        min-width: 260px;
         white-space: normal;
+    }
+    .evt-field {
+        min-height: 37px;
+        border-radius: 11px;
+        border: 1px solid #d5dbe3;
+        background: #eef3f8;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: .48rem .78rem;
+        line-height: 1.15;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+        font-size: .95rem;
+    }
+    .evt-field-post-complete {
+        border-color: rgba(245, 158, 11, 0.28);
+        box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .evt-field-textarea {
+        min-height: 37px;
+        align-items: flex-start;
+        white-space: normal;
+        word-break: break-word;
+    }
+    .evt-field-select {
+        position: relative;
+        padding-right: 1.9rem;
+        white-space: nowrap;
+    }
+    .evt-field-select::after {
+        content: "";
+        position: absolute;
+        right: .8rem;
+        top: 50%;
+        width: .45rem;
+        height: .45rem;
+        border-right: 2px solid #475569;
+        border-bottom: 2px solid #475569;
+        transform: translateY(-65%) rotate(45deg);
+        pointer-events: none;
+    }
+    .evt-field-number {
+        justify-content: flex-start;
+        min-width: 74px;
+    }
+    .evt-actions {
+        display: flex;
+        align-items: center;
+        gap: .48rem;
+        white-space: nowrap;
+    }
+    .evt-action-btn {
+        width: 40px;
+        height: 34px;
+        border-radius: 9px;
+        border: 1px solid #d5dbe3;
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 0 rgba(15,23,42,.04);
+        padding: 0;
+    }
+    .evt-action-btn:hover {
+        background: #f8fafc;
+    }
+    .evt-action-ok i {
+        color: #7ca68d;
+    }
+    .evt-action-edit i {
+        color: #f59e0b;
+    }
+    .evt-action-delete i {
+        color: #dc2626;
+    }
+    .evt-action-save i {
+        color: #166534;
+    }
+    .evt-action-disabled {
+        opacity: .45;
+        cursor: not-allowed;
+    }
+    .evt-editing-row td {
+        background: #f8fbff;
+    }
+    .evt-editing-row .evt-action-cancel i {
+        color: #64748b;
     }
     .evt-notes-wrap {
         border: 1px solid #dbe2ea;
@@ -501,14 +702,87 @@
     }
 
     .btn-erp {
-        border-radius: 8px;
+        border-radius: 11px;
         font-weight: 700;
-        border: 1px solid #d5dbe3;
-        background: #f8fafc;
+        border: 1px solid #d5dde7;
+        background: #fff;
         color: #1f2937;
+        min-height: 34px;
+        padding: .38rem .8rem;
+        box-shadow: 0 1px 0 rgba(15,23,42,.04);
+        font-size: .96rem;
     }
+    .btn-erp:hover {
+        background: #f8fafc;
+    }
+    .btn-erp-primary i { color: #0d6efd; }
     .btn-erp-danger i { color: #dc2626; }
     .btn-erp-secondary i { color: #334155; }
+    .evt-edit-control {
+        width: 100%;
+        height: 34px;
+        min-height: 34px;
+        border-radius: 12px;
+        border: 1px solid #d5dbe3;
+        background: #f8fafc;
+        color: #334155;
+        padding: .38rem .72rem;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+        font-size: .96rem;
+        font-weight: 500;
+    }
+    textarea.evt-edit-control {
+        height: 34px;
+        min-height: 34px;
+        resize: none;
+        overflow: hidden;
+        line-height: 1.25;
+        padding-top: .44rem;
+        padding-bottom: .44rem;
+    }
+    .evt-edit-control:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+        background: #fff;
+    }
+    .evt-edit-control[type="number"] {
+        min-width: 74px;
+    }
+    .evt-draft-row td {
+        background: #fff;
+        padding-top: .3rem !important;
+        padding-bottom: .3rem !important;
+    }
+    .evt-draft-row .evt-action-save i {
+        color: #16a34a;
+    }
+    .evt-draft-row .evt-action-remove i {
+        color: #dc2626;
+    }
+    .evt-draft-row .evt-edit-control[name="date"] {
+        min-width: 138px;
+    }
+    .evt-draft-row .evt-edit-control[name="insp_type"] {
+        min-width: 92px;
+    }
+    .evt-draft-row .evt-edit-control[name="operation"] {
+        min-width: 112px;
+    }
+    .evt-draft-row .evt-edit-control[name="results"] {
+        min-width: 104px;
+    }
+    .evt-draft-row .evt-edit-control[name="method"] {
+        min-width: 138px;
+    }
+    .evt-draft-row .evt-edit-control[name="qty_pcs"],
+    .evt-draft-row .evt-edit-control[name="qty_process"] {
+        min-width: 72px;
+        max-width: 72px;
+    }
+    .evt-draft-row .evt-actions {
+        justify-content: flex-end;
+    }
 
     @media print {
         @page {
@@ -722,9 +996,406 @@
 @section('js')
 <script>
     (function () {
+        const orderId = @json($order->id);
+        const inspectorName = @json($inspectorName);
+        const totalOps = @json($ops);
+        const csrf = @json(csrf_token());
+        const methods = ['Manual', 'Vmm/Manual', 'Visual', 'Vmm', 'Keyence', 'Keyence/Manual'];
+        let operatorOptions = [];
+        let stationOptions = [];
+        const operatorListId = 'evtOperatorOptions';
+        const stationListId = 'evtStationOptions';
+
         const doPrint = () => window.print();
         const btnPrint = document.getElementById('btnPrintOrderEvents');
         if (btnPrint) btnPrint.addEventListener('click', doPrint);
+
+        const btnAdd = document.getElementById('btnAddInspectionTop');
+        const tbody = document.querySelector('#orderEventsTable tbody');
+
+        const opLabel = (i) => {
+            if (i === 1) return '1st Op';
+            if (i === 2) return '2nd Op';
+            if (i === 3) return '3rd Op';
+            return `${i}th Op`;
+        };
+
+        const ipiRequired = Math.max(0, (parseInt(@json($sampling), 10) || 0) - 1);
+
+        const buildOptions = (rows, textKey) => rows.map(r => {
+            const value = (r?.[textKey] || '').toString().trim();
+            return value ? `<option value="${value.replace(/"/g, '&quot;')}">${value}</option>` : '';
+        }).join('');
+
+        const ensureDatalists = () => {
+            let operatorList = document.getElementById(operatorListId);
+            if (!operatorList) {
+                operatorList = document.createElement('datalist');
+                operatorList.id = operatorListId;
+                document.body.appendChild(operatorList);
+            }
+            operatorList.innerHTML = buildOptions(operatorOptions, 'operator');
+
+            let stationList = document.getElementById(stationListId);
+            if (!stationList) {
+                stationList = document.createElement('datalist');
+                stationList.id = stationListId;
+                document.body.appendChild(stationList);
+            }
+            stationList.innerHTML = buildOptions(stationOptions, 'station');
+        };
+
+        const loadLookupData = () => {
+            const operatorReq = $.getJSON(`/operators/by-order/${orderId}`).then((rows) => {
+                operatorOptions = Array.isArray(rows) ? rows : [];
+            });
+            const stationReq = $.getJSON(`/stations/by-order/${orderId}`).then((rows) => {
+                stationOptions = Array.isArray(rows) ? rows : [];
+            });
+            return $.when(operatorReq, stationReq).always(() => {
+                ensureDatalists();
+            });
+        };
+
+        const getCompletedCounts = () => {
+            const faiSum = new Map();
+            const ipiSum = new Map();
+
+            $(tbody).find('tr[data-id]').each(function () {
+                const $row = $(this);
+                const type = String($row.data('inspType') || '').toUpperCase();
+                const op = String($row.data('operation') || '').trim();
+                const results = String($row.data('results') || '').trim().toLowerCase();
+                if (!op || results !== 'pass') return;
+
+                const qty = parseInt($row.data('qtyPcs') || 0, 10) || 0;
+
+                if (type === 'FAI') {
+                    const faiQty = Math.min(1, qty || 0);
+                    const spillToIpi = Math.max(0, (qty || 0) - faiQty);
+                    faiSum.set(op, (faiSum.get(op) || 0) + faiQty);
+                    if (spillToIpi > 0) {
+                        ipiSum.set(op, (ipiSum.get(op) || 0) + spillToIpi);
+                    }
+                }
+
+                if (type === 'IPI') {
+                    ipiSum.set(op, (ipiSum.get(op) || 0) + qty);
+                }
+            });
+
+            return { faiSum, ipiSum };
+        };
+
+        const getNextInspectionPair = () => {
+            const ops = parseInt(totalOps || 0, 10) || 0;
+            if (ops < 1) return null;
+
+            const { faiSum, ipiSum } = getCompletedCounts();
+            for (let i = 1; i <= ops; i++) {
+                const op = opLabel(i);
+                if ((faiSum.get(op) || 0) < 1) {
+                    return { type: 'FAI', op };
+                }
+                if ((ipiSum.get(op) || 0) < ipiRequired) {
+                    return { type: 'IPI', op };
+                }
+            }
+            return null;
+        };
+
+        const buildOperationControl = (inspType = 'FAI', preferredOp = null) => {
+            if (parseInt(totalOps || 0, 10) > 0) {
+                const { faiSum, ipiSum } = getCompletedCounts();
+                let labels = [];
+                for (let i = 1; i <= totalOps; i++) labels.push(opLabel(i));
+
+                if (preferredOp && labels.includes(preferredOp)) {
+                    labels = [preferredOp].concat(labels.filter(v => v !== preferredOp));
+                }
+
+                const isFai = String(inspType).toUpperCase() === 'FAI';
+                let options = '';
+                labels.forEach((label) => {
+                    const done = isFai
+                        ? ((faiSum.get(label) || 0) >= 1)
+                        : ((ipiSum.get(label) || 0) >= ipiRequired);
+                    const text = done ? `${label} (done)` : label;
+                    const selected = preferredOp && preferredOp === label ? 'selected' : '';
+                    options += `<option value="${label}" ${selected}>${text}</option>`;
+                });
+                return `<select class="evt-edit-control" name="operation">${options}</select>`;
+            }
+            return `<input type="text" class="evt-edit-control" name="operation" value="">`;
+        };
+
+        const today = () => {
+            const d = new Date();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${d.getFullYear()}-${mm}-${dd}`;
+        };
+
+        const ensureNoDraft = () => {
+            const existing = tbody.querySelector('.evt-draft-row, .evt-editing-row');
+            if (existing) {
+                const first = existing.querySelector('input, select, textarea');
+                if (first) first.focus();
+                return false;
+            }
+            return true;
+        };
+
+        const syncQtyProcess = ($row) => {
+            const type = ($row.find('[name="insp_type"]').val() || '').toUpperCase();
+            const $qty = $row.find('[name="qty_process"]');
+            if (type === 'FAI') {
+                $qty.prop('disabled', false).removeClass('d-none');
+                if (!$qty.val()) $qty.val('1');
+            } else {
+                $qty.val('').prop('disabled', true).addClass('d-none');
+            }
+        };
+
+        const autoSizeTextarea = (el) => {
+            if (!el) return;
+            el.style.height = '34px';
+            el.style.height = `${Math.max(34, el.scrollHeight)}px`;
+        };
+
+        const autoSizeRowTextareas = ($row) => {
+            $row.find('textarea.evt-edit-control').each(function () {
+                autoSizeTextarea(this);
+            });
+        };
+
+        const buildDraftRow = () => {
+            const suggestion = getNextInspectionPair();
+            const defaultType = suggestion?.type || 'FAI';
+            const preferredOp = suggestion?.op || null;
+            const opControl = buildOperationControl(defaultType, preferredOp);
+            const operatorInput = `<input type="text" class="evt-edit-control" name="operator" list="${operatorListId}" autocomplete="off">`;
+            const stationInput = `<input type="text" class="evt-edit-control" name="station" list="${stationListId}" autocomplete="off">`;
+            const methodSelect = `<select class="evt-edit-control" name="method">${methods.map(m => `<option value="${m}">${m}</option>`).join('')}</select>`;
+            const html = `
+                <tr class="evt-draft-row">
+                    <td><input type="date" class="evt-edit-control" name="date" value="${today()}"></td>
+                    <td>
+                        <select class="evt-edit-control" name="insp_type">
+                            <option value="FAI" ${defaultType === 'FAI' ? 'selected' : ''}>FAI</option>
+                            <option value="IPI" ${defaultType === 'IPI' ? 'selected' : ''}>IPI</option>
+                        </select>
+                    </td>
+                    <td>${opControl}</td>
+                    <td>${operatorInput}</td>
+                    <td>
+                        <select class="evt-edit-control" name="results">
+                            <option value="pass">Pass</option>
+                            <option value="no pass">No Pass</option>
+                        </select>
+                    </td>
+                    <td><textarea class="evt-edit-control" name="sb_is" rows="1"></textarea></td>
+                    <td><textarea class="evt-edit-control" name="observation" rows="1"></textarea></td>
+                    <td>${stationInput}</td>
+                    <td>${methodSelect}</td>
+                    <td><input type="number" class="evt-edit-control" name="qty_pcs" min="1" value="1"></td>
+                    <td><input type="number" class="evt-edit-control" name="qty_process" min="0" value="1"></td>
+                    <td>
+                        <div class="evt-actions">
+                            <button type="button" class="evt-action-btn evt-action-save" title="Save">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button type="button" class="evt-action-btn evt-action-remove" title="Remove">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            tbody.insertAdjacentHTML('afterbegin', html);
+            const $row = $(tbody).find('.evt-draft-row').first();
+            syncQtyProcess($row);
+            autoSizeRowTextareas($row);
+            $row.find('[name="insp_type"]').on('change', function () {
+                const selectedType = ($(this).val() || 'FAI').toString().trim();
+                const nextSuggestion = getNextInspectionPair();
+                const preferredForType = nextSuggestion && nextSuggestion.type === selectedType ? nextSuggestion.op : null;
+                const newControl = buildOperationControl(selectedType, preferredForType);
+                $row.find('[name="operation"]').closest('td').html(newControl);
+                syncQtyProcess($row);
+            });
+            const first = $row.find('input, select').get(0);
+            if (first) first.focus();
+        };
+
+        const saveDraftRow = ($row) => {
+            const rowId = ($row.data('id') || '').toString().trim();
+            const payload = {
+                order_schedule_id: orderId,
+                date: ($row.find('[name="date"]').val() || '').trim(),
+                insp_type: ($row.find('[name="insp_type"]').val() || '').trim(),
+                operation: ($row.find('[name="operation"]').val() || '').trim(),
+                operator: ($row.find('[name="operator"]').val() || '').trim(),
+                results: ($row.find('[name="results"]').val() || '').trim(),
+                sb_is: ($row.find('[name="sb_is"]').val() || '').trim(),
+                observation: ($row.find('[name="observation"]').val() || '').trim(),
+                station: ($row.find('[name="station"]').val() || '').trim(),
+                method: ($row.find('[name="method"]').val() || '').trim(),
+                inspector: inspectorName,
+                qty_pcs: ($row.find('[name="qty_pcs"]').val() || '1').trim(),
+                qty_process: ($row.find('[name="qty_process"]').prop('disabled') ? '' : ($row.find('[name="qty_process"]').val() || '0').trim())
+            };
+            if (rowId) {
+                payload.id = rowId;
+            }
+
+            if (!payload.date || !payload.insp_type || !payload.operation || !payload.operator || !payload.results || !payload.method) {
+                Swal.fire('Missing data', 'Complete the required inspection fields, including operator.', 'warning');
+                return;
+            }
+
+            $.ajax({
+                url: '/qa/faisummary/store-single',
+                type: 'POST',
+                data: {
+                    ...payload,
+                    _token: csrf
+                }
+            }).done(function () {
+                window.location.reload();
+            }).fail(function (xhr) {
+                const errors = xhr?.responseJSON?.errors || null;
+                const firstError = errors ? Object.values(errors).flat()[0] : null;
+                const msg = firstError || xhr?.responseJSON?.message || xhr?.responseJSON?.error || 'Could not save inspection.';
+                Swal.fire('Error', msg, 'error');
+            });
+        };
+
+        if (btnAdd) {
+            btnAdd.addEventListener('click', function () {
+                if (!ensureNoDraft()) return;
+                loadLookupData().always(function () {
+                    buildDraftRow();
+                });
+            });
+        }
+
+        $(document).on('click', '.evt-action-remove', function () {
+            $(this).closest('tr').remove();
+        });
+
+        $(document).on('click', '.evt-action-save', function () {
+            saveDraftRow($(this).closest('tr'));
+        });
+
+        const renderEditableRow = ($row) => {
+            const rowId = ($row.data('id') || '').toString().trim();
+            const date = ($row.data('date') || '').toString().trim();
+            const inspType = ($row.data('inspType') || 'FAI').toString().trim();
+            const operation = ($row.data('operation') || '').toString().trim();
+            const operator = ($row.data('operator') || '').toString().trim();
+            const results = (($row.data('results') || 'Pass').toString().trim().toLowerCase() === 'no pass') ? 'no pass' : 'pass';
+            const sbIs = ($row.data('sbIs') || '').toString().trim();
+            const observation = ($row.data('observation') || '').toString().trim();
+            const station = ($row.data('station') || '').toString().trim();
+            const method = ($row.data('method') || 'Manual').toString().trim();
+            const qtyPcs = ($row.data('qtyPcs') || 1).toString().trim();
+            const qtyProcess = ($row.data('qtyProcess') || '').toString().trim();
+
+            const operatorInput = `<input type="text" class="evt-edit-control" name="operator" list="${operatorListId}" value="${operator.replace(/"/g, '&quot;')}" autocomplete="off">`;
+            const stationInput = `<input type="text" class="evt-edit-control" name="station" list="${stationListId}" value="${station.replace(/"/g, '&quot;')}" autocomplete="off">`;
+            const methodSelect = `<select class="evt-edit-control" name="method">${methods.map(m => `<option value="${m}" ${m === method ? 'selected' : ''}>${m}</option>`).join('')}</select>`;
+            const opControl = parseInt(totalOps || 0, 10) > 0
+                ? `<select class="evt-edit-control" name="operation">${Array.from({ length: totalOps }, (_, idx) => {
+                    const label = opLabel(idx + 1);
+                    return `<option value="${label}" ${label === operation ? 'selected' : ''}>${label}</option>`;
+                }).join('')}</select>`
+                : `<input type="text" class="evt-edit-control" name="operation" value="${operation.replace(/"/g, '&quot;')}">`;
+
+            $row.addClass('evt-editing-row').removeClass('evt-row-post-complete');
+            $row.html(`
+                <td><input type="date" class="evt-edit-control" name="date" value="${date}"></td>
+                <td>
+                    <select class="evt-edit-control" name="insp_type">
+                        <option value="FAI" ${inspType === 'FAI' ? 'selected' : ''}>FAI</option>
+                        <option value="IPI" ${inspType === 'IPI' ? 'selected' : ''}>IPI</option>
+                    </select>
+                </td>
+                <td>${opControl}</td>
+                <td>${operatorInput}</td>
+                <td>
+                    <select class="evt-edit-control" name="results">
+                        <option value="pass" ${results === 'pass' ? 'selected' : ''}>Pass</option>
+                        <option value="no pass" ${results === 'no pass' ? 'selected' : ''}>No Pass</option>
+                    </select>
+                </td>
+                <td><textarea class="evt-edit-control" name="sb_is" rows="1">${sbIs}</textarea></td>
+                <td><textarea class="evt-edit-control" name="observation" rows="1">${observation}</textarea></td>
+                <td>${stationInput}</td>
+                <td>${methodSelect}</td>
+                <td><input type="number" class="evt-edit-control" name="qty_pcs" min="1" value="${qtyPcs || '1'}"></td>
+                <td><input type="number" class="evt-edit-control" name="qty_process" min="0" value="${qtyProcess}"></td>
+                <td>
+                    <div class="evt-actions">
+                        <button type="button" class="evt-action-btn evt-action-save" title="Save">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button type="button" class="evt-action-btn evt-action-cancel" title="Cancel">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </td>
+            `);
+            $row.attr('data-id', rowId);
+            syncQtyProcess($row);
+            autoSizeRowTextareas($row);
+            $row.find('[name="insp_type"]').on('change', function () {
+                syncQtyProcess($row);
+            });
+        };
+
+        $(document).on('click', '.evt-action-edit:not(.evt-action-disabled)', function () {
+            if (!ensureNoDraft()) return;
+            const $row = $(this).closest('tr');
+            loadLookupData().always(function () {
+                renderEditableRow($row);
+            });
+        });
+
+        $(document).on('click', '.evt-action-cancel', function () {
+            window.location.reload();
+        });
+
+        $(document).on('input', 'textarea.evt-edit-control[name="sb_is"], textarea.evt-edit-control[name="observation"]', function () {
+            autoSizeTextarea(this);
+        });
+
+        $(document).on('click', '.evt-action-delete:not(.evt-action-disabled)', function () {
+            const rowId = ($(this).data('rowId') || '').toString().trim();
+            if (!rowId) return;
+            Swal.fire({
+                title: 'Delete inspection?',
+                text: 'This post-complete inspection will be removed.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                $.ajax({
+                    url: `/qa/faisummary/delete/${rowId}`,
+                    type: 'POST',
+                    data: {
+                        _token: csrf,
+                        _method: 'DELETE'
+                    }
+                }).done(function () {
+                    window.location.reload();
+                }).fail(function (xhr) {
+                    const msg = xhr?.responseJSON?.error || 'Could not delete inspection.';
+                    Swal.fire('Error', msg, 'error');
+                });
+            });
+        });
     })();
 </script>
 @endsection
