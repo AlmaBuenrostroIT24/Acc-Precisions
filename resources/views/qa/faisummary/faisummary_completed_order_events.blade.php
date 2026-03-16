@@ -271,13 +271,13 @@
                             $fmtDate = $e->date ? \Illuminate\Support\Carbon::parse($e->date)->format('m/d/Y H:i') : '';
                             $typeLabel = strtoupper((string) $e->insp_type);
                             $resultLabel = $isPass ? 'Pass' : 'No Pass';
-                            $eventAt = $e->date ? \Illuminate\Support\Carbon::parse($e->date) : null;
+                            $eventAt = $e->created_at ? \Illuminate\Support\Carbon::parse($e->created_at) : ($e->date ? \Illuminate\Support\Carbon::parse($e->date) : null);
                             $completedAt = $order->inspection_endate ? \Illuminate\Support\Carbon::parse($order->inspection_endate) : null;
                             $addedAfterCompleted = $eventAt && $completedAt && $eventAt->greaterThan($completedAt);
                         @endphp
                         <tr class="{{ $addedAfterCompleted ? 'evt-row-post-complete' : '' }}"
                             data-id="{{ $e->id }}"
-                            data-date="{{ $e->date ? \Illuminate\Support\Carbon::parse($e->date)->format('Y-m-d') : '' }}"
+                            data-date="{{ $e->date ? \Illuminate\Support\Carbon::parse($e->date)->format('Y-m-d\\TH:i') : '' }}"
                             data-insp-type="{{ strtoupper((string) $e->insp_type) }}"
                             data-operation="{{ $e->operation }}"
                             data-operator="{{ $e->operator }}"
@@ -559,7 +559,7 @@
         padding: .38rem .45rem;
     }
     .evt-table th.col-date,
-    .evt-table td:nth-child(1) { width: 148px; min-width: 148px; }
+    .evt-table td:nth-child(1) { width: 190px; min-width: 190px; }
     .evt-table th.col-type,
     .evt-table td:nth-child(2) { width: 92px; min-width: 92px; }
     .evt-table th.col-operation,
@@ -754,6 +754,9 @@
         padding-top: .3rem !important;
         padding-bottom: .3rem !important;
     }
+    .evt-draft-row .evt-edit-control {
+        background: #fff;
+    }
     .evt-draft-row .evt-action-save i {
         color: #16a34a;
     }
@@ -761,7 +764,10 @@
         color: #dc2626;
     }
     .evt-draft-row .evt-edit-control[name="date"] {
-        min-width: 138px;
+        min-width: 178px;
+    }
+    .evt-editing-row .evt-edit-control[name="date"] {
+        min-width: 178px;
     }
     .evt-draft-row .evt-edit-control[name="insp_type"] {
         min-width: 92px;
@@ -1133,7 +1139,9 @@
             const d = new Date();
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');
-            return `${d.getFullYear()}-${mm}-${dd}`;
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            return `${d.getFullYear()}-${mm}-${dd}T${hh}:${mi}`;
         };
 
         const ensureNoDraft = () => {
@@ -1179,7 +1187,7 @@
             const methodSelect = `<select class="evt-edit-control" name="method">${methods.map(m => `<option value="${m}">${m}</option>`).join('')}</select>`;
             const html = `
                 <tr class="evt-draft-row">
-                    <td><input type="date" class="evt-edit-control" name="date" value="${today()}"></td>
+                    <td><input type="datetime-local" class="evt-edit-control" name="date" value="${today()}"></td>
                     <td>
                         <select class="evt-edit-control" name="insp_type">
                             <option value="FAI" ${defaultType === 'FAI' ? 'selected' : ''}>FAI</option>
@@ -1313,7 +1321,7 @@
 
             $row.addClass('evt-editing-row').removeClass('evt-row-post-complete');
             $row.html(`
-                <td><input type="date" class="evt-edit-control" name="date" value="${date}"></td>
+                <td><input type="datetime-local" class="evt-edit-control" name="date" value="${date}"></td>
                 <td>
                     <select class="evt-edit-control" name="insp_type">
                         <option value="FAI" ${inspType === 'FAI' ? 'selected' : ''}>FAI</option>

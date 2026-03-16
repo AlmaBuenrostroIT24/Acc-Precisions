@@ -596,7 +596,7 @@ class QaFaiSummaryController extends Controller
         //Log::info('storeSingle called', $request->all());
         $validated = $request->validate([
             'order_schedule_id' => 'required|exists:orders_schedule,id',
-            'date' => 'required|date_format:Y-m-d',
+            'date' => 'required|date',
             'insp_type' => 'required|in:FAI,IPI',
             'operation' => 'required|string',
             'operator' => 'nullable|string',
@@ -615,8 +615,8 @@ class QaFaiSummaryController extends Controller
             $validated['qty_process'] = 1;
         }
 
-        // ⭐ Convertir fecha a datetime agregando la hora actual
-        $validated['date'] = $validated['date'] . ' ' . now()->format('H:i:s');
+        // Permite fecha sola o fecha+hora (datetime-local) y la guarda como datetime completo.
+        $validated['date'] = \Carbon\Carbon::parse($validated['date'])->format('Y-m-d H:i:s');
 
         // 🔍 Obtener la ubicación del order_schedule
         $order = \App\Models\OrderSchedule::find($validated['order_schedule_id']);
