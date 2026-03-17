@@ -81,6 +81,22 @@
 
     $faiPct = $faiReqTotal > 0 ? max(0, min(100, (int) round(($faiPassTotal / $faiReqTotal) * 100))) : 0;
     $ipiPct = $ipiReqTotal > 0 ? max(0, min(100, (int) round(($ipiPassTotal / $ipiReqTotal) * 100))) : 0;
+    $inspectionCompleted = collect($statusRows)->every(function ($r) {
+        return (int) ($r['fai_pass'] ?? 0) >= (int) ($r['fai_req'] ?? 0)
+            && (int) ($r['ipi_pass'] ?? 0) >= (int) ($r['ipi_req'] ?? 0);
+    });
+    $completedOnLabel = $order->inspection_endate
+        ? \Illuminate\Support\Carbon::parse($order->inspection_endate)->format('m/d/Y H:i')
+        : 'Pending';
+    $lastInspectionLabel = $events->first()?->date
+        ? \Illuminate\Support\Carbon::parse($events->first()->date)->format('m/d/Y H:i')
+        : 'No events';
+    $inspectionStatusLabel = \Illuminate\Support\Str::of((string) ($order->status_inspection ?? 'pending'))
+        ->replace('_', ' ')
+        ->title();
+    $inspectionUpdatedLabel = $order->updated_at
+        ? \Illuminate\Support\Carbon::parse($order->updated_at)->format('m/d/Y H:i')
+        : 'N/A';
 @endphp
 
 <div class="print-report-head d-none">
@@ -163,6 +179,77 @@
                         <textarea class="form-control evt-readonly evt-note-view" readonly>{{ (string) ($order->inspection_note ?? $order->notes ?? '') }}</textarea>
                     </div>
                 </div>
+
+                @if(count($statusRows))
+                    <div class="ops-journey mt-2">
+                        <div class="ops-journey-head">
+                            <span class="ops-journey-title">Inspection Journey</span>
+                        </div>
+                        <div class="ops-journey-track">
+                            <div class="ops-simple-track">
+                                <div class="ops-simple-steps {{ count($statusRows) >= 5 ? 'ops-simple-steps-compact' : '' }} {{ count($statusRows) >= 7 ? 'ops-simple-steps-dense' : '' }}" style="grid-template-columns: repeat({{ max(1, count($statusRows) + 1) }}, minmax(0, 1fr));">
+                                    @foreach($statusRows as $r)
+                                        @php
+                                            $faiState = $r['fai_pass'] >= $r['fai_req'] ? 'ok' : ($r['fai_np'] > 0 ? 'warn' : 'pending');
+                                            $ipiState = $r['ipi_pass'] >= $r['ipi_req'] ? 'ok' : ($r['ipi_np'] > 0 ? 'warn' : 'pending');
+                                            $opState = ($faiState === 'ok' && $ipiState === 'ok') ? 'ok' : (($faiState === 'warn' || $ipiState === 'warn') ? 'warn' : 'pending');
+                                        @endphp
+                                        <div class="ops-simple-step">
+                                            <div class="ops-simple-head">
+                                                <div class="ops-simple-label">{{ $r['label'] }}</div>
+                                                <div class="ops-grid-node ops-grid-node-{{ $opState }}">
+                                                    <i class="fas {{ $opState === 'ok' ? 'fa-check' : ($opState === 'warn' ? 'fa-times' : 'fa-minus') }}"></i>
+                                                </div>
+                                            </div>
+                                            <div class="ops-simple-body">
+                                                <div class="ops-simple-row">
+                                                    <span class="ops-mini-pill ops-mini-pill-fai">FAI</span>
+                                                    <span class="ops-simple-metric">{{ $r['fai_pass'] }}/{{ $r['fai_req'] }}</span>
+                                                    <div class="ops-grid-mini">
+                                                        @for($i = 1; $i <= max(1, (int) $r['fai_req']); $i++)
+                                                            @php
+                                                                $faiPass = (int) $r['fai_pass'];
+                                                                $faiFail = (int) $r['fai_np'];
+                                                                $faiClass = $i <= $faiPass ? 'is-done' : (($i > $faiPass && $i <= ($faiPass + $faiFail)) ? 'is-fail' : '');
+                                                            @endphp
+                                                            <span class="ops-chain-done {{ $faiClass }}"><i class="fas fa-check"></i></span>
+                                                        @endfor
+                                                    </div>
+                                                </div>
+                                                <div class="ops-simple-row">
+                                                    <span class="ops-mini-pill ops-mini-pill-ipi">IPI</span>
+                                                    <span class="ops-simple-metric">{{ $r['ipi_pass'] }}/{{ $r['ipi_req'] }}</span>
+                                                    <div class="ops-grid-mini">
+                                                        @for($i = 1; $i <= max(1, (int) $r['ipi_req']); $i++)
+                                                            @php
+                                                                $ipiPass = (int) $r['ipi_pass'];
+                                                                $ipiFail = (int) $r['ipi_np'];
+                                                                $ipiClass = $i <= $ipiPass ? 'is-done' : (($i > $ipiPass && $i <= ($ipiPass + $ipiFail)) ? 'is-fail' : '');
+                                                            @endphp
+                                                            <span class="ops-chain-done {{ $ipiClass }}"><i class="fas fa-check"></i></span>
+                                                        @endfor
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    <div class="ops-simple-step ops-simple-step-final">
+                                        <div class="ops-simple-head">
+                                            <div class="ops-journey-final-circle-only {{ $inspectionCompleted ? 'ops-journey-final-circle-only-complete' : 'ops-journey-final-circle-only-pending' }}"
+                                                title="Status: {{ $inspectionStatusLabel }} | Updated: {{ $inspectionUpdatedLabel }} | Completed On: {{ $completedOnLabel }} | Last Inspection: {{ $lastInspectionLabel }}">
+                                                <i class="fas {{ $inspectionCompleted ? 'fa-check-circle' : ($inspectionStatusLabel === 'In Progress' ? 'fa-hourglass-half' : 'fa-pause-circle') }}"></i>
+                                            </div>
+                                            <div class="ops-simple-label">{{ $inspectionStatusLabel }}</div>
+                                        </div>
+                                        <div class="ops-simple-body">
+                                            <div class="ops-final-status-date">Updated {{ $inspectionUpdatedLabel }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <div class="col-lg-5">
@@ -488,6 +575,385 @@
         border-color: rgba(14,165,233,.45);
         background: rgba(14,165,233,.12);
         color: #0c4a6e;
+    }
+    .ops-journey {
+        position: relative;
+        border: 1px solid #d8e0ea;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #fcfdff 0%, #f7fafc 100%);
+        padding: .85rem .8rem 1rem;
+        overflow: hidden;
+    }
+    .ops-journey-head {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: .75rem;
+        margin-bottom: .75rem;
+    }
+    .ops-journey-title {
+        font-size: .92rem;
+        font-weight: 900;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: #334155;
+    }
+    .ops-legend {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    .ops-legend-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: .16rem .48rem;
+        font-size: .68rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        border: 1px solid transparent;
+    }
+    .ops-legend-fai {
+        color: #166534;
+        background: rgba(34,197,94,.10);
+        border-color: rgba(34,197,94,.24);
+    }
+    .ops-legend-ipi {
+        color: #0c4a6e;
+        background: rgba(14,165,233,.10);
+        border-color: rgba(14,165,233,.24);
+    }
+    .ops-journey-track {
+        display: block;
+    }
+    .ops-simple-track {
+        position: relative;
+        padding: .8rem .35rem .2rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+    }
+    .ops-simple-steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.1rem;
+        align-items: start;
+        position: relative;
+        min-width: max-content;
+        padding-bottom: .2rem;
+    }
+    .ops-simple-steps-compact {
+        gap: .72rem;
+    }
+    .ops-simple-steps-dense {
+        gap: .45rem;
+    }
+    .ops-simple-step {
+        position: relative;
+        min-width: 180px;
+        text-align: center;
+        display: grid;
+        justify-items: center;
+        align-content: start;
+    }
+    .ops-simple-steps-compact .ops-simple-step {
+        min-width: 156px;
+    }
+    .ops-simple-steps-dense .ops-simple-step {
+        min-width: 138px;
+    }
+    .ops-simple-step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 45px;
+        left: calc(50% + 20px);
+        width: calc(100% - 40px);
+        border-top: 3px dotted #93c5fd;
+        opacity: .95;
+    }
+    .ops-simple-steps-compact .ops-simple-step:not(:last-child)::after {
+        top: 39px;
+        left: calc(50% + 17px);
+        width: calc(100% - 34px);
+    }
+    .ops-simple-steps-dense .ops-simple-step:not(:last-child)::after {
+        top: 37px;
+        left: calc(50% + 15px);
+        width: calc(100% - 30px);
+        border-top-width: 2px;
+    }
+    .ops-simple-step:has(.ops-grid-node-ok):not(:last-child)::after {
+        border-top-color: rgba(34,197,94,.55);
+    }
+    .ops-simple-step:has(.ops-grid-node-warn):not(:last-child)::after {
+        border-top-color: rgba(245,158,11,.72);
+    }
+    .ops-simple-step-final:not(:last-child)::after {
+        display: none;
+    }
+    .ops-simple-step-final {
+        margin-top: 18px;
+    }
+    .ops-simple-steps-compact .ops-simple-step-final {
+        margin-top: 14px;
+    }
+    .ops-simple-steps-dense .ops-simple-step-final {
+        margin-top: 12px;
+    }
+    .ops-simple-head {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .34rem;
+        position: relative;
+        z-index: 1;
+        padding: 0 .35rem;
+        min-height: auto;
+    }
+    .ops-simple-label {
+        font-size: .84rem;
+        font-weight: 800;
+        color: #1e293b;
+        white-space: nowrap;
+    }
+    .ops-simple-steps-compact .ops-simple-label {
+        font-size: .78rem;
+    }
+    .ops-simple-steps-dense .ops-simple-label {
+        font-size: .74rem;
+    }
+    .ops-simple-body {
+        display: grid;
+        gap: .24rem;
+        margin-top: .36rem;
+        justify-items: center;
+    }
+    .ops-simple-steps-compact .ops-simple-body {
+        gap: .18rem;
+        margin-top: .28rem;
+    }
+    .ops-simple-steps-dense .ops-simple-body {
+        gap: .14rem;
+        margin-top: .22rem;
+    }
+    .ops-simple-row {
+        display: flex;
+        align-items: center;
+        gap: .32rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .ops-mini-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 18px;
+        padding: 0 .42rem;
+        border-radius: 999px;
+        font-size: .62rem;
+        font-weight: 900;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+    }
+    .ops-simple-steps-compact .ops-mini-pill {
+        min-width: 24px;
+        height: 16px;
+        padding: 0 .32rem;
+        font-size: .57rem;
+    }
+    .ops-simple-steps-dense .ops-mini-pill {
+        min-width: 22px;
+        height: 15px;
+        padding: 0 .28rem;
+        font-size: .54rem;
+    }
+    .ops-mini-pill-fai {
+        color: #15803d;
+        background: rgba(34,197,94,.10);
+        border-color: rgba(34,197,94,.28);
+    }
+    .ops-mini-pill-ipi {
+        color: #0369a1;
+        background: rgba(14,165,233,.10);
+        border-color: rgba(14,165,233,.28);
+    }
+    .ops-simple-metric {
+        font-size: .68rem;
+        font-weight: 900;
+        color: #64748b;
+        letter-spacing: .03em;
+    }
+    .ops-simple-steps-compact .ops-simple-metric {
+        font-size: .62rem;
+    }
+    .ops-simple-steps-dense .ops-simple-metric {
+        font-size: .58rem;
+    }
+    .ops-grid-node {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #cbd5e1;
+        background: transparent;
+        font-size: 1.06rem;
+        box-shadow: 0 3px 10px rgba(15,23,42,.06);
+        vertical-align: top;
+        position: relative;
+        overflow: hidden;
+    }
+    .ops-simple-steps-compact .ops-grid-node {
+        width: 36px;
+        height: 36px;
+        font-size: .92rem;
+    }
+    .ops-simple-steps-dense .ops-grid-node {
+        width: 34px;
+        height: 34px;
+        font-size: .88rem;
+        border-width: 2px;
+    }
+    .ops-simple-steps-compact .ops-grid-node::before {
+        inset: 8px;
+    }
+    .ops-simple-steps-dense .ops-grid-node::before {
+        inset: 7px;
+    }
+    .ops-grid-node::before {
+        content: "";
+        position: absolute;
+        inset: 9px;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: .18;
+    }
+    .ops-grid-node i {
+        position: relative;
+        z-index: 1;
+    }
+    .ops-grid-node-ok {
+        border-color: rgba(34,197,94,.7);
+        color: #15803d;
+        background: rgba(34,197,94,.12);
+    }
+    .ops-grid-node-warn {
+        border-color: rgba(239,68,68,.72);
+        color: #dc2626;
+        background: rgba(239,68,68,.10);
+    }
+    .ops-grid-node-pending {
+        border-color: rgba(148,163,184,.75);
+        color: #64748b;
+        background: rgba(148,163,184,.12);
+    }
+    .ops-grid-step:has(.ops-grid-node-ok):not(:last-child)::after {
+        background: rgba(34,197,94,.6);
+    }
+    .ops-grid-mini {
+        display: inline-flex;
+        align-items: center;
+        gap: .14rem;
+        flex-wrap: wrap;
+    }
+    .ops-chain-done {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #cbd5e1;
+        font-size: .52rem;
+    }
+    .ops-simple-steps-compact .ops-chain-done {
+        width: 14px;
+        height: 14px;
+        font-size: .46rem;
+    }
+    .ops-simple-steps-dense .ops-chain-done {
+        width: 12px;
+        height: 12px;
+        font-size: .42rem;
+    }
+    .ops-chain-done.is-done {
+        border-color: rgba(34,197,94,.65);
+        background: rgba(34,197,94,.12);
+        color: #15803d;
+    }
+    .ops-chain-done.is-fail {
+        border-color: rgba(239,68,68,.7);
+        background: rgba(239,68,68,.12);
+        color: #dc2626;
+    }
+    .ops-journey-final-circle-only {
+        width: 58px;
+        height: 58px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: 2px solid rgba(15,23,42,.10);
+        box-shadow: 0 10px 22px rgba(15,23,42,.08);
+        font-size: 1.22rem;
+        margin-left: 0;
+        flex: 0 0 auto;
+        position: relative;
+        overflow: hidden;
+    }
+    .ops-journey-final-circle-only::before {
+        content: "";
+        position: absolute;
+        inset: 10px;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: .16;
+    }
+    .ops-journey-final-circle-only i {
+        position: relative;
+        z-index: 1;
+    }
+    .ops-journey-final-circle-only-complete {
+        border-color: rgba(34,197,94,.45);
+        color: #16a34a;
+        background: rgba(34,197,94,.08);
+    }
+    .ops-journey-final-circle-only-pending {
+        border-color: rgba(245,158,11,.45);
+        color: #d97706;
+        background: rgba(245,158,11,.08);
+    }
+    .ops-final-status-text {
+        font-size: .7rem;
+        font-weight: 900;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #334155;
+        line-height: 1.1;
+    }
+    .ops-final-status-date {
+        font-size: .62rem;
+        font-weight: 700;
+        color: #64748b;
+        line-height: 1.1;
+    }
+    @media (max-width: 1399.98px) {
+        .ops-simple-steps {
+            padding-bottom: .3rem;
+        }
+        .ops-simple-step {
+            min-width: 180px;
+        }
+        .ops-simple-step:not(:last-child)::after {
+            width: calc(100% - 40px);
+        }
     }
     .donut-card {
         border: 1px solid #d8e0ea;
