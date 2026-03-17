@@ -27,6 +27,8 @@
         $otdThisMonth = $otdThisMonth ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $sentThisMonth = $sentThisMonth ?? 0;
         $dashboardEndDate = $dashboardEndDate ?? now();
+        $currentCalendarYear = (int) now()->year;
+        $currentCalendarMonth = (int) now()->month;
 
         $rows = [
             ['key' => 'customer_otd', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer On-Time Delivery (OTD)', 'values' => $customerOtdCells, 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
@@ -490,21 +492,29 @@
                                             $faiPct = $isFaiRej && is_array($cell) ? ($cell['pct'] ?? null) : null;
                                             $faiClickable = $isFaiRej && is_array($cell) && ((int) ($cell['rejects'] ?? 0) > 0);
                                             $faiTone = $isFaiRej ? $pctToneLower($faiPct, $faiGoal) : '';
+                                            $isFutureOtdMonth = $isOtd && (
+                                                (int) $dashboardYear > $currentCalendarYear
+                                                || (
+                                                    (int) $dashboardYear === $currentCalendarYear
+                                                    && (int) $m > $currentCalendarMonth
+                                                )
+                                            );
+                                            $otdClickable = $isOtd && !$isFutureOtdMonth;
                                         @endphp
                                         <td
                                             class="col-month
-                                                {{ $isOtd ? 'js-otd-cell kpi-clickable ' . $pctTone($pct) : '' }}
+                                                {{ $otdClickable ? 'js-otd-cell kpi-clickable ' . $pctTone($pct) : '' }}
                                                 {{ $faiClickable ? 'js-fai-rej-cell kpi-clickable ' . $faiTone : '' }}
                                             "
-                                            @if($isOtd || $faiClickable)
+                                            @if($otdClickable || $faiClickable)
                                                 data-year="{{ (int) $dashboardYear }}"
                                                 data-month="{{ (int) $m }}"
-                                                title="{{ $isOtd ? $title : 'FAI no pass details' }}"
+                                                title="{{ $otdClickable ? $title : 'FAI no pass details' }}"
                                             @endif
                                         >
                                             @if($isOtd)
-                                                {{ $pct !== null ? number_format($pct, 1) . '%' : '' }}
-                                                @if(is_array($cell) && !empty($cell['total']))
+                                                {{ !$isFutureOtdMonth && $pct !== null ? number_format($pct, 1) . '%' : '' }}
+                                                @if(!$isFutureOtdMonth && is_array($cell) && !empty($cell['total']))
                                                     <span class="kpi-cell-meta d-block">({{ (int) $cell['total'] }})</span>
                                                 @endif
                                             @elseif($isFaiRej && is_array($cell))
@@ -517,16 +527,21 @@
                                             @endif
                                         </td>
 
-                                        @if($isOtd && in_array($m, [3, 6, 9, 12], true))
+                                            @if($isOtd && in_array($m, [3, 6, 9, 12], true))
                                             @php
                                                 $qi = intdiv($m - 1, 3) + 1;
                                                 $qt = $quarterTotals[$qi] ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
                                                 $qpct = $qt['pct'] ?? null;
                                                 $qtitle = ($qt['on_time'] ?? 0) . '/' . ($qt['total'] ?? 0);
+                                                $isFutureOtdQuarter = (int) $dashboardYear > $currentCalendarYear
+                                                    || (
+                                                        (int) $dashboardYear === $currentCalendarYear
+                                                        && (int) $m > $currentCalendarMonth
+                                                    );
                                             @endphp
-                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ $qpct !== null ? $pctTone($qpct) : '' }}" title="{{ $qtitle }}">
-                                                {{ $qpct !== null ? number_format($qpct, 1) . '%' : '' }}
-                                                @if(!empty($qt['total']))
+                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ !$isFutureOtdQuarter && $qpct !== null ? $pctTone($qpct) : '' }}" title="{{ !$isFutureOtdQuarter ? $qtitle : '' }}">
+                                                {{ !$isFutureOtdQuarter && $qpct !== null ? number_format($qpct, 1) . '%' : '' }}
+                                                @if(!$isFutureOtdQuarter && !empty($qt['total']))
                                                     <span class="kpi-cell-meta d-block">({{ (int) $qt['total'] }})</span>
                                                 @endif
                                             </td>
@@ -551,6 +566,7 @@
                                     @php
                                         $ytdPct = $isOtd ? ($otdYtd['pct'] ?? null) : ($isFaiRej ? ($faiRejYtd['pct'] ?? null) : null);
                                         $r12Pct = $isOtd ? ($otdR12['pct'] ?? null) : ($isFaiRej ? ($faiRejR12['pct'] ?? null) : null);
+                                        $hideFutureOtdSummary = $isOtd && (int) $dashboardYear > $currentCalendarYear;
                                     @endphp
                                     @php
                                         $ytdEmpty = !$isOtd || $ytdPct === null;
@@ -559,11 +575,11 @@
                                         $ytdTone = $isOtd ? $pctTone($ytdPct) : ($isFaiRej ? $pctToneLower($ytdPct, $faiGoal) : '');
                                         $ytdMeta = $isOtd ? (($otdYtd['on_time'] ?? 0) . '/' . ($otdYtd['total'] ?? 0)) : ($isFaiRej ? (($faiRejYtd['rejects'] ?? 0) . '/' . ($faiRejYtd['total'] ?? 0)) : '');
                                     @endphp
-                                    <td class="col-ytd {{ $ytdTone }} {{ ($isOtd || $isFaiRej) && $ytdPct === null ? 'kpi-empty' : '' }}" title="{{ $ytdMeta }}">
-                                        @if(($isOtd || $isFaiRej) && $ytdPct !== null)
+                                    <td class="col-ytd {{ !$hideFutureOtdSummary ? $ytdTone : '' }} {{ ($isOtd || $isFaiRej) && ($hideFutureOtdSummary || $ytdPct === null) ? 'kpi-empty' : '' }}" title="{{ !$hideFutureOtdSummary ? $ytdMeta : '' }}">
+                                        @if(($isOtd || $isFaiRej) && !$hideFutureOtdSummary && $ytdPct !== null)
                                             {{ number_format((float) $ytdPct, 1) . '%' }}
                                         @endif
-                                        @if($isOtd && !empty($otdYtd['total']))
+                                        @if($isOtd && !$hideFutureOtdSummary && !empty($otdYtd['total']))
                                             <span class="kpi-cell-meta d-block">({{ (int) $otdYtd['total'] }})</span>
                                         @elseif($isFaiRej && !empty($faiRejYtd['total']))
                                             <span class="kpi-cell-meta d-block">({{ (int) ($faiRejYtd['rejects'] ?? 0) }}/{{ (int) $faiRejYtd['total'] }})</span>
@@ -576,11 +592,11 @@
                                         $r12Tone = $isOtd ? $pctTone($r12Pct) : ($isFaiRej ? $pctToneLower($r12Pct, $faiGoal) : '');
                                         $r12Meta = $isOtd ? (($otdR12['on_time'] ?? 0) . '/' . ($otdR12['total'] ?? 0)) : ($isFaiRej ? (($faiRejR12['rejects'] ?? 0) . '/' . ($faiRejR12['total'] ?? 0)) : '');
                                     @endphp
-                                    <td class="col-r12 {{ $r12Tone }} {{ ($isOtd || $isFaiRej) && $r12Pct === null ? 'kpi-empty' : '' }}" title="{{ $r12Meta }}">
-                                        @if(($isOtd || $isFaiRej) && $r12Pct !== null)
+                                    <td class="col-r12 {{ !$hideFutureOtdSummary ? $r12Tone : '' }} {{ ($isOtd || $isFaiRej) && ($hideFutureOtdSummary || $r12Pct === null) ? 'kpi-empty' : '' }}" title="{{ !$hideFutureOtdSummary ? $r12Meta : '' }}">
+                                        @if(($isOtd || $isFaiRej) && !$hideFutureOtdSummary && $r12Pct !== null)
                                             {{ number_format((float) $r12Pct, 1) . '%' }}
                                         @endif
-                                        @if($isOtd && !empty($otdR12['total']))
+                                        @if($isOtd && !$hideFutureOtdSummary && !empty($otdR12['total']))
                                             <span class="kpi-cell-meta d-block">({{ (int) $otdR12['total'] }})</span>
                                         @elseif($isFaiRej && !empty($faiRejR12['total']))
                                             <span class="kpi-cell-meta d-block">({{ (int) ($faiRejR12['rejects'] ?? 0) }}/{{ (int) $faiRejR12['total'] }})</span>
