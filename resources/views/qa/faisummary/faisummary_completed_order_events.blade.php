@@ -219,7 +219,7 @@
                                                 <div class="ops-simple-row">
                                                     <span class="ops-mini-pill ops-mini-pill-ipi">IPI</span>
                                                     <span class="ops-simple-metric">{{ $r['ipi_pass'] }}/{{ $r['ipi_req'] }}</span>
-                                                    <div class="ops-grid-mini">
+                                                    <div class="ops-grid-mini ops-grid-mini-ipi">
                                                         @for($i = 1; $i <= max(1, (int) $r['ipi_req']); $i++)
                                                             @php
                                                                 $ipiPass = (int) $r['ipi_pass'];
@@ -742,7 +742,8 @@
         align-items: center;
         gap: .32rem;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: flex-start;
+        width: 100%;
     }
     .ops-mini-pill {
         display: inline-flex;
@@ -860,6 +861,13 @@
         gap: .14rem;
         flex-wrap: wrap;
     }
+    .ops-grid-mini-ipi {
+        display: grid;
+        grid-template-columns: repeat(5, 16px);
+        gap: .14rem;
+        justify-content: start;
+        align-items: center;
+    }
     .ops-chain-done {
         width: 16px;
         height: 16px;
@@ -877,10 +885,16 @@
         height: 14px;
         font-size: .46rem;
     }
+    .ops-simple-steps-compact .ops-grid-mini-ipi {
+        grid-template-columns: repeat(5, 14px);
+    }
     .ops-simple-steps-dense .ops-chain-done {
         width: 12px;
         height: 12px;
         font-size: .42rem;
+    }
+    .ops-simple-steps-dense .ops-grid-mini-ipi {
+        grid-template-columns: repeat(5, 12px);
     }
     .ops-chain-done.is-done {
         border-color: rgba(34,197,94,.65);
