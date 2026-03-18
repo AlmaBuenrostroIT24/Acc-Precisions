@@ -61,6 +61,10 @@
         return names[month - 1] || ('M' + month);
     }
 
+    function quarterLabel(quarter, year) {
+        return 'Q' + quarter + ' ' + year;
+    }
+
     function downloadModalExcel(baseUrl, params) {
         if (!baseUrl) return;
         const url = new URL(baseUrl, window.location.origin);
@@ -238,24 +242,25 @@
             noMatchId: 'faiRejDetailNoMatchRow',
             pageClass: 'js-fai-page',
             ariaLabel: 'FAI pagination',
-            colspan: 11,
+            colspan: 10,
         });
     }
 
-    function loadOtdDetails(year, month, filter, searchQuery) {
+    function loadOtdDetails(year, month, quarter, filter, searchQuery) {
         if (!DASHBOARD.otdDetailsUrl) return;
 
+        const periodLabel = quarter ? quarterLabel(quarter, year) : (monthName(month) + ' ' + year);
         renderLoading();
         setFilterActive(filter);
-        $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' • ' + filter);
+        $('#otdDetailMeta').text(periodLabel + ' • ' + filter);
 
-        $.get(DASHBOARD.otdDetailsUrl, { year, month, filter })
+        $.get(DASHBOARD.otdDetailsUrl, { year, month, quarter, filter })
             .done(function (res) {
                 $('#otdDetailTbody').html(res && res.html ? res.html : '');
                 otdUiState.page = 1;
                 applyOtdSearch(searchQuery, 1);
                 const count = (res && typeof res.count === 'number') ? res.count : 0;
-                $('#otdDetailMeta').text(monthName(month) + ' ' + year + ' • ' + filter + ' • ' + count + ' rows');
+                $('#otdDetailMeta').text(periodLabel + ' • ' + filter + ' • ' + count + ' rows');
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : null;
@@ -263,13 +268,14 @@
             });
     }
 
-    function loadFaiRejDetails(year, month, searchQuery) {
+    function loadFaiRejDetails(year, month, quarter, searchQuery) {
         if (!DASHBOARD.faiRejDetailsUrl) return;
 
-        $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Loading...</td></tr>');
-        $('#faiRejDetailMeta').text(monthName(month) + ' ' + year);
+        const periodLabel = quarter ? quarterLabel(quarter, year) : (monthName(month) + ' ' + year);
+        $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Loading...</td></tr>');
+        $('#faiRejDetailMeta').text(periodLabel);
 
-        $.get(DASHBOARD.faiRejDetailsUrl, { year, month })
+        $.get(DASHBOARD.faiRejDetailsUrl, { year, month, quarter })
             .done(function (res) {
                 $('#faiRejDetailTbody').html(res && res.html ? res.html : '');
                 faiUiState.page = 1;
@@ -278,11 +284,11 @@
                 const total = (res && typeof res.total === 'number') ? res.total : 0;
                 const pct = (res && typeof res.pct === 'number') ? res.pct : null;
                 const pctText = pct !== null ? (pct.toFixed(1) + '%') : '-';
-                $('#faiRejDetailMeta').text(monthName(month) + ' ' + year + ' • ' + pctText + ' (' + rejects + '/' + total + ')');
+                $('#faiRejDetailMeta').text(periodLabel + ' • ' + pctText + ' (' + rejects + '/' + total + ')');
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
-                $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-danger py-3">' + msg + '</td></tr>');
+                $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-danger py-3">' + msg + '</td></tr>');
             });
     }
 
@@ -364,7 +370,7 @@
         });
 
         // OTD cell click -> open modal + load details
-        let selected = { year: DASHBOARD.year || null, month: null, filter: 'all', search: '' };
+        let selected = { year: DASHBOARD.year || null, month: null, quarter: null, filter: 'all', search: '' };
 
         $(document).on('click', '.js-otd-cell', function () {
             const year = parseInt($(this).data('year'), 10);
@@ -373,18 +379,32 @@
 
             selected.year = year;
             selected.month = month;
+            selected.quarter = null;
             selected.filter = 'all';
 
             $('#otdDetailModal').modal('show');
-            loadOtdDetails(selected.year, selected.month, selected.filter, selected.search);
+            loadOtdDetails(selected.year, selected.month, selected.quarter, selected.filter, selected.search);
         });
 
-        // Filter buttons
+        $(document).on('click', '.js-otd-quarter', function () {
+            const year = parseInt($(this).data('year'), 10);
+            const quarter = parseInt($(this).data('quarter'), 10);
+            if (!year || !quarter) return;
+
+            selected.year = year;
+            selected.month = 0;
+            selected.quarter = quarter;
+            selected.filter = 'all';
+
+            $('#otdDetailModal').modal('show');
+            loadOtdDetails(selected.year, selected.month, selected.quarter, selected.filter, selected.search);
+        });
+
         $(document).on('click', '.js-otd-filter', function () {
             const filter = String($(this).data('filter') || 'all');
             selected.filter = filter;
-            if (!selected.year || !selected.month) return;
-            loadOtdDetails(selected.year, selected.month, selected.filter, selected.search);
+            if (!selected.year || (!selected.month && !selected.quarter)) return;
+            loadOtdDetails(selected.year, selected.month, selected.quarter, selected.filter, selected.search);
         });
 
         $('#otdDetailSearch').on('input', function () {
@@ -413,19 +433,20 @@
             downloadModalExcel(DASHBOARD.otdDetailsExcelUrl, {
                 year: selected.year,
                 month: selected.month,
+                quarter: selected.quarter,
                 filter: selected.filter,
                 search: String($('#otdDetailSearch').val() || '').trim(),
             });
         });
 
-        // Reset modal on close
         $('#otdDetailModal').on('hidden.bs.modal', function () {
-            $('#otdDetailMeta').text('Select a month.');
-            $('#otdDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>');
+            $('#otdDetailMeta').text('Select a month or quarter.');
+            $('#otdDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
             $('#otdDetailPagination').html('');
             $('#otdDetailSearch').val('');
             setFilterActive('all');
             selected.month = null;
+            selected.quarter = null;
             selected.filter = 'all';
             selected.search = '';
             otdUiState.page = 1;
@@ -433,7 +454,7 @@
         });
 
         // FAI Rejection cell click -> open modal + load details
-        let faiSelected = { year: DASHBOARD.year || null, month: null, search: '' };
+        let faiSelected = { year: DASHBOARD.year || null, month: null, quarter: null, search: '' };
 
         $(document).on('click', '.js-fai-rej-cell', function () {
             const year = parseInt($(this).data('year'), 10);
@@ -442,9 +463,23 @@
 
             faiSelected.year = year;
             faiSelected.month = month;
+            faiSelected.quarter = null;
 
             $('#faiRejDetailModal').modal('show');
-            loadFaiRejDetails(faiSelected.year, faiSelected.month, faiSelected.search);
+            loadFaiRejDetails(faiSelected.year, faiSelected.month, faiSelected.quarter, faiSelected.search);
+        });
+
+        $(document).on('click', '.js-fai-rej-quarter', function () {
+            const year = parseInt($(this).data('year'), 10);
+            const quarter = parseInt($(this).data('quarter'), 10);
+            if (!year || !quarter) return;
+
+            faiSelected.year = year;
+            faiSelected.month = 0;
+            faiSelected.quarter = quarter;
+
+            $('#faiRejDetailModal').modal('show');
+            loadFaiRejDetails(faiSelected.year, faiSelected.month, faiSelected.quarter, faiSelected.search);
         });
 
         $('#faiRejDetailSearch').on('input', function () {
@@ -473,20 +508,24 @@
             downloadModalExcel(DASHBOARD.faiRejDetailsExcelUrl, {
                 year: faiSelected.year,
                 month: faiSelected.month,
+                quarter: faiSelected.quarter,
                 search: String($('#faiRejDetailSearch').val() || '').trim(),
             });
         });
 
         $('#faiRejDetailModal').on('hidden.bs.modal', function () {
-            $('#faiRejDetailMeta').text('Select a month.');
-            $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>');
+            $('#faiRejDetailMeta').text('Select a month or quarter.');
+            $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
             $('#faiRejDetailPagination').html('');
             $('#faiRejDetailSearch').val('');
             faiSelected.month = null;
+            faiSelected.quarter = null;
             faiSelected.search = '';
             faiUiState.page = 1;
             toggleFaiSearchClear();
         });
+
+
     });
 })();
 

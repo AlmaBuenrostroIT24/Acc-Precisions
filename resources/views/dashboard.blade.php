@@ -539,7 +539,14 @@
                                                         && (int) $m > $currentCalendarMonth
                                                     );
                                             @endphp
-                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ !$isFutureOtdQuarter && $qpct !== null ? $pctTone($qpct) : '' }}" title="{{ !$isFutureOtdQuarter ? $qtitle : '' }}">
+                                            <td
+                                                class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ !$isFutureOtdQuarter && $qpct !== null ? 'js-otd-quarter kpi-clickable ' . $pctTone($qpct) : '' }}"
+                                                @if(!$isFutureOtdQuarter && $qpct !== null)
+                                                    data-year="{{ (int) $dashboardYear }}"
+                                                    data-quarter="{{ (int) $qi }}"
+                                                    title="{{ $qtitle }}"
+                                                @endif
+                                            >
                                                 {{ !$isFutureOtdQuarter && $qpct !== null ? number_format($qpct, 1) . '%' : '' }}
                                                 @if(!$isFutureOtdQuarter && !empty($qt['total']))
                                                     <span class="kpi-cell-meta d-block">({{ (int) $qt['total'] }})</span>
@@ -552,7 +559,16 @@
                                                 $qpct = $qt['pct'] ?? null;
                                                 $qtitle = ($qt['rejects'] ?? 0) . '/' . ($qt['total'] ?? 0);
                                             @endphp
-                                            <td class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ $qpct !== null ? $pctToneLower($qpct, $faiGoal) : '' }}" title="{{ $qtitle }}">
+                                            <td
+                                                class="col-qtotal {{ $m === 12 ? 'kpi-sep--block' : 'kpi-sep' }} {{ ($qpct !== null && !empty($qt['rejects'])) ? 'js-fai-rej-quarter kpi-clickable ' . $pctToneLower($qpct, $faiGoal) : ($qpct !== null ? $pctToneLower($qpct, $faiGoal) : '') }}"
+                                                @if($qpct !== null && !empty($qt['rejects']))
+                                                    data-year="{{ (int) $dashboardYear }}"
+                                                    data-quarter="{{ (int) $qi }}"
+                                                    title="FAI no pass details"
+                                                @else
+                                                    title="{{ $qtitle }}"
+                                                @endif
+                                            >
                                                 {{ $qpct !== null ? number_format((float) $qpct, 1) . '%' : '' }}
                                                 @if(!empty($qt['total']))
                                                     <span class="kpi-cell-meta d-block">({{ (int) ($qt['rejects'] ?? 0) }}/{{ (int) $qt['total'] }})</span>
@@ -910,11 +926,10 @@
                                         <th class="text-center fai-col-due">Due</th>
                                         <th class="text-center fai-col-sent">Sent</th>
                                         <th class="text-left fai-col-failops">Fail Ops</th>
-                                        <th class="text-center fai-col-status">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="faiRejDetailTbody">
-                                    <tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="10" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>

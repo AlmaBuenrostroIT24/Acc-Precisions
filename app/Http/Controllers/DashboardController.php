@@ -25,12 +25,16 @@ class DashboardController extends Controller
     {
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month');
+        $quarter = (int) $request->query('quarter');
 
         if ($year < 2000 || $year > 3000) {
             return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid year'], 422);
         }
-        if ($month < 1 || $month > 12) {
-            return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month'], 422);
+        if ($quarter < 1 || $quarter > 4) {
+            $quarter = 0;
+        }
+        if ($quarter === 0 && ($month < 1 || $month > 12)) {
+            return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month or quarter'], 422);
         }
 
         $filter = strtolower(trim((string) $request->query('filter', 'all')));
@@ -38,7 +42,7 @@ class DashboardController extends Controller
             $filter = 'all';
         }
 
-        $rows = $this->buildOtdDetailsQuery($year, $month, $filter)
+        $rows = $this->buildOtdDetailsQuery($year, $month, $filter, $quarter)
             ->orderBy('due_date', 'asc')
             ->orderBy('sent_at', 'desc')
             ->limit(2000)
@@ -53,6 +57,7 @@ class DashboardController extends Controller
             'count' => $rows->count(),
             'year' => $year,
             'month' => $month,
+            'quarter' => $quarter ?: null,
             'filter' => $filter,
         ]);
     }
@@ -61,6 +66,7 @@ class DashboardController extends Controller
     {
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month');
+        $quarter = (int) $request->query('quarter');
         $filter = strtolower(trim((string) $request->query('filter', 'all')));
         $search = trim((string) $request->query('search', ''));
 
@@ -68,7 +74,7 @@ class DashboardController extends Controller
             $filter = 'all';
         }
 
-        $items = $this->buildOtdDetailsQuery($year, $month, $filter)
+        $items = $this->buildOtdDetailsQuery($year, $month, $filter, $quarter)
             ->orderBy('due_date', 'asc')
             ->orderBy('sent_at', 'desc')
             ->limit(5000)
@@ -89,7 +95,7 @@ class DashboardController extends Controller
             ]);
         });
 
-        $title = 'OTD Details - ' . $this->monthNameEn($month) . ' ' . $year . ' - ' . strtoupper($filter);
+        $title = 'OTD Details - ' . ($quarter ? ('Q' . $quarter . ' ' . $year) : ($this->monthNameEn($month) . ' ' . $year)) . ' - ' . strtoupper($filter);
         $exportRows = [];
         foreach ($items->values() as $index => $row) {
             $meta = $this->buildOtdRowMeta($row);
@@ -114,7 +120,7 @@ class DashboardController extends Controller
                 ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Days', 'Status'],
                 $exportRows,
             ),
-            'otd-details-' . $year . '-' . str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '.xlsx',
+            'otd-details-' . $year . '-' . ($quarter ? ('q' . $quarter) : str_pad((string) $month, 2, '0', STR_PAD_LEFT)) . '.xlsx',
         );
     }
 
@@ -122,19 +128,23 @@ class DashboardController extends Controller
     {
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month');
+        $quarter = (int) $request->query('quarter');
 
         if ($year < 2000 || $year > 3000) {
             return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid year'], 422);
         }
-        if ($month < 1 || $month > 12) {
-            return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month'], 422);
+        if ($quarter < 1 || $quarter > 4) {
+            $quarter = 0;
+        }
+        if ($quarter === 0 && ($month < 1 || $month > 12)) {
+            return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month or quarter'], 422);
         }
 
-        $base = $this->buildFaiRejBaseQuery($year, $month);
+        $base = $this->buildFaiRejBaseQuery($year, $month, $quarter);
 
         $total = (int) (clone $base)->count('qfs.id');
 
-        $rows = $this->buildFaiRejRowsQuery($year, $month)
+        $rows = $this->buildFaiRejRowsQuery($year, $month, $quarter)
             ->orderBy('orders_schedule.due_date', 'asc')
             ->orderBy('fai_date', 'desc')
             ->limit(2000)
@@ -157,6 +167,7 @@ class DashboardController extends Controller
             'pct' => $pct,
             'year' => $year,
             'month' => $month,
+            'quarter' => $quarter ?: null,
         ]);
     }
 
@@ -164,9 +175,10 @@ class DashboardController extends Controller
     {
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month');
+        $quarter = (int) $request->query('quarter');
         $search = trim((string) $request->query('search', ''));
 
-        $items = $this->buildFaiRejRowsQuery($year, $month)
+        $items = $this->buildFaiRejRowsQuery($year, $month, $quarter)
             ->orderBy('orders_schedule.due_date', 'asc')
             ->orderBy('fai_date', 'desc')
             ->limit(5000)
@@ -183,11 +195,10 @@ class DashboardController extends Controller
                 $this->formatDashboardDate($row->sent_at),
                 $row->fail_ops,
                 $row->fail_operations,
-                'Late',
             ]);
         });
 
-        $title = 'Internal FAI Rejection Details - ' . $this->monthNameEn($month) . ' ' . $year;
+        $title = 'Internal FAI Rejection Details - ' . ($quarter ? ('Q' . $quarter . ' ' . $year) : ($this->monthNameEn($month) . ' ' . $year));
         $exportRows = [];
         foreach ($items->values() as $index => $row) {
             $failOps = (int) ($row->fail_ops ?? 0);
@@ -203,17 +214,16 @@ class DashboardController extends Controller
                 $this->formatDashboardDate($row->due_date),
                 $this->formatDashboardDate($row->sent_at),
                 $failOps > 0 ? trim($failOps . ($ops !== '' ? ' Op: ' . $ops : '')) : '-',
-                'Late',
             ];
         }
 
         return Excel::download(
             new DashboardDetailExport(
                 $title,
-                ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Fail Ops', 'Status'],
+                ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Fail Ops'],
                 $exportRows,
             ),
-            'internal-fai-rejection-details-' . $year . '-' . str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '.xlsx',
+            'internal-fai-rejection-details-' . $year . '-' . ($quarter ? ('q' . $quarter) : str_pad((string) $month, 2, '0', STR_PAD_LEFT)) . '.xlsx',
         );
     }
 
@@ -278,8 +288,9 @@ class DashboardController extends Controller
         return array_values(array_unique($years));
     }
 
-    private function buildOtdDetailsQuery(int $year, int $month, string $filter)
+    private function buildOtdDetailsQuery(int $year, int $month, string $filter, int $quarter = 0)
     {
+        $months = $this->resolveDashboardPeriodMonths($month, $quarter);
         $query = DB::table('orders_schedule')
             ->select([
                 'id',
@@ -295,7 +306,9 @@ class DashboardController extends Controller
             ])
             ->whereNotNull('due_date')
             ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
-            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
+            ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->whereIn(DB::raw('MONTH(due_date)'), $months);
+        $this->applyCurrentPeriodCutoff($query, 'due_date', $year, $months);
 
         if ($filter === 'ontime') {
             $query->where(function ($q) {
@@ -324,18 +337,23 @@ class DashboardController extends Controller
         return $query;
     }
 
-    private function buildFaiRejBaseQuery(int $year, int $month)
+    private function buildFaiRejBaseQuery(int $year, int $month, int $quarter = 0)
     {
-        return DB::table('qa_faisummary as qfs')
+        $months = $this->resolveDashboardPeriodMonths($month, $quarter);
+        $query = DB::table('qa_faisummary as qfs')
             ->join('orders_schedule', 'orders_schedule.id', '=', 'qfs.order_schedule_id')
             ->whereNotNull('qfs.date')
-            ->whereRaw('YEAR(qfs.date) = ? AND MONTH(qfs.date) = ?', [$year, $month])
+            ->whereRaw('YEAR(qfs.date) = ?', [$year])
+            ->whereIn(DB::raw('MONTH(qfs.date)'), $months)
             ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'");
+        $this->applyCurrentPeriodCutoff($query, 'qfs.date', $year, $months);
+
+        return $query;
     }
 
-    private function buildFaiRejRowsQuery(int $year, int $month)
+    private function buildFaiRejRowsQuery(int $year, int $month, int $quarter = 0)
     {
-        return $this->buildFaiRejBaseQuery($year, $month)
+        return $this->buildFaiRejBaseQuery($year, $month, $quarter)
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
             ->selectRaw('
                 orders_schedule.id,
@@ -394,6 +412,28 @@ class DashboardController extends Controller
         return $names[$month] ?? 'M' . $month;
     }
 
+    private function applyCurrentPeriodCutoff($query, string $dateColumn, int $year, array $months): void
+    {
+        $today = now();
+        if ($year === (int) $today->year && in_array((int) $today->month, $months, true)) {
+            $query->whereDate($dateColumn, '<=', $today->toDateString());
+        }
+    }
+
+    private function resolveDashboardPeriodMonths(int $month, int $quarter): array
+    {
+        if ($quarter >= 1 && $quarter <= 4) {
+            return match ($quarter) {
+                1 => [1, 2, 3],
+                2 => [4, 5, 6],
+                3 => [7, 8, 9],
+                default => [10, 11, 12],
+            };
+        }
+
+        return [$month];
+    }
+
     private function buildOtdRowMeta(object $row): array
     {
         $due = $row->due_date ? \Carbon\Carbon::parse($row->due_date)->startOfDay() : null;
@@ -447,6 +487,15 @@ class DashboardController extends Controller
                 ) as on_time
             ")
             ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->when($year === $currentYear, function ($query) use ($now) {
+                $query->where(function ($q) use ($now) {
+                    $q->whereRaw('MONTH(due_date) < ?', [(int) $now->month])
+                        ->orWhere(function ($q2) use ($now) {
+                            $q2->whereRaw('MONTH(due_date) = ?', [(int) $now->month])
+                                ->whereDate('due_date', '<=', $now->toDateString());
+                        });
+                });
+            })
             ->groupBy('m')
             ->get()
             ->keyBy('m');
@@ -479,6 +528,15 @@ class DashboardController extends Controller
         $faiTotalsByMonth = (clone $faiBase)
             ->selectRaw('MONTH(qfs.date) as m, COUNT(*) as total')
             ->whereRaw('YEAR(qfs.date) = ?', [$year])
+            ->when($year === $currentYear, function ($query) use ($now) {
+                $query->where(function ($q) use ($now) {
+                    $q->whereRaw('MONTH(qfs.date) < ?', [(int) $now->month])
+                        ->orWhere(function ($q2) use ($now) {
+                            $q2->whereRaw('MONTH(qfs.date) = ?', [(int) $now->month])
+                                ->whereDate('qfs.date', '<=', $now->toDateString());
+                        });
+                });
+            })
             ->groupBy('m')
             ->get()
             ->keyBy('m');
@@ -488,6 +546,15 @@ class DashboardController extends Controller
             ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'")
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
             ->selectRaw('MONTH(qfs.date) as m, COUNT(*) as rejects')
+            ->when($year === $currentYear, function ($query) use ($now) {
+                $query->where(function ($q) use ($now) {
+                    $q->whereRaw('MONTH(qfs.date) < ?', [(int) $now->month])
+                        ->orWhere(function ($q2) use ($now) {
+                            $q2->whereRaw('MONTH(qfs.date) = ?', [(int) $now->month])
+                                ->whereDate('qfs.date', '<=', $now->toDateString());
+                        });
+                });
+            })
             ->groupBy('m')
             ->get()
             ->keyBy('m');
@@ -508,9 +575,9 @@ class DashboardController extends Controller
             ];
         }
 
-        // "YTD" on this dashboard means full-year (Jan 1 → Dec 31) for the selected year.
+        // YTD means Jan 1 through the current cutoff date for the selected year.
         $yearStart = $endDate->copy()->startOfYear();
-        $yearEnd = $endDate->copy()->endOfYear();
+        $yearEnd = $endDate->copy();
         $otdYtd = $this->computeOtdForRange(clone $otdBaseQuery, $yearStart, $yearEnd);
         $otdR12 = $this->computeOtdForRange(clone $otdBaseQuery, $r12Start, $endDate);
         $otdAllYears = $this->computeOtdAllTime(clone $otdBaseQuery);
@@ -576,7 +643,7 @@ class DashboardController extends Controller
 
     private function computeOtdForMonth($baseQuery, int $year, int $month): array
     {
-        $row = $baseQuery
+        $query = $baseQuery
             ->selectRaw("
                 COUNT(*) as total,
                 SUM(
@@ -587,8 +654,10 @@ class DashboardController extends Controller
                     END
                 ) as on_time
             ")
-            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month])
-            ->first();
+            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
+        $this->applyCurrentPeriodCutoff($query, 'due_date', $year, [$month]);
+
+        $row = $query->first();
 
         $total = (int) ($row->total ?? 0);
         $onTime = (int) ($row->on_time ?? 0);
@@ -662,3 +731,5 @@ class DashboardController extends Controller
     }
 
 }
+
+

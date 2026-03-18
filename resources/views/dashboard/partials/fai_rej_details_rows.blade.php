@@ -31,13 +31,10 @@
                 -
             @endif
         </td>
-        <td class="text-center fai-col-status">
-            <span class="otd-state-badge otd-state-badge--late">Late</span>
-        </td>
     </tr>
 @empty
     <tr>
-        <td colspan="11" class="text-center text-muted py-3">No results.</td>
+        <td colspan="10" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
 
