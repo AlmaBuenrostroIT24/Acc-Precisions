@@ -52,6 +52,14 @@ Route::get('/dashboard/export/excel', [DashboardController::class, 'exportExcel'
     ->middleware(['auth', 'verified'])
     ->name('dashboard.exportExcel');
 
+Route::get('/dashboard/export/otd-details-excel', [DashboardController::class, 'exportOtdDetailsExcel'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.exportOtdDetailsExcel');
+
+Route::get('/dashboard/export/fai-rej-details-excel', [DashboardController::class, 'exportFaiRejDetailsExcel'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.exportFaiRejDetailsExcel');
+
 Route::get('/quote/costing', [CostingController::class, 'index'])->middleware(['auth'])->name('costing');
 Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->middleware(['auth'])->name('costing.pdf');
 Route::get('/costing', function () {

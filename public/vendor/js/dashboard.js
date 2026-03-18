@@ -61,21 +61,32 @@
         return names[month - 1] || ('M' + month);
     }
 
+    function downloadModalExcel(baseUrl, params) {
+        if (!baseUrl) return;
+        const url = new URL(baseUrl, window.location.origin);
+        Object.keys(params || {}).forEach(function (key) {
+            const value = params[key];
+            if (value === undefined || value === null || value === '') return;
+            url.searchParams.set(key, value);
+        });
+        window.location.href = url.toString();
+    }
+
     function setFilterActive(filter) {
         $('.js-otd-filter').removeClass('active');
         $('.js-otd-filter[data-filter="' + filter + '"]').addClass('active');
     }
 
     function renderLoading() {
-        $('#otdDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loading...</td></tr>');
+        $('#otdDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Loading...</td></tr>');
     }
 
     function renderError(message) {
         const msg = message || 'Error loading details.';
-        $('#otdDetailTbody').html('<tr><td colspan="7" class="text-center text-danger py-3">' + msg + '</td></tr>');
+        $('#otdDetailTbody').html('<tr><td colspan="11" class="text-center text-danger py-3">' + msg + '</td></tr>');
     }
 
-    function renderPager($pager, pageClass, totalRows, totalPages, currentPage, ariaLabel) {
+    function renderPager($pager, pageClass, totalRows, matchedRows, totalPages, currentPage, ariaLabel) {
         if (!$pager.length) return;
 
         if (!totalRows) {
@@ -84,24 +95,66 @@
         }
 
         let pagesHtml = '';
-        const maxButtons = 5;
-        let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-        const end = Math.min(totalPages, start + maxButtons - 1);
-        start = Math.max(1, end - maxButtons + 1);
+        const maxMiddleButtons = 3;
+        let start = Math.max(2, currentPage - 1);
+        let end = Math.min(totalPages - 1, currentPage + 1);
 
-        for (let p = start; p <= end; p += 1) {
-            pagesHtml += '<button type="button" class="btn btn-sm ' + (p === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' ' + pageClass + ' mx-1" data-page="' + p + '">' + p + '</button>';
+        while ((end - start + 1) < maxMiddleButtons && start > 2) {
+            start -= 1;
+        }
+        while ((end - start + 1) < maxMiddleButtons && end < totalPages - 1) {
+            end += 1;
         }
 
-        const prevDisabled = currentPage <= 1 ? 'disabled' : '';
-        const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+        pagesHtml += '<li class="page-item ' + (currentPage <= 1 ? 'disabled' : '') + '">' +
+            '<button type="button" class="page-link ' + pageClass + '" data-page="' + (currentPage - 1) + '" ' + (currentPage <= 1 ? 'disabled' : '') + '>Prev</button>' +
+        '</li>';
+
+        const pushPage = function (p) {
+            pagesHtml += '<li class="page-item ' + (p === currentPage ? 'active' : '') + '">' +
+                '<button type="button" class="page-link ' + pageClass + '" data-page="' + p + '">' + p + '</button>' +
+            '</li>';
+        };
+
+        const pushEllipsis = function () {
+            pagesHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        };
+
+        if (totalPages <= 5) {
+            for (let p = 1; p <= totalPages; p += 1) {
+                pushPage(p);
+            }
+        } else {
+            pushPage(1);
+
+            if (start > 2) {
+                pushEllipsis();
+            }
+
+            for (let p = start; p <= end; p += 1) {
+                pushPage(p);
+            }
+
+            if (end < totalPages - 1) {
+                pushEllipsis();
+            }
+
+            pushPage(totalPages);
+        }
+
+        const pageSize = OTD_PAGE_SIZE;
+        const startRow = ((currentPage - 1) * pageSize) + 1;
+        const endRow = Math.min(currentPage * pageSize, matchedRows);
+        const summaryText = 'Showing ' + startRow + '-' + endRow + ' of ' + totalRows + ' records';
+
+        pagesHtml += '<li class="page-item ' + (currentPage >= totalPages ? 'disabled' : '') + '">' +
+            '<button type="button" class="page-link ' + pageClass + '" data-page="' + (currentPage + 1) + '" ' + (currentPage >= totalPages ? 'disabled' : '') + '>Next</button>' +
+        '</li>';
 
         $pager.html(
-            '<div class="small text-muted my-1">Showing ' + totalRows + ' records</div>' +
-            '<div class="btn-group btn-group-sm my-1" role="group" aria-label="' + ariaLabel + '">' +
-                '<button type="button" class="btn btn-outline-secondary ' + pageClass + '" data-page="' + (currentPage - 1) + '" ' + prevDisabled + '>Prev</button>' +
-                pagesHtml +
-                '<button type="button" class="btn btn-outline-secondary ' + pageClass + '" data-page="' + (currentPage + 1) + '" ' + nextDisabled + '>Next</button>' +
+            '<div class="small text-muted my-1">' + summaryText + '</div>' +
+            '<div class="dashboard-modal-paginate my-1" role="navigation" aria-label="' + ariaLabel + '">' +
+                '<ul class="pagination pagination-sm mb-0">' + pagesHtml + '</ul>' +
             '</div>'
         );
     }
@@ -131,7 +184,7 @@
         });
 
         if (!dataRows.length) {
-            renderPager($(opts.pagerSelector), opts.pageClass, 0, 0, 1, opts.ariaLabel);
+            renderPager($(opts.pagerSelector), opts.pageClass, 0, 0, 0, 1, opts.ariaLabel);
             return;
         }
 
@@ -154,11 +207,11 @@
 
         if (matchedRows.length === 0) {
             $tbody.append('<tr id="' + opts.noMatchId + '"><td colspan="' + colspan + '" class="text-center text-muted py-3">No matching records.</td></tr>');
-            renderPager($(opts.pagerSelector), opts.pageClass, 0, 0, 1, opts.ariaLabel);
+            renderPager($(opts.pagerSelector), opts.pageClass, dataRows.length, 0, 0, 1, opts.ariaLabel);
             return;
         }
 
-        renderPager($(opts.pagerSelector), opts.pageClass, matchedRows.length, totalPages, uiState.page, opts.ariaLabel);
+        renderPager($(opts.pagerSelector), opts.pageClass, dataRows.length, matchedRows.length, totalPages, uiState.page, opts.ariaLabel);
     }
 
     function applyOtdSearch(query, page) {
@@ -171,7 +224,7 @@
             noMatchId: 'otdDetailNoMatchRow',
             pageClass: 'js-otd-page',
             ariaLabel: 'OTD pagination',
-            colspan: 7,
+            colspan: 11,
         });
     }
 
@@ -185,7 +238,7 @@
             noMatchId: 'faiRejDetailNoMatchRow',
             pageClass: 'js-fai-page',
             ariaLabel: 'FAI pagination',
-            colspan: 7,
+            colspan: 11,
         });
     }
 
@@ -213,7 +266,7 @@
     function loadFaiRejDetails(year, month, searchQuery) {
         if (!DASHBOARD.faiRejDetailsUrl) return;
 
-        $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Loading...</td></tr>');
+        $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Loading...</td></tr>');
         $('#faiRejDetailMeta').text(monthName(month) + ' ' + year);
 
         $.get(DASHBOARD.faiRejDetailsUrl, { year, month })
@@ -229,7 +282,7 @@
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
-                $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-danger py-3">' + msg + '</td></tr>');
+                $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-danger py-3">' + msg + '</td></tr>');
             });
     }
 
@@ -356,10 +409,19 @@
             applyOtdSearch(selected.search, page);
         });
 
+        $(document).on('click', '.js-export-otd-excel', function () {
+            downloadModalExcel(DASHBOARD.otdDetailsExcelUrl, {
+                year: selected.year,
+                month: selected.month,
+                filter: selected.filter,
+                search: String($('#otdDetailSearch').val() || '').trim(),
+            });
+        });
+
         // Reset modal on close
         $('#otdDetailModal').on('hidden.bs.modal', function () {
             $('#otdDetailMeta').text('Select a month.');
-            $('#otdDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>');
+            $('#otdDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>');
             $('#otdDetailPagination').html('');
             $('#otdDetailSearch').val('');
             setFilterActive('all');
@@ -407,9 +469,17 @@
             applyFaiSearch(faiSelected.search, page);
         });
 
+        $(document).on('click', '.js-export-fai-excel', function () {
+            downloadModalExcel(DASHBOARD.faiRejDetailsExcelUrl, {
+                year: faiSelected.year,
+                month: faiSelected.month,
+                search: String($('#faiRejDetailSearch').val() || '').trim(),
+            });
+        });
+
         $('#faiRejDetailModal').on('hidden.bs.modal', function () {
             $('#faiRejDetailMeta').text('Select a month.');
-            $('#faiRejDetailTbody').html('<tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>');
+            $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>');
             $('#faiRejDetailPagination').html('');
             $('#faiRejDetailSearch').val('');
             faiSelected.month = null;
@@ -419,3 +489,4 @@
         });
     });
 })();
+

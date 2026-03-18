@@ -1,4 +1,4 @@
-@forelse($rows as $r)
+@forelse($rows as $i => $r)
     @php
         $due = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->startOfDay() : null;
         $sent = $r->sent_at ? \Carbon\Carbon::parse($r->sent_at)->startOfDay() : null;
@@ -26,8 +26,11 @@
         };
     @endphp
     <tr class="{{ $isOnTime ? '' : 'table-danger' }}">
+        <td class="text-center otd-col-idx">{{ $i + 1 }}</td>
         <td class="text-left otd-col-workid">{{ $r->work_id }}</td>
         <td class="text-left otd-col-pn">{{ $r->PN }}</td>
+        <td class="text-left otd-col-custpo">{{ $r->cust_po }}</td>
+        <td class="text-left otd-col-co">{{ $r->co }}</td>
         <td>{{ $r->Part_description }}</td>
         <td class="text-left otd-col-customer">{{ $r->costumer }}</td>
         <td class="text-center otd-col-due">{{ $fmtDate($due) }}</td>
@@ -41,9 +44,15 @@
                 <span class="otd-days-badge otd-days-badge--late">{{ $delta }}</span>
             @endif
         </td>
+        <td class="text-center otd-col-status">
+            <span class="otd-state-badge {{ $isOnTime ? 'otd-state-badge--ontime' : 'otd-state-badge--late' }}">
+                {{ $isOnTime ? 'On Time' : 'Late' }}
+            </span>
+        </td>
     </tr>
 @empty
     <tr>
-        <td colspan="7" class="text-center text-muted py-3">No results.</td>
+        <td colspan="11" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
+

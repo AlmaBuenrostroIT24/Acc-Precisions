@@ -1139,9 +1139,13 @@ table.kpi-report {
     table-layout: auto;
 }
 
+.dashboard-detail-modal .fai-dt-table .otd-col-idx,
 .dashboard-detail-modal .fai-dt-table .otd-col-workid,
 .dashboard-detail-modal .fai-dt-table .otd-col-pn,
+.dashboard-detail-modal .fai-dt-table .otd-col-custpo,
+.dashboard-detail-modal .fai-dt-table .otd-col-co,
 .dashboard-detail-modal .fai-dt-table .otd-col-customer,
+.dashboard-detail-modal .fai-dt-table .otd-col-status,
 .dashboard-detail-modal .fai-dt-table .otd-col-due,
 .dashboard-detail-modal .fai-dt-table .otd-col-sent {
     overflow: visible !important;
@@ -1149,11 +1153,23 @@ table.kpi-report {
     max-width: none !important;
 }
 
+.dashboard-detail-modal .fai-dt-table .otd-col-idx,
 .dashboard-detail-modal .fai-dt-table .otd-col-workid,
 .dashboard-detail-modal .fai-dt-table .otd-col-pn,
+.dashboard-detail-modal .fai-dt-table .otd-col-custpo,
+.dashboard-detail-modal .fai-dt-table .otd-col-co,
+.dashboard-detail-modal .fai-dt-table .otd-col-status,
 .dashboard-detail-modal .fai-dt-table .otd-col-due,
 .dashboard-detail-modal .fai-dt-table .otd-col-sent {
     white-space: nowrap !important;
+}
+
+.dashboard-detail-modal .fai-dt-table .otd-col-custpo {
+    min-width: 104px;
+}
+
+.dashboard-detail-modal .fai-dt-table .otd-col-co {
+    min-width: 78px;
 }
 
 .dashboard-detail-modal .fai-dt-table .otd-col-customer {
@@ -1161,13 +1177,22 @@ table.kpi-report {
     min-width: 140px;
 }
 
+.dashboard-detail-modal .fai-dt-table .fai-col-idx,
 .dashboard-detail-modal .fai-dt-table .fai-col-workid,
 .dashboard-detail-modal .fai-dt-table .fai-col-pn,
+.dashboard-detail-modal .fai-dt-table .fai-col-custpo,
+.dashboard-detail-modal .fai-dt-table .fai-col-co,
 .dashboard-detail-modal .fai-dt-table .fai-col-customer,
+.dashboard-detail-modal .fai-dt-table .fai-col-status,
 .dashboard-detail-modal .fai-dt-table .fai-col-due,
 .dashboard-detail-modal .fai-dt-table .fai-col-sent,
 .dashboard-detail-modal .fai-dt-table .fai-col-failops {
     white-space: nowrap !important;
+}
+
+.dashboard-detail-modal .fai-dt-table .otd-col-idx,
+.dashboard-detail-modal .fai-dt-table .fai-col-idx {
+    min-width: 42px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-workid {
@@ -1178,8 +1203,21 @@ table.kpi-report {
     min-width: 82px;
 }
 
+.dashboard-detail-modal .fai-dt-table .fai-col-custpo {
+    min-width: 104px;
+}
+
+.dashboard-detail-modal .fai-dt-table .fai-col-co {
+    min-width: 78px;
+}
+
 .dashboard-detail-modal .fai-dt-table .fai-col-customer {
     min-width: 110px;
+}
+
+.dashboard-detail-modal .fai-dt-table .otd-col-status,
+.dashboard-detail-modal .fai-dt-table .fai-col-status {
+    min-width: 88px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-due,
@@ -1199,6 +1237,34 @@ table.kpi-report {
     white-space: nowrap !important;
 }
 
+.dashboard-detail-modal .otd-state-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    border: 1px solid #d6dbe6;
+    background: #f6f8fc;
+    color: #273244;
+}
+
+.dashboard-detail-modal .otd-state-badge--ontime {
+    background: #dff3e6;
+    border-color: #b8dfc3;
+    color: #166534;
+}
+
+.dashboard-detail-modal .otd-state-badge--late {
+    background: #f6d2cf;
+    border-color: #e9c4c0;
+    color: #1f2937;
+}
+
 .dashboard-detail-modal .fai-dt-table tbody tr:nth-child(odd) td {
     background: #fff;
 }
@@ -1213,14 +1279,14 @@ table.kpi-report {
 
 .dashboard-detail-modal .fai-dt-table tbody tr.table-danger td,
 .dashboard-detail-modal .fai-dt-table tbody tr.is-late td {
-    background: #f6d2cf !important;
+    background: #fff !important;
     color: #111827 !important;
     border-color: #d5d8dd !important;
 }
 
 .dashboard-detail-modal .fai-dt-table tbody tr.table-danger:hover td,
 .dashboard-detail-modal .fai-dt-table tbody tr.is-late:hover td {
-    background: #efc3bf !important;
+    background: #fff !important;
 }
 
 .dashboard-detail-modal .fai-dt-table tbody tr.table-warning td {
@@ -1370,6 +1436,32 @@ table.kpi-report {
     padding: 0 10px;
 }
 
+.dashboard-detail-modal .dashboard-modal-export-btn {
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid #cbd5e1;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1;
+    padding: 0 11px;
+    box-shadow: none;
+}
+
+.dashboard-detail-modal .dashboard-modal-export-btn i {
+    color: #15803d;
+    font-size: 0.98rem;
+}
+
+.dashboard-detail-modal .dashboard-modal-export-btn:hover,
+.dashboard-detail-modal .dashboard-modal-export-btn:focus {
+    color: #111827;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    border-color: #b8c4d6;
+    box-shadow: none;
+}
+
 .dashboard-detail-modal .otd-search-icon {
     display: inline-flex;
     align-items: center;
@@ -1421,8 +1513,10 @@ table.kpi-report {
 .dashboard-detail-modal #faiRejDetailPagination {
     background: #f8fafc;
     border-top-color: #d5d8dd !important;
-    padding: 0.28rem 0.6rem !important;
-    min-height: 34px;
+    padding: 4px 10px 8px !important;
+    min-height: 40px;
+    margin-top: 2px;
+    row-gap: 6px;
 }
 
 .dashboard-detail-modal .table-responsive {
@@ -1431,50 +1525,83 @@ table.kpi-report {
 
 .dashboard-detail-modal #otdDetailPagination .small,
 .dashboard-detail-modal #faiRejDetailPagination .small {
-    font-weight: 700;
+    font-weight: 600;
     color: #475569 !important;
-    font-size: 0.76rem;
+    font-size: 0.8rem;
+    line-height: 1.1;
     margin: 0 !important;
 }
 
-.dashboard-detail-modal #otdDetailPagination .btn-group,
-.dashboard-detail-modal #faiRejDetailPagination .btn-group {
-    gap: 3px;
+.dashboard-detail-modal .dashboard-modal-paginate {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
     margin: 0 !important;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page,
-.dashboard-detail-modal #faiRejDetailPagination .js-fai-page {
-    min-width: 30px;
-    height: 28px;
-    padding: 0 8px;
-    border-radius: 7px;
+.dashboard-detail-modal .dashboard-modal-paginate .pagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 0;
+}
+
+.dashboard-detail-modal .dashboard-modal-paginate .page-item {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.dashboard-detail-modal #otdDetailPagination .page-link,
+.dashboard-detail-modal #faiRejDetailPagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin: 0 2px;
     border: 1px solid #d5d8dd;
-    background: #fff;
+    background: #f8fafc;
     color: #1f2937;
     font-weight: 700;
-    font-size: 0.76rem;
+    font-size: 0.9rem;
     line-height: 1;
+    min-width: 34px;
+    height: 32px;
+    padding: 0 10px;
     box-shadow: none;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page:hover:not(:disabled),
-.dashboard-detail-modal #faiRejDetailPagination .js-fai-page:hover:not(:disabled) {
-    filter: brightness(0.98);
-    color: #111827;
+.dashboard-detail-modal #otdDetailPagination .page-item:first-child .page-link,
+.dashboard-detail-modal #otdDetailPagination .page-item:last-child .page-link,
+.dashboard-detail-modal #faiRejDetailPagination .page-item:first-child .page-link,
+.dashboard-detail-modal #faiRejDetailPagination .page-item:last-child .page-link {
+    min-width: 48px;
+    padding: 0 9px;
+    font-size: 0.8rem;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page.btn-primary,
-.dashboard-detail-modal #faiRejDetailPagination .js-fai-page.btn-primary {
-    background: #e2e8f0;
-    border-color: #94a3b8;
-    color: #0f172a;
+.dashboard-detail-modal #otdDetailPagination .page-item.disabled .page-link span,
+.dashboard-detail-modal #faiRejDetailPagination .page-item.disabled .page-link span {
+    line-height: 1;
 }
 
-.dashboard-detail-modal #otdDetailPagination .js-otd-page:disabled,
-.dashboard-detail-modal #faiRejDetailPagination .js-fai-page:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.dashboard-detail-modal #otdDetailPagination .page-item.active .page-link,
+.dashboard-detail-modal #faiRejDetailPagination .page-item.active .page-link {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
+    color: #fff;
+}
+
+.dashboard-detail-modal #otdDetailPagination .page-item.disabled .page-link,
+.dashboard-detail-modal #faiRejDetailPagination .page-item.disabled .page-link {
+    opacity: 0.6;
+}
+
+.dashboard-detail-modal #otdDetailPagination .page-item.disabled .page-link,
+.dashboard-detail-modal #faiRejDetailPagination .page-item.disabled .page-link {
+    pointer-events: none;
 }
 
 .dashboard-detail-modal .modal-footer .btn[data-dismiss="modal"] {

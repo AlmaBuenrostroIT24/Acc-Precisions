@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DashboardDetailExport;
 use App\Exports\DashboardKpiExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
@@ -36,46 +38,7 @@ class DashboardController extends Controller
             $filter = 'all';
         }
 
-        $query = DB::table('orders_schedule')
-            ->select([
-                'id',
-                'work_id',
-                'PN',
-                'Part_description',
-                'costumer',
-                'status',
-                'due_date',
-                'sent_at',
-            ])
-            ->whereNotNull('due_date')
-            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
-            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
-
-        if ($filter === 'ontime') {
-            $query->where(function ($q) {
-                $q->where(function ($q1) {
-                    $q1->whereRaw("LOWER(TRIM(status)) = 'sent'")
-                        ->whereNotNull('sent_at')
-                        ->whereRaw('DATE(sent_at) <= DATE(due_date)');
-                })->orWhere(function ($q2) {
-                    $q2->whereRaw("COALESCE(LOWER(TRIM(status)), '') <> 'sent'")
-                        ->whereRaw('DATE(due_date) >= CURDATE()');
-                });
-            });
-        } elseif ($filter === 'late') {
-            $query->where(function ($q) {
-                $q->where(function ($q1) {
-                    $q1->whereRaw("LOWER(TRIM(status)) = 'sent'")
-                        ->whereNotNull('sent_at')
-                        ->whereRaw('DATE(sent_at) > DATE(due_date)');
-                })->orWhere(function ($q2) {
-                    $q2->whereRaw("COALESCE(LOWER(TRIM(status)), '') <> 'sent'")
-                        ->whereRaw('DATE(due_date) < CURDATE()');
-                });
-            });
-        }
-
-        $rows = $query
+        $rows = $this->buildOtdDetailsQuery($year, $month, $filter)
             ->orderBy('due_date', 'asc')
             ->orderBy('sent_at', 'desc')
             ->limit(2000)
@@ -94,6 +57,67 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function exportOtdDetailsExcel(Request $request)
+    {
+        $year = (int) $request->query('year', now()->year);
+        $month = (int) $request->query('month');
+        $filter = strtolower(trim((string) $request->query('filter', 'all')));
+        $search = trim((string) $request->query('search', ''));
+
+        if (!in_array($filter, ['all', 'ontime', 'late'], true)) {
+            $filter = 'all';
+        }
+
+        $items = $this->buildOtdDetailsQuery($year, $month, $filter)
+            ->orderBy('due_date', 'asc')
+            ->orderBy('sent_at', 'desc')
+            ->limit(5000)
+            ->get();
+        $items = $this->filterDashboardDetailRows($items, $search, function ($row) {
+            $meta = $this->buildOtdRowMeta($row);
+            return implode(' ', [
+                $row->work_id,
+                $row->PN,
+                $row->cust_po,
+                $row->co,
+                $row->Part_description,
+                $row->costumer,
+                $this->formatDashboardDate($row->due_date),
+                $this->formatDashboardDate($row->sent_at),
+                $meta['days'],
+                $meta['status'],
+            ]);
+        });
+
+        $title = 'OTD Details - ' . $this->monthNameEn($month) . ' ' . $year . ' - ' . strtoupper($filter);
+        $exportRows = [];
+        foreach ($items->values() as $index => $row) {
+            $meta = $this->buildOtdRowMeta($row);
+            $exportRows[] = [
+                $index + 1,
+                (string) ($row->work_id ?? ''),
+                (string) ($row->PN ?? ''),
+                (string) ($row->cust_po ?? ''),
+                (string) ($row->co ?? ''),
+                (string) ($row->Part_description ?? ''),
+                (string) ($row->costumer ?? ''),
+                $this->formatDashboardDate($row->due_date),
+                $this->formatDashboardDate($row->sent_at),
+                $meta['days'],
+                $meta['status'],
+            ];
+        }
+
+        return Excel::download(
+            new DashboardDetailExport(
+                $title,
+                ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Days', 'Status'],
+                $exportRows,
+            ),
+            'otd-details-' . $year . '-' . str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '.xlsx',
+        );
+    }
+
     public function faiRejDetails(Request $request)
     {
         $year = (int) $request->query('year', now()->year);
@@ -106,37 +130,11 @@ class DashboardController extends Controller
             return response()->json(['html' => '', 'count' => 0, 'message' => 'Invalid month'], 422);
         }
 
-        $base = DB::table('qa_faisummary as qfs')
-            ->join('orders_schedule', 'orders_schedule.id', '=', 'qfs.order_schedule_id')
-            ->whereNotNull('qfs.date')
-            ->whereRaw('YEAR(qfs.date) = ? AND MONTH(qfs.date) = ?', [$year, $month])
-            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'");
+        $base = $this->buildFaiRejBaseQuery($year, $month);
 
         $total = (int) (clone $base)->count('qfs.id');
 
-        $rows = (clone $base)
-            ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
-            ->selectRaw('
-                orders_schedule.id,
-                orders_schedule.work_id,
-                orders_schedule.PN,
-                orders_schedule.Part_description,
-                orders_schedule.costumer,
-                orders_schedule.due_date,
-                orders_schedule.sent_at,
-                MAX(qfs.date) as fai_date,
-                COUNT(*) as fail_ops,
-                GROUP_CONCAT(DISTINCT NULLIF(TRIM(qfs.operation), \'\') ORDER BY qfs.operation SEPARATOR \', \') as fail_operations
-            ')
-            ->groupBy(
-                'orders_schedule.id',
-                'orders_schedule.work_id',
-                'orders_schedule.PN',
-                'orders_schedule.Part_description',
-                'orders_schedule.costumer',
-                'orders_schedule.due_date',
-                'orders_schedule.sent_at',
-            )
+        $rows = $this->buildFaiRejRowsQuery($year, $month)
             ->orderBy('orders_schedule.due_date', 'asc')
             ->orderBy('fai_date', 'desc')
             ->limit(2000)
@@ -160,6 +158,63 @@ class DashboardController extends Controller
             'year' => $year,
             'month' => $month,
         ]);
+    }
+
+    public function exportFaiRejDetailsExcel(Request $request)
+    {
+        $year = (int) $request->query('year', now()->year);
+        $month = (int) $request->query('month');
+        $search = trim((string) $request->query('search', ''));
+
+        $items = $this->buildFaiRejRowsQuery($year, $month)
+            ->orderBy('orders_schedule.due_date', 'asc')
+            ->orderBy('fai_date', 'desc')
+            ->limit(5000)
+            ->get();
+        $items = $this->filterDashboardDetailRows($items, $search, function ($row) {
+            return implode(' ', [
+                $row->work_id,
+                $row->PN,
+                $row->cust_po,
+                $row->co,
+                $row->Part_description,
+                $row->costumer,
+                $this->formatDashboardDate($row->due_date),
+                $this->formatDashboardDate($row->sent_at),
+                $row->fail_ops,
+                $row->fail_operations,
+                'Late',
+            ]);
+        });
+
+        $title = 'Internal FAI Rejection Details - ' . $this->monthNameEn($month) . ' ' . $year;
+        $exportRows = [];
+        foreach ($items->values() as $index => $row) {
+            $failOps = (int) ($row->fail_ops ?? 0);
+            $ops = trim((string) ($row->fail_operations ?? ''));
+            $exportRows[] = [
+                $index + 1,
+                (string) ($row->work_id ?? ''),
+                (string) ($row->PN ?? ''),
+                (string) ($row->cust_po ?? ''),
+                (string) ($row->co ?? ''),
+                (string) ($row->Part_description ?? ''),
+                (string) ($row->costumer ?? ''),
+                $this->formatDashboardDate($row->due_date),
+                $this->formatDashboardDate($row->sent_at),
+                $failOps > 0 ? trim($failOps . ($ops !== '' ? ' Op: ' . $ops : '')) : '-',
+                'Late',
+            ];
+        }
+
+        return Excel::download(
+            new DashboardDetailExport(
+                $title,
+                ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Fail Ops', 'Status'],
+                $exportRows,
+            ),
+            'internal-fai-rejection-details-' . $year . '-' . str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '.xlsx',
+        );
     }
 
     public function exportPdf(Request $request)
@@ -221,6 +276,148 @@ class DashboardController extends Controller
             ->all();
         
         return array_values(array_unique($years));
+    }
+
+    private function buildOtdDetailsQuery(int $year, int $month, string $filter)
+    {
+        $query = DB::table('orders_schedule')
+            ->select([
+                'id',
+                'work_id',
+                'co',
+                'cust_po',
+                'PN',
+                'Part_description',
+                'costumer',
+                'status',
+                'due_date',
+                'sent_at',
+            ])
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
+            ->whereRaw('YEAR(due_date) = ? AND MONTH(due_date) = ?', [$year, $month]);
+
+        if ($filter === 'ontime') {
+            $query->where(function ($q) {
+                $q->where(function ($q1) {
+                    $q1->whereRaw("LOWER(TRIM(status)) = 'sent'")
+                        ->whereNotNull('sent_at')
+                        ->whereRaw('DATE(sent_at) <= DATE(due_date)');
+                })->orWhere(function ($q2) {
+                    $q2->whereRaw("COALESCE(LOWER(TRIM(status)), '') <> 'sent'")
+                        ->whereRaw('DATE(due_date) >= CURDATE()');
+                });
+            });
+        } elseif ($filter === 'late') {
+            $query->where(function ($q) {
+                $q->where(function ($q1) {
+                    $q1->whereRaw("LOWER(TRIM(status)) = 'sent'")
+                        ->whereNotNull('sent_at')
+                        ->whereRaw('DATE(sent_at) > DATE(due_date)');
+                })->orWhere(function ($q2) {
+                    $q2->whereRaw("COALESCE(LOWER(TRIM(status)), '') <> 'sent'")
+                        ->whereRaw('DATE(due_date) < CURDATE()');
+                });
+            });
+        }
+
+        return $query;
+    }
+
+    private function buildFaiRejBaseQuery(int $year, int $month)
+    {
+        return DB::table('qa_faisummary as qfs')
+            ->join('orders_schedule', 'orders_schedule.id', '=', 'qfs.order_schedule_id')
+            ->whereNotNull('qfs.date')
+            ->whereRaw('YEAR(qfs.date) = ? AND MONTH(qfs.date) = ?', [$year, $month])
+            ->whereRaw("UPPER(TRIM(qfs.insp_type)) = 'FAI'");
+    }
+
+    private function buildFaiRejRowsQuery(int $year, int $month)
+    {
+        return $this->buildFaiRejBaseQuery($year, $month)
+            ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
+            ->selectRaw('
+                orders_schedule.id,
+                orders_schedule.work_id,
+                orders_schedule.co,
+                orders_schedule.cust_po,
+                orders_schedule.PN,
+                orders_schedule.Part_description,
+                orders_schedule.costumer,
+                orders_schedule.due_date,
+                orders_schedule.sent_at,
+                MAX(qfs.date) as fai_date,
+                COUNT(*) as fail_ops,
+                GROUP_CONCAT(DISTINCT NULLIF(TRIM(qfs.operation), \'\') ORDER BY qfs.operation SEPARATOR \', \') as fail_operations
+            ')
+            ->groupBy(
+                'orders_schedule.id',
+                'orders_schedule.work_id',
+                'orders_schedule.co',
+                'orders_schedule.cust_po',
+                'orders_schedule.PN',
+                'orders_schedule.Part_description',
+                'orders_schedule.costumer',
+                'orders_schedule.due_date',
+                'orders_schedule.sent_at',
+            );
+    }
+
+    private function filterDashboardDetailRows(Collection $rows, string $search, callable $toText): Collection
+    {
+        $needle = trim($search);
+        if ($needle === '') {
+            return $rows->values();
+        }
+
+        $needle = mb_strtolower($needle, 'UTF-8');
+
+        return $rows->filter(function ($row) use ($needle, $toText) {
+            $text = mb_strtolower((string) $toText($row), 'UTF-8');
+            return str_contains($text, $needle);
+        })->values();
+    }
+
+    private function formatDashboardDate($date): string
+    {
+        if (!$date) {
+            return '';
+        }
+
+        return \Carbon\Carbon::parse($date)->format('M/d/Y');
+    }
+
+    private function monthNameEn(int $month): string
+    {
+        $names = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'];
+        return $names[$month] ?? 'M' . $month;
+    }
+
+    private function buildOtdRowMeta(object $row): array
+    {
+        $due = $row->due_date ? \Carbon\Carbon::parse($row->due_date)->startOfDay() : null;
+        $sent = $row->sent_at ? \Carbon\Carbon::parse($row->sent_at)->startOfDay() : null;
+        $status = strtolower(trim((string) ($row->status ?? '')));
+        $today = now()->startOfDay();
+        $isSent = $status === 'sent' && $sent !== null;
+        $delta = null;
+        $isOnTime = false;
+
+        if ($due) {
+            if ($isSent) {
+                $delta = $sent->diffInDays($due, false);
+                $isOnTime = $delta >= 0;
+            } else {
+                $delta = $today->diffInDays($due, false);
+                $isOnTime = $due->gte($today);
+            }
+        }
+
+        return [
+            'days' => $delta === null ? '-' : (string) $delta,
+            'status' => $isOnTime ? 'On Time' : 'Late',
+        ];
     }
 
     private function buildDashboardPayload(int $year, ?array $availableYears = null): array

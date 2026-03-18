@@ -806,8 +806,11 @@
                                 <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
                                 <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
                             </div>
-                            <div class="mx-2 my-1">
-                                <div class="otd-search-box" style="min-width: 240px;">
+                            <div class="d-flex align-items-center flex-wrap mx-2 my-1">
+                                <button type="button" class="btn btn-outline-secondary dashboard-modal-export-btn js-export-otd-excel mr-2 my-1" title="Export OTD details to Excel" aria-label="Export OTD details to Excel">
+                                    <i class="fas fa-file-excel mr-1" aria-hidden="true"></i> Excel
+                                </button>
+                                <div class="otd-search-box my-1" style="min-width: 240px;">
                                     <span class="otd-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
                                     <input
                                         type="text"
@@ -827,17 +830,21 @@
                             <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
                                 <thead>
                                     <tr>
+                                        <th class="text-center otd-col-idx">#</th>
                                         <th class="text-center otd-col-workid">Work ID</th>
                                         <th class="text-center otd-col-pn">PN</th>
+                                        <th class="text-center otd-col-custpo">Cust PO</th>
+                                        <th class="text-center otd-col-co">CO</th>
                                         <th>Part/Description</th>
                                         <th class="text-center otd-col-customer">Customer</th>
                                         <th class="text-center otd-col-due">Due</th>
                                         <th class="text-center otd-col-sent">Sent</th>
                                         <th class="text-center">Days</th>
+                                        <th class="text-center otd-col-status">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="otdDetailTbody">
-                                    <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -869,8 +876,11 @@
                 <div class="modal-body p-0">
                     <div class="otd-grid-shell">
                         <div class="d-flex align-items-center justify-content-end flex-wrap px-3 py-2 border-bottom">
-                            <div class="mx-2 my-1">
-                                <div class="otd-search-box" style="min-width: 240px;">
+                            <div class="d-flex align-items-center flex-wrap mx-2 my-1">
+                                <button type="button" class="btn btn-outline-secondary dashboard-modal-export-btn js-export-fai-excel mr-2 my-1" title="Export FAI rejection details to Excel" aria-label="Export FAI rejection details to Excel">
+                                    <i class="fas fa-file-excel mr-1" aria-hidden="true"></i> Excel
+                                </button>
+                                <div class="otd-search-box my-1" style="min-width: 240px;">
                                     <span class="otd-search-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
                                     <input
                                         type="text"
@@ -890,17 +900,21 @@
                             <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
                                 <thead>
                                     <tr>
+                                        <th class="text-center fai-col-idx">#</th>
                                         <th class="text-left fai-col-workid">Work ID</th>
                                         <th class="text-left fai-col-pn">PN</th>
+                                        <th class="text-left fai-col-custpo">Cust PO</th>
+                                        <th class="text-left fai-col-co">CO</th>
                                         <th class="fai-col-desc">Part/Description</th>
                                         <th class="text-left fai-col-customer">Customer</th>
                                         <th class="text-center fai-col-due">Due</th>
                                         <th class="text-center fai-col-sent">Sent</th>
                                         <th class="text-left fai-col-failops">Fail Ops</th>
+                                        <th class="text-center fai-col-status">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="faiRejDetailTbody">
-                                    <tr><td colspan="7" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -921,6 +935,9 @@
         window.__DASHBOARD.year = {{ (int) $dashboardYear }};
         window.__DASHBOARD.otdDetailsUrl = @json(route('dashboard.otdDetails'));
         window.__DASHBOARD.faiRejDetailsUrl = @json(route('dashboard.faiRejDetails'));
+        window.__DASHBOARD.otdDetailsExcelUrl = @json(route('dashboard.exportOtdDetailsExcel'));
+        window.__DASHBOARD.faiRejDetailsExcelUrl = @json(route('dashboard.exportFaiRejDetailsExcel'));
     </script>
     <script src="{{ asset('vendor/js/dashboard.js?v=' . filemtime(public_path('vendor/js/dashboard.js'))) }}"></script>
 @stop
+

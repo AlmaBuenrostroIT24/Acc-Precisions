@@ -1,4 +1,4 @@
-@forelse($rows as $r)
+@forelse($rows as $i => $r)
     @php
         $due = $r->due_date ? \Carbon\Carbon::parse($r->due_date)->startOfDay() : null;
         $sent = $r->sent_at ? \Carbon\Carbon::parse($r->sent_at)->startOfDay() : null;
@@ -12,8 +12,11 @@
         };
     @endphp
     <tr class="table-warning">
+        <td class="text-center fai-col-idx">{{ $i + 1 }}</td>
         <td class="text-left fai-col-workid">{{ $r->work_id }}</td>
         <td class="text-left fai-col-pn">{{ $r->PN }}</td>
+        <td class="text-left fai-col-custpo">{{ $r->cust_po }}</td>
+        <td class="text-left fai-col-co">{{ $r->co }}</td>
         <td class="fai-col-desc">{{ $r->Part_description }}</td>
         <td class="text-left fai-col-customer">{{ $r->costumer }}</td>
         <td class="text-center fai-col-due">{{ $fmtDate($due) }}</td>
@@ -28,9 +31,13 @@
                 -
             @endif
         </td>
+        <td class="text-center fai-col-status">
+            <span class="otd-state-badge otd-state-badge--late">Late</span>
+        </td>
     </tr>
 @empty
     <tr>
-        <td colspan="7" class="text-center text-muted py-3">No results.</td>
+        <td colspan="11" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
+
