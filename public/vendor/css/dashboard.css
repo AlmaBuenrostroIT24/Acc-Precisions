@@ -1168,6 +1168,13 @@ table.kpi-report {
     min-width: 104px;
 }
 
+.dashboard-detail-modal .fai-dt-table .otd-col-pn,
+.dashboard-detail-modal .fai-dt-table .otd-col-custpo,
+.dashboard-detail-modal .fai-dt-table .fai-col-pn,
+.dashboard-detail-modal .fai-dt-table .fai-col-custpo {
+    text-align: left !important;
+}
+
 .dashboard-detail-modal .fai-dt-table .otd-col-co {
     min-width: 78px;
 }
