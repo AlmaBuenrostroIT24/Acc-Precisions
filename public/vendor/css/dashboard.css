@@ -1204,23 +1204,23 @@ table.kpi-report {
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-workid {
-    min-width: 86px;
+    min-width: 88px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-pn {
-    min-width: 82px;
+    min-width: 88px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-custpo {
-    min-width: 104px;
+    min-width: 108px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-co {
-    min-width: 78px;
+    min-width: 82px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-customer {
-    min-width: 110px;
+    min-width: 96px;
 }
 
 .dashboard-detail-modal .fai-dt-table .otd-col-status,
@@ -1231,15 +1231,27 @@ table.kpi-report {
 .dashboard-detail-modal .fai-dt-table .fai-col-due,
 .dashboard-detail-modal .fai-dt-table .fai-col-sent,
 .dashboard-detail-modal .fai-dt-table .fai-col-faidate {
-    min-width: 92px;
+    min-width: 86px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-failops {
-    min-width: 160px;
+    min-width: 176px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-desc {
-    min-width: 320px;
+    min-width: 200px;
+}
+
+.dashboard-detail-modal .fai-dt-table tbody td.fai-col-desc {
+    font-size: 0.79rem;
+    line-height: 1.22;
+    padding-top: 0.42rem;
+    padding-bottom: 0.42rem;
+}
+
+.dashboard-detail-modal .fai-dt-table tbody td.fai-col-customer {
+    font-size: 0.79rem;
+    line-height: 1.2;
 }
 
 .dashboard-detail-modal .fai-failops-inline {
@@ -1346,6 +1358,87 @@ table.kpi-report {
 .dashboard-detail-modal .otd-grid-shell > .d-flex.border-bottom {
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     border-bottom-color: #d5d8dd !important;
+}
+
+.dashboard-detail-modal .fai-customer-summary {
+    background: linear-gradient(180deg, #fdfefe 0%, #f7fafc 100%);
+    border-bottom-color: #d5d8dd !important;
+}
+
+.dashboard-detail-modal .fai-customer-summary__label {
+    font-size: 0.73rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.35rem;
+}
+
+.dashboard-detail-modal .fai-customer-summary__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem;
+    align-items: center;
+}
+
+.dashboard-detail-modal .fai-customer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.28rem 0.55rem;
+    border: 1px solid #d5d8dd;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 0.79rem;
+    line-height: 1;
+    appearance: none;
+    cursor: pointer;
+}
+
+.dashboard-detail-modal .fai-customer-chip__name {
+    font-weight: 700;
+}
+
+.dashboard-detail-modal .fai-customer-chip__count {
+    min-width: 1.3rem;
+    padding: 0.2rem 0.38rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 800;
+    text-align: center;
+}
+
+.dashboard-detail-modal .fai-customer-chip.is-active {
+    border-color: #86efac;
+    background: #dcfce7;
+    color: #166534;
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18);
+}
+
+.dashboard-detail-modal .fai-customer-chip.is-active .fai-customer-chip__count {
+    background: #bbf7d0;
+    color: #166534;
+}
+
+.dashboard-detail-modal #otdCustomerSummary {
+    background: linear-gradient(180deg, #fdfefe 0%, #f7fafc 100%);
+    border-bottom-color: #d5d8dd !important;
+}
+
+.dashboard-detail-modal #otdCustomerSummary .fai-customer-chip.is-active,
+.dashboard-detail-modal #otdCustomerSummary .fai-customer-chip.is-late-active {
+    border-color: #86efac;
+    background: #dcfce7;
+    color: #166534;
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18);
+}
+
+.dashboard-detail-modal #otdCustomerSummary .fai-customer-chip.is-active .fai-customer-chip__count,
+.dashboard-detail-modal #otdCustomerSummary .fai-customer-chip.is-late-active .fai-customer-chip__count {
+    background: #bbf7d0;
+    color: #166534;
 }
 
 .dashboard-detail-modal .otd-grid-shell .fai-dt-table {

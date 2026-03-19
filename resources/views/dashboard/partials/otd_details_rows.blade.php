@@ -25,7 +25,7 @@
             return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y');
         };
     @endphp
-    <tr class="{{ $isOnTime ? '' : 'table-danger' }}">
+    <tr class="{{ $isOnTime ? '' : 'table-danger' }}" data-customer="{{ trim((string) ($r->costumer ?? '')) }}">
         <td class="text-left otd-col-workid">{{ $r->work_id }}</td>
         <td class="text-left otd-col-pn">{{ $r->PN }}</td>
         <td class="text-left otd-col-custpo">{{ $r->cust_po }}</td>

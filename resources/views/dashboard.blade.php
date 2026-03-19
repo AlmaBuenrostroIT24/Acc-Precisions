@@ -819,10 +819,12 @@
                 <div class="modal-body p-0">
                     <div class="otd-grid-shell">
                         <div class="d-flex align-items-center justify-content-between flex-wrap px-3 py-2 border-bottom">
-                            <div class="btn-group btn-group-sm" role="group" aria-label="OTD filter">
-                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="all">All</button>
-                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
-                                <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
+                            <div class="d-flex align-items-center flex-wrap mx-2 my-1">
+                                <div class="btn-group btn-group-sm mr-2 my-1" role="group" aria-label="OTD filter">
+                                    <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="all">All</button>
+                                    <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="ontime">On time</button>
+                                    <button type="button" class="btn btn-outline-secondary js-otd-filter" data-filter="late">Late</button>
+                                </div>
                             </div>
                             <div class="d-flex align-items-center flex-wrap mx-2 my-1">
                                 <button type="button" class="btn btn-outline-secondary dashboard-modal-export-btn js-export-otd-excel mr-2 my-1" title="Export OTD details to Excel" aria-label="Export OTD details to Excel">
@@ -842,6 +844,9 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                        <div id="otdCustomerSummary" class="otd-customer-summary px-3 py-2 border-bottom text-muted small">
+                            Customer totals will appear here.
                         </div>
 
                         <div class="table-responsive">
@@ -912,7 +917,9 @@
                                 </div>
                             </div>
                         </div>
-
+                        <div id="faiRejCustomerSummary" class="fai-customer-summary px-3 py-2 border-bottom text-muted small">
+                            Totals by customer will appear here.
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
                                 <thead>

@@ -48,12 +48,24 @@ class DashboardController extends Controller
             ->limit(2000)
             ->get();
 
+        $customerTotals = $rows
+            ->groupBy(function ($row) {
+                $name = trim((string) ($row->costumer ?? ''));
+                return $name !== '' ? $name : 'Unknown';
+            })
+            ->map->count()
+            ->sortDesc();
+
         $html = view('dashboard.partials.otd_details_rows', [
             'rows' => $rows,
+        ])->render();
+        $customerSummaryHtml = view('dashboard.partials.otd_customer_summary', [
+            'totals' => $customerTotals,
         ])->render();
 
         return response()->json([
             'html' => $html,
+            'customerSummaryHtml' => $customerSummaryHtml,
             'count' => $rows->count(),
             'year' => $year,
             'month' => $month,
@@ -167,6 +179,18 @@ class DashboardController extends Controller
             ->limit(2000)
             ->get();
 
+        $customerTotals = $rows
+            ->groupBy(function ($row) {
+                $name = trim((string) ($row->costumer ?? ''));
+                return $name !== '' ? $name : 'Unknown';
+            })
+            ->map(function ($group) {
+                return $group->sum(function ($row) {
+                    return (int) ($row->fail_ops ?? 0);
+                });
+            })
+            ->sortDesc();
+
         $rejects = (int) (clone $base)
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
             ->count('qfs.id');
@@ -175,9 +199,13 @@ class DashboardController extends Controller
         $html = view('dashboard.partials.fai_rej_details_rows', [
             'rows' => $rows,
         ])->render();
+        $customerSummaryHtml = view('dashboard.partials.fai_rej_customer_summary', [
+            'totals' => $customerTotals,
+        ])->render();
 
         return response()->json([
             'html' => $html,
+            'customerSummaryHtml' => $customerSummaryHtml,
             'count' => $rows->count(),
             'total' => $total,
             'rejects' => $rejects,

@@ -5,8 +5,8 @@
 
     const DASHBOARD = window.__DASHBOARD || {};
     const OTD_PAGE_SIZE = 12;
-    const otdUiState = { search: '', page: 1 };
-    const faiUiState = { search: '', page: 1 };
+    const otdUiState = { search: '', page: 1, customer: '' };
+    const faiUiState = { search: '', page: 1, customer: '' };
 
     function getQueryParam(name) {
         const url = new URL(window.location.href);
@@ -194,7 +194,8 @@
 
         const matchedRows = dataRows.filter(function ($row) {
             const haystack = $row.text().toLowerCase();
-            return !needle || haystack.indexOf(needle) !== -1;
+            const rowOk = typeof opts.rowFilter === 'function' ? opts.rowFilter($row) : true;
+            return rowOk && (!needle || haystack.indexOf(needle) !== -1);
         });
 
         const totalPages = Math.max(1, Math.ceil(matchedRows.length / OTD_PAGE_SIZE));
@@ -229,6 +230,12 @@
             pageClass: 'js-otd-page',
             ariaLabel: 'OTD pagination',
             colspan: 10,
+            rowFilter: function ($row) {
+                const selectedCustomer = String(otdUiState.customer || '').trim().toLowerCase();
+                if (!selectedCustomer) return true;
+                const rowCustomer = String($row.data('customer') || '').trim().toLowerCase();
+                return rowCustomer === selectedCustomer;
+            },
         });
     }
 
@@ -243,7 +250,29 @@
             pageClass: 'js-fai-page',
             ariaLabel: 'FAI pagination',
             colspan: 10,
+            rowFilter: function ($row) {
+                const selectedCustomer = String(faiUiState.customer || '').trim().toLowerCase();
+                if (!selectedCustomer) return true;
+                const rowCustomer = String($row.data('customer') || '').trim().toLowerCase();
+                return rowCustomer === selectedCustomer;
+            },
         });
+    }
+
+    function setFaiCustomerFilter(customer) {
+        faiUiState.customer = String(customer || '').trim();
+        $('.fai-customer-chip').removeClass('is-active');
+        $('.fai-customer-chip').filter(function () {
+            return String($(this).data('customerFilter') || '').trim() === faiUiState.customer;
+        }).addClass('is-active');
+    }
+
+    function setOtdCustomerFilter(customer) {
+        otdUiState.customer = String(customer || '').trim();
+        $('#otdCustomerSummary .fai-customer-chip').removeClass('is-active is-late-active');
+        $('#otdCustomerSummary .fai-customer-chip').filter(function () {
+            return String($(this).data('customerFilter') || '').trim() === otdUiState.customer;
+        }).addClass('is-active is-late-active');
     }
 
     function loadOtdDetails(year, month, quarter, filter, searchQuery) {
@@ -257,6 +286,8 @@
         $.get(DASHBOARD.otdDetailsUrl, { year, month, quarter, filter })
             .done(function (res) {
                 $('#otdDetailTbody').html(res && res.html ? res.html : '');
+                $('#otdCustomerSummary').html(res && res.customerSummaryHtml ? res.customerSummaryHtml : '<span class="text-muted">No customer totals available.</span>');
+                setOtdCustomerFilter('');
                 otdUiState.page = 1;
                 applyOtdSearch(searchQuery, 1);
                 const count = (res && typeof res.count === 'number') ? res.count : 0;
@@ -274,10 +305,13 @@
         const periodLabel = quarter ? quarterLabel(quarter, year) : (monthName(month) + ' ' + year);
         $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Loading...</td></tr>');
         $('#faiRejDetailMeta').text(periodLabel);
+        $('#faiRejCustomerSummary').html('<span class="text-muted">Loading customer totals...</span>');
 
         $.get(DASHBOARD.faiRejDetailsUrl, { year, month, quarter })
             .done(function (res) {
                 $('#faiRejDetailTbody').html(res && res.html ? res.html : '');
+                $('#faiRejCustomerSummary').html(res && res.customerSummaryHtml ? res.customerSummaryHtml : '<span class="text-muted">No customer totals available.</span>');
+                setFaiCustomerFilter('');
                 faiUiState.page = 1;
                 applyFaiSearch(searchQuery, 1);
                 const rejects = (res && typeof res.rejects === 'number') ? res.rejects : 0;
@@ -289,6 +323,7 @@
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
                 $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-danger py-3">' + msg + '</td></tr>');
+                $('#faiRejCustomerSummary').html('<span class="text-danger">Unable to load customer totals.</span>');
             });
     }
 
@@ -422,6 +457,13 @@
             toggleOtdSearchClear();
         });
 
+        $(document).on('click', '#otdCustomerSummary .fai-customer-chip', function () {
+            const customer = String($(this).data('customerFilter') || '').trim();
+            setOtdCustomerFilter(customer);
+            otdUiState.page = 1;
+            applyOtdSearch(selected.search, 1);
+        });
+
         $(document).on('click', '.js-otd-page', function () {
             const page = parseInt($(this).data('page'), 10);
             if (!page || page < 1) return;
@@ -442,6 +484,7 @@
         $('#otdDetailModal').on('hidden.bs.modal', function () {
             $('#otdDetailMeta').text('Select a month or quarter.');
             $('#otdDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
+            $('#otdCustomerSummary').html('Customer totals will appear here.');
             $('#otdDetailPagination').html('');
             $('#otdDetailSearch').val('');
             setFilterActive('all');
@@ -450,6 +493,7 @@
             selected.filter = 'all';
             selected.search = '';
             otdUiState.page = 1;
+            otdUiState.customer = '';
             toggleOtdSearchClear();
         });
 
@@ -497,6 +541,13 @@
             toggleFaiSearchClear();
         });
 
+        $(document).on('click', '.fai-customer-chip', function () {
+            const customer = String($(this).data('customerFilter') || '').trim();
+            setFaiCustomerFilter(customer);
+            faiUiState.page = 1;
+            applyFaiSearch(faiSelected.search, 1);
+        });
+
         $(document).on('click', '.js-fai-page', function () {
             const page = parseInt($(this).data('page'), 10);
             if (!page || page < 1) return;
@@ -516,12 +567,14 @@
         $('#faiRejDetailModal').on('hidden.bs.modal', function () {
             $('#faiRejDetailMeta').text('Select a month or quarter.');
             $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
+            $('#faiRejCustomerSummary').html('Totals by customer will appear here.');
             $('#faiRejDetailPagination').html('');
             $('#faiRejDetailSearch').val('');
             faiSelected.month = null;
             faiSelected.quarter = null;
             faiSelected.search = '';
             faiUiState.page = 1;
+            faiUiState.customer = '';
             toggleFaiSearchClear();
         });
 

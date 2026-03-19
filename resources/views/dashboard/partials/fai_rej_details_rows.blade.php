@@ -12,7 +12,7 @@
             return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y');
         };
     @endphp
-    <tr class="table-warning">
+    <tr class="table-warning" data-customer="{{ trim((string) ($r->costumer ?? '')) }}">
         <td class="text-left fai-col-workid">{{ $r->work_id }}</td>
         <td class="text-left fai-col-pn">{{ $r->PN }}</td>
         <td class="text-left fai-col-custpo">{{ $r->cust_po }}</td>
