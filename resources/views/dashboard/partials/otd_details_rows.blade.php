@@ -26,7 +26,6 @@
         };
     @endphp
     <tr class="{{ $isOnTime ? '' : 'table-danger' }}">
-        <td class="text-center otd-col-idx">{{ $i + 1 }}</td>
         <td class="text-left otd-col-workid">{{ $r->work_id }}</td>
         <td class="text-left otd-col-pn">{{ $r->PN }}</td>
         <td class="text-left otd-col-custpo">{{ $r->cust_po }}</td>
@@ -52,7 +51,7 @@
     </tr>
 @empty
     <tr>
-        <td colspan="11" class="text-center text-muted py-3">No results.</td>
+        <td colspan="10" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
 

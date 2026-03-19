@@ -848,7 +848,6 @@
                             <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
                                 <thead>
                                     <tr>
-                                        <th class="text-center otd-col-idx">#</th>
                                         <th class="text-center otd-col-workid">Work ID</th>
                                         <th class="text-center otd-col-pn">PN</th>
                                         <th class="text-center otd-col-custpo">Cust PO</th>
@@ -862,7 +861,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="otdDetailTbody">
-                                    <tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="10" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -918,7 +917,6 @@
                             <table class="table table-sm table-hover align-middle mb-0 fai-dt-table">
                                 <thead>
                                     <tr>
-                                        <th class="text-center fai-col-idx">#</th>
                                         <th class="text-left fai-col-workid">Work ID</th>
                                         <th class="text-left fai-col-pn">PN</th>
                                         <th class="text-left fai-col-custpo">Cust PO</th>
@@ -931,7 +929,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="faiRejDetailTbody">
-                                    <tr><td colspan="10" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="9" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>

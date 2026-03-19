@@ -12,7 +12,6 @@
         };
     @endphp
     <tr class="table-warning">
-        <td class="text-center fai-col-idx">{{ $i + 1 }}</td>
         <td class="text-left fai-col-workid">{{ $r->work_id }}</td>
         <td class="text-left fai-col-pn">{{ $r->PN }}</td>
         <td class="text-left fai-col-custpo">{{ $r->cust_po }}</td>
@@ -34,7 +33,7 @@
     </tr>
 @empty
     <tr>
-        <td colspan="10" class="text-center text-muted py-3">No results.</td>
+        <td colspan="9" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
 
