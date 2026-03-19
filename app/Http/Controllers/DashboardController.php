@@ -114,11 +114,28 @@ class DashboardController extends Controller
             ];
         }
 
+        [$summaryTitle, $summaryHeadings, $summaryRows] = $quarter
+            ? $this->buildOtdQuarterSummary($year, $quarter)
+            : [null, [], []];
+
+        $exportHeadings = ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Days', 'Status'];
+        if ($quarter) {
+            $exportHeadings[] = 'Period Month';
+            foreach ($exportRows as $index => $row) {
+                $dueValue = $items->values()->get($index)?->due_date;
+                $exportRows[$index][] = $dueValue ? $this->monthNameEn((int) \Carbon\Carbon::parse($dueValue)->format('n')) : '';
+            }
+        }
+
         return Excel::download(
             new DashboardDetailExport(
                 $title,
-                ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Days', 'Status'],
+                $exportHeadings,
                 $exportRows,
+                $summaryTitle,
+                $summaryHeadings,
+                $summaryRows,
+                $quarter ? 'otd' : null,
             ),
             'otd-details-' . $year . '-' . ($quarter ? ('q' . $quarter) : str_pad((string) $month, 2, '0', STR_PAD_LEFT)) . '.xlsx',
         );
@@ -217,11 +234,30 @@ class DashboardController extends Controller
             ];
         }
 
+        [$summaryTitle, $summaryHeadings, $summaryRows, $summaryTotals] = $quarter
+            ? $this->buildFaiQuarterSummary($year, $quarter)
+            : [null, [], [], []];
+
+        $exportHeadings = ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Fail Ops'];
+        if ($quarter) {
+            $exportHeadings[] = 'Period Month';
+            $exportHeadings[] = 'Period Total';
+            foreach ($items->values() as $index => $item) {
+                $monthKey = $item->fai_date ? $this->monthNameEn((int) \Carbon\Carbon::parse($item->fai_date)->format('n')) : '';
+                $exportRows[$index][] = $monthKey;
+                $exportRows[$index][] = (int) ($summaryTotals[$monthKey] ?? 0);
+            }
+        }
+
         return Excel::download(
             new DashboardDetailExport(
                 $title,
-                ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Fail Ops'],
+                $exportHeadings,
                 $exportRows,
+                $summaryTitle,
+                $summaryHeadings,
+                $summaryRows,
+                $quarter ? 'fai' : null,
             ),
             'internal-fai-rejection-details-' . $year . '-' . ($quarter ? ('q' . $quarter) : str_pad((string) $month, 2, '0', STR_PAD_LEFT)) . '.xlsx',
         );
@@ -432,6 +468,53 @@ class DashboardController extends Controller
         }
 
         return [$month];
+    }
+
+    private function buildOtdQuarterSummary(int $year, int $quarter): array
+    {
+        $baseQuery = DB::table('orders_schedule')
+            ->whereNotNull('due_date')
+            ->whereRaw("LOWER(TRIM(status_order)) = 'active'");
+
+        $rows = [];
+        foreach ($this->resolveDashboardPeriodMonths(0, $quarter) as $month) {
+            $stats = $this->computeOtdForMonth(clone $baseQuery, $year, $month);
+            $total = (int) ($stats['total'] ?? 0);
+            $onTime = (int) ($stats['on_time'] ?? 0);
+            $late = max(0, $total - $onTime);
+            $rows[] = [
+                $this->monthNameEn($month),
+                $onTime,
+                $total > 0 ? (($stats['pct'] ?? 0) / 100) : 0,
+                $late,
+                $total > 0 ? ($late / $total) : 0,
+            ];
+        }
+
+        return ['Monthly Summary', ['Month', 'On Time', 'On Time %', 'Late', 'Late %'], $rows];
+    }
+
+    private function buildFaiQuarterSummary(int $year, int $quarter): array
+    {
+        $rows = [];
+        $totals = [];
+        foreach ($this->resolveDashboardPeriodMonths(0, $quarter) as $month) {
+            $base = $this->buildFaiRejBaseQuery($year, $month);
+            $total = (int) (clone $base)->count('qfs.id');
+            $rejects = (int) (clone $base)
+                ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
+                ->count('qfs.id');
+            $monthName = $this->monthNameEn($month);
+            $rows[] = [
+                $monthName,
+                $rejects,
+                $total,
+                $total > 0 ? round($rejects / $total, 4) : 0,
+            ];
+            $totals[$monthName] = $total;
+        }
+
+        return ['Monthly Summary', ['Month', 'Rejects', 'Total', '%'], $rows, $totals];
     }
 
     private function buildOtdRowMeta(object $row): array
