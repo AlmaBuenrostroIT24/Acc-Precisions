@@ -627,17 +627,17 @@ class DashboardController extends Controller
     {
         return [
             ['key' => 'customer_otd', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer On-Time Delivery (OTD)', 'values' => $customerOtdCells, 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'customer_conf', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer Conformance', 'values' => [1 => '98.5% (5)'], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'internal_conf', 'type' => 'QO', 'prcs' => '', 'name' => 'Internal Conformance', 'values' => [1 => '99.4% (2)'], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'cust_survey', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer Satisfaction Surveys', 'values' => [6 => '94.2% 2025.1'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'customer_conf', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer Conformance', 'values' => [], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'internal_conf', 'type' => 'QO', 'prcs' => '', 'name' => 'Internal Conformance', 'values' => [], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'cust_survey', 'type' => 'QO', 'prcs' => '', 'name' => 'Customer Satisfaction Surveys', 'values' => [], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
 
-            ['key' => 'training', 'type' => 'KPI', 'prcs' => '1', 'name' => 'Training Progress (Req. Training/Req. Eval.)', 'values' => [3 => '2/2'], 'goal' => '< 3 / < 2 Eval.', 'goal_class' => 'goal-warn', 'trend' => ''],
-            ['key' => 'planning_ncars', 'type' => 'KPI', 'prcs' => '2', 'name' => 'Planning NCARs', 'values' => [3 => '0'], 'goal' => '< 7', 'goal_class' => 'goal-warn', 'trend' => ''],
-            ['key' => 'ext_otd', 'type' => 'KPI', 'prcs' => '3', 'name' => 'External Provider OTD (Tot. Jobs)', 'values' => [3 => '94.5% (217)'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'ext_conf', 'type' => 'KPI', 'prcs' => '3', 'name' => "External Provider Conformance (Rej.'s)", 'values' => [3 => '99.1% (2)'], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'training', 'type' => 'KPI', 'prcs' => '1', 'name' => 'Training Progress (Req. Training/Req. Eval.)', 'values' => [], 'goal' => '< 3 / < 2 Eval.', 'goal_class' => 'goal-warn', 'trend' => ''],
+            ['key' => 'planning_ncars', 'type' => 'KPI', 'prcs' => '2', 'name' => 'Planning NCARs', 'values' => [], 'goal' => '< 7', 'goal_class' => 'goal-warn', 'trend' => ''],
+            ['key' => 'ext_otd', 'type' => 'KPI', 'prcs' => '3', 'name' => 'External Provider OTD (Tot. Jobs)', 'values' => [], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'ext_conf', 'type' => 'KPI', 'prcs' => '3', 'name' => "External Provider Conformance (Rej.'s)", 'values' => [], 'goal' => '98%', 'goal_class' => '', 'trend' => ''],
             ['key' => 'fai_rej', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Internal FAI Rejection Rate (Rej./Tot.)', 'values' => $faiRejCells, 'goal' => '15%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'work_audit', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Work Audit Conformance', 'values' => [3 => '96.7%'], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
-            ['key' => 'audit_findings', 'type' => 'KPI', 'prcs' => '5', 'name' => 'Internal Audit Findings', 'values' => [9 => '3 in 2025'], 'goal' => '< 15', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'work_audit', 'type' => 'KPI', 'prcs' => '4', 'name' => 'Work Audit Conformance', 'values' => [], 'goal' => '90%', 'goal_class' => '', 'trend' => ''],
+            ['key' => 'audit_findings', 'type' => 'KPI', 'prcs' => '5', 'name' => 'Internal Audit Findings', 'values' => [], 'goal' => '< 15', 'goal_class' => '', 'trend' => ''],
         ];
     }
 
