@@ -37,7 +37,7 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
 
     public function startCell(): string
     {
-        return 'A9';
+        return $this->hasStatusColumn() ? 'A9' : 'A6';
     }
 
     public function drawings()
@@ -66,8 +66,11 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
+                $hasStatusColumn = $this->hasStatusColumn();
+                $headerRow = $hasStatusColumn ? 9 : 6;
+                $dataStart = $headerRow + 1;
                 $lastColumn = $sheet->getHighestColumn();
-                $lastRow = max(9, $sheet->getHighestRow());
+                $lastRow = max($headerRow, $sheet->getHighestRow());
                 $statusIndex = array_search('Status', $this->headings, true);
                 $statusColumn = $statusIndex !== false
                     ? Coordinate::stringFromColumnIndex($statusIndex + 1)
@@ -85,14 +88,16 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
                 $sheet->mergeCells("C5:{$lastColumn}5");
                 $sheet->setCellValue('C5', '');
 
-                $sheet->setCellValue('A6', 'Status Summary');
-                $sheet->mergeCells('A6:D6');
-                $sheet->setCellValue('A7', 'On Time');
-                $sheet->setCellValue('B7', $statusColumn ? '=COUNTIF(' . $statusColumn . '10:' . $statusColumn . $lastRow . ',"On Time")' : 0);
-                $sheet->setCellValue('C7', $statusColumn ? '=IF(COUNTA(' . $statusColumn . '10:' . $statusColumn . $lastRow . ')=0,0,B7/COUNTA(' . $statusColumn . '10:' . $statusColumn . $lastRow . '))' : 0);
-                $sheet->setCellValue('A8', 'Late');
-                $sheet->setCellValue('B8', $statusColumn ? '=COUNTIF(' . $statusColumn . '10:' . $statusColumn . $lastRow . ',"Late")' : 0);
-                $sheet->setCellValue('C8', $statusColumn ? '=IF(COUNTA(' . $statusColumn . '10:' . $statusColumn . $lastRow . ')=0,0,B8/COUNTA(' . $statusColumn . '10:' . $statusColumn . $lastRow . '))' : 0);
+                if ($hasStatusColumn) {
+                    $sheet->setCellValue('A6', 'Status Summary');
+                    $sheet->mergeCells('A6:D6');
+                    $sheet->setCellValue('A7', 'On Time');
+                    $sheet->setCellValue('B7', '=COUNTIF(' . $statusColumn . $dataStart . ':' . $statusColumn . $lastRow . ',"On Time")');
+                    $sheet->setCellValue('C7', '=IF(COUNTA(' . $statusColumn . $dataStart . ':' . $statusColumn . $lastRow . ')=0,0,B7/COUNTA(' . $statusColumn . $dataStart . ':' . $statusColumn . $lastRow . '))');
+                    $sheet->setCellValue('A8', 'Late');
+                    $sheet->setCellValue('B8', '=COUNTIF(' . $statusColumn . $dataStart . ':' . $statusColumn . $lastRow . ',"Late")');
+                    $sheet->setCellValue('C8', '=IF(COUNTA(' . $statusColumn . $dataStart . ':' . $statusColumn . $lastRow . ')=0,0,B8/COUNTA(' . $statusColumn . $dataStart . ':' . $statusColumn . $lastRow . '))');
+                }
 
                 $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->getFont()->setName('Arial');
                 $sheet->getStyle('C1')->applyFromArray([
@@ -115,47 +120,46 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
                     ],
                 ]);
 
-                $sheet->getStyle('A6:D6')->applyFromArray([
-                    'font' => ['bold' => true, 'color' => ['rgb' => '0F172A']],
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'EDF1F6'],
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_LEFT,
-                        'vertical' => Alignment::VERTICAL_CENTER,
-                    ],
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => 'D5D8DD'],
+                if ($hasStatusColumn) {
+                    $sheet->getStyle('A6:D6')->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '0F172A']],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'EDF1F6'],
                         ],
-                    ],
-                ]);
-                $sheet->getStyle('A7:C8')->applyFromArray([
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => 'D5D8DD'],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_LEFT,
+                            'vertical' => Alignment::VERTICAL_CENTER,
                         ],
-                    ],
-                    'alignment' => [
-                        'vertical' => Alignment::VERTICAL_CENTER,
-                    ],
-                ]);
-                $sheet->getStyle('A7:A8')->getFont()->setBold(true);
-                $sheet->getStyle('C7:C8')->getNumberFormat()->setFormatCode('0.0%');
-                $sheet->getStyle('A7:C7')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCFCE7');
-                $sheet->getStyle('A8:C8')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FEE2E2');
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['rgb' => 'D5D8DD'],
+                            ],
+                        ],
+                    ]);
+                    $sheet->getStyle('A7:C8')->applyFromArray([
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['rgb' => 'D5D8DD'],
+                            ],
+                        ],
+                        'alignment' => [
+                            'vertical' => Alignment::VERTICAL_CENTER,
+                        ],
+                    ]);
+                    $sheet->getStyle('A7:A8')->getFont()->setBold(true);
+                    $sheet->getStyle('C7:C8')->getNumberFormat()->setFormatCode('0.0%');
+                    $sheet->getStyle('A7:C7')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCFCE7');
+                    $sheet->getStyle('A8:C8')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FEE2E2');
+                }
 
                 $sheet->getRowDimension(1)->setRowHeight(24);
                 $sheet->getRowDimension(2)->setRowHeight(22);
                 $sheet->getRowDimension(3)->setRowHeight(18);
                 $sheet->getRowDimension(4)->setRowHeight(18);
                 $sheet->getRowDimension(5)->setRowHeight(16);
-
-                $headerRow = 9;
-                $dataStart = 10;
 
                 $sheet->getStyle("A{$headerRow}:{$lastColumn}{$headerRow}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => '0F172A']],
@@ -255,8 +259,13 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
                 $sheet->getPageSetup()->setPrintArea("A1:{$lastColumn}{$lastRow}");
                 $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd($headerRow, $headerRow);
                 $sheet->getSheetView()->setView('pageLayout');
-                $sheet->freezePane('A10');
+                $sheet->freezePane('A' . $dataStart);
             },
         ];
+    }
+
+    private function hasStatusColumn(): bool
+    {
+        return in_array('Status', $this->headings, true);
     }
 }
