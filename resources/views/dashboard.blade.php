@@ -26,6 +26,8 @@
         $otdAllYears = $otdAllYears ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $otdThisMonth = $otdThisMonth ?? ['pct' => null, 'on_time' => 0, 'total' => 0];
         $sentThisMonth = $sentThisMonth ?? 0;
+        $sentYearToDate = $sentYearToDate ?? 0;
+        $sentYearAhead = $sentYearAhead ?? 0;
         $dashboardEndDate = $dashboardEndDate ?? now();
         $currentCalendarYear = (int) now()->year;
         $currentCalendarMonth = (int) now()->month;
@@ -247,7 +249,7 @@
                         'icon' => 'fas fa-check-circle',
                         'label' => 'Sent (Year)',
                         'value' => (string) ((int) $sentThisMonth),
-                        'meta' => 'Due date year',
+                        'meta' => 'Jan-today ' . (int) $sentYearToDate . ' • Ahead ' . (int) $sentYearAhead,
                         'meta_class' => 'text-muted',
                         'ratio' => '',
                         'badge_text' => 'Sent',
@@ -349,7 +351,7 @@
                                     <div class="dashboard-kpi-label">Sent (Year)</div>
                                     <div class="dashboard-kpi-value">{{ (int) $sentThisMonth }}</div>
                                     <div class="dashboard-kpi-meta">
-                                        <span class="text-muted">Due date year</span>
+                                        <span class="text-muted">Jan-today {{ (int) $sentYearToDate }} • Ahead {{ (int) $sentYearAhead }}</span>
                                     </div>
                                 </div>
                                 <div class="dashboard-kpi-right">
@@ -719,7 +721,7 @@
                                         <div class="dashboard-kpi-label">Sent (Year)</div>
                                         <div class="dashboard-kpi-value">{{ (int) $sentThisMonth }}</div>
                                         <div class="dashboard-kpi-meta">
-                                            <span class="text-muted">Due date year</span>
+                                            <span class="text-muted">Jan-today {{ (int) $sentYearToDate }} • Ahead {{ (int) $sentYearAhead }}</span>
                                         </div>
                                     </div>
                                     <div class="dashboard-kpi-right">

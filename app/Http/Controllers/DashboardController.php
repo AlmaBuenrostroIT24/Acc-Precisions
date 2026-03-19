@@ -587,11 +587,18 @@ class DashboardController extends Controller
 
         $currentMonth = (int) $endDate->month;
         $otdThisMonth = $this->computeOtdForMonth(clone $otdBaseQuery, $year, $currentMonth);
-        $sentThisMonth = DB::table('orders_schedule')
+        $sentYearBase = DB::table('orders_schedule')
             ->whereNotNull('due_date')
             ->whereRaw("LOWER(TRIM(status_order)) = 'active'")
             ->whereRaw("LOWER(TRIM(status)) = 'sent'")
-            ->whereRaw('YEAR(due_date) = ?', [$year])
+            ->whereRaw('YEAR(due_date) = ?', [$year]);
+        $todayDate = now()->toDateString();
+        $sentThisMonth = (clone $sentYearBase)->count();
+        $sentYearToDate = (clone $sentYearBase)
+            ->whereDate('due_date', '<=', $todayDate)
+            ->count();
+        $sentYearAhead = (clone $sentYearBase)
+            ->whereDate('due_date', '>', $todayDate)
             ->count();
 
         $lastUpdated = null;
@@ -617,6 +624,8 @@ class DashboardController extends Controller
             'otdAllYears' => $otdAllYears,
             'otdThisMonth' => $otdThisMonth,
             'sentThisMonth' => $sentThisMonth,
+            'sentYearToDate' => $sentYearToDate,
+            'sentYearAhead' => $sentYearAhead,
             'dashboardEndDate' => $endDate,
             'lastUpdatedAt' => $lastUpdated,
             'kpiRows' => $kpiRows,
