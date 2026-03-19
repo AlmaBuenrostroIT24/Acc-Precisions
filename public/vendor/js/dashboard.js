@@ -242,7 +242,7 @@
             noMatchId: 'faiRejDetailNoMatchRow',
             pageClass: 'js-fai-page',
             ariaLabel: 'FAI pagination',
-            colspan: 9,
+            colspan: 10,
         });
     }
 
@@ -272,7 +272,7 @@
         if (!DASHBOARD.faiRejDetailsUrl) return;
 
         const periodLabel = quarter ? quarterLabel(quarter, year) : (monthName(month) + ' ' + year);
-        $('#faiRejDetailTbody').html('<tr><td colspan="9" class="text-center text-muted py-3">Loading...</td></tr>');
+        $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Loading...</td></tr>');
         $('#faiRejDetailMeta').text(periodLabel);
 
         $.get(DASHBOARD.faiRejDetailsUrl, { year, month, quarter })
@@ -288,7 +288,7 @@
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
-                $('#faiRejDetailTbody').html('<tr><td colspan="9" class="text-center text-danger py-3">' + msg + '</td></tr>');
+                $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-danger py-3">' + msg + '</td></tr>');
             });
     }
 
@@ -515,7 +515,7 @@
 
         $('#faiRejDetailModal').on('hidden.bs.modal', function () {
             $('#faiRejDetailMeta').text('Select a month or quarter.');
-            $('#faiRejDetailTbody').html('<tr><td colspan="9" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
+            $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
             $('#faiRejDetailPagination').html('');
             $('#faiRejDetailSearch').val('');
             faiSelected.month = null;

@@ -925,11 +925,12 @@
                                         <th class="text-left fai-col-customer">Customer</th>
                                         <th class="text-center fai-col-due">Due</th>
                                         <th class="text-center fai-col-sent">Sent</th>
+                                        <th class="text-center fai-col-faidate">FAI Date</th>
                                         <th class="text-left fai-col-failops">Fail Ops</th>
                                     </tr>
                                 </thead>
                                 <tbody id="faiRejDetailTbody">
-                                    <tr><td colspan="9" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="10" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>

@@ -210,6 +210,7 @@ class DashboardController extends Controller
                 $row->costumer,
                 $this->formatDashboardDate($row->due_date),
                 $this->formatDashboardDate($row->sent_at),
+                $this->formatDashboardDate($row->fai_date),
                 $row->fail_ops,
                 $row->fail_operations,
             ]);
@@ -230,6 +231,7 @@ class DashboardController extends Controller
                 (string) ($row->costumer ?? ''),
                 $this->formatDashboardDate($row->due_date),
                 $this->formatDashboardDate($row->sent_at),
+                $this->formatDashboardDate($row->fai_date),
                 $failOps > 0 ? trim($failOps . ($ops !== '' ? ' Op: ' . $ops : '')) : '-',
             ];
         }
@@ -238,14 +240,20 @@ class DashboardController extends Controller
             ? $this->buildFaiQuarterSummary($year, $quarter)
             : [null, [], [], []];
 
-        $exportHeadings = ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'Fail Ops'];
+        $exportHeadings = ['#', 'Work ID', 'PN', 'Cust PO', 'CO', 'Part/Description', 'Customer', 'Due', 'Sent', 'FAI Date', 'Fail Ops'];
         if ($quarter) {
             $exportHeadings[] = 'Period Month';
             $exportHeadings[] = 'Period Total';
+            $exportHeadings[] = 'Fail Ops Total';
             foreach ($items->values() as $index => $item) {
-                $monthKey = $item->fai_date ? $this->monthNameEn((int) \Carbon\Carbon::parse($item->fai_date)->format('n')) : '';
+                $monthNumber = (int) ($item->fai_month ?? 0);
+                if ($monthNumber <= 0 && $item->fai_date) {
+                    $monthNumber = (int) \Carbon\Carbon::parse($item->fai_date)->format('n');
+                }
+                $monthKey = $monthNumber > 0 ? $this->monthNameEn($monthNumber) : '';
                 $exportRows[$index][] = $monthKey;
                 $exportRows[$index][] = (int) ($summaryTotals[$monthKey] ?? 0);
+                $exportRows[$index][] = (int) ($item->fail_ops ?? 0);
             }
         }
 
@@ -389,7 +397,7 @@ class DashboardController extends Controller
 
     private function buildFaiRejRowsQuery(int $year, int $month, int $quarter = 0)
     {
-        return $this->buildFaiRejBaseQuery($year, $month, $quarter)
+        $query = $this->buildFaiRejBaseQuery($year, $month, $quarter)
             ->whereRaw("LOWER(TRIM(qfs.results)) IN ('no pass','nopass','no_pass','fail','np')")
             ->selectRaw('
                 orders_schedule.id,
@@ -404,18 +412,26 @@ class DashboardController extends Controller
                 MAX(qfs.date) as fai_date,
                 COUNT(*) as fail_ops,
                 GROUP_CONCAT(DISTINCT NULLIF(TRIM(qfs.operation), \'\') ORDER BY qfs.operation SEPARATOR \', \') as fail_operations
-            ')
-            ->groupBy(
-                'orders_schedule.id',
-                'orders_schedule.work_id',
-                'orders_schedule.co',
-                'orders_schedule.cust_po',
-                'orders_schedule.PN',
-                'orders_schedule.Part_description',
-                'orders_schedule.costumer',
-                'orders_schedule.due_date',
-                'orders_schedule.sent_at',
-            );
+            ');
+
+        $groupBy = [
+            'orders_schedule.id',
+            'orders_schedule.work_id',
+            'orders_schedule.co',
+            'orders_schedule.cust_po',
+            'orders_schedule.PN',
+            'orders_schedule.Part_description',
+            'orders_schedule.costumer',
+            'orders_schedule.due_date',
+            'orders_schedule.sent_at',
+        ];
+
+        if ($quarter > 0) {
+            $query->addSelect(DB::raw('MONTH(qfs.date) as fai_month'));
+            $groupBy[] = DB::raw('MONTH(qfs.date)');
+        }
+
+        return $query->groupBy(...$groupBy);
     }
 
     private function filterDashboardDetailRows(Collection $rows, string $search, callable $toText): Collection

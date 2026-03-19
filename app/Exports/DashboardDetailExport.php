@@ -87,6 +87,10 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
                 $helperTotalColumn = $helperTotalIndex !== false
                     ? Coordinate::stringFromColumnIndex($helperTotalIndex + 1)
                     : null;
+                $helperFailOpsIndex = array_search('Fail Ops Total', $this->headings, true);
+                $helperFailOpsColumn = $helperFailOpsIndex !== false
+                    ? Coordinate::stringFromColumnIndex($helperFailOpsIndex + 1)
+                    : null;
 
                 $sheet->mergeCells('A1:B4');
                 $sheet->mergeCells("C1:{$lastColumn}1");
@@ -308,10 +312,17 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
                                     $rejectsCell = Coordinate::stringFromColumnIndex($summaryStartColumnIndex + 1) . $row;
                                     $totalCell = Coordinate::stringFromColumnIndex($summaryStartColumnIndex + 2) . $row;
                                     $percentageCell = Coordinate::stringFromColumnIndex($summaryStartColumnIndex + 3) . $row;
-                                    $sheet->setCellValue(
-                                        $rejectsCell,
-                                        '=COUNTIF($' . $helperMonthColumn . '$' . $dataStart . ':$' . $helperMonthColumn . '$' . $lastRow . ',' . $monthCell . ')'
-                                    );
+                                    if ($helperFailOpsColumn) {
+                                        $sheet->setCellValue(
+                                            $rejectsCell,
+                                            '=SUMPRODUCT(($' . $helperMonthColumn . '$' . $dataStart . ':$' . $helperMonthColumn . '$' . $lastRow . '=' . $monthCell . ')*($' . $helperFailOpsColumn . '$' . $dataStart . ':$' . $helperFailOpsColumn . '$' . $lastRow . '))'
+                                        );
+                                    } else {
+                                        $sheet->setCellValue(
+                                            $rejectsCell,
+                                            '=COUNTIF($' . $helperMonthColumn . '$' . $dataStart . ':$' . $helperMonthColumn . '$' . $lastRow . ',' . $monthCell . ')'
+                                        );
+                                    }
                                     if ($helperTotalColumn) {
                                         $sheet->setCellValue(
                                             $totalCell,
@@ -471,6 +482,9 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
                 if ($helperTotalColumn) {
                     $sheet->getColumnDimension($helperTotalColumn)->setVisible(false);
                 }
+                if ($helperFailOpsColumn) {
+                    $sheet->getColumnDimension($helperFailOpsColumn)->setVisible(false);
+                }
 
                 $sheet->getPageSetup()
                     ->setOrientation(PageSetup::ORIENTATION_LANDSCAPE)
@@ -505,8 +519,12 @@ class DashboardDetailExport implements FromArray, WithHeadings, WithEvents, Shou
     {
         $lastReservedRow = 5;
 
+        if ($this->hasStatusColumn()) {
+            $lastReservedRow = max($lastReservedRow, 8);
+        }
+
         if ($this->hasMonthlySummary()) {
-            $lastReservedRow = max($lastReservedRow, 7 + count($this->summaryRows));
+            $lastReservedRow = max($lastReservedRow, 7 + count($this->summaryRows) + 1);
         }
 
         return $lastReservedRow + 1;

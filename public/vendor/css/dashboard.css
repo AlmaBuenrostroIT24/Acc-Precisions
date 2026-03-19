@@ -1193,6 +1193,7 @@ table.kpi-report {
 .dashboard-detail-modal .fai-dt-table .fai-col-status,
 .dashboard-detail-modal .fai-dt-table .fai-col-due,
 .dashboard-detail-modal .fai-dt-table .fai-col-sent,
+.dashboard-detail-modal .fai-dt-table .fai-col-faidate,
 .dashboard-detail-modal .fai-dt-table .fai-col-failops {
     white-space: nowrap !important;
 }
@@ -1228,7 +1229,8 @@ table.kpi-report {
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-due,
-.dashboard-detail-modal .fai-dt-table .fai-col-sent {
+.dashboard-detail-modal .fai-dt-table .fai-col-sent,
+.dashboard-detail-modal .fai-dt-table .fai-col-faidate {
     min-width: 92px;
 }
 
