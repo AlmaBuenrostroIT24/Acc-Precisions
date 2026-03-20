@@ -101,82 +101,93 @@ class OrderScheduleImportService
         'cur_break_total_prepay',
     ];
 
+    /**
+     * 🔥 AGRUPACIÓN PADRE / HIJO CORREGIDA
+     */
     public function relabelParents(): void
     {
         DB::transaction(function () {
 
-            // 1) group_key: PN#WORK_ID (normalizado). Si work_id está vacío => group_key = NULL (no agrupar).
-            DB::statement("
-            UPDATE orders_schedule
-            SET group_key = CASE
-                WHEN LOWER(status) <> 'sent'
-                 AND NULLIF(TRIM(work_id),'') IS NOT NULL
-                THEN CONCAT(UPPER(TRIM(PN)), '#', UPPER(TRIM(work_id)))
-                ELSE NULL
-            END
-            WHERE LOWER(status) <> 'sent'
-        ");
+            // 👇 condición base (CORREGIDA)
+            $validCondition = "
+    LOWER(status) = 'sent'
+    AND LOWER(status_order) = 'active'
+";
 
-            // 2) Reiniciar parent_id SOLO para filas agrupables (group_key no nulo)
+            // 1) group_key
             DB::statement("
-            UPDATE orders_schedule
-            SET parent_id = NULL
-            WHERE LOWER(status) <> 'sent'
-              AND group_key IS NOT NULL
-        ");
+                UPDATE orders_schedule
+                SET group_key = CASE
+                    WHEN $validCondition
+                     AND NULLIF(TRIM(work_id),'') IS NOT NULL
+                    THEN CONCAT(UPPER(TRIM(PN)), '#', UPPER(TRIM(work_id)))
+                    ELSE NULL
+                END
+                WHERE $validCondition
+            ");
 
-            // 3) Elegir UN padre por group_key (PN#WORK_ID). Tomamos el MAX(id) del grupo.
+            // 2) reset parent
             DB::statement("
-            UPDATE orders_schedule os
-            JOIN (
-                SELECT group_key, MAX(id) AS parent_id
-                FROM orders_schedule
-                WHERE group_key IS NOT NULL
-                  AND LOWER(status) <> 'sent'
-                GROUP BY group_key
-            ) p ON p.group_key = os.group_key
-            SET os.parent_id = CASE WHEN os.id = p.parent_id THEN NULL ELSE p.parent_id END
-            WHERE os.group_key IS NOT NULL
-              AND LOWER(os.status) <> 'sent'
-        ");
+                UPDATE orders_schedule
+                SET parent_id = NULL
+                WHERE $validCondition
+                  AND group_key IS NOT NULL
+            ");
 
-            // 3.5) Copiar qty -> wo_qty SOLO en hijos con wo_qty vacío/0
+            // 3) seleccionar padre
             DB::statement("
-            UPDATE orders_schedule
-            SET wo_qty = COALESCE(qty,0)
-            WHERE parent_id IS NOT NULL
-              AND (wo_qty IS NULL OR wo_qty = 0)
-        ");
+                UPDATE orders_schedule os
+                JOIN (
+                    SELECT group_key, MAX(id) AS parent_id
+                    FROM orders_schedule
+                    WHERE group_key IS NOT NULL
+                      AND $validCondition
+                    GROUP BY group_key
+                ) p ON p.group_key = os.group_key
+                SET os.parent_id = CASE 
+                    WHEN os.id = p.parent_id THEN NULL 
+                    ELSE p.parent_id 
+                END
+                WHERE os.group_key IS NOT NULL
+                  AND $validCondition
+            ");
 
-            // 4) Totales: suma wo_qty por grupo (solo filas con group_key, o sea, con work_id válido)
+            // 4) copiar qty → wo_qty
             DB::statement("
-            UPDATE orders_schedule p
-            JOIN (
-                SELECT COALESCE(parent_id, id) AS grp_parent_id,
-                       SUM(COALESCE(wo_qty,0))   AS total_qty
-                FROM orders_schedule
-                WHERE group_key IS NOT NULL
-                GROUP BY COALESCE(parent_id, id)
-            ) s ON s.grp_parent_id = p.id
-            SET p.group_wo_qty = s.total_qty
-            WHERE p.parent_id IS NULL
-              AND p.group_key IS NOT NULL
-        ");
+                UPDATE orders_schedule
+                SET wo_qty = COALESCE(qty,0)
+                WHERE parent_id IS NOT NULL
+                  AND (wo_qty IS NULL OR wo_qty = 0)
+            ");
 
-            // 5) Limpiar total en hijos
+            // 5) total del grupo
             DB::statement("
-            UPDATE orders_schedule
-            SET group_wo_qty = NULL
-            WHERE parent_id IS NOT NULL
-              AND group_wo_qty IS NOT NULL
-        ");
+                UPDATE orders_schedule p
+                JOIN (
+                    SELECT COALESCE(parent_id, id) AS grp_parent_id,
+                           SUM(COALESCE(wo_qty,0)) AS total_qty
+                    FROM orders_schedule
+                    WHERE group_key IS NOT NULL
+                    GROUP BY COALESCE(parent_id, id)
+                ) s ON s.grp_parent_id = p.id
+                SET p.group_wo_qty = s.total_qty
+                WHERE p.parent_id IS NULL
+                  AND p.group_key IS NOT NULL
+            ");
 
-            // 6) Opcional: en órdenes sin work_id (group_key NULL) no mostrar total de grupo
+            // 6) limpiar hijos
             DB::statement("
-            UPDATE orders_schedule
-            SET group_wo_qty = NULL
-            WHERE group_key IS NULL
-        ");
+                UPDATE orders_schedule
+                SET group_wo_qty = NULL
+                WHERE parent_id IS NOT NULL
+            ");
+
+            // 7) limpiar sin grupo
+            DB::statement("
+                UPDATE orders_schedule
+                SET group_wo_qty = NULL
+                WHERE group_key IS NULL
+            ");
         });
     }
 
