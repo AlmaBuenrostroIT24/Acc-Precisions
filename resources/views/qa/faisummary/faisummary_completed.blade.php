@@ -52,7 +52,7 @@
                                 <th style="width: 40px;">FAI</th>
                                 <th style="width: 40px;">IPI</th>
                                 <th style="width: 100px;">PROGRESS</th>
-                                <th style="width: 100px;">ACTION</th>
+                                <th style="width: 150px;">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,6 +137,9 @@
                                             <i class="fas fa-download"></i>
                                         </a>
                                         <a href="#" class="btn btn-warning btn-edit-pdf" data-id="{{ $o->id }}">
+                                            <i class="fas fa-reply"></i>
+                                        </a>
+                                        <a href="{{ route('faisummary.completed.events', $o->id) }}" class="btn btn-primary btn-edit-row" data-id="{{ $o->id }}" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     </div>
@@ -674,12 +677,77 @@
     #faicompleteTable tbody td:nth-child(13) {
         text-align: left;
     }
+    #faicompleteTable thead th:nth-child(13),
+    #faicompleteTable tbody td:nth-child(13) {
+        width: 150px !important;
+        min-width: 150px !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+    }
+
+    /* Progress bar estilo ERP */
+    .fai-erp-table .progress {
+        height: 20px !important;
+        border-radius: 10px;
+        background: #eef2f7;
+        border: 1px solid #d8e0ea;
+        box-shadow: none;
+        overflow: hidden;
+    }
+    .fai-erp-table .progress .progress-bar {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: 0;
+        box-shadow: none;
+        background-image: none;
+    }
+    .fai-erp-table .progress .progress-bar.bg-success { background: #22c55e !important; }
+    .fai-erp-table .progress .progress-bar.bg-info    { background: #38bdf8 !important; }
+    .fai-erp-table .progress .progress-bar.bg-warning { background: #facc15 !important; }
+    .fai-erp-table .progress .progress-bar.bg-danger  { background: #ef4444 !important; }
+
+    /* Botones de acción estilo ERP */
+    .fai-erp-table .btn-group.btn-group-sm .btn {
+        background: #f8fafc !important;
+        border: 1px solid #d5dbe3 !important;
+        color: #1f2937 !important;
+        border-radius: 9px !important;
+        min-width: 34px;
+        height: 32px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+    }
+    .fai-erp-table .btn-group.btn-group-sm .btn i {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+    .fai-erp-table .btn-group.btn-group-sm .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+        filter: brightness(1.02);
+    }
+    .fai-erp-table .btn-group.btn-group-sm .btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.10);
+    }
+    .fai-erp-table .btn-group.btn-group-sm .btn-danger i { color: #dc2626; }
+    .fai-erp-table .btn-group.btn-group-sm .btn-info i   { color: #0ea5e9; }
+    .fai-erp-table .btn-group.btn-group-sm .btn-warning i{ color: #f59e0b; }
+    .fai-erp-table .btn-group.btn-group-sm .btn-edit-pdf i { color: #7c3aed !important; }
+    .fai-erp-table .btn-group.btn-group-sm .btn-edit-row i { color: #2563eb !important; }
 
     /* Paginado estilo ERP */
     .dataTables_wrapper .dataTables_paginate {
         margin-top: 0 !important;
         padding-top: 0 !important;
         border-top: 0 !important;
+        margin-left: auto !important;
+        text-align: right !important;
     }
 
     .dataTables_wrapper .dataTables_paginate .pagination {
@@ -690,16 +758,16 @@
         border: 1px solid rgba(15, 23, 42, 0.18) !important;
         background: rgba(241, 245, 249, 0.95) !important;
         color: #0f172a !important;
-        margin: 0 0.16rem !important;
+        margin: 0 0.12rem !important;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
         transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
-        border-radius: 0.65rem !important;
+        border-radius: 0.55rem !important;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
-        padding: 0.22rem 0.72rem !important;
+        padding: 0.34rem 0.68rem !important;
         font-size: 0.95rem !important;
-        line-height: 1.15 !important;
+        line-height: 1.4 !important;
         border: none !important;
         background: transparent !important;
         color: inherit !important;
@@ -712,15 +780,25 @@
         box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
     }
 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.active,
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #94a3b8 !important;
-        border-color: #94a3b8 !important;
+        background: #0b5ed7 !important;
+        border-color: #0b5ed7 !important;
         color: #fff !important;
         font-weight: 700;
     }
 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.active .page-link,
     .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
         color: #fff !important;
+        background: transparent !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.active:hover,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #0a58ca !important;
+        border-color: #0a58ca !important;
+        transform: none;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
@@ -764,6 +842,8 @@
 
     .dataTables_wrapper .row:last-child>div:last-child {
         justify-content: flex-end;
+        margin-left: auto !important;
+        flex: 0 0 auto !important;
     }
 
     /* Alinear fila superior (Show entries + Search) */

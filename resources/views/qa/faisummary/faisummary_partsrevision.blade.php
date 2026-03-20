@@ -9,7 +9,25 @@
 
 @section('content')
 
-<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0 mx-0">
+<div class="row mx-0 mb-2 fai-layout-row">
+  <div class="col-12 px-0">
+    <div class="fai-global-search-wrap d-flex justify-content-end">
+      <div class="input-group fai-global-search">
+        <div class="input-group-prepend">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+        </div>
+        <input id="globalTablesSearch" type="search" class="form-control" placeholder="Search in both tables..." autocomplete="off">
+        <div class="input-group-append">
+          <button id="clearGlobalTablesSearch" class="btn btn-outline-secondary" type="button" title="Clear">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 g-3 mt-0 pt-0 mx-0 fai-grid-row">
   <!-- Pending -->
   <div class="col">
     <div class="card shadow-sm rounded-3 fai-card">
@@ -25,12 +43,9 @@
             </div>
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
-          <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="btn fai-chip fai-chip--gray mr-2 d-none" id="badgePending" style="pointer-events:none;">
-              Total <span class="fai-chip-count">0</span>
-            </span>
-            <div class="dt-filter-slot" data-dt-filter-slot="empty"></div>
-          </div>
+          <span class="btn fai-chip fai-chip--gray ml-auto" id="badgePending" style="pointer-events:none;">
+            Total <span class="fai-chip-count">0</span>
+          </span>
         </div>
         <div class="table-responsive position-relative fai-table-shell">
           <div class="fai-skeleton is-hidden" data-skeleton-for="ordersTableEmpty" aria-hidden="true">
@@ -73,12 +88,9 @@
             </div>
           </div>
           {{-- 2025-12-17: tools a la altura del título (contador + search) --}}
-          <div class="fai-dt-tools d-flex align-items-center ml-auto">
-            <span class="btn fai-chip fai-chip--gray mr-2 d-none" id="badgeProcess" style="pointer-events:none;">
-              Total <span class="fai-chip-count">0</span>
-            </span>
-            <div class="dt-filter-slot" data-dt-filter-slot="process"></div>
-          </div>
+          <span class="btn fai-chip fai-chip--gray ml-auto" id="badgeProcess" style="pointer-events:none;">
+            Total <span class="fai-chip-count">0</span>
+          </span>
         </div>
         <div class="table-responsive position-relative fai-table-shell">
           <div class="fai-skeleton is-hidden" data-skeleton-for="ordersTableProcess" aria-hidden="true">
@@ -96,6 +108,8 @@
               <tr>
                 <th>PART/DESCRIPCIÓN</th>
                 <th>JOB</th>
+                <th>FAI OPS</th>
+                <th>DUE DATE</th>
                 <th>(WIP) FAI + IPI</th>
                 <th class="actions-col">ACTIONS</th>
               </tr>
@@ -119,6 +133,11 @@
 <link rel="stylesheet" href="{{ asset('vendor/select2/dist/css/select2.min.css') }}">
 <style>
   :root {
+    /* Spacing system: 4/8/12/16 */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
     /* Colores ERP (sólidos, derivados de .erp-pill en #orders_endscheduleTable) */
     --erp-warn-border: #eab308;
     --erp-warn-bg: #facc15;
@@ -133,6 +152,108 @@
   /* Card container neutral (sin borde amarillo/verde) */
   .fai-card {
     border: 1px solid rgba(15, 23, 42, 0.10) !important;
+    width: 100%;
+    height: 100%;
+  }
+  .fai-layout-row {
+    margin-bottom: var(--sp-2) !important;
+  }
+  .fai-grid-row {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .fai-global-search-wrap {
+    width: 100%;
+  }
+  .fai-global-search {
+    max-width: 360px;
+  }
+  .fai-global-search .input-group-text {
+    border-radius: 10px 0 0 10px;
+    border: 1px solid #d5d8dd;
+    background: #eef2f7;
+    color: #334155;
+  }
+  .fai-global-search .form-control {
+    border-top: 1px solid #d5d8dd;
+    border-bottom: 1px solid #d5d8dd;
+    border-left: 0;
+    border-right: 0;
+    height: 36px;
+    font-weight: 600;
+  }
+  .fai-global-search .btn {
+    border-radius: 0 10px 10px 0;
+    border: 1px solid #d5d8dd;
+    height: 36px;
+  }
+
+  /* Evitar doble "X" en inputs search (nativa del navegador + botón clear del diseño) */
+  #globalTablesSearch::-webkit-search-cancel-button,
+  .dt-search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+
+  /* Mantener ambas tarjetas con la misma altura */
+  .row.row-cols-1.row-cols-md-2 > .col {
+    display: flex;
+  }
+
+  /* Solo en pantallas amplias: Pending/In Process en la misma fila (38/62) */
+  @media (min-width: 1200px) {
+    .fai-grid-row > .col:first-child {
+      flex: 0 0 38%;
+      max-width: 38%;
+    }
+
+    .fai-grid-row > .col:last-child {
+      flex: 0 0 62%;
+      max-width: 62%;
+    }
+  }
+
+  /* Mitad de pantalla / laptop: bajar In Process debajo de Pending */
+  @media (max-width: 1199.98px) {
+    .fai-grid-row > .col {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+
+    /* Mantener ancho de tabla y mostrar barra horizontal (no comprimir columnas) */
+    .fai-table-shell.table-responsive {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+    }
+
+    #ordersTableEmpty_wrapper {
+      min-width: 760px;
+    }
+
+    #ordersTableProcess_wrapper {
+      min-width: 1080px;
+    }
+
+    .fai-card-title {
+      align-items: flex-start;
+      gap: var(--sp-2);
+    }
+
+    .fai-dt-tools {
+      margin-left: 0 !important;
+      width: 100%;
+      min-height: auto;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .dt-filter-slot {
+      min-width: 0;
+      flex: 1 1 240px;
+    }
   }
 
   /* Evitar scrollbar horizontal "fantasma" por overflow de 1-2px (AdminLTE/DT)
@@ -144,17 +265,18 @@
   } 
 
   /* DataTables wrappers a veces agregan 1px extra */
-  .dataTables_wrapper,
-  .dataTables_wrapper .row,
-  .dataTables_wrapper .col-sm-12,
-  .dataTables_wrapper .col-md-6,
-  .dataTables_wrapper .col-md-12 {
+  #ordersTableEmpty_wrapper,
+  #ordersTableEmpty_wrapper .row,
+  #ordersTableEmpty_wrapper .col-sm-12,
+  #ordersTableEmpty_wrapper .col-md-6,
+  #ordersTableEmpty_wrapper .col-md-12,
+  #ordersTableProcess_wrapper,
+  #ordersTableProcess_wrapper .row,
+  #ordersTableProcess_wrapper .col-sm-12,
+  #ordersTableProcess_wrapper .col-md-6,
+  #ordersTableProcess_wrapper .col-md-12 {
     max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
-
-  .table thead th {
-    white-space: normal; /* permitir salto y evitar overflow */
+    overflow-x: visible !important;
   }
 
   /* Tabla tipo ERP + filas alternadas (gris/blanco) */
@@ -166,21 +288,11 @@
     margin-bottom: 0;
   }
 
-  .fai-dt-table thead th { 
-    background: linear-gradient(180deg, #f7f9fc 0%, #edf1f6 100%); 
-    color: #0f172a; 
-    font-weight: 800; 
-    letter-spacing: .04em; 
-    text-transform: uppercase; 
-    border-bottom: 1px solid #d5d8dd !important; 
-    vertical-align: middle; 
-    padding: 6px 8px; 
-  } 
  
   .fai-dt-table tbody td { 
     color: #111827; 
     vertical-align: middle; 
-    padding: 6px 8px; 
+    padding: var(--sp-2) var(--sp-2); 
   } 
 
   .fai-dt-table tbody tr:nth-child(odd) {
@@ -206,8 +318,8 @@
     right: 0;
     top: 44px; /* deja visible el thead */
     bottom: 0;
-    padding: 10px 10px 12px;
-    background: rgba(255, 255, 255, 0.88);
+    padding: var(--sp-2) var(--sp-2) var(--sp-3);
+    background: transparent;
     border-radius: 10px;
     z-index: 3;
   }
@@ -219,9 +331,9 @@
   .fai-skeleton-row {
     display: grid;
     grid-template-columns: 1.6fr 0.6fr 0.9fr 0.35fr;
-    gap: 10px;
+    gap: var(--sp-2);
     align-items: center;
-    padding: 10px 8px;
+    padding: var(--sp-2) var(--sp-2);
     border-radius: 10px;
   }
 
@@ -256,27 +368,19 @@
   /* Nota: NO ocultamos .dataTables_filter por CSS.
      Si por alguna razón no se logra mover al slot (JS), queremos que el search se vea "normal". */
 
-  .dt-filter-slot .dataTables_filter {
-    display: block !important;
-    margin: 0;
-  }
-
-  .dt-filter-slot .dataTables_filter label {
-    margin: 0;
-    width: 260px;
-  }
-
   .dt-filter-slot {
     min-width: 260px;
     min-height: 34px;
+    display: flex;
+    align-items: center;
   }
 
-  .dt-filter-slot .dataTables_filter input {
+  .dt-filter-slot .dt-search-input {
     width: 100% !important;
     height: 34px;
     border-radius: 10px;
     border: 1px solid #d5d8dd;
-    padding: 6px 10px;
+    padding: var(--sp-2) var(--sp-3);
     background: #fff;
     box-shadow: none;
     color: #0f172a;
@@ -284,7 +388,7 @@
     line-height: 1.2;
   }
 
-  .dt-filter-slot .dataTables_filter input:focus {
+  .dt-filter-slot .dt-search-input:focus {
     border-color: #94a3b8;
     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
     outline: none;
@@ -298,15 +402,16 @@
     background: rgba(148, 163, 184, 0.16);
     border: 1px solid rgba(51, 65, 85, 0.18);
     border-radius: 12px;
-    padding: 6px 8px;
-    gap: 0.35rem;
-    min-height: 46px; /* reserva alto para chip + search (evita salto) */
+    padding: var(--sp-2) var(--sp-2);
+    gap: var(--sp-2);
+    min-height: calc(var(--sp-4) * 3); /* reserva alto para chip + search (evita salto) */
   }
 
   .fai-chip {
     height: 34px;
+    min-width: 88px;
     border-radius: 999px;
-    padding: 6px 10px;
+    padding: var(--sp-2) var(--sp-3);
     border: 1px solid rgba(51, 65, 85, 0.35);
     background: rgba(51, 65, 85, 0.10);
     color: #0f172a;
@@ -321,9 +426,9 @@
     justify-content: center;
     min-width: 26px;
     height: 22px;
-    margin-left: 6px;
+    margin-left: var(--sp-1);
     border-radius: 999px;
-    padding: 0 6px;
+    padding: 0 var(--sp-2);
     background: rgba(51, 65, 85, 0.18);
     color: #0f172a;
     font-weight: 900;
@@ -424,6 +529,22 @@
     display: inline-block;
   }
 
+  /* Indicador ERP: tiene al menos un FAI No Pass */
+  .fai-flag-nopass {
+    background: #fde8e8;
+    border: 1px solid #f5c2c7;
+    color: #b42318;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: var(--sp-1) var(--sp-2);
+    vertical-align: middle;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
   /* Progress tipo ERP (igual que Schedule) */
   .fai-dt-table .progress {
     height: 22px !important;
@@ -450,7 +571,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 8px;
+    padding: 0 var(--sp-2);
     white-space: nowrap;
     font-family: inherit;
     letter-spacing: 0;
@@ -466,7 +587,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 8px;
+    padding: 0 var(--sp-2);
     font-size: 13px; 
     font-weight: 800;
     color: #0f172a;
@@ -487,7 +608,7 @@
     align-items: center;
     justify-content: center;
     height: 24px;
-    padding: 2px 10px;
+    padding: var(--sp-1) var(--sp-3);
     border-radius: 999px;
     border: 1px solid #d5d8dd;
     background: #f8fafc;
@@ -561,7 +682,7 @@
     text-transform: uppercase;
     border-bottom: 1px solid #d5d8dd !important;
     vertical-align: middle;
-    padding: 6px 8px;
+    padding: var(--sp-2) var(--sp-2);
     white-space: nowrap;
   }
 
@@ -569,7 +690,7 @@
     font-size: 14px;
     color: #111827;
     vertical-align: middle;
-    padding: 6px 8px;
+    padding: var(--sp-2) var(--sp-2);
     border-top: 1px solid rgba(15, 23, 42, 0.08);
   }
 
@@ -598,65 +719,33 @@
     color: #0f172a;
   }
 
-  /* Footer/paginación ERP (DataTables) */
-  #ordersTableEmpty_wrapper .dataTables_info,
-  #ordersTableProcess_wrapper .dataTables_info {
-    color: #475569;
-    font-weight: 600;
-    font-size: 0.80rem;
-    line-height: 1.1;
-  }
-
-  #ordersTableEmpty_wrapper .erp-dt-footer,
-  #ordersTableProcess_wrapper .erp-dt-footer {
-    margin-top: 2px; /* pegarlo a la tabla */
-    padding: 0 0 8px;
-  }
-
-  #ordersTableEmpty_wrapper .pagination .page-link,
-  #ordersTableProcess_wrapper .pagination .page-link {
-    border-radius: 8px;
-    margin: 0 2px;
-    border: 1px solid #d5d8dd;
-    background: #f8fafc;
-    color: #1f2937;
-    font-weight: 700;
-    box-shadow: none;
-    font-size: 1rem; /* paginado normal (Bootstrap) */
-    line-height: 1.5;
-    padding: 0.375rem 0.75rem;
-  }
-
-  #ordersTableEmpty_wrapper .pagination .page-item.active .page-link,
-  #ordersTableProcess_wrapper .pagination .page-item.active .page-link {
-    background: #0b5ed7;
-    border-color: #0b5ed7;
-    color: #fff;
-  }
-
-  #ordersTableEmpty_wrapper .pagination .page-item.disabled .page-link,
-  #ordersTableProcess_wrapper .pagination .page-item.disabled .page-link {
-    opacity: .6;
-  }
-
   .card-title-mini {
     font-size: .95rem;
     font-weight: 700;
-    margin-bottom: .45rem;
+    margin-bottom: var(--sp-2);
     display: flex;
     align-items: center;
-    gap: .4rem;
+    gap: var(--sp-2);
     flex-wrap: wrap;
-    padding-bottom: .28rem;
+    padding-bottom: var(--sp-1);
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   /* 2025-12-17: encabezado moderno para Pending/In Process */
   .fai-card-title {
     justify-content: space-between;
-    margin-bottom: 0.25rem;
-    padding-bottom: 0.22rem;
+    margin-bottom: var(--sp-1);
+    padding-bottom: var(--sp-1);
   }
+
+  /* Pending + In Process: subir ligeramente el bloque de título/subtítulo */
+  .fai-grid-row > .col .fai-card-title > .d-flex {
+    transform: translateY(-4px);
+  }
+  .fai-grid-row > .col .fai-card-title > .fai-chip {
+    transform: translateY(-4px);
+  }
+
 
   .fai-title-icon {
     width: 34px;
@@ -689,11 +778,12 @@
 
   /* 2025-12-17: hacer el card-body más compacto en Pending/Process */
   .fai-compact-body {
-    padding: 0.6rem 0.6rem 0.2rem;
+    padding: var(--sp-3) var(--sp-3) var(--sp-1);
+    margin-bottom: 0;
   }
 
   .fai-compact-body .card-title-mini {
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--sp-1);
   }
 
   .actions-col {
@@ -703,7 +793,7 @@
 
   .card-title-mini .badge {
     border-radius: 999px;
-    padding: 0.35rem 0.55rem;
+    padding: var(--sp-1) var(--sp-2);
     font-weight: 700;
   }
 
@@ -711,50 +801,25 @@
   .badge:empty {
     display: none !important;
   }
-
-  /* 2025-12-17: Search alineado con el título del card */
-  .fai-dt-tools .dataTables_filter {
-    margin: 0 !important;
-  }
-
-  .fai-dt-tools .dataTables_filter label {
-    margin: 0 !important;
-  }
-
-  .fai-dt-tools .dataTables_filter input {
-    width: 180px;
-  }
-
-  /* 2025-12-17: evitar que el título se “apachurre” cuando el search ocupa espacio */
-  .card-title-mini > span {
-    white-space: nowrap;
-  }
-
-  .fai-dt-tools {
-    flex: 1 1 auto;
-    justify-content: flex-end;
-    gap: 0.4rem;
-  }
-
-  .dt-filter-slot {
-    display: flex;
-    align-items: center;
-  }
-
   @media (max-width: 575.98px) {
     .fai-dt-tools {
       width: 100%;
       justify-content: flex-start;
     }
 
-    .fai-dt-tools .dataTables_filter input {
+    .dt-filter-slot {
+      flex: 1 1 100%;
       width: 100%;
-      max-width: 220px;
+    }
+
+    .fai-dt-tools .dt-search-input {
+      width: 100%;
+      max-width: none;
     }
   }
 
   /* 2025-12-17: mejoras visuales de tablas (AdminLTE/BS4 + DataTables) */
-  .table-responsive {
+  .fai-table-shell.table-responsive {
     /* 2025-12-17: quitar efecto "cuadro" alrededor de la tabla */
     border: 0;
     border-radius: 0;
@@ -767,12 +832,11 @@
 
   /* En pantallas chicas sí permitir scroll horizontal real */
   @media (max-width: 991.98px) {
-    .table-responsive {
+  .fai-table-shell.table-responsive {
       overflow-x: auto;
     }
   }
-
-  .table {
+  .fai-dt-table {
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
@@ -803,6 +867,15 @@
     font-variant-numeric: tabular-nums;
   }
 
+  #ordersTableProcess td:nth-child(4),
+  #ordersTableProcess th:nth-child(4) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    min-width: 110px;
+    width: 12%;
+    white-space: nowrap;
+  }
+
   /* Columna ACTIONS centrada */
   #ordersTableEmpty td:last-child,
   #ordersTableProcess td:last-child {
@@ -810,31 +883,33 @@
   }
 
   /* 2025-12-17: líneas suaves (sin borde pesado) */
-  .table thead th,
-  .table tbody td {
+  .fai-dt-table thead th,
+  .fai-dt-table tbody td {
     border-top: 0;
     border-left: 0;
     border-right: 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
-
-  .table thead th {
-    font-size: 0.72rem;
+  .fai-dt-table thead th {
+    white-space: normal; /* permitir salto y evitar overflow */
+    font-size: 0.86rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #334155;
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+    letter-spacing: 0.02em;
+    color: #0b0b0b !important;
+    padding: var(--sp-2) var(--sp-3);
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.12);
     vertical-align: middle;
+    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
   }
-
-  .table tbody td {
+  .fai-dt-table tbody td {
     font-size: 0.85rem;
     color: #0f172a;
   }
 
   /* Sticky header dentro del contenedor scroll */
-  .table-responsive thead th {
+  .fai-table-shell.table-responsive thead th {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -855,25 +930,131 @@
     box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
   }
 
-  /* 2025-12-17: encabezado estilo ERP (más contraste y sombra inferior) */
-  .fai-dt-table thead th {
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    color: #1f2937;
-    font-size: 0.86rem;
-    padding: 0.48rem 0.68rem;
-    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-    border-bottom-color: rgba(15, 23, 42, 0.12);
-    box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
-    text-transform: uppercase;
-  }
 
   /* Ancho mínimo para la columna de progreso en In Process */
-  #ordersTableProcess thead th:nth-child(3),
-  #ordersTableProcess tbody td:nth-child(3) {
+  #ordersTableProcess thead th:nth-child(5),
+  #ordersTableProcess tbody td:nth-child(5) {
     width: 18%;
     min-width: 140px;
     text-align: center;
+  }
+
+  /* Columna FAI OPS (3ra): secuencia de checks por operación */
+  #ordersTableProcess thead th:nth-child(3),
+  #ordersTableProcess tbody td:nth-child(3) {
+    text-align: left;
+    min-width: 210px;
+    width: 28%;
+  }
+
+  .fai-op-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+  }
+
+  .fai-op-summary {
+    font-size: 10px;
+    font-weight: 700;
+    color: #334155;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+
+  .fai-op-timeline {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+
+  .fai-op-node {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    white-space: nowrap;
+  }
+
+  .fai-op-node:not(:last-child)::after {
+    content: "";
+    width: var(--sp-2);
+    height: 2px;
+    background: #64748b;
+    border-radius: 999px;
+    margin-left: var(--sp-1);
+  }
+
+  .fai-op-node.is-ok:not(:last-child)::after {
+    background: #16a34a;
+  }
+
+  .fai-op-node.is-fail:not(:last-child)::after {
+    background: #dc2626;
+  }
+
+  .fai-op-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10);
+  }
+
+  .fai-op-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: #334155;
+  }
+
+  .fai-op-node.is-ok .fai-op-dot {
+    background: #dcfce7;
+    border-color: #16a34a;
+    color: #166534;
+    box-shadow: inset 0 -1px 0 rgba(22, 101, 52, 0.18);
+  }
+
+  .fai-op-node.is-pending .fai-op-dot {
+    background: #fff7ed;
+    border-color: #f59e0b;
+    color: #9a3412;
+    box-shadow: inset 0 -1px 0 rgba(154, 52, 18, 0.16);
+  }
+
+  .fai-op-node.is-fail .fai-op-dot {
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #991b1b;
+    box-shadow: inset 0 -1px 0 rgba(153, 27, 27, 0.16);
+  }
+
+  .fai-op-node.is-current .fai-op-dot {
+    border-width: 2px;
+    transform: scale(1.06);
+  }
+
+  .fai-op-node.is-current .fai-op-label {
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  @media (max-width: 991.98px) {
+    .fai-op-timeline {
+      gap: 8px;
+    }
+
+    .fai-op-dot {
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+    }
   }
 
   /* 2025-12-17: bordes redondeados en el encabezado */
@@ -888,7 +1069,7 @@
   }
 
   /* 2025-12-17: hover elegante */
-  .table tbody tr:hover {
+  .fai-dt-table tbody tr:hover {
     background: rgba(13, 110, 253, 0.04);
   }
 
@@ -901,8 +1082,14 @@
     background: rgba(13, 110, 253, 0.05);
   }
 
+  /* Resaltar fila recién editada al volver del modal */
+  .fai-dt-table tbody tr.row-just-updated {
+    background: #e8f6ee !important;
+    box-shadow: inset 4px 0 0 #22a06b;
+  }
+
   .fai-dt-table tbody td {
-    padding: 0.42rem 0.6rem;
+    padding: var(--sp-2) var(--sp-3);
   }
 
   /* Centrar contenido y alinear verticalmente */
@@ -920,78 +1107,96 @@
     text-align: left;
   }
 
+  /* Alinear a la izquierda columna JOB */
+  #ordersTableEmpty thead th:nth-child(2),
+  #ordersTableEmpty tbody td:nth-child(2),
+  #ordersTableProcess thead th:nth-child(2),
+  #ordersTableProcess tbody td:nth-child(2) {
+    text-align: left;
+  }
+
   /* Tabla: ancho completo sin forzar overflow */
-  .table {
+  .fai-dt-table {
     width: 100% !important;
     min-width: 0;
   }
 
   /* Compactar el footer de DataTables para evitar huecos */
-  .dataTables_wrapper .row:last-child {
+#ordersTableEmpty_wrapper .row:last-child,
+#ordersTableProcess_wrapper .row:last-child {
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
   }
-  .dataTables_wrapper .dataTables_info {
+#ordersTableEmpty_wrapper .dataTables_info,
+#ordersTableProcess_wrapper .dataTables_info {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin-top: 0 !important;
   }
-  .dataTables_wrapper .dataTables_paginate {
+#ordersTableEmpty_wrapper .dataTables_paginate,
+#ordersTableProcess_wrapper .dataTables_paginate {
     margin-top: 0 !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
 
   /* 2025-12-17: botones en ACTIONS */
-  .table .btn {
+  .fai-dt-table .btn {
     border-radius: 0.5rem;
     box-shadow: 0 1px 1px rgba(16, 24, 40, 0.06);
     transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
   }
-
-  .table .btn.btn-sm {
-    padding: 0.2rem 0.45rem;
+  .fai-dt-table .btn.btn-sm {
+    padding: var(--sp-1) var(--sp-2);
   }
 
   /* 2025-12-17: icon-buttons cuadrados (más pro y consistentes) */
-  .table .btn:hover {
+  .fai-dt-table .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
     filter: brightness(1.02);
   }
-
-  .table .btn:active {
+  .fai-dt-table .btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 6px rgba(16, 24, 40, 0.10);
   }
-
-  .table .btn:focus {
+  .fai-dt-table .btn:focus {
     outline: none;
     box-shadow: 0 0 0 .2rem rgba(13, 110, 253, 0.18), 0 2px 10px rgba(16, 24, 40, 0.10);
   }
 
   /* 2025-12-17: iconos centrados dentro del botón */
-  .table .btn i,
-  .table .btn .fas,
-  .table .btn .far {
+  .fai-dt-table .btn i,
+  .fai-dt-table .btn .fas,
+  .fai-dt-table .btn .far {
     display: inline-block;
     line-height: 1;
     vertical-align: middle;
   }
 
   /* 2025-12-17: íconos de acciones un poco más grandes */
-  .table .btn i,
-  .table .btn .fas,
-  .table .btn .far {
+  .fai-dt-table .btn i,
+  .fai-dt-table .btn .fas,
+  .fai-dt-table .btn .far {
     font-size: 1.05rem;
   }
 
-/* Controles DataTables */
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate {
+/* Controles DataTables (solo esta vista) */
+#ordersTableEmpty_wrapper .dataTables_length,
+#ordersTableEmpty_wrapper .dataTables_filter,
+#ordersTableEmpty_wrapper .dataTables_info,
+#ordersTableEmpty_wrapper .dataTables_paginate,
+#ordersTableProcess_wrapper .dataTables_length,
+#ordersTableProcess_wrapper .dataTables_filter,
+#ordersTableProcess_wrapper .dataTables_info,
+#ordersTableProcess_wrapper .dataTables_paginate {
   font-size: 0.85rem;
+}
+
+/* Ocultar indicador "processing" (spinner/puntos azules) al buscar */
+#ordersTableEmpty_wrapper .dataTables_processing,
+#ordersTableProcess_wrapper .dataTables_processing {
+  display: none !important;
 }
 
 /* Fondo gris suave en toda la vista */
@@ -1000,21 +1205,25 @@ body .content {
   background: #f5f7fa !important;
 }
 
-  .dataTables_wrapper .dataTables_filter input,
-  .dataTables_wrapper .dataTables_length select {
+#ordersTableEmpty_wrapper .dataTables_filter input,
+#ordersTableEmpty_wrapper .dataTables_length select,
+#ordersTableProcess_wrapper .dataTables_filter input,
+#ordersTableProcess_wrapper .dataTables_length select {
     border-radius: 0.5rem !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
-    padding: 0.25rem 0.5rem !important;
+    padding: var(--sp-1) var(--sp-2) !important;
     height: auto !important;
     background: #fff;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button {
     border-radius: 0.55rem !important;
   }
 
   /* 2025-12-17: paginado más llamativo / moderno */
-  .dataTables_wrapper .dataTables_paginate {
+#ordersTableEmpty_wrapper .dataTables_paginate,
+#ordersTableProcess_wrapper .dataTables_paginate {
     /* 2025-12-17: footer (info + paginate) más compacto */
     margin-top: 0.1rem !important;
     padding-top: 0.1rem !important;
@@ -1022,60 +1231,75 @@ body .content {
   }
 
   /* 2025-12-17: compactar el contenedor UL de paginación (Bootstrap) */
-  .dataTables_wrapper .dataTables_paginate .pagination {
+#ordersTableEmpty_wrapper .dataTables_paginate .pagination,
+#ordersTableProcess_wrapper .dataTables_paginate .pagination {
     margin: 0 !important;
   }
 
   /* Nota: con integración Bootstrap4, el padding real vive en .page-link */
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button {
     border: 1px solid rgba(15, 23, 42, 0.18) !important;
     background: rgba(241, 245, 249, 0.95) !important;
     color: #0f172a !important;
-    margin: 0 0.12rem !important;
+    margin: 0 var(--sp-1) !important;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
     transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
-    /* 2025-12-17: botones de paginación un poco más grandes */
-    padding: 0.375rem 0.75rem !important;
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button .page-link,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button .page-link {
+    /* Tamaño normal (bootstrap-like), conservando estilo ERP */
+    padding: 0.34rem 0.68rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
     border: none !important;
     background: transparent !important;
     color: inherit !important;
     border-radius: 0.5rem;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button:hover,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button:hover {
     background: rgba(226, 232, 240, 1) !important;
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: #94a3b8 !important;
-    border-color: #94a3b8 !important;
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.active,
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.current,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.active,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.current {
+    background: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
     color: #fff !important;
     font-weight: 700;
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.active .page-link,
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.current .page-link,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.active .page-link,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.current .page-link {
     color: #fff !important;
+    background: transparent !important;
   }
 
   /* 2025-12-17: hacer más pequeño el texto de "Showing X to Y..." */
-  .dataTables_wrapper .dataTables_info {
+#ordersTableEmpty_wrapper .dataTables_info,
+#ordersTableProcess_wrapper .dataTables_info {
     padding: 0 !important;
     margin: 0 !important;
     /* 2025-12-17: footer más pequeño (texto info) */
     font-size: 0.82rem !important;
     line-height: 1.2 !important;
     color: rgba(15, 23, 42, 0.80);
+    font-weight: 600;
   }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.disabled,
+#ordersTableEmpty_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.disabled,
+#ordersTableProcess_wrapper .dataTables_paginate .paginate_button.disabled:hover {
   opacity: 0.5;
   transform: none;
   box-shadow: none;
@@ -1094,18 +1318,6 @@ body .content {
 
 /* (se removieron overrides de content-wrapper para evitar saltos de fondo) */
 
-.fai-compact-body {
-  /* ya se redujo padding; evitar agregar espacio extra abajo */
-  margin-bottom: 0;
-}
-
-/* Ajuste: encabezados con texto negro definido */
-#ordersTableEmpty thead th,
-#ordersTableProcess thead th,
-.fai-dt-table thead th,
-.table thead th {
-  color: #0b0b0b !important;
-}
 
 /* NCR modal (ERP style) */
 #ncrModal .modal-content {
@@ -1123,7 +1335,7 @@ body .content {
 #ncrModal .erp-ncr-modal-header {
   background: #fff !important;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
-  padding: 14px 16px !important;
+  padding: var(--sp-3) var(--sp-4) !important;
 }
 
 #ncrModal .erp-ncr-title-icon {
@@ -1148,7 +1360,7 @@ body .content {
 
 #ncrModal .erp-ncr-subtitle {
   display: block !important;
-  margin-top: 2px;
+  margin-top: var(--sp-1);
   font-size: 0.82rem;
   color: #6b7280;
   font-weight: 600;
@@ -1157,7 +1369,7 @@ body .content {
 
 #ncrModal .erp-ncr-modal-body {
   background: #fff;
-  padding: 14px 16px !important;
+  padding: var(--sp-3) var(--sp-4) !important;
   max-height: calc(100vh - 190px) !important;
   overflow: auto;
 }
@@ -1165,12 +1377,12 @@ body .content {
 #ncrModal .erp-ncr-modal-footer {
   background: #fff !important;
   border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
-  padding: 14px 16px !important;
+  padding: var(--sp-3) var(--sp-4) !important;
 }
 
 #ncrModal .erp-ncr-label {
   display: block !important;
-  margin: 0 0 6px !important;
+  margin: 0 0 var(--sp-1) !important;
   color: #6b7280 !important;
   font-weight: 700 !important;
   font-size: 0.78rem !important;
@@ -1190,7 +1402,7 @@ body .content {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
   color: #111827 !important;
   font-weight: 600 !important;
-  padding: 10px 12px !important;
+  padding: var(--sp-2) var(--sp-3) !important;
 }
 
 #ncrModal .erp-ncr-control:focus {
@@ -1216,7 +1428,7 @@ body .content {
   border: 1px solid rgba(15, 23, 42, 0.10) !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
   border-radius: 10px !important;
-  padding: 12px 12px 10px !important;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2) !important;
 }
 
 #ncrModal .erp-ncr-orderbox-title {
@@ -1225,13 +1437,13 @@ body .content {
   font-size: 1.1rem !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  margin-bottom: 10px !important;
+  margin-bottom: var(--sp-2) !important;
 }
 
 #ncrModal .erp-ncr-btn {
   height: 40px !important;
   border-radius: 8px !important;
-  padding: 8px 14px !important;
+  padding: var(--sp-2) var(--sp-3) !important;
   font-weight: 700 !important;
 }
 
@@ -1301,13 +1513,13 @@ body .content {
 #ncrModal .select2-search--dropdown .select2-search__field {
   border: 1px solid rgba(15, 23, 42, 0.12) !important;
   border-radius: 8px !important;
-  padding: 8px 10px !important;
+  padding: var(--sp-2) var(--sp-3) !important;
   height: 40px !important;
   outline: none !important;
 }
 
 #ncrModal .select2-results__option {
-  padding: 8px 10px;
+  padding: var(--sp-2) var(--sp-3);
 }
 
 #ncrModal .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
@@ -1423,22 +1635,62 @@ body .content {
         $woqty: null
       },
       faiDoneOps: new Set(),
-      ipiCountMap: new Map()
+      ipiCountMap: new Map(),
+      justUpdatedOrderId: null,
+      rowHighlightTimer: null
     };
+
+    function setJustUpdatedOrder(orderId) {
+      const id = parseInt(orderId, 10);
+      ctx.justUpdatedOrderId = Number.isFinite(id) && id > 0 ? id : null;
+    }
+
+    function applyJustUpdatedHighlight(api) {
+      const targetId = parseInt(ctx.justUpdatedOrderId, 10);
+      if (!Number.isFinite(targetId) || targetId <= 0) return;
+
+      let targetNode = null;
+      api.rows({ page: 'current' }).every(function() {
+        const rowData = this.data() || {};
+        const rowId = parseInt(rowData.id, 10);
+        if (rowId === targetId) {
+          targetNode = this.node();
+          return false;
+        }
+      });
+
+      if (!targetNode) return;
+
+      const $row = $(targetNode);
+      $row.addClass('row-just-updated');
+      try {
+        targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) {
+        // no-op in browsers that don't support smooth scroll options
+      }
+      if (ctx.rowHighlightTimer) clearTimeout(ctx.rowHighlightTimer);
+      ctx.rowHighlightTimer = setTimeout(() => {
+        $row.removeClass('row-just-updated');
+      }, 2600);
+      ctx.justUpdatedOrderId = null;
+    }
 
     // ================== DataTables ==================
     const TEXT = $.fn.dataTable.render.text();
     const COLUMNS = {
       empty: [{
           data: 'part',
+          width: '56%',
           render: TEXT
         },
         {
           data: 'work_id',
+          width: '16%',
           render: TEXT
         },
         {
           data: 'due_date',
+          width: '18%',
           // 2025-12-17: ordenar por YYYY-MM-DD desde el backend (due_date_sort)
           render: function (data, type, row) {
             if (type === 'sort' || type === 'type') return row?.due_date_sort || data || '';
@@ -1447,25 +1699,50 @@ body .content {
         },
         {
           data: 'actions',
+          width: '10%',
           orderable: false,
           searchable: false
         }
       ],
       process: [{
           data: 'part',
+          width: '34%',
           render: TEXT
         },
         {
           data: 'work_id',
-          render: TEXT
+          width: '12%',
+          render: function(data, type, row) {
+            const val = data || '';
+            if (type === 'sort' || type === 'type') return val;
+            const safe = TEXT.display(val);
+            if (!row?.has_fai_pending) return safe;
+            return `${safe} <span class="badge fai-flag-nopass ml-1" title="At least one operation has FAI No Pass and no FAI Pass yet"><i class="fas fa-exclamation-triangle mr-1"></i>FAI</span>`;
+          }
+        },
+        {
+          data: 'fai_ops',
+          width: '24%',
+          orderable: false,
+          searchable: false
+        },
+        {
+          data: 'due_date',
+          width: '12%',
+          render: function (data, type, row) {
+            if (type === 'sort' || type === 'type') return row?.due_date_sort || data || '';
+            return data || '';
+          }
         },
         {
           data: 'progress',
+          width: '12%',
           orderable: false,
           searchable: false
         },
         {
           data: 'actions',
+          width: '6%',
           orderable: false,
           searchable: false
         }
@@ -1475,13 +1752,17 @@ body .content {
     function makeDT(bucket, badgeSelector) {
       const $table = $('#ordersTable' + (bucket === 'empty' ? 'Empty' : 'Process'));
       const dt = $table.DataTable({
-        responsive: true,
+        responsive: false,
+        autoWidth: false,
         deferRender: true,
-        pageLength: 15,
+        processing: true,
+        serverSide: true,
+        searchDelay: 220,
+        pageLength: 13,
         // 2025-12-17: ocultar "Show entries" (selector de longitud) para un look más limpio
         lengthChange: false,
         // Footer/paginación ERP (igual que Schedule)
-        dom: "frt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
+        dom: "rt<'erp-dt-footer d-flex align-items-center justify-content-between flex-wrap'<'dataTables_info'i><'dataTables_paginate'p>>",
         // 2025-12-17: search sin label y placeholder elegante
         language: {
           search: '',
@@ -1489,35 +1770,25 @@ body .content {
           emptyTable: 'No orders found.',
           zeroRecords: 'No matching orders.'
         },
-        // 2025-12-17: ordenar por due_date en Pending (bucket=empty), mantener JOB en Process
-        order: bucket === 'empty' ? [[2, 'asc']] : [[1, 'desc']],
+        // Orden inicial por DUE DATE (ascendente)
+        order: bucket === 'empty' ? [[2, 'asc']] : [[3, 'asc']],
         rowId: 'id',
         // 2025-12-17: truncar Part/Descripción y dejar tooltip con el texto completo
         createdRow: function(row, data) {
           const partText = String(data?.part || '').trim();
           if (partText) $('td:eq(0)', row).attr('title', partText).addClass('fai-cell-ellipsis');
         },
-        // 2025-12-17: mover el search al header del card (a la altura de PENDING / IN PROCESS)
-        initComplete: function() {
-          const api = this.api();
-          const $container = $(api.table().container());
-          const $filter = $container.find('.dataTables_filter');
-          const $slot = $(`.dt-filter-slot[data-dt-filter-slot="${bucket}"]`);
-          if ($slot.length && $filter.length) { 
-            $filter.show().appendTo($slot); 
-          } 
-        }, 
         ajax: {
           url: ROUTES.partsData,
-          data: {
-            bucket
+          data: function(d) {
+            d.bucket = bucket;
           },
           dataType: 'json',
           headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
           },
-          dataSrc: (json) => (Array.isArray(json?.data) ? json.data : [])
+          dataSrc: 'data'
         },
         columns: COLUMNS[bucket],
         drawCallback: function() {
@@ -1526,7 +1797,6 @@ body .content {
           // Mostrar badge solo cuando haya datos; ocultar si es 0 o vacío
           const $chip = $(badgeSelector);
           if ($chip.length) {
-            $chip.toggleClass('d-none', !total);
             $chip.find('.fai-chip-count').text(total > 0 ? total : 0);
           }
 
@@ -1561,6 +1831,8 @@ body .content {
             if (!$wrap.length) return;
             applyProgressUI($wrap, pct);
           });
+
+          applyJustUpdatedHighlight(api);
         }
       });
 
@@ -1568,6 +1840,7 @@ body .content {
       const tableId = dt.table().node()?.id;
       const $skeleton = tableId ? $(`[data-skeleton-for="${tableId}"]`) : $();
       let skTimer = null;
+      let hasLoadedOnce = false;
 
       function hideSkeleton() {
         if (skTimer) {
@@ -1585,9 +1858,18 @@ body .content {
         }, 250);
       }
 
-      $table.on('preXhr.dt', maybeShowSkeleton);
-      $table.on('xhr.dt', hideSkeleton);
-      $table.on('error.dt', hideSkeleton);
+      $table.on('preXhr.dt', function() {
+        // En la primera carga evitamos overlay para quitar "pantalla gris / salto".
+        if (hasLoadedOnce) maybeShowSkeleton();
+      });
+      $table.on('xhr.dt', function() {
+        hasLoadedOnce = true;
+        hideSkeleton();
+      });
+      $table.on('error.dt', function() {
+        hasLoadedOnce = true;
+        hideSkeleton();
+      });
 
       // Asegurar oculto al cargar inicialmente
       hideSkeleton();
@@ -1597,8 +1879,29 @@ body .content {
 
     // Init 
     $(function() { 
-      ctx.dtEmpty = makeDT('empty', '#badgePending'); 
       ctx.dtProcess = makeDT('process', '#badgeProcess'); 
+      setTimeout(() => {
+        ctx.dtEmpty = makeDT('empty', '#badgePending'); 
+        const globalVal = String($('#globalTablesSearch').val() || '').trim();
+        if (globalVal && ctx.dtEmpty) {
+          ctx.dtEmpty.search(globalVal).draw();
+        }
+      }, 160);
+
+      const applyGlobalTablesSearch = debounce((term) => {
+        const q = String(term || '').trim();
+        if (ctx.dtProcess) ctx.dtProcess.search(q).draw();
+        if (ctx.dtEmpty) ctx.dtEmpty.search(q).draw();
+      }, 160);
+
+      $('#globalTablesSearch').on('input', function() {
+        applyGlobalTablesSearch(this.value);
+      });
+
+      $('#clearGlobalTablesSearch').on('click', function() {
+        $('#globalTablesSearch').val('');
+        applyGlobalTablesSearch('');
+      });
  
       // ---------------------- NCR (modal + guardar) ---------------------- 
       const decodeHtml = function(v) { 
@@ -2314,6 +2617,7 @@ body .content {
 
 
     $('#editModal').on('hidden.bs.modal', function() {
+      setJustUpdatedOrder($('#order-id').val());
       if (ctx.dtEmpty) ctx.dtEmpty.ajax.reload(null, false);
       if (ctx.dtProcess) ctx.dtProcess.ajax.reload(null, false);
 

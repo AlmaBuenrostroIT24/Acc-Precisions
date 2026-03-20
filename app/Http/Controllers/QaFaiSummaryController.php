@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\QaFaiSummary;
+use App\Models\OrderScheduleLog;
 use Illuminate\Http\Request;
 use App\Models\OrderSchedule;
 use Illuminate\Support\Facades\Log;
@@ -39,8 +40,14 @@ class QaFaiSummaryController extends Controller
     {
         try {
             $bucket = $request->query('bucket');
+            $draw = (int) $request->input('draw', 0);
             if (!in_array($bucket, ['empty', 'process'], true)) {
-                return response()->json(['data' => []]);
+                return response()->json([
+                    'draw' => $draw,
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0,
+                    'data' => [],
+                ]);
             }
 
             $user = auth()->user();
@@ -81,7 +88,16 @@ class QaFaiSummaryController extends Controller
 
             $hasNcrCols = Schema::hasColumn('orders_schedule', 'ncr_number') && Schema::hasColumn('orders_schedule', 'ncr_notes');
 
-            $rows = OrderSchedule::query()
+            $start = max(0, (int) $request->input('start', 0));
+            $length = (int) $request->input('length', 15);
+            if ($length <= 0) {
+                $length = 15;
+            }
+            $searchValue = trim((string) data_get($request->all(), 'search.value', ''));
+            $orderColIndex = (int) data_get($request->all(), 'order.0.column', ($bucket === 'empty' ? 2 : 3));
+            $orderDir = strtolower((string) data_get($request->all(), 'order.0.dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+            $baseQuery = OrderSchedule::query()
                 ->select($select)
                 ->where('status', '<>', 'sent')
                 ->where('status_order', '!=', 'inactive')
@@ -112,14 +128,119 @@ class QaFaiSummaryController extends Controller
                             ->orWhere('status_inspection', 'pending')
                     ),
                     fn($q) => $q->where('status_inspection', 'in_progress')
-                )
-                ->orderByDesc('due_date')
+                );
+
+            $recordsTotal = (clone $baseQuery)->count();
+
+            if ($searchValue !== '') {
+                $searchLike = '%' . $searchValue . '%';
+                $baseQuery->where(function ($q) use ($searchLike) {
+                    $q->where('PN', 'like', $searchLike)
+                        ->orWhere('Part_description', 'like', $searchLike)
+                        ->orWhere('work_id', 'like', $searchLike)
+                        ->orWhereRaw("DATE_FORMAT(due_date, '%b/%d/%Y') like ?", [$searchLike])
+                        ->orWhereRaw("DATE_FORMAT(due_date, '%Y-%m-%d') like ?", [$searchLike]);
+                });
+            }
+
+            $recordsFiltered = (clone $baseQuery)->count();
+
+            $orderMap = $bucket === 'empty'
+                ? [0 => 'PN', 1 => 'work_id', 2 => 'due_date']
+                : [0 => 'PN', 1 => 'work_id', 3 => 'due_date'];
+            $orderColumn = $orderMap[$orderColIndex] ?? 'due_date';
+
+            $rows = $baseQuery
+                ->orderBy($orderColumn, $orderDir)
+                ->offset($start)
+                ->limit($length)
                 ->get();
+
+            $orderIds = ($bucket === 'process')
+                ? $rows->pluck('id')->filter()->map(fn($v) => (int) $v)->values()->all()
+                : [];
+
+            // FAI por operación (pass/fail) para estado de timeline y bandera pendiente
+            $faiPendingMap = [];
+            $faiOpsMetaMap = [];
+            $passAggMap = [];
+            $qaQtyExpr = '1';
+            if ($bucket === 'process' && !empty($orderIds)) {
+                $qaQtyExpr = Schema::hasColumn('qa_faisummary', 'qty_pcs')
+                    ? 'qty_pcs'
+                    : (Schema::hasColumn('qa_faisummary', 'sample_idx')
+                        ? 'sample_idx'
+                        : '1');
+
+                $faiOpRows = DB::table('qa_faisummary')
+                    ->select([
+                        'order_schedule_id',
+                        'operation',
+                        DB::raw("SUM(CASE WHEN LOWER(TRIM(COALESCE(results,''))) = 'pass' THEN 1 ELSE 0 END) as pass_cnt"),
+                        DB::raw("SUM(CASE WHEN LOWER(TRIM(COALESCE(results,''))) IN ('no pass','nopass','no_pass','fail') THEN 1 ELSE 0 END) as fail_cnt"),
+                    ])
+                    ->whereIn('order_schedule_id', $orderIds)
+                    ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'FAI'")
+                    ->groupBy('order_schedule_id', 'operation')
+                    ->get();
+
+                foreach ($faiOpRows as $fr) {
+                    $oid = (int) ($fr->order_schedule_id ?? 0);
+                    $op = trim((string) ($fr->operation ?? ''));
+                    $hasPass = (int) ($fr->pass_cnt ?? 0) > 0;
+                    $hasFail = (int) ($fr->fail_cnt ?? 0) > 0;
+                    if ($oid > 0 && $op !== '') {
+                        $status = $hasPass ? 'ok' : ($hasFail ? 'fail' : 'pending');
+                        if (!isset($faiOpsMetaMap[$oid])) {
+                            $faiOpsMetaMap[$oid] = [];
+                        }
+                        $faiOpsMetaMap[$oid][$op] = [
+                            'pass_cnt' => (int) ($fr->pass_cnt ?? 0),
+                            'fail_cnt' => (int) ($fr->fail_cnt ?? 0),
+                            'status' => $status,
+                        ];
+                    }
+                    if ($oid > 0 && $hasFail && !$hasPass) {
+                        $faiPendingMap[$oid] = true;
+                    }
+                }
+
+                // Agregado de PASS por orden/op/tipo para evitar query por cada fila (N+1)
+                $passAggRows = DB::table('qa_faisummary')
+                    ->select([
+                        'order_schedule_id',
+                        'operation',
+                        'insp_type',
+                        DB::raw("SUM(COALESCE($qaQtyExpr,1)) as qty"),
+                    ])
+                    ->whereIn('order_schedule_id', $orderIds)
+                    ->whereRaw('LOWER(results) = ?', ['pass'])
+                    ->groupBy('order_schedule_id', 'operation', 'insp_type')
+                    ->get();
+
+                foreach ($passAggRows as $pr) {
+                    $oid = (int) ($pr->order_schedule_id ?? 0);
+                    $op = trim((string) ($pr->operation ?? ''));
+                    if ($oid <= 0 || $op === '') {
+                        continue;
+                    }
+                    $type = strtoupper(trim((string) ($pr->insp_type ?? '')));
+                    if ($type !== 'FAI' && $type !== 'IPI') {
+                        continue;
+                    }
+                    if (!isset($passAggMap[$oid])) {
+                        $passAggMap[$oid] = [];
+                    }
+                    if (!isset($passAggMap[$oid][$op])) {
+                        $passAggMap[$oid][$op] = ['FAI' => 0, 'IPI' => 0];
+                    }
+                    $passAggMap[$oid][$op][$type] += (int) ($pr->qty ?? 0);
+                }
+            }
 
             // NCAR status per order (internal/external) for UI indicator in Process table
             $ncarMap = [];
             if ($bucket === 'process' && Schema::hasTable('qa_ncar') && Schema::hasTable('qa_ncartype')) {
-                $orderIds = $rows->pluck('id')->filter()->map(fn($v) => (int) $v)->values()->all();
                 if (!empty($orderIds)) {
                     $ncarRows = DB::table('qa_ncar as n')
                         ->join('qa_ncartype as t', 't.id', '=', 'n.ncartype_id')
@@ -155,7 +276,7 @@ class QaFaiSummaryController extends Controller
             }
 
 
-            $opName = function (int $i): string {
+            $opKey = function (int $i): string {
                 return match ($i) {
                     1 => '1st Op',
                     2 => '2nd Op',
@@ -164,10 +285,19 @@ class QaFaiSummaryController extends Controller
                 };
             };
 
+            $opLabel = function (int $i): string {
+                return match ($i) {
+                    1 => '1st',
+                    2 => '2nd',
+                    3 => '3rd',
+                    default => "{$i}th"
+                };
+            };
+
             $updates = [];
 
             // 👇 capturamos &$updates por referencia
-            $data = $rows->map(function ($r) use ($bucket, $opName, $hasNcrCols, $ncarMap, $hasQtyCol, &$updates) {
+            $data = $rows->map(function ($r) use ($bucket, $opKey, $opLabel, $hasNcrCols, $ncarMap, $faiPendingMap, $faiOpsMetaMap, $passAggMap, $hasQtyCol, &$updates) {
                 $pn   = trim((string) $r->PN);
                 $desc = trim(\Illuminate\Support\Str::before((string) $r->Part_description, ','));
                 $part = $pn . ' - ' . $desc;
@@ -266,6 +396,8 @@ class QaFaiSummaryController extends Controller
                     'id'             => (int) $r->id,
                     'part'           => $part,
                     'work_id'        => trim((string) $r->work_id),
+                    'has_fai_pending' => !empty($faiPendingMap[(int)($r->id ?? 0)]),
+                    'fai_ops'        => '',
                     'actions'        => '<div class="btn-group btn-group-sm">' . $btn . $btnOther . '</div>',
                     'ops'            => (int) ($r->operation ?? 0),
                     'wo_qty'         => $sum,
@@ -283,6 +415,7 @@ class QaFaiSummaryController extends Controller
                     if ($ops === 0 && $sampling === 0) {
                         $pct = 100;
 
+                        $row['fai_ops'] = '<span class="text-muted">N/A</span>';
                         $row['progress'] = '<span class="badge badge-info">Done</span>';
                         $row['progress_pct'] = $pct;
 
@@ -305,33 +438,41 @@ class QaFaiSummaryController extends Controller
                     $done     = 0;
 
                     if ($ops > 0) {
-                        $qtyExpr = \Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'qty_pcs')
-                            ? 'qty_pcs'
-                            : (\Illuminate\Support\Facades\Schema::hasColumn('qa_faisummary', 'sample_idx')
-                                ? 'sample_idx'
-                                : '1');
-
-                        $pass = DB::table('qa_faisummary')
-                            ->select('operation', 'insp_type', DB::raw("SUM(COALESCE($qtyExpr,1)) as qty"))
-                            ->where('order_schedule_id', $r->id)
-                            ->whereRaw('LOWER(results) = ?', ['pass'])
-                            ->groupBy('operation', 'insp_type')
-                            ->get();
-
-                        $fai = [];
-                        $ipi = [];
-                        foreach ($pass as $p) {
-                            $name = (string) $p->operation;
-                            $q    = (int) $p->qty;
-                            $type = strtoupper((string) $p->insp_type);
-                            if ($type === 'FAI') $fai[$name] = ($fai[$name] ?? 0) + $q;
-                            if ($type === 'IPI') $ipi[$name] = ($ipi[$name] ?? 0) + $q;
-                        }
+                        $orderPass = $passAggMap[(int) ($r->id ?? 0)] ?? [];
 
                         for ($i = 1; $i <= $ops; $i++) {
-                            $name = $opName($i);
-                            $done += min($fai[$name] ?? 0, 1) + min($ipi[$name] ?? 0, $ipiReq);
+                            $key = $opKey($i);
+                            $faiQty = (int) ($orderPass[$key]['FAI'] ?? 0);
+                            $ipiQty = (int) ($orderPass[$key]['IPI'] ?? 0);
+                            $done += min($faiQty, 1) + min($ipiQty, $ipiReq);
                         }
+
+                        $faiOpsNodes = [];
+                        $currentOp = 0;
+                        for ($i = 1; $i <= $ops; $i++) {
+                            $key = $opKey($i);
+                            $label = $opLabel($i);
+                            $meta = $faiOpsMetaMap[(int) ($r->id ?? 0)][$key] ?? null;
+                            $state = (string) ($meta['status'] ?? 'pending');
+                            $passCnt = (int) ($meta['pass_cnt'] ?? 0);
+                            $failCnt = (int) ($meta['fail_cnt'] ?? 0);
+                            if ($state !== 'ok' && $currentOp === 0) {
+                                $currentOp = $i;
+                            }
+
+                            $nodeClass = $state === 'ok' ? 'is-ok' : ($state === 'fail' ? 'is-fail' : 'is-pending');
+                            $stateText = $state === 'ok' ? 'PASS' : ($state === 'fail' ? 'NO PASS' : 'PENDING');
+                            $icon = $state === 'ok' ? '&#10003;' : ($state === 'fail' ? '&#10007;' : '&#9716;');
+                            $isCurrent = ($currentOp > 0 && $currentOp === $i) ? ' is-current' : '';
+                            $tip = $label . ' | ' . $stateText . ' | Pass: ' . $passCnt . ' | No Pass: ' . $failCnt;
+                            $faiOpsNodes[] = '<span class="fai-op-node ' . $nodeClass . $isCurrent . '" title="' . e($tip) . '">'
+                                . '<span class="fai-op-dot">' . $icon . '</span>'
+                                . '<span class="fai-op-label">' . e($label) . '</span>'
+                                . '</span>';
+                        }
+                        $row['fai_ops'] = '<div class="fai-op-timeline">' . implode('', $faiOpsNodes) . '</div>';
+                    } else {
+                        $row['fai_ops'] = '<span class="text-muted">N/A</span>';
                     }
 
                     $pct = $totalReq > 0 ? (int) round(($done / $totalReq) * 100) : 0;
@@ -371,15 +512,32 @@ class QaFaiSummaryController extends Controller
             }
 
             return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => $recordsTotal,
+                'recordsFiltered' => $recordsFiltered,
                 'data' => $data->values()->all(),
             ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (\Throwable $e) {
-            /* Log::error('partsrevisionData error', [
-            'msg' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-        ]); */
-            return response()->json(['data' => [], 'error' => 'Server error'], 500);
+            Log::error('partsrevisionData error', [
+                'msg' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'bucket' => $request->query('bucket'),
+                'draw' => (int) $request->input('draw', 0),
+                'start' => (int) $request->input('start', 0),
+                'length' => (int) $request->input('length', 0),
+                'search' => (string) data_get($request->all(), 'search.value', ''),
+                'order' => $request->input('order', []),
+                'user_id' => optional(auth()->user())->id,
+            ]);
+            $draw = (int) $request->input('draw', 0);
+            return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Server error',
+            ], 500);
         }
     }
 
@@ -438,7 +596,7 @@ class QaFaiSummaryController extends Controller
         //Log::info('storeSingle called', $request->all());
         $validated = $request->validate([
             'order_schedule_id' => 'required|exists:orders_schedule,id',
-            'date' => 'required|date_format:Y-m-d',
+            'date' => 'required|date',
             'insp_type' => 'required|in:FAI,IPI',
             'operation' => 'required|string',
             'operator' => 'nullable|string',
@@ -457,8 +615,8 @@ class QaFaiSummaryController extends Controller
             $validated['qty_process'] = 1;
         }
 
-        // ⭐ Convertir fecha a datetime agregando la hora actual
-        $validated['date'] = $validated['date'] . ' ' . now()->format('H:i:s');
+        // Permite fecha sola o fecha+hora (datetime-local) y la guarda como datetime completo.
+        $validated['date'] = \Carbon\Carbon::parse($validated['date'])->format('Y-m-d H:i:s');
 
         // 🔍 Obtener la ubicación del order_schedule
         $order = \App\Models\OrderSchedule::find($validated['order_schedule_id']);
@@ -765,6 +923,387 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.faisummary_summary', $data);
     }
 
+    public function generalData(Request $request)
+    {
+        $draw = (int) $request->input('draw', 1);
+        $start = max(0, (int) $request->input('start', 0));
+        $length = (int) $request->input('length', 14);
+        if ($length < 1) $length = 14;
+        if ($length > 200) $length = 200;
+
+        $globalSearch = trim((string) $request->input('search.value', ''));
+        $focusOrderId = (int) $request->input('focus_order_id', 0);
+        $focusWorkId = trim((string) $request->input('focus_work_id', ''));
+        $focusPn = trim((string) $request->input('focus_pn', ''));
+        $focusMonths = (int) $request->input('focus_months', 12);
+        $focusMonths = max(1, min($focusMonths, 60));
+
+        $buildBase = function () {
+            return DB::table('qa_faisummary as qfs')
+                ->leftJoin('orders_schedule as os', 'os.id', '=', 'qfs.order_schedule_id');
+        };
+
+        $applyBaseFilters = function ($q, bool $ignoreDateForSearch = false) use (
+            $request,
+            $focusOrderId,
+            $focusWorkId,
+            $focusPn,
+            $focusMonths
+        ) {
+            if ($request->filled('operator')) {
+                $q->where('qfs.operator', $request->input('operator'));
+            }
+            if ($request->filled('inspector')) {
+                $q->where('qfs.inspector', $request->input('inspector'));
+            }
+            if ($request->filled('location')) {
+                $q->where('qfs.loc_inspection', $request->input('location'));
+            }
+
+            if ($focusOrderId > 0) {
+                $focusOrder = OrderSchedule::query()->select('id', 'work_id', 'PN')->find($focusOrderId);
+                if ($focusOrder) {
+                    $focusWork = trim((string) $focusOrder->work_id);
+                    $focusPart = trim((string) $focusOrder->PN);
+                    $q->where(function ($w) use ($focusOrderId, $focusWork, $focusPart) {
+                        $w->where('qfs.order_schedule_id', $focusOrderId);
+                        if ($focusWork !== '' || $focusPart !== '') {
+                            $w->orWhere(function ($x) use ($focusWork, $focusPart) {
+                                if ($focusWork !== '') $x->where('os.work_id', $focusWork);
+                                if ($focusPart !== '') $x->where('os.PN', $focusPart);
+                            });
+                        }
+                    });
+                } else {
+                    $q->where('qfs.order_schedule_id', $focusOrderId);
+                }
+            } elseif ($focusWorkId !== '' || $focusPn !== '') {
+                $q->where(function ($w) use ($focusWorkId, $focusPn) {
+                    if ($focusWorkId !== '') $w->where('os.work_id', $focusWorkId);
+                    if ($focusPn !== '') $w->where('os.PN', $focusPn);
+                });
+            }
+
+            if ($focusOrderId > 0 || $focusWorkId !== '' || $focusPn !== '') {
+                $q->where('qfs.date', '>=', now()->subMonthsNoOverflow($focusMonths)->startOfDay());
+            }
+
+            if ($ignoreDateForSearch) {
+                return;
+            }
+
+            if ($request->filled('day')) {
+                $q->whereDate('qfs.date', $request->input('day'));
+                return;
+            }
+
+            if ($request->filled('year')) {
+                $q->whereYear('qfs.date', (int) $request->input('year'));
+            }
+            if ($request->filled('month')) {
+                $q->whereMonth('qfs.date', (int) $request->input('month'));
+            }
+
+            if (!$request->filled('year') && !$request->filled('month') && $focusOrderId <= 0 && $focusWorkId === '' && $focusPn === '') {
+                $q->whereBetween('qfs.date', [now()->startOfMonth(), now()->endOfMonth()]);
+            }
+        };
+
+        $recordsTotalQuery = $buildBase();
+        $applyBaseFilters($recordsTotalQuery, false);
+        $recordsTotal = (int) $recordsTotalQuery->count('qfs.id');
+
+        $filteredQuery = $buildBase();
+        $applyBaseFilters($filteredQuery, $globalSearch !== '');
+
+        if ($globalSearch !== '') {
+            $like = '%' . $globalSearch . '%';
+            $filteredQuery->where(function ($w) use ($like) {
+                $w->where('qfs.operator', 'like', $like)
+                    ->orWhere('qfs.inspector', 'like', $like)
+                    ->orWhere('qfs.loc_inspection', 'like', $like)
+                    ->orWhere('qfs.operation', 'like', $like)
+                    ->orWhere('qfs.insp_type', 'like', $like)
+                    ->orWhere('qfs.results', 'like', $like)
+                    ->orWhere('qfs.station', 'like', $like)
+                    ->orWhere('qfs.method', 'like', $like)
+                    ->orWhere('qfs.sb_is', 'like', $like)
+                    ->orWhere('qfs.observation', 'like', $like)
+                    ->orWhere('os.work_id', 'like', $like)
+                    ->orWhere('os.PN', 'like', $like);
+            });
+        }
+
+        $columnFilters = (array) $request->input('columns', []);
+        $colMap = [
+            0 => 'qfs.date',
+            1 => 'os.PN',
+            2 => 'os.work_id',
+            3 => 'qfs.insp_type',
+            4 => 'qfs.operation',
+            5 => 'qfs.operator',
+            6 => 'qfs.results',
+            9 => 'qfs.station',
+            10 => 'qfs.method',
+            11 => 'qfs.qty_pcs',
+            12 => 'qfs.inspector',
+            13 => 'qfs.loc_inspection',
+        ];
+        $applyColumnFilters = function ($q, ?int $skipIdx = null) use ($columnFilters, $colMap) {
+            foreach ($columnFilters as $idx => $meta) {
+                $idx = (int) $idx;
+                if ($skipIdx !== null && $idx === $skipIdx) continue;
+
+                $val = trim((string) data_get($meta, 'search.value', ''));
+                if ($val === '' || !isset($colMap[$idx])) continue;
+
+                if ($idx === 0) {
+                    $q->whereRaw("DATE_FORMAT(qfs.date, '%b-%d-%y') = ?", [$val]);
+                    continue;
+                }
+                if ($idx === 6) {
+                    $result = strtolower(trim(strip_tags($val)));
+                    if ($result === '') continue;
+
+                    $passVals = ['pass', 'ok', 'p'];
+                    $failVals = ['no pass', 'nopass', 'no_pass', 'fail', 'np', 'no', 'f'];
+                    if (in_array($result, $passVals, true)) {
+                        $q->whereIn(DB::raw("LOWER(TRIM(COALESCE(qfs.results,'')))"), $passVals);
+                    } elseif (in_array($result, $failVals, true)) {
+                        $q->whereIn(DB::raw("LOWER(TRIM(COALESCE(qfs.results,'')))"), $failVals);
+                    } else {
+                        $q->whereRaw('LOWER(TRIM(COALESCE(qfs.results, ""))) = ?', [$result]);
+                    }
+                    continue;
+                }
+                $q->where($colMap[$idx], $val);
+            }
+        };
+        $applyColumnFilters($filteredQuery);
+
+        $recordsFiltered = (int) (clone $filteredQuery)->count('qfs.id');
+
+        $orderColIdx = (int) data_get($request->input('order', []), '0.column', 0);
+        $orderDir = strtolower((string) data_get($request->input('order', []), '0.dir', 'desc'));
+        $orderDir = $orderDir === 'asc' ? 'asc' : 'desc';
+        $orderMap = [
+            0 => 'qfs.date',
+            1 => 'os.PN',
+            2 => 'os.work_id',
+            3 => 'qfs.insp_type',
+            4 => 'qfs.operation',
+            5 => 'qfs.operator',
+            6 => 'qfs.results',
+            7 => 'qfs.sb_is',
+            8 => 'qfs.observation',
+            9 => 'qfs.station',
+            10 => 'qfs.method',
+            11 => 'qfs.qty_pcs',
+            12 => 'qfs.inspector',
+            13 => 'qfs.loc_inspection',
+        ];
+        $orderCol = $orderMap[$orderColIdx] ?? 'qfs.date';
+
+        $rows = $filteredQuery
+            ->select([
+                'qfs.id',
+                'qfs.date',
+                'qfs.insp_type',
+                'qfs.operation',
+                'qfs.operator',
+                'qfs.results',
+                'qfs.sb_is',
+                'qfs.observation',
+                'qfs.station',
+                'qfs.method',
+                'qfs.qty_pcs',
+                'qfs.inspector',
+                'qfs.loc_inspection',
+                'os.PN as part_number',
+                'os.work_id as work_id',
+            ])
+            ->orderBy($orderCol, $orderDir)
+            ->offset($start)
+            ->limit($length)
+            ->get();
+
+        $data = $rows->map(function ($r) {
+            $dt = $r->date ? Carbon::parse($r->date) : null;
+            $dateDisplay = $dt ? $dt->format('M-d-y') . ' <span class="badge badge-light">' . $dt->format('H:i') . '</span>' : '';
+            $isFAI = strcasecmp(trim((string) $r->insp_type), 'FAI') === 0;
+            $isPass = strcasecmp(trim((string) $r->results), 'pass') === 0;
+
+            return [
+                'date' => [
+                    'display' => $dateDisplay,
+                    'sort' => $dt ? $dt->format('Y-m-d H:i:s') : '',
+                    'filter' => $dt ? $dt->format('M-d-y H:i') : '',
+                ],
+                'part_revision' => e((string) ($r->part_number ?? '')),
+                'job' => e((string) ($r->work_id ?? '')),
+                'type' => '<span class="badge erp-type-badge ' . ($isFAI ? 'erp-type-fai' : 'erp-type-ipi') . '">' . e((string) $r->insp_type) . '</span>',
+                'opet' => e((string) ($r->operation ?? '')),
+                'operator' => e((string) ($r->operator ?? '')),
+                'result' => '<span class="badge erp-result-badge ' . ($isPass ? 'erp-result-pass' : 'erp-result-fail') . '">' . e(ucfirst((string) $r->results)) . '</span>',
+                'sb_is' => e((string) ($r->sb_is ?? '')),
+                'observation' => e((string) ($r->observation ?? '')),
+                'station' => e((string) ($r->station ?? '')),
+                'method' => e((string) ($r->method ?? '')),
+                'qty_insp' => (string) ($r->qty_pcs ?? ''),
+                'inspector' => e((string) ($r->inspector ?? '')),
+                'location' => e((string) ($r->loc_inspection ?? '')),
+            ];
+        })->values();
+
+        // Header filter options must come from the full filtered dataset (not current page).
+        $buildOptionsQuery = function (?int $skipIdx = null) use (
+            $buildBase,
+            $applyBaseFilters,
+            $globalSearch,
+            $applyColumnFilters
+        ) {
+            $q = $buildBase();
+            $applyBaseFilters($q, $globalSearch !== '');
+
+            if ($globalSearch !== '') {
+                $like = '%' . $globalSearch . '%';
+                $q->where(function ($w) use ($like) {
+                    $w->where('qfs.operator', 'like', $like)
+                        ->orWhere('qfs.inspector', 'like', $like)
+                        ->orWhere('qfs.loc_inspection', 'like', $like)
+                        ->orWhere('qfs.operation', 'like', $like)
+                        ->orWhere('qfs.insp_type', 'like', $like)
+                        ->orWhere('qfs.results', 'like', $like)
+                        ->orWhere('qfs.station', 'like', $like)
+                        ->orWhere('qfs.method', 'like', $like)
+                        ->orWhere('qfs.sb_is', 'like', $like)
+                        ->orWhere('qfs.observation', 'like', $like)
+                        ->orWhere('os.work_id', 'like', $like)
+                        ->orWhere('os.PN', 'like', $like);
+                });
+            }
+
+            $applyColumnFilters($q, $skipIdx);
+            return $q;
+        };
+
+        $toOptionRows = function ($rows) {
+            return collect($rows)->map(function ($r) {
+                return [
+                    'value' => (string) ($r->v ?? ''),
+                    'count' => (int) ($r->c ?? 0),
+                ];
+            })->filter(fn($x) => trim((string) $x['value']) !== '')->values();
+        };
+
+        $filterOptions = [
+            'date' => $toOptionRows(
+                (clone $buildOptionsQuery(0))
+                    ->selectRaw("DATE_FORMAT(qfs.date, '%b-%d-%y') as v, COUNT(*) as c")
+                    ->whereNotNull('qfs.date')
+                    ->groupBy('v')
+                    ->orderByRaw('MAX(qfs.date) DESC')
+                    ->get()
+            ),
+
+            'type' => $toOptionRows(
+                (clone $buildOptionsQuery(3))
+                    ->selectRaw("TRIM(COALESCE(qfs.insp_type,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.insp_type,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'operation' => $toOptionRows(
+                (clone $buildOptionsQuery(4))
+                    ->selectRaw("TRIM(COALESCE(qfs.operation,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.operation,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderByRaw("CAST(v AS UNSIGNED) ASC, v ASC")
+                    ->get()
+            ),
+
+            'result' => $toOptionRows(
+                (clone $buildOptionsQuery(6))
+                    ->selectRaw("
+                        CASE
+                            WHEN LOWER(TRIM(COALESCE(qfs.results,''))) IN ('pass','ok','p') THEN 'pass'
+                            WHEN LOWER(TRIM(COALESCE(qfs.results,''))) IN ('no pass','nopass','no_pass','fail','np','no','f') THEN 'no pass'
+                            ELSE LOWER(TRIM(COALESCE(qfs.results,'')))
+                        END as v,
+                        COUNT(*) as c
+                    ")
+                    ->whereRaw("TRIM(COALESCE(qfs.results,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderByRaw("FIELD(v, 'pass', 'no pass'), v")
+                    ->get()
+            ),
+
+            'station' => $toOptionRows(
+                (clone $buildOptionsQuery(9))
+                    ->selectRaw("TRIM(COALESCE(qfs.station,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.station,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'operator' => $toOptionRows(
+                (clone $buildOptionsQuery(5))
+                    ->selectRaw("TRIM(COALESCE(qfs.operator,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.operator,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'method' => $toOptionRows(
+                (clone $buildOptionsQuery(10))
+                    ->selectRaw("TRIM(COALESCE(qfs.method,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.method,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'qty_insp' => $toOptionRows(
+                (clone $buildOptionsQuery(11))
+                    ->selectRaw("TRIM(COALESCE(CAST(qfs.qty_pcs AS CHAR),'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(CAST(qfs.qty_pcs AS CHAR),'')) <> ''")
+                    ->groupBy('v')
+                    ->orderByRaw('CAST(v AS UNSIGNED) ASC, v ASC')
+                    ->get()
+            ),
+
+            'inspector' => $toOptionRows(
+                (clone $buildOptionsQuery(12))
+                    ->selectRaw("TRIM(COALESCE(qfs.inspector,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.inspector,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+
+            'location' => $toOptionRows(
+                (clone $buildOptionsQuery(13))
+                    ->selectRaw("TRIM(COALESCE(qfs.loc_inspection,'')) as v, COUNT(*) as c")
+                    ->whereRaw("TRIM(COALESCE(qfs.loc_inspection,'')) <> ''")
+                    ->groupBy('v')
+                    ->orderBy('v')
+                    ->get()
+            ),
+        ];
+
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+            'filterOptions' => $filterOptions,
+        ]);
+    }
+
 
 
     /**
@@ -867,17 +1406,55 @@ class QaFaiSummaryController extends Controller
         }
 
         $inspections = $query->orderByDesc('date')->get();
+        $faiCount = $inspections->filter(function ($row) {
+            return strcasecmp(trim((string) $row->insp_type), 'FAI') === 0;
+        })->count();
+        $ipiCount = $inspections->filter(function ($row) {
+            return strcasecmp(trim((string) $row->insp_type), 'IPI') === 0;
+        })->count();
 
-        // === monthStats (usa tu lógica actual; aquí solo un ejemplo) ===
-        $month = $request->input('month', now()->month);
-        $year  = $request->input('year', now()->year);
+        // === KPIs (respetar filtros de fecha: day / month / year) ===
+        $month = (int) $request->input('month', now()->month);
+        $year  = (int) $request->input('year', now()->year);
+        $day   = trim((string) $request->input('day', ''));
 
-        $monthQuery = QaFaiSummary::whereYear('date', $year)
-            ->whereMonth('date', $month);
+        $statsQuery = QaFaiSummary::query();
+        if ($day !== '') {
+            $statsQuery->whereDate('date', Carbon::parse($day)->toDateString());
+            $year = (int) Carbon::parse($day)->year;
+            $month = (int) Carbon::parse($day)->month;
+        } elseif ($request->filled('year') && $request->filled('month')) {
+            $statsQuery->whereYear('date', $year)->whereMonth('date', $month);
+        } elseif ($request->filled('year')) {
+            $statsQuery->whereYear('date', $year);
+        } elseif ($request->filled('month')) {
+            $statsQuery->whereYear('date', now()->year)->whereMonth('date', $month);
+            $year = (int) now()->year;
+        } else {
+            $statsQuery->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()]);
+            $year = (int) now()->year;
+            $month = (int) now()->month;
+        }
 
-        $total = (clone $monthQuery)->count();
-        $pass  = (clone $monthQuery)->where('results', 'pass')->count();
-        $fail  = (clone $monthQuery)->where('results', 'no pass')->count();
+        $total = (clone $statsQuery)->count();
+        $pass  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])->count();
+        $fail  = (clone $statsQuery)->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')->count();
+        $passFai = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'FAI'")
+            ->count();
+        $passIpi = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) = ?', ['pass'])
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'IPI'")
+            ->count();
+        $failFai = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'FAI'")
+            ->count();
+        $failIpi = (clone $statsQuery)
+            ->whereRaw('LOWER(TRIM(results)) IN ("fail","no pass","nopass","no_pass")')
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type,''))) = 'IPI'")
+            ->count();
 
         $rate = $total > 0 ? number_format(($pass * 100) / $total, 2, '.', '') : '0.00';
 
@@ -885,7 +1462,13 @@ class QaFaiSummaryController extends Controller
             'total' => $total,
             'pass'  => $pass,
             'fail'  => $fail,
+            'pass_fai' => $passFai,
+            'pass_ipi' => $passIpi,
+            'fail_fai' => $failFai,
+            'fail_ipi' => $failIpi,
             'rate'  => $rate,
+            'fai'   => $faiCount,
+            'ipi'   => $ipiCount,
             'month' => $month,
             'year'  => $year,
         ];
@@ -1208,6 +1791,35 @@ class QaFaiSummaryController extends Controller
         return view('qa.faisummary.completed', [
             'order' => $order,
             'summary' => $summary,
+        ]);
+    }
+
+    public function completedOrderEvents(OrderSchedule $order)
+    {
+        $order->load([
+            'faiSummaries' => function ($q) {
+                $q->orderByDesc('date')->orderByDesc('id');
+            }
+        ]);
+
+        $noteLogs = OrderScheduleLog::query()
+            ->with('user:id,name')
+            ->where('order_id', $order->id)
+            ->whereIn('field', ['inspection_note', 'notes'])
+            ->orderByDesc('id')
+            ->get();
+
+        $summary = app(InspectionSummary::class)->summarize(
+            $order,
+            (int) ($order->operation ?? 0),
+            (int) ($order->sampling ?? 0)
+        );
+
+        return view('qa.faisummary.faisummary_completed_order_events', [
+            'order' => $order,
+            'events' => $order->faiSummaries,
+            'summary' => $summary,
+            'noteLogs' => $noteLogs,
         ]);
     }
 
@@ -2126,4 +2738,3 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 }
-
