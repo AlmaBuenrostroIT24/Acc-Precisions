@@ -229,7 +229,7 @@
             noMatchId: 'otdDetailNoMatchRow',
             pageClass: 'js-otd-page',
             ariaLabel: 'OTD pagination',
-            colspan: 10,
+            colspan: 11,
             rowFilter: function ($row) {
                 const selectedCustomer = String(otdUiState.customer || '').trim().toLowerCase();
                 if (!selectedCustomer) return true;
@@ -249,7 +249,7 @@
             noMatchId: 'faiRejDetailNoMatchRow',
             pageClass: 'js-fai-page',
             ariaLabel: 'FAI pagination',
-            colspan: 10,
+            colspan: 11,
             rowFilter: function ($row) {
                 const selectedCustomer = String(faiUiState.customer || '').trim().toLowerCase();
                 if (!selectedCustomer) return true;
@@ -303,7 +303,7 @@
         if (!DASHBOARD.faiRejDetailsUrl) return;
 
         const periodLabel = quarter ? quarterLabel(quarter, year) : (monthName(month) + ' ' + year);
-        $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Loading...</td></tr>');
+        $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Loading...</td></tr>');
         $('#faiRejDetailMeta').text(periodLabel);
         $('#faiRejCustomerSummary').html('<span class="text-muted">Loading customer totals...</span>');
 
@@ -322,7 +322,7 @@
             })
             .fail(function (xhr) {
                 const msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error loading details.';
-                $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-danger py-3">' + msg + '</td></tr>');
+                $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-danger py-3">' + msg + '</td></tr>');
                 $('#faiRejCustomerSummary').html('<span class="text-danger">Unable to load customer totals.</span>');
             });
     }
@@ -483,7 +483,7 @@
 
         $('#otdDetailModal').on('hidden.bs.modal', function () {
             $('#otdDetailMeta').text('Select a month or quarter.');
-            $('#otdDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
+            $('#otdDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
             $('#otdCustomerSummary').html('Customer totals will appear here.');
             $('#otdDetailPagination').html('');
             $('#otdDetailSearch').val('');
@@ -566,7 +566,7 @@
 
         $('#faiRejDetailModal').on('hidden.bs.modal', function () {
             $('#faiRejDetailMeta').text('Select a month or quarter.');
-            $('#faiRejDetailTbody').html('<tr><td colspan="10" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
+            $('#faiRejDetailTbody').html('<tr><td colspan="11" class="text-center text-muted py-3">Select a month or quarter.</td></tr>');
             $('#faiRejCustomerSummary').html('Totals by customer will appear here.');
             $('#faiRejDetailPagination').html('');
             $('#faiRejDetailSearch').val('');
@@ -581,4 +581,3 @@
 
     });
 })();
-

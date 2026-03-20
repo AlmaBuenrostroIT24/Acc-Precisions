@@ -1235,7 +1235,7 @@ table.kpi-report {
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-failops {
-    min-width: 176px;
+    min-width: 126px;
 }
 
 .dashboard-detail-modal .fai-dt-table .fai-col-desc {
@@ -1298,6 +1298,50 @@ table.kpi-report {
     background: rgba(2, 6, 23, 0.04);
 }
 
+.dashboard-detail-modal .otd-col-view .btn,
+.dashboard-detail-modal .fai-col-view .btn {
+    min-width: 58px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.76rem;
+    line-height: 1.15;
+    border-radius: 8px;
+}
+
+.dashboard-detail-modal .otd-col-view .otd-view-btn,
+.dashboard-detail-modal .fai-col-view .otd-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    min-width: 34px;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.dashboard-detail-modal .otd-col-view .otd-view-btn i,
+.dashboard-detail-modal .fai-col-view .otd-view-btn i {
+    color: #2563eb;
+    font-size: 0.86rem;
+}
+
+.dashboard-detail-modal .otd-col-view .otd-view-btn:hover,
+.dashboard-detail-modal .otd-col-view .otd-view-btn:focus,
+.dashboard-detail-modal .fai-col-view .otd-view-btn:hover,
+.dashboard-detail-modal .fai-col-view .otd-view-btn:focus {
+    background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
+    border-color: #93c5fd;
+    color: #0f172a;
+    text-decoration: none;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.22);
+}
+
 .dashboard-detail-modal .fai-dt-table tbody tr.table-danger td,
 .dashboard-detail-modal .fai-dt-table tbody tr.is-late td {
     background: #fff !important;
@@ -1311,13 +1355,19 @@ table.kpi-report {
 }
 
 .dashboard-detail-modal .fai-dt-table tbody tr.table-warning td {
-    background: #fef3c7 !important;
+    background: #fff !important;
     color: #111827 !important;
     border-color: #d5d8dd !important;
 }
 
 .dashboard-detail-modal .fai-dt-table tbody tr.table-warning:hover td {
-    background: #fde68a !important;
+    background: rgba(2, 6, 23, 0.04) !important;
+}
+
+.dashboard-detail-modal .fai-dt-table.table-hover tbody tr.table-warning:hover > td,
+.dashboard-detail-modal .fai-dt-table.table-hover tbody tr.table-warning:hover > th {
+    background: rgba(2, 6, 23, 0.04) !important;
+    color: #111827 !important;
 }
 
 .dashboard-detail-modal .otd-days-badge {

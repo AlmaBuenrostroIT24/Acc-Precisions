@@ -48,10 +48,14 @@
                 {{ $isOnTime ? 'On Time' : 'Late' }}
             </span>
         </td>
+        <td class="text-center otd-col-view">
+            <button type="button" class="btn btn-sm otd-view-btn" title="View" aria-label="View">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+            </button>
+        </td>
     </tr>
 @empty
     <tr>
-        <td colspan="10" class="text-center text-muted py-3">No results.</td>
+        <td colspan="11" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
-

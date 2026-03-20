@@ -863,10 +863,11 @@
                                         <th class="text-center otd-col-sent">Sent</th>
                                         <th class="text-center">Days</th>
                                         <th class="text-center otd-col-status">Status</th>
+                                        <th class="text-center otd-col-view">View</th>
                                     </tr>
                                 </thead>
                                 <tbody id="otdDetailTbody">
-                                    <tr><td colspan="10" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -934,10 +935,11 @@
                                         <th class="text-center fai-col-sent">Sent</th>
                                         <th class="text-center fai-col-faidate">FAI Date</th>
                                         <th class="text-left fai-col-failops">Fail Ops</th>
+                                        <th class="text-center fai-col-view">View</th>
                                     </tr>
                                 </thead>
                                 <tbody id="faiRejDetailTbody">
-                                    <tr><td colspan="10" class="text-center text-muted py-3">Select a month.</td></tr>
+                                    <tr><td colspan="11" class="text-center text-muted py-3">Select a month.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -963,4 +965,3 @@
     </script>
     <script src="{{ asset('vendor/js/dashboard.js?v=' . filemtime(public_path('vendor/js/dashboard.js'))) }}"></script>
 @stop
-

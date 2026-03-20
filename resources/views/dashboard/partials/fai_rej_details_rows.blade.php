@@ -12,7 +12,7 @@
             return ($monthEs[$m] ?? strtolower($d->format('M'))) . '/' . $d->format('d/Y');
         };
     @endphp
-    <tr class="table-warning" data-customer="{{ trim((string) ($r->costumer ?? '')) }}">
+    <tr data-customer="{{ trim((string) ($r->costumer ?? '')) }}">
         <td class="text-left fai-col-workid">{{ $r->work_id }}</td>
         <td class="text-left fai-col-pn">{{ $r->PN }}</td>
         <td class="text-left fai-col-custpo">{{ $r->cust_po }}</td>
@@ -32,10 +32,14 @@
                 -
             @endif
         </td>
+        <td class="text-center fai-col-view">
+            <a href="{{ route('faisummary.completed.events', $r->id) }}" class="btn btn-sm otd-view-btn" title="Open Completed Inspection" aria-label="Open Completed Inspection">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+            </a>
+        </td>
     </tr>
 @empty
     <tr>
-        <td colspan="10" class="text-center text-muted py-3">No results.</td>
+        <td colspan="11" class="text-center text-muted py-3">No results.</td>
     </tr>
 @endforelse
-
