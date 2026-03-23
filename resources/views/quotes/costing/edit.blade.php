@@ -430,6 +430,12 @@
             font-weight: 500;
         }
 
+        .costing-save-status {
+            min-height: 20px;
+            font-size: 0.88rem;
+            color: #475569;
+        }
+
         @media (max-width: 991.98px) {
             .costing-layout {
                 grid-template-columns: 1fr;
@@ -491,8 +497,21 @@
                             <a href="{{ route('costing') }}" class="btn btn-outline-secondary btn-sm">Back</a>
                         </div>
 
-                        <form method="POST" action="javascript:void(0)">
+                        @if(session('success'))
+                            <div class="alert alert-success py-2 px-3">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+
+                        @if($errors->any())
+                            <div class="alert alert-danger py-2 px-3">
+                                {{ $errors->first() }}
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('costing.update', $order) }}" id="costingForm">
                             @csrf
+                            @method('PUT')
 
                             <div class="costing-top-card">
                                 <div class="costing-top-grid">
@@ -686,14 +705,14 @@
                                                 <td class="costing-summary-label">Total Materials:</td>
                                                 <td class="costing-summary-currency">$</td>
                                                 <td colspan="4">
-                                                    <input class="costing-form-control costing-summary-right-text" type="text" inputmode="decimal" name="total_material" value="{{ old('total_material', '') }}">
+                                                    <input class="costing-form-control costing-summary-right-text" type="text" inputmode="decimal" name="total_material" value="{{ old('total_material', $costing && $costing->total_material > 0 ? $costing->total_material : '') }}">
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="costing-summary-label">Total Outsource Process:</td>
                                                 <td class="costing-summary-currency">$</td>
                                                 <td colspan="4">
-                                                    <input class="costing-form-control costing-summary-right-text" type="text" name="total_outsource_process" value="{{ old('total_outsource_process', '') }}">
+                                                    <input class="costing-form-control costing-summary-right-text" type="text" name="total_outsource" value="{{ old('total_outsource', $costing && $costing->total_outsource > 0 ? $costing->total_outsource : '') }}">
                                                 </td>
                                             </tr>
                                             <tr>
@@ -714,7 +733,7 @@
                                                 <td class="costing-summary-label">Sale Price:</td>
                                                 <td class="costing-summary-center">$</td>
                                                 <td colspan="2">
-                                                    <input class="costing-form-control costing-summary-right-text costing-summary-value" type="text" inputmode="decimal" name="sale_price" value="{{ old('sale_price', '') }}">
+                                                    <input class="costing-form-control costing-summary-right-text costing-summary-value" type="text" inputmode="decimal" name="sale_price" value="{{ old('sale_price', $costing && $costing->sale_price > 0 ? $costing->sale_price : '') }}">
                                                 </td>
                                             </tr>
                                             <tr>
@@ -745,9 +764,9 @@
                             </div>
 
                             <div class="costing-form-actions">
-                                <small class="text-muted">Layout ready for next save step.</small>
+                                <div class="costing-save-status" id="costingSaveStatus">Use Save to store costing and operations for this order.</div>
                                 <div>
-                                    <button type="submit" class="btn btn-primary" disabled>Save</button>
+                                    <button type="submit" class="btn btn-primary">Save</button>
                                 </div>
                             </div>
                         </form>
@@ -1055,7 +1074,7 @@
             function updateCostSummary() {
                 const totalLabor = parseMoney($('input[name="total_labor"]').val());
                 const totalMaterial = parseMoney($('input[name="total_material"]').val());
-                const totalOutsource = parseMoney($('input[name="total_outsource_process"]').val());
+                const totalOutsource = parseMoney($('input[name="total_outsource"]').val());
                 const grandTotal = totalLabor + totalMaterial + totalOutsource;
                 const salePrice = parseMoney($('input[name="sale_price"]').val());
                 const difference = salePrice - grandTotal;
@@ -1129,7 +1148,7 @@
                 }
             });
 
-            $('input[name="total_material"], input[name="total_outsource_process"], input[name="sale_price"]').on('blur', function () {
+            $('input[name="total_material"], input[name="total_outsource"], input[name="sale_price"]').on('blur', function () {
                 const $input = $(this);
                 if ($input.val().trim() !== '') {
                     $input.val(formatMoney($input.val()));
