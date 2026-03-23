@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Costing\Costing;
+use App\Models\Costing\CostingLog;
 use App\Models\Costing\CostingOperation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\OrderSchedule;
@@ -154,24 +155,38 @@ class CostingController extends Controller
                 $notes = trim((string) ($validated['notes'] ?? ''));
             }
 
-            $costing = Costing::query()->updateOrCreate(
-                ['order_schedule_id' => $order->id],
-                [
-                    'status' => 'draft',
-                    'type_material' => $validated['type_material'] ?? null,
-                    'total_material' => $this->parseMoney($validated['total_material'] ?? null),
-                    'total_outsource' => $this->parseMoney($validated['total_outsource'] ?? null),
-                    'total_time_order' => $this->timeStringToDecimalHours($validated['total_time_order'] ?? null),
-                    'total_labor' => $this->parseMoney($validated['total_labor'] ?? null),
-                    'sale_price' => $this->parseMoney($validated['sale_price'] ?? null),
-                    'grandtotal_cost' => $this->parseMoney($validated['grandtotal_cost'] ?? null),
-                    'difference_cost' => $this->parseMoney($validated['difference_cost'] ?? null),
-                    'percentage' => $this->parseMoney($validated['percentage'] ?? null),
-                    'notes' => $notes !== '' ? $notes : null,
-                    'updated_by' => Auth::id(),
-                    'created_by' => optional($order->costing)->created_by ?? Auth::id(),
-                ]
-            );
+            $payload = [
+                'status' => 'draft',
+                'type_material' => $validated['type_material'] ?? null,
+                'total_material' => $this->parseMoney($validated['total_material'] ?? null),
+                'total_outsource' => $this->parseMoney($validated['total_outsource'] ?? null),
+                'total_time_order' => $this->timeStringToDecimalHours($validated['total_time_order'] ?? null),
+                'total_labor' => $this->parseMoney($validated['total_labor'] ?? null),
+                'sale_price' => $this->parseMoney($validated['sale_price'] ?? null),
+                'grandtotal_cost' => $this->parseMoney($validated['grandtotal_cost'] ?? null),
+                'difference_cost' => $this->parseMoney($validated['difference_cost'] ?? null),
+                'percentage' => $this->parseMoney($validated['percentage'] ?? null),
+                'notes' => $notes !== '' ? $notes : null,
+                'updated_by' => Auth::id(),
+            ];
+
+            $costing = Costing::query()->firstOrNew([
+                'order_schedule_id' => $order->id,
+            ]);
+
+            $isNewCosting = !$costing->exists;
+            if ($isNewCosting) {
+                $costing->created_by = Auth::id();
+            }
+
+            $originalCostingValues = $costing->exists
+                ? $costing->only(array_keys($payload))
+                : [];
+
+            $costing->fill($payload);
+            $costing->save();
+
+            $this->logCostingChanges($costing, $originalCostingValues, $payload, $isNewCosting);
 
             $operations = collect($validated['operations'] ?? [])
                 ->map(function ($operation) {
@@ -200,10 +215,10 @@ class CostingController extends Controller
                 })
                 ->values();
 
-            $costing->operations()->delete();
+            $existingOperations = $costing->operations()->orderBy('id')->get()->values();
 
-            foreach ($operations as $operation) {
-                $costing->operations()->create([
+            foreach ($operations as $index => $operation) {
+                $operationPayload = [
                     'status' => 'active',
                     'name_operation' => $operation['name_operation'] !== '' ? $operation['name_operation'] : null,
                     'resource_name' => $operation['resource_name'] !== '' ? $operation['resource_name'] : null,
@@ -214,9 +229,47 @@ class CostingController extends Controller
                     'total_time_operation' => $operation['total_time_operation'],
                     'labor_rate' => 120,
                     'operation_cost' => round($operation['total_time_operation'] * 120, 2),
-                    'created_by' => Auth::id(),
                     'updated_by' => Auth::id(),
+                ];
+
+                $existingOperation = $existingOperations->get($index);
+                $isNewOperation = !$existingOperation;
+
+                if ($existingOperation) {
+                    $originalOperationValues = $existingOperation->only(array_keys($operationPayload));
+                    $existingOperation->fill($operationPayload);
+                    $existingOperation->save();
+                    $this->logOperationChanges($costing, $existingOperation, $originalOperationValues, $operationPayload, false);
+                    continue;
+                }
+
+                $newOperation = $costing->operations()->create($operationPayload + [
+                    'created_by' => Auth::id(),
                 ]);
+
+                $this->logOperationChanges($costing, $newOperation, [], $operationPayload, $isNewOperation);
+            }
+
+            if ($existingOperations->count() > $operations->count()) {
+                $existingOperations
+                    ->slice($operations->count())
+                    ->each(function (CostingOperation $operation) use ($costing) {
+                        CostingLog::create([
+                            'costing_id' => $costing->id,
+                            'costing_operation_id' => $operation->id,
+                            'action' => 'deleted',
+                            'description' => sprintf(
+                                'Operation %s deleted.',
+                                $operation->name_operation ?: ('#' . $operation->id)
+                            ),
+                            'user_id' => Auth::id(),
+                        ]);
+
+                        $operation->update([
+                            'deleted_by' => Auth::id(),
+                        ]);
+                        $operation->delete();
+                    });
             }
         });
 
@@ -230,6 +283,19 @@ class CostingController extends Controller
         return redirect()
             ->route('costing.edit', $order)
             ->with('success', 'Costing saved successfully.');
+    }
+
+    public function logs(OrderSchedule $order)
+    {
+        $logs = CostingLog::query()
+            ->whereHas('costing', function ($query) use ($order) {
+                $query->where('order_schedule_id', $order->id);
+            })
+            ->with(['user', 'costingOperation'])
+            ->latest('created_at')
+            ->get();
+
+        return view('quotes.costing._logs', compact('logs', 'order'));
     }
 
     public function pdf(OrderSchedule $order)
@@ -272,5 +338,141 @@ class CostingController extends Controller
         $seconds = (int) ($parts[2] ?? 0);
 
         return round($hours + ($minutes / 60) + ($seconds / 3600), 4);
+    }
+
+    private function logCostingChanges(Costing $costing, array $original, array $payload, bool $isNew): void
+    {
+        $fields = [
+            'type_material',
+            'total_material',
+            'total_outsource',
+            'total_time_order',
+            'total_labor',
+            'sale_price',
+            'grandtotal_cost',
+            'difference_cost',
+            'percentage',
+            'notes',
+        ];
+
+        foreach ($fields as $field) {
+            $old = $original[$field] ?? null;
+            $new = $payload[$field] ?? null;
+
+            if (!$isNew && !$this->valueChanged($old, $new)) {
+                continue;
+            }
+
+            CostingLog::create([
+                'costing_id' => $costing->id,
+                'action' => $isNew ? 'created' : 'updated',
+                'field_changed' => $field,
+                'old_value' => $isNew ? null : $this->displayLogValue($field, $old),
+                'new_value' => $this->displayLogValue($field, $new),
+                'description' => sprintf(
+                    'Costing %s changed from %s to %s.',
+                    str_replace('_', ' ', $field),
+                    $isNew ? 'blank' : $this->displayLogValue($field, $old),
+                    $this->displayLogValue($field, $new)
+                ),
+                'user_id' => Auth::id(),
+            ]);
+        }
+    }
+
+    private function logOperationChanges(Costing $costing, CostingOperation $operation, array $original, array $payload, bool $isNew): void
+    {
+        $fields = [
+            'name_operation',
+            'resource_name',
+            'time_programming',
+            'time_setup',
+            'runtime_pcs',
+            'runtime_total',
+            'total_time_operation',
+            'labor_rate',
+            'operation_cost',
+        ];
+
+        foreach ($fields as $field) {
+            $old = $original[$field] ?? null;
+            $new = $payload[$field] ?? null;
+
+            if (!$isNew && !$this->valueChanged($old, $new)) {
+                continue;
+            }
+
+            CostingLog::create([
+                'costing_id' => $costing->id,
+                'costing_operation_id' => $operation->id,
+                'action' => $isNew ? 'created' : 'updated',
+                'field_changed' => $field,
+                'old_value' => $isNew ? null : $this->displayLogValue($field, $old),
+                'new_value' => $this->displayLogValue($field, $new),
+                'description' => sprintf(
+                    'Operation %s: %s changed from %s to %s.',
+                    $operation->name_operation ?: ('#' . $operation->id),
+                    str_replace('_', ' ', $field),
+                    $isNew ? 'blank' : $this->displayLogValue($field, $old),
+                    $this->displayLogValue($field, $new)
+                ),
+                'user_id' => Auth::id(),
+            ]);
+        }
+    }
+
+    private function valueChanged($old, $new): bool
+    {
+        return $this->normalizeLogComparableValue($old) !== $this->normalizeLogComparableValue($new);
+    }
+
+    private function normalizeLogComparableValue($value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if (is_numeric($value)) {
+            return number_format((float) $value, 4, '.', '');
+        }
+
+        $stringValue = trim((string) $value);
+
+        if (preg_match('/^\d+:\d{2}(?::\d{2})?$/', $stringValue)) {
+            return number_format($this->timeStringToDecimalHours($stringValue), 4, '.', '');
+        }
+
+        return $stringValue;
+    }
+
+    private function displayLogValue(string $field, $value): string
+    {
+        if ($value === null || $value === '') {
+            return 'blank';
+        }
+
+        if (in_array($field, ['total_material', 'total_outsource', 'total_labor', 'sale_price', 'grandtotal_cost', 'difference_cost', 'labor_rate', 'operation_cost'], true)) {
+            return number_format((float) $value, 2);
+        }
+
+        if (in_array($field, ['percentage'], true)) {
+            return number_format((float) $value, 2);
+        }
+
+        if (in_array($field, ['total_time_order', 'time_programming', 'time_setup', 'runtime_pcs', 'runtime_total', 'total_time_operation'], true)) {
+            return $this->decimalHoursToTimeString((float) $value);
+        }
+
+        return (string) $value;
+    }
+
+    private function decimalHoursToTimeString(float $value): string
+    {
+        $totalSeconds = (int) round($value * 3600);
+        $hours = intdiv($totalSeconds, 3600);
+        $minutes = intdiv($totalSeconds % 3600, 60);
+        $seconds = $totalSeconds % 60;
+
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
     }
 }

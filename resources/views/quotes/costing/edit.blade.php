@@ -26,6 +26,13 @@
             flex-wrap: wrap;
         }
 
+        .costing-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
         .costing-edit-title,
         .costing-files-title {
             font-size: 1.05rem;
@@ -436,6 +443,32 @@
             color: #475569;
         }
 
+        .costing-logs-modal .modal-content {
+            border: 1px solid #cfe0f5;
+            border-radius: 10px;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+            overflow: hidden;
+        }
+
+        .costing-logs-modal .modal-header {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+            border-bottom: 1px solid #dbe7f5;
+            padding: 14px 18px;
+        }
+
+        .costing-logs-modal .modal-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #111827;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .costing-logs-modal .modal-body {
+            background: #f8fbff;
+            padding: 16px;
+        }
+
         @media (max-width: 991.98px) {
             .costing-layout {
                 grid-template-columns: 1fr;
@@ -494,7 +527,10 @@
                     <div class="card-body">
                         <div class="costing-edit-header">
                             <div class="costing-edit-title">Quote</div>
-                            <a href="{{ route('costing') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+                            <div class="costing-header-actions">
+                                <button type="button" class="btn btn-outline-info btn-sm" id="openCostingLogs">History</button>
+                                <a href="{{ route('costing') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+                            </div>
                         </div>
 
                         @if(session('success'))
@@ -789,6 +825,22 @@
                             <div class="costing-file-help">Reserved area for quote file upload.</div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade costing-logs-modal" id="costingLogsModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Costing History</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="costingLogsContent">
+                    <div class="text-center text-muted py-4">Loading history...</div>
                 </div>
             </div>
         </div>
@@ -1139,6 +1191,22 @@
 
             $(document).on('click', function () {
                 closeDurationPanel();
+            });
+
+            $('#openCostingLogs').on('click', function () {
+                const $modal = $('#costingLogsModal');
+                const $content = $('#costingLogsContent');
+
+                $content.html('<div class="text-center text-muted py-4">Loading history...</div>');
+                $modal.modal('show');
+
+                $.get(@json(route('costing.logs', $order)))
+                    .done(function (html) {
+                        $content.html(html);
+                    })
+                    .fail(function () {
+                        $content.html('<div class="alert alert-danger mb-0">Unable to load history.</div>');
+                    });
             });
 
             $('input[name="total_material"], input[name="sale_price"], input[name="grandtotal_cost"], input[name="difference_cost"], input[name="percentage"]').each(function () {

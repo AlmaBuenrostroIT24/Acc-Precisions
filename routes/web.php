@@ -63,6 +63,7 @@ Route::get('/dashboard/export/fai-rej-details-excel', [DashboardController::clas
 Route::get('/quote/costing', [CostingController::class, 'index'])->middleware(['auth'])->name('costing');
 Route::get('/quote/costing/{order}/edit', [CostingController::class, 'edit'])->middleware(['auth'])->name('costing.edit');
 Route::put('/quote/costing/{order}', [CostingController::class, 'update'])->middleware(['auth'])->name('costing.update');
+Route::get('/quote/costing/{order}/logs', [CostingController::class, 'logs'])->middleware(['auth'])->name('costing.logs');
 Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->middleware(['auth'])->name('costing.pdf');
 Route::get('/costing', function () {
     return redirect()->route('costing');
