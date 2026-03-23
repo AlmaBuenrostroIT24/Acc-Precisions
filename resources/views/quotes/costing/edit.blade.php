@@ -268,12 +268,12 @@
             font-weight: 700;
         }
 
-        .costing-value-positive {
-            color: #15803d !important;
+        .costing-cell-positive {
+            background: #dcfce7 !important;
         }
 
-        .costing-value-negative {
-            color: #b91c1c !important;
+        .costing-cell-negative {
+            background: #fee2e2 !important;
         }
 
         .costing-summary-center {
@@ -876,12 +876,13 @@
             }
 
             function paintValueState($input, value) {
-                $input.removeClass('costing-value-positive costing-value-negative');
+                const $cell = $input.closest('td');
+                $cell.removeClass('costing-cell-positive costing-cell-negative');
 
                 if (value > 0) {
-                    $input.addClass('costing-value-positive');
+                    $cell.addClass('costing-cell-positive');
                 } else if (value < 0) {
-                    $input.addClass('costing-value-negative');
+                    $cell.addClass('costing-cell-negative');
                 }
             }
 
