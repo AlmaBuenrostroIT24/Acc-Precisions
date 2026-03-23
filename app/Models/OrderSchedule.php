@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Costing\Costing;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -104,6 +105,11 @@ class OrderSchedule extends Model
     public function faiSummaries()
     {
         return $this->hasMany(\App\Models\QaFaiSummary::class, 'order_schedule_id');
+    }
+
+    public function costing()
+    {
+        return $this->hasOne(Costing::class, 'order_schedule_id');
     }
 
     public function completedByUser()

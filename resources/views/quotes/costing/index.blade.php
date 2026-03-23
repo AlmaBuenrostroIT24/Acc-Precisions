@@ -357,6 +357,41 @@
             white-space: normal !important;
         }
 
+        .costing-edit-btn {
+            min-width: 38px;
+        }
+
+        .erp-table-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0.35rem 0.55rem;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+
+        .erp-table-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(16, 24, 40, 0.12);
+        }
+
+        .btn-erp-primary {
+            background: #dbeafe;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .btn-erp-primary:hover,
+        .btn-erp-primary:focus {
+            background: #bfdbfe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+
         @media (max-width: 767.98px) {
             .fai-card-title {
                 align-items: flex-start;

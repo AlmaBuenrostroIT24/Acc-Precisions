@@ -103,6 +103,22 @@ class CostingController extends Controller
         return view('quotes.costing.index', compact('orders', 'pnOrders', 'search'));
     }
 
+    public function edit(OrderSchedule $order)
+    {
+        $order->loadMissing('costing.operations');
+
+        $costing = $order->costing;
+        $operations = $costing?->operations ?? collect();
+        $blankRows = max(6, $operations->count());
+
+        return view('quotes.costing.edit', [
+            'order' => $order,
+            'costing' => $costing,
+            'operations' => $operations,
+            'blankRows' => $blankRows,
+        ]);
+    }
+
     public function pdf(OrderSchedule $order)
     {
         $pdf = Pdf::loadView('quotes.costing.pdf', [

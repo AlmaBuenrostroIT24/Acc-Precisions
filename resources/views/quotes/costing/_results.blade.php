@@ -58,6 +58,7 @@
                                             <th class="text-right">wo_qty</th>
                                             <th>operation</th>
                                             <th>due_date</th>
+                                            <th>Edit</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -73,6 +74,15 @@
                                                 <td class="text-right">{{ $order->wo_qty }}</td>
                                                 <td>{{ $order->operation }}</td>
                                                 <td>{{ $order->due_date ? \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') : '' }}</td>
+                                                <td class="text-center">
+                                                    <a
+                                                        href="{{ route('costing.edit', $order->id) }}"
+                                                        class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn"
+                                                        title="Edit costing"
+                                                    >
+                                                        <i class="fas fa-pen"></i>
+                                                    </a>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
