@@ -326,19 +326,82 @@
             margin-top: 12px;
         }
 
+        .costing-file-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
         .costing-file-label {
-            display: block;
             font-size: 0.88rem;
             font-weight: 800;
             color: #111827;
-            margin-bottom: 8px;
             text-transform: uppercase;
+            margin: 0;
         }
 
         .costing-file-help {
             font-size: 0.92rem;
             color: #64748b;
             margin-top: 8px;
+        }
+
+        .costing-file-input {
+            display: block;
+            width: auto;
+            max-width: 220px;
+            font-size: 0.88rem;
+            color: #334155;
+        }
+
+        .costing-file-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .costing-file-preview {
+            width: 100%;
+            height: 280px;
+            border: 1px solid #dbe7f5;
+            border-radius: 6px;
+            background: #fff;
+            margin-top: 12px;
+        }
+
+        .costing-file-thumb {
+            display: block;
+            margin-top: 12px;
+            border: 1px solid #dbe7f5;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .costing-file-thumb:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .costing-file-thumb-frame {
+            width: 100%;
+            height: 390px;
+            border: 0;
+            display: block;
+            pointer-events: none;
+            background: #fff;
+        }
+
+        .costing-file-thumb-meta {
+            display: none;
         }
 
         .costing-row-actions {
@@ -469,6 +532,34 @@
             padding: 16px;
         }
 
+        .costing-pdf-modal .modal-dialog {
+            max-width: 1100px;
+        }
+
+        .costing-pdf-modal .modal-content {
+            border: 1px solid #cfe0f5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .costing-pdf-modal .modal-header {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+            border-bottom: 1px solid #dbe7f5;
+        }
+
+        .costing-pdf-modal .modal-body {
+            padding: 0;
+            background: #e2e8f0;
+        }
+
+        .costing-pdf-frame {
+            width: 100%;
+            height: 78vh;
+            border: 0;
+            display: block;
+            background: #fff;
+        }
+
         @media (max-width: 991.98px) {
             .costing-layout {
                 grid-template-columns: 1fr;
@@ -545,7 +636,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('costing.update', $order) }}" id="costingForm">
+                        <form method="POST" action="{{ route('costing.update', $order) }}" id="costingForm" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
 
@@ -563,6 +654,14 @@
                                         <div class="costing-info-row">
                                             <div class="costing-info-label">WO Qty:</div>
                                             <div class="costing-info-value">{{ $order->wo_qty ?? 'N/A' }}</div>
+                                        </div>
+                                        <div class="costing-info-row">
+                                            <div class="costing-info-label">CO:</div>
+                                            <div class="costing-info-value">{{ $order->co ?: 'N/A' }}</div>
+                                        </div>
+                                        <div class="costing-info-row">
+                                            <div class="costing-info-label">Cust PO:</div>
+                                            <div class="costing-info-value">{{ $order->cust_po ?: 'N/A' }}</div>
                                         </div>
                                         <div class="costing-info-row">
                                             <div class="costing-info-label">Qty:</div>
@@ -814,15 +913,45 @@
                         <div class="costing-files-title">Files</div>
 
                         <div class="costing-file-box">
-                            <label class="costing-file-label">Drawing PDF</label>
-                            <input type="file" class="form-control-file">
-                            <div class="costing-file-help">Reserved area for drawing file upload.</div>
+                            <div class="costing-file-head">
+                                <label class="costing-file-label" for="drawing_pdf">Drawing PDF</label>
+                                <input id="drawing_pdf" type="file" class="costing-file-input" name="drawing_pdf" accept="application/pdf" form="costingForm">
+                            </div>
+                            @if($costing?->drawing_pdf_path)
+                                <a
+                                    class="costing-file-thumb js-costing-pdf-preview"
+                                    href="{{ asset('storage/' . $costing->drawing_pdf_path) }}"
+                                    data-pdf-url="{{ asset('storage/' . $costing->drawing_pdf_path) }}"
+                                    data-pdf-title="Drawing PDF"
+                                >
+                                    <iframe
+                                        class="costing-file-thumb-frame"
+                                        src="{{ asset('storage/' . $costing->drawing_pdf_path) }}#page=1&zoom=page-fit&toolbar=0&navpanes=0&scrollbar=0"
+                                        title="Drawing PDF Preview"
+                                    ></iframe>
+                                </a>
+                            @endif
                         </div>
 
                         <div class="costing-file-box">
-                            <label class="costing-file-label">Quote PDF</label>
-                            <input type="file" class="form-control-file">
-                            <div class="costing-file-help">Reserved area for quote file upload.</div>
+                            <div class="costing-file-head">
+                                <label class="costing-file-label" for="quote_pdf">Quote PDF</label>
+                                <input id="quote_pdf" type="file" class="costing-file-input" name="quote_pdf" accept="application/pdf" form="costingForm">
+                            </div>
+                            @if($costing?->quote_pdf_path)
+                                <a
+                                    class="costing-file-thumb js-costing-pdf-preview"
+                                    href="{{ asset('storage/' . $costing->quote_pdf_path) }}"
+                                    data-pdf-url="{{ asset('storage/' . $costing->quote_pdf_path) }}"
+                                    data-pdf-title="Quote PDF"
+                                >
+                                    <iframe
+                                        class="costing-file-thumb-frame"
+                                        src="{{ asset('storage/' . $costing->quote_pdf_path) }}#page=1&zoom=page-fit&toolbar=0&navpanes=0&scrollbar=0"
+                                        title="Quote PDF Preview"
+                                    ></iframe>
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -841,6 +970,25 @@
                 </div>
                 <div class="modal-body" id="costingLogsContent">
                     <div class="text-center text-muted py-4">Loading history...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade costing-pdf-modal" id="costingPdfModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="costingPdfModalTitle">PDF Preview</h5>
+                    <div class="d-flex align-items-center" style="gap:8px;">
+                        <a href="#" target="_blank" class="btn btn-outline-primary btn-sm" id="costingPdfOpenTab">Open in new tab</a>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <iframe id="costingPdfFrame" class="costing-pdf-frame" src="" title="PDF Preview"></iframe>
                 </div>
             </div>
         </div>
@@ -1207,6 +1355,22 @@
                     .fail(function () {
                         $content.html('<div class="alert alert-danger mb-0">Unable to load history.</div>');
                     });
+            });
+
+            $(document).on('click', '.js-costing-pdf-preview', function (event) {
+                event.preventDefault();
+
+                const pdfUrl = $(this).data('pdf-url');
+                const pdfTitle = $(this).data('pdf-title') || 'PDF Preview';
+
+                $('#costingPdfModalTitle').text(pdfTitle);
+                $('#costingPdfFrame').attr('src', pdfUrl);
+                $('#costingPdfOpenTab').attr('href', pdfUrl);
+                $('#costingPdfModal').modal('show');
+            });
+
+            $('#costingPdfModal').on('hidden.bs.modal', function () {
+                $('#costingPdfFrame').attr('src', '');
             });
 
             $('input[name="total_material"], input[name="sale_price"], input[name="grandtotal_cost"], input[name="difference_cost"], input[name="percentage"]').each(function () {

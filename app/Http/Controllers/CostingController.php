@@ -11,12 +11,16 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CostingController extends Controller
 {
     public function index()
     {
         $search = trim((string) request('search'));
+        $costingOrderIds = Costing::query()
+            ->pluck('order_schedule_id')
+            ->flip();
 
         $orders = OrderSchedule::query()
             ->select([
@@ -34,6 +38,11 @@ class CostingController extends Controller
             ])
             ->orderByDesc('due_date')
             ->get();
+
+        $orders->transform(function ($order) use ($costingOrderIds) {
+            $order->has_costing = $costingOrderIds->has($order->id);
+            return $order;
+        });
 
         $pnOrders = $orders
             ->filter(function ($order) {
@@ -67,6 +76,7 @@ class CostingController extends Controller
                     'latest_due_date' => $latestDueDate,
                     'customer_summary' => $customers->take(2)->implode(', '),
                     'customer_count' => $customers->count(),
+                    'has_costing' => $group->contains(fn ($order) => !empty($order->has_costing)),
                     'orders' => $group,
                 ];
             });
@@ -131,6 +141,8 @@ class CostingController extends Controller
             'type_material' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
             'notes_bottom' => ['nullable', 'string'],
+            'drawing_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'quote_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'total_material' => ['nullable', 'string'],
             'total_outsource' => ['nullable', 'string'],
             'sale_price' => ['nullable', 'string'],
@@ -149,7 +161,7 @@ class CostingController extends Controller
             'operations.*.total_time_operation' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($validated, $order) {
+        DB::transaction(function () use ($validated, $request, $order) {
             $notes = trim((string) ($validated['notes_bottom'] ?? ''));
             if ($notes === '') {
                 $notes = trim((string) ($validated['notes'] ?? ''));
@@ -182,6 +194,28 @@ class CostingController extends Controller
             $originalCostingValues = $costing->exists
                 ? $costing->only(array_keys($payload))
                 : [];
+
+            if ($request->hasFile('drawing_pdf')) {
+                if ($costing->exists && $costing->drawing_pdf_path) {
+                    Storage::disk('public')->delete($costing->drawing_pdf_path);
+                }
+
+                $payload['drawing_pdf_path'] = $request->file('drawing_pdf')->store(
+                    "costings/{$order->id}",
+                    'public'
+                );
+            }
+
+            if ($request->hasFile('quote_pdf')) {
+                if ($costing->exists && $costing->quote_pdf_path) {
+                    Storage::disk('public')->delete($costing->quote_pdf_path);
+                }
+
+                $payload['quote_pdf_path'] = $request->file('quote_pdf')->store(
+                    "costings/{$order->id}",
+                    'public'
+                );
+            }
 
             $costing->fill($payload);
             $costing->save();
@@ -344,6 +378,8 @@ class CostingController extends Controller
     {
         $fields = [
             'type_material',
+            'drawing_pdf_path',
+            'quote_pdf_path',
             'total_material',
             'total_outsource',
             'total_time_order',

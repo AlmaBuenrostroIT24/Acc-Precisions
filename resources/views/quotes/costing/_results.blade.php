@@ -14,7 +14,7 @@
         <tbody>
             @forelse($pnOrders as $pnOrder)
                 @php($detailId = 'pn-detail-' . \Illuminate\Support\Str::slug($pnOrder->pn . '-' . $loop->index . '-' . $pnOrders->currentPage()))
-                <tr>
+                <tr class="{{ !empty($pnOrder->has_costing) ? 'costing-row-has-costing' : '' }}">
                     <td class="text-center">
                         <button
                             class="btn btn-sm costing-toggle-btn toggle-detail"
@@ -64,7 +64,9 @@
                                     <tbody>
                                         @foreach($pnOrder->orders as $order)
                                             <tr>
-                                                <td>{{ $order->work_id }}</td>
+                                                <td class="{{ !empty($order->has_costing) ? 'text-success font-weight-bold' : '' }}">
+                                                    {{ $order->work_id }}
+                                                </td>
                                                 <td>{{ $order->co }}</td>
                                                 <td>{{ $order->cust_po }}</td>
                                                 <td>{{ $order->pn }}</td>

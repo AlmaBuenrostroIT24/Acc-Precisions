@@ -326,6 +326,14 @@
             border-top: 0;
         }
 
+        .costing-row-has-costing td {
+            background: #e8f7ee !important;
+        }
+
+        .costing-row-has-costing:hover td {
+            background: #dff1e7 !important;
+        }
+
         .costing-detail-panel {
             background: #ffffff;
             border: 1px solid #d6dde6;
