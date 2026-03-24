@@ -283,6 +283,10 @@
             background: #fee2e2 !important;
         }
 
+        .costing-cell-warning {
+            background: #fef3c7 !important;
+        }
+
         .costing-summary-center {
             text-align: center;
         }
@@ -879,6 +883,13 @@
                                                 </td>
                                             </tr>
                                             <tr>
+                                                <td class="costing-summary-label">Cost Pcs:</td>
+                                                <td class="costing-summary-center">$</td>
+                                                <td colspan="2" class="costing-cell-warning">
+                                                    <input class="costing-form-control costing-summary-right-text costing-summary-value costing-summary-readonly" type="text" inputmode="decimal" name="price_pcs" value="{{ old('price_pcs', $costing && $costing->price_pcs > 0 ? $costing->price_pcs : '') }}" readonly>
+                                                </td>
+                                            </tr>
+                                            <tr>
                                                 <td class="costing-summary-label">Difference</td>
                                                 <td class="costing-summary-center">$</td>
                                                 <td colspan="2">
@@ -1000,6 +1011,7 @@
         $(function () {
             const $tableBody = $('#operationsTableBody');
             const orderQty = {{ (int) ($order->qty ?? 0) }};
+            const orderWoQty = {{ (float) ($order->wo_qty ?? 0) }};
             const laborRatePerHour = 120;
             let $activeDurationField = null;
 
@@ -1279,8 +1291,10 @@
                 const salePrice = parseMoney($('input[name="sale_price"]').val());
                 const difference = salePrice - grandTotal;
                 const result = salePrice > 0 ? (difference / salePrice) * 100 : 0;
+                const costPcs = orderWoQty > 0 ? grandTotal / orderWoQty : 0;
 
                 $('input[name="grandtotal_cost"]').val(formatMoney(grandTotal));
+                $('input[name="price_pcs"]').val(costPcs > 0 ? formatMoney(costPcs) : '');
                 $('input[name="difference_cost"]').val(formatMoney(difference));
                 $('input[name="percentage"]').val(result.toFixed(2));
                 paintValueState($('input[name="difference_cost"]'), difference);
@@ -1373,14 +1387,14 @@
                 $('#costingPdfFrame').attr('src', '');
             });
 
-            $('input[name="total_material"], input[name="sale_price"], input[name="grandtotal_cost"], input[name="difference_cost"], input[name="percentage"]').each(function () {
+            $('input[name="total_material"], input[name="sale_price"], input[name="price_pcs"], input[name="grandtotal_cost"], input[name="difference_cost"], input[name="percentage"]').each(function () {
                 const $input = $(this);
                 if ($input.attr('name') !== 'percentage' && $input.val().trim() !== '') {
                     $input.val(formatMoney($input.val()));
                 }
             });
 
-            $('input[name="total_material"], input[name="total_outsource"], input[name="sale_price"]').on('blur', function () {
+            $('input[name="total_material"], input[name="total_outsource"], input[name="sale_price"], input[name="price_pcs"]').on('blur', function () {
                 const $input = $(this);
                 if ($input.val().trim() !== '') {
                     $input.val(formatMoney($input.val()));

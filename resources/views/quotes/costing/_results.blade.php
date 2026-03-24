@@ -57,6 +57,10 @@
                                             <th class="text-right">qty</th>
                                             <th class="text-right">wo_qty</th>
                                             <th>operation</th>
+                                            <th class="text-right">sale price</th>
+                                            <th class="text-right">grandtotal cost</th>
+                                            <th class="text-right">difference</th>
+                                            <th class="text-right">cost pcs</th>
                                             <th>due_date</th>
                                             <th>Edit</th>
                                         </tr>
@@ -75,6 +79,19 @@
                                                 <td class="text-right">{{ $order->qty }}</td>
                                                 <td class="text-right">{{ $order->wo_qty }}</td>
                                                 <td>{{ $order->operation }}</td>
+                                                <td class="text-right">${{ number_format((float) ($order->sale_price ?? 0), 2) }}</td>
+                                                <td class="text-right">${{ number_format((float) ($order->grandtotal_cost ?? 0), 2) }}</td>
+                                                @php($difference = (float) ($order->difference_cost ?? 0))
+                                                <td class="text-right">
+                                                    <span class="costing-diff-pill {{ $difference >= 0 ? 'is-positive' : 'is-negative' }}">
+                                                        ${{ number_format($difference, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span class="costing-cost-pill">
+                                                        ${{ number_format((float) ($order->price_pcs ?? 0), 2) }}
+                                                    </span>
+                                                </td>
                                                 <td>{{ $order->due_date ? \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') : '' }}</td>
                                                 <td class="text-center">
                                                     <a

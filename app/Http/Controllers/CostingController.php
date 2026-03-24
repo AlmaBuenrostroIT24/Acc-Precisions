@@ -18,8 +18,13 @@ class CostingController extends Controller
     public function index()
     {
         $search = trim((string) request('search'));
-        $costingOrderIds = Costing::query()
-            ->pluck('order_schedule_id')
+        $costingsByOrder = Costing::query()
+            ->select(['order_schedule_id', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost'])
+            ->get()
+            ->keyBy('order_schedule_id');
+
+        $costingOrderIds = $costingsByOrder
+            ->keys()
             ->flip();
 
         $orders = OrderSchedule::query()
@@ -39,8 +44,18 @@ class CostingController extends Controller
             ->orderByDesc('due_date')
             ->get();
 
-        $orders->transform(function ($order) use ($costingOrderIds) {
+        $orders->transform(function ($order) use ($costingOrderIds, $costingsByOrder) {
             $order->has_costing = $costingOrderIds->has($order->id);
+            $costing = $costingOrderIds->has($order->id) ? $costingsByOrder->get($order->id) : null;
+            $order->sale_price = (float) ($costing->sale_price ?? 0);
+            $order->grandtotal_cost = (float) ($costing->grandtotal_cost ?? 0);
+            $order->difference_cost = (float) ($costing->difference_cost ?? 0);
+            $storedPricePcs = (float) ($costing->price_pcs ?? 0);
+            $order->price_pcs = $storedPricePcs > 0
+                ? $storedPricePcs
+                : ((float) ($order->wo_qty ?? 0) > 0
+                    ? round($order->grandtotal_cost / (float) $order->wo_qty, 2)
+                    : 0);
             return $order;
         });
 
@@ -77,6 +92,9 @@ class CostingController extends Controller
                     'customer_summary' => $customers->take(2)->implode(', '),
                     'customer_count' => $customers->count(),
                     'has_costing' => $group->contains(fn ($order) => !empty($order->has_costing)),
+                    'sale_price' => (float) $group->sum(fn ($order) => (float) ($order->sale_price ?? 0)),
+                    'grandtotal_cost' => (float) $group->sum(fn ($order) => (float) ($order->grandtotal_cost ?? 0)),
+                    'difference_cost' => (float) $group->sum(fn ($order) => (float) ($order->difference_cost ?? 0)),
                     'orders' => $group,
                 ];
             });
@@ -146,6 +164,7 @@ class CostingController extends Controller
             'total_material' => ['nullable', 'string'],
             'total_outsource' => ['nullable', 'string'],
             'sale_price' => ['nullable', 'string'],
+            'price_pcs' => ['nullable', 'string'],
             'grandtotal_cost' => ['nullable', 'string'],
             'difference_cost' => ['nullable', 'string'],
             'percentage' => ['nullable', 'string'],
@@ -167,6 +186,9 @@ class CostingController extends Controller
                 $notes = trim((string) ($validated['notes'] ?? ''));
             }
 
+            $grandTotalCost = $this->parseMoney($validated['grandtotal_cost'] ?? null);
+            $woQty = (float) ($order->wo_qty ?? 0);
+
             $payload = [
                 'status' => 'draft',
                 'type_material' => $validated['type_material'] ?? null,
@@ -175,7 +197,8 @@ class CostingController extends Controller
                 'total_time_order' => $this->timeStringToDecimalHours($validated['total_time_order'] ?? null),
                 'total_labor' => $this->parseMoney($validated['total_labor'] ?? null),
                 'sale_price' => $this->parseMoney($validated['sale_price'] ?? null),
-                'grandtotal_cost' => $this->parseMoney($validated['grandtotal_cost'] ?? null),
+                'price_pcs' => $woQty > 0 ? round($grandTotalCost / $woQty, 2) : 0,
+                'grandtotal_cost' => $grandTotalCost,
                 'difference_cost' => $this->parseMoney($validated['difference_cost'] ?? null),
                 'percentage' => $this->parseMoney($validated['percentage'] ?? null),
                 'notes' => $notes !== '' ? $notes : null,
@@ -385,6 +408,7 @@ class CostingController extends Controller
             'total_time_order',
             'total_labor',
             'sale_price',
+            'price_pcs',
             'grandtotal_cost',
             'difference_cost',
             'percentage',
@@ -487,7 +511,7 @@ class CostingController extends Controller
             return 'blank';
         }
 
-        if (in_array($field, ['total_material', 'total_outsource', 'total_labor', 'sale_price', 'grandtotal_cost', 'difference_cost', 'labor_rate', 'operation_cost'], true)) {
+        if (in_array($field, ['total_material', 'total_outsource', 'total_labor', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost', 'labor_rate', 'operation_cost'], true)) {
             return number_format((float) $value, 2);
         }
 

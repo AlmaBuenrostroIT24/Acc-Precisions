@@ -302,6 +302,42 @@
             color: #0a4366;
         }
 
+        .costing-diff-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            padding: 0.28rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .costing-diff-pill.is-positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .costing-diff-pill.is-negative {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .costing-cost-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            padding: 0.28rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            line-height: 1;
+            background: #fef3c7;
+            color: #92400e;
+        }
+
         .costing-toggle-btn {
             border-radius: 999px;
             border: 1px solid rgba(15, 95, 143, 0.22);
