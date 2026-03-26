@@ -242,7 +242,7 @@ class CostingController extends Controller
             }
 
             $originalCostingValues = $costing->exists
-                ? $costing->only(array_keys($payload))
+                ? $costing->only(array_merge(array_keys($payload), ['drawing_pdf_path', 'quote_pdf_path']))
                 : [];
 
             if ($request->hasFile('drawing_pdf')) {
@@ -367,6 +367,151 @@ class CostingController extends Controller
         return redirect()
             ->route('costing.edit', $order)
             ->with('success', 'Costing saved successfully.');
+    }
+
+    public function deletePdf(OrderSchedule $order, string $type)
+    {
+        $order->loadMissing('costing');
+
+        $costing = $order->costing;
+
+        if (!$costing) {
+            return redirect()
+                ->route('costing.edit', $order)
+                ->withErrors('No costing record found for this order.');
+        }
+
+        if (!in_array($type, ['drawing', 'quote'], true)) {
+            abort(404);
+        }
+
+        $column = $type === 'drawing' ? 'drawing_pdf_path' : 'quote_pdf_path';
+
+        if (!$costing->{$column}) {
+            return redirect()
+                ->route('costing.edit', $order)
+                ->with('success', 'PDF already removed.');
+        }
+
+        DB::transaction(function () use ($costing, $column) {
+            $originalValues = $costing->only([$column]);
+
+            Storage::disk('public')->delete($costing->{$column});
+
+            $costing->fill([
+                $column => null,
+                'updated_by' => Auth::id(),
+            ]);
+            $costing->save();
+
+            $this->logCostingChanges($costing, $originalValues, [$column => null], false);
+        });
+
+        return redirect()
+            ->route('costing.edit', $order)
+            ->with('success', 'PDF removed successfully.');
+    }
+
+    public function uploadPdf(Request $request, OrderSchedule $order, string $type)
+    {
+        $order->loadMissing('costing');
+
+        $costing = $order->costing;
+
+        if (!$costing) {
+            return redirect()
+                ->route('costing.edit', $order)
+                ->withErrors('Save the costing first before uploading PDFs.');
+        }
+
+        if (!in_array($type, ['drawing', 'quote'], true)) {
+            abort(404);
+        }
+
+        $field = $type === 'drawing' ? 'drawing_pdf' : 'quote_pdf';
+        $column = $type === 'drawing' ? 'drawing_pdf_path' : 'quote_pdf_path';
+        $label = $type === 'drawing' ? 'Drawing PDF' : 'Quote PDF';
+
+        $validated = $request->validate([
+            $field => ['required', 'file', 'mimes:pdf', 'max:10240'],
+        ]);
+
+        $originalValues = $costing->only([$column]);
+
+        if ($costing->{$column}) {
+            Storage::disk('public')->delete($costing->{$column});
+        }
+
+        $path = $validated[$field]->store("costings/{$order->id}", 'public');
+
+        $costing->fill([
+            $column => $path,
+            'updated_by' => Auth::id(),
+        ]);
+        $costing->save();
+
+        $this->logCostingChanges($costing, $originalValues, [$column => $path], false);
+
+        return redirect()
+            ->route('costing.edit', $order)
+            ->with('success', $label . ' uploaded successfully.');
+    }
+
+    public function destroy(OrderSchedule $order)
+    {
+        $order->loadMissing('costing.operations');
+
+        $costing = $order->costing;
+
+        if (!$costing) {
+            return redirect()
+                ->route('costing.edit', $order)
+                ->withErrors('No costing record found for this order.');
+        }
+
+        DB::transaction(function () use ($costing) {
+            if ($costing->drawing_pdf_path) {
+                Storage::disk('public')->delete($costing->drawing_pdf_path);
+            }
+
+            if ($costing->quote_pdf_path) {
+                Storage::disk('public')->delete($costing->quote_pdf_path);
+            }
+
+            $costing->operations->each(function (CostingOperation $operation) use ($costing) {
+                CostingLog::create([
+                    'costing_id' => $costing->id,
+                    'costing_operation_id' => $operation->id,
+                    'action' => 'deleted',
+                    'description' => sprintf(
+                        'Operation %s deleted with costing removal.',
+                        $operation->name_operation ?: ('#' . $operation->id)
+                    ),
+                    'user_id' => Auth::id(),
+                ]);
+
+                $operation->update([
+                    'deleted_by' => Auth::id(),
+                ]);
+                $operation->delete();
+            });
+
+            CostingLog::create([
+                'costing_id' => $costing->id,
+                'action' => 'deleted',
+                'description' => 'Costing deleted.',
+                'user_id' => Auth::id(),
+            ]);
+
+            $costing->update([
+                'deleted_by' => Auth::id(),
+            ]);
+            $costing->delete();
+        });
+
+        return redirect()
+            ->route('costing')
+            ->with('success', 'Costing deleted successfully.');
     }
 
     public function logs(OrderSchedule $order)

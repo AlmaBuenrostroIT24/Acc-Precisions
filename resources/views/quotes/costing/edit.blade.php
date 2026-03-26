@@ -15,6 +15,7 @@
             display: grid;
             grid-template-columns: minmax(0, 8fr) minmax(320px, 4fr);
             gap: 16px;
+            align-items: start;
         }
 
         .costing-edit-header {
@@ -426,7 +427,43 @@
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .costing-file-upload {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .costing-file-upload-main,
+        .costing-file-upload-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .costing-file-upload-actions {
+            margin-left: auto;
+        }
+
+        .costing-file-remove {
+            margin-top: 8px;
+        }
+
+        .costing-file-remove-btn {
+            min-height: 32px;
+            padding: 0.35rem 0.7rem;
+        }
+
+        .costing-file-save-btn[disabled] {
+            opacity: 0.55;
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
         .costing-file-label {
@@ -444,11 +481,51 @@
         }
 
         .costing-file-input {
-            display: block;
-            width: auto;
-            max-width: 220px;
-            font-size: 1rem;
-            color: #334155;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+
+        .costing-file-picker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 36px;
+            padding: 0.45rem 0.75rem;
+            border: 1px solid #cfe0f5;
+            border-radius: 10px;
+            background: #f8fbff;
+            color: #0f172a;
+            font-size: 0.96rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+            transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .costing-file-picker:hover {
+            background: #eef6ff;
+            border-color: #9ec5fe;
+            box-shadow: 0 4px 10px rgba(16, 24, 40, 0.1);
+        }
+
+        .costing-file-picker.is-disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .costing-file-picker i {
+            color: #0d6efd;
+        }
+
+        .costing-file-name {
+            font-size: 0.94rem;
+            color: #64748b;
+            font-weight: 600;
+            min-width: 120px;
         }
 
         .costing-file-actions {
@@ -504,6 +581,7 @@
             justify-content: flex-end;
             gap: 8px;
             margin-bottom: 8px;
+            align-items: center;
         }
 
         .costing-row-icon-btn {
@@ -660,12 +738,77 @@
             background: #e2e8f0;
         }
 
+        .swal2-popup.erp-swal {
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+        }
+
+        .swal2-title.erp-swal-title {
+            color: #0f172a;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+        }
+
+        .swal2-html-container.erp-swal-text {
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .swal2-icon.erp-swal-icon {
+            box-shadow: none;
+        }
+
+        .swal2-icon.erp-swal-icon.swal2-warning {
+            border-color: rgba(245, 158, 11, 0.35) !important;
+            color: #b45309 !important;
+        }
+
+        .swal2-confirm.erp-swal-confirm,
+        .swal2-cancel.erp-swal-cancel {
+            border-radius: 10px !important;
+            font-weight: 800 !important;
+            box-shadow: none !important;
+            padding: 0.6rem 1rem !important;
+        }
+
+        .swal2-confirm.erp-swal-confirm {
+            background: #dc2626 !important;
+        }
+
+        .swal2-cancel.erp-swal-cancel {
+            background: #e2e8f0 !important;
+            color: #475569 !important;
+        }
+
         .costing-pdf-frame {
             width: 100%;
             height: 78vh;
             border: 0;
             display: block;
             background: #fff;
+        }
+
+        .costing-alert {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .costing-alert-close {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .costing-alert-close:hover {
+            opacity: 1;
         }
 
         @media (max-width: 991.98px) {
@@ -739,6 +882,11 @@
                                 <button type="button" class="costing-erp-btn costing-erp-btn-info costing-header-icon-btn" id="openCostingLogs" title="History" aria-label="History">
                                     <i class="fas fa-history"></i>
                                 </button>
+                                @if($costing)
+                                    <button type="submit" form="costingDeleteForm" class="costing-erp-btn costing-erp-btn-danger costing-header-icon-btn js-costing-delete-form-trigger" title="Delete Costing" aria-label="Delete Costing">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                @endif
                                 <a href="{{ route('costing') }}" class="costing-erp-btn costing-erp-btn-neutral costing-header-icon-btn" title="Back" aria-label="Back">
                                     <i class="fas fa-arrow-left"></i>
                                 </a>
@@ -746,8 +894,11 @@
                         </div>
 
                         @if(session('success'))
-                            <div class="alert alert-success py-2 px-3">
-                                {{ session('success') }}
+                            <div class="alert alert-success py-2 px-3 costing-alert" id="costingFlashSuccess">
+                                <span>{{ session('success') }}</span>
+                                <button type="button" class="costing-alert-close" aria-label="Close" id="costingFlashClose">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         @endif
 
@@ -824,6 +975,10 @@
                                 <button type="button" class="costing-erp-btn costing-erp-btn-danger costing-row-icon-btn" id="removeOperationRow" title="Remove Row" aria-label="Remove Row">
                                     <i class="fas fa-minus"></i>
                                 </button>
+                                <button type="submit" class="costing-erp-btn costing-erp-btn-primary" title="Save" aria-label="Save">
+                                    <i class="fas fa-save"></i>
+                                    <span class="ml-1">Save</span>
+                                </button>
                             </div>
 
                             <div class="costing-table-wrap">
@@ -836,7 +991,7 @@
                                             <th>Setup</th>
                                             <th>Run Time * Pcs</th>
                                             <th>Run Time Total</th>
-                                            <th>Total Tme OP</th>
+                                            <th>Total Time OP</th>
                                         </tr>
                                     </thead>
                                     <tbody id="operationsTableBody">
@@ -915,7 +1070,7 @@
                                                         class="costing-form-control costing-duration-input js-duration-field js-row-total-time"
                                                         type="hidden"
                                                         name="operations[{{ $index }}][total_time_operation]"
-                                                        value="{{ old("operations.$index.total_time_operation", $index === 0 ? '1:00:00' : $formatHours($operation->total_time_operation ?? 0)) }}"
+                                                        value="{{ old("operations.$index.total_time_operation", $index === 0 ? '0:00:00' : $formatHours($operation->total_time_operation ?? 0)) }}"
                                                     >
                                                 </td>
                                             </tr>
@@ -1000,7 +1155,7 @@
                                             <tr>
                                                 <td class="costing-summary-label">Cost Pcs:</td>
                                                 <td class="costing-summary-center">$</td>
-                                                <td colspan="2" class="costing-cell-warning">
+                                                <td colspan="2" class="{{ ($costing && (float) ($costing->price_pcs ?? 0) > 0) ? 'costing-cell-warning' : '' }}">
                                                     <input class="costing-form-control costing-summary-right-text costing-summary-value costing-summary-readonly" type="text" inputmode="decimal" name="price_pcs" value="{{ old('price_pcs', $costing && $costing->price_pcs > 0 ? $costing->price_pcs : '') }}" readonly>
                                                 </td>
                                             </tr>
@@ -1026,11 +1181,14 @@
 
                             <div class="costing-form-actions">
                                 <div class="costing-save-status" id="costingSaveStatus">Use Save to store costing and operations for this order.</div>
-                                <div>
-                                    <button type="submit" class="costing-erp-btn costing-erp-btn-primary">Save</button>
-                                </div>
                             </div>
                         </form>
+                        @if($costing)
+                            <form id="costingDeleteForm" method="POST" action="{{ route('costing.destroy', $order) }}" class="d-none">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                        @endif
                     </div>
                 </div>
 
@@ -1039,10 +1197,40 @@
                         <div class="costing-files-title">Files</div>
 
                         <div class="costing-file-box">
-                            <div class="costing-file-head">
-                                <label class="costing-file-label" for="drawing_pdf">Drawing PDF</label>
-                                <input id="drawing_pdf" type="file" class="costing-file-input" name="drawing_pdf" accept="application/pdf" form="costingForm">
-                            </div>
+                            <form method="POST" action="{{ route('costing.pdf.upload', ['order' => $order, 'type' => 'drawing']) }}" enctype="multipart/form-data">
+                                @csrf
+                                <div class="costing-file-head">
+                                    <div class="costing-file-upload">
+                                        <div class="costing-file-upload-main">
+                                            <label class="costing-file-picker {{ $costing ? '' : 'is-disabled' }}" for="drawing_pdf">
+                                                <i class="fas fa-paperclip"></i>
+                                                <span>Drawing PDF</span>
+                                            </label>
+                                            <span class="costing-file-name" id="drawing_pdf_name">No file chosen</span>
+                                            <input id="drawing_pdf" type="file" class="costing-file-input js-costing-file-input" data-target="#drawing_pdf_name" name="drawing_pdf" accept="application/pdf" {{ $costing ? '' : 'disabled' }}>
+                                        </div>
+                                        <div class="costing-file-upload-actions">
+                                            <button type="submit" class="costing-erp-btn costing-erp-btn-primary costing-file-save-btn costing-header-icon-btn" title="Save PDF" aria-label="Save PDF" {{ $costing ? '' : 'disabled' }}>
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                            @if($costing?->drawing_pdf_path)
+                                                <button type="submit" form="drawingPdfDeleteForm" class="costing-erp-btn costing-erp-btn-danger costing-file-remove-btn costing-header-icon-btn" title="Delete PDF" aria-label="Delete PDF">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            @unless($costing)
+                                <div class="costing-file-help">Save the costing first to enable PDF upload.</div>
+                            @endunless
+                            @if($costing?->drawing_pdf_path)
+                                <form id="drawingPdfDeleteForm" method="POST" action="{{ route('costing.pdf.delete', ['order' => $order, 'type' => 'drawing']) }}" class="d-none js-costing-delete-pdf-form" data-pdf-label="Drawing PDF">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            @endif
                             @if($costing?->drawing_pdf_path)
                                 <a
                                     class="costing-file-thumb js-costing-pdf-preview"
@@ -1060,10 +1248,40 @@
                         </div>
 
                         <div class="costing-file-box">
-                            <div class="costing-file-head">
-                                <label class="costing-file-label" for="quote_pdf">Quote PDF</label>
-                                <input id="quote_pdf" type="file" class="costing-file-input" name="quote_pdf" accept="application/pdf" form="costingForm">
-                            </div>
+                            <form method="POST" action="{{ route('costing.pdf.upload', ['order' => $order, 'type' => 'quote']) }}" enctype="multipart/form-data">
+                                @csrf
+                                <div class="costing-file-head">
+                                    <div class="costing-file-upload">
+                                        <div class="costing-file-upload-main">
+                                            <label class="costing-file-picker {{ $costing ? '' : 'is-disabled' }}" for="quote_pdf">
+                                                <i class="fas fa-paperclip"></i>
+                                                <span>Quote PDF</span>
+                                            </label>
+                                            <span class="costing-file-name" id="quote_pdf_name">No file chosen</span>
+                                            <input id="quote_pdf" type="file" class="costing-file-input js-costing-file-input" data-target="#quote_pdf_name" name="quote_pdf" accept="application/pdf" {{ $costing ? '' : 'disabled' }}>
+                                        </div>
+                                        <div class="costing-file-upload-actions">
+                                            <button type="submit" class="costing-erp-btn costing-erp-btn-primary costing-file-save-btn costing-header-icon-btn" title="Save PDF" aria-label="Save PDF" {{ $costing ? '' : 'disabled' }}>
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                            @if($costing?->quote_pdf_path)
+                                                <button type="submit" form="quotePdfDeleteForm" class="costing-erp-btn costing-erp-btn-danger costing-file-remove-btn costing-header-icon-btn" title="Delete PDF" aria-label="Delete PDF">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            @unless($costing)
+                                <div class="costing-file-help">Save the costing first to enable PDF upload.</div>
+                            @endunless
+                            @if($costing?->quote_pdf_path)
+                                <form id="quotePdfDeleteForm" method="POST" action="{{ route('costing.pdf.delete', ['order' => $order, 'type' => 'quote']) }}" class="d-none js-costing-delete-pdf-form" data-pdf-label="Quote PDF">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            @endif
                             @if($costing?->quote_pdf_path)
                                 <a
                                     class="costing-file-thumb js-costing-pdf-preview"
@@ -1312,7 +1530,8 @@
                 $(scope).find('.js-duration-field').each(function () {
                     const $field = $(this);
                     const isFirstRow = $field.closest('.operation-row').index() === 0;
-                    const readonly = isFirstRow || $field.hasClass('js-runtime-total-field');
+                    const isRowTotalField = $field.hasClass('js-row-total-time');
+                    const readonly = $field.hasClass('js-runtime-total-field') || (isFirstRow && !isRowTotalField);
                     $field.val(normalizeTime($field.val()));
 
                     if (!$field.siblings('.costing-duration-cell').length) {
@@ -1343,11 +1562,7 @@
                 const $runtimeTotalField = $row.find('.js-runtime-total-field');
 
                 if (rowIndex === 0) {
-                    if (!$totalField.val() || normalizeTime($totalField.val()) === '0:00:00') {
-                        $totalField.val('1:00:00');
-                    } else {
-                        $totalField.val(normalizeTime($totalField.val()));
-                    }
+                    $totalField.val(normalizeTime($totalField.val()));
                     $totalField.siblings('.costing-duration-cell').find('.js-duration-trigger').text(displayTime($totalField.val()));
                     setDurationTriggerReadonly($totalField, false);
                     return;
@@ -1412,6 +1627,7 @@
                 $('input[name="price_pcs"]').val(costPcs > 0 ? formatMoney(costPcs) : '');
                 $('input[name="difference_cost"]').val(formatMoney(difference));
                 $('input[name="percentage"]').val(result.toFixed(2));
+                $('input[name="price_pcs"]').closest('td').toggleClass('costing-cell-warning', costPcs > 0);
                 paintValueState($('input[name="difference_cost"]'), difference);
                 paintValueState($('input[name="percentage"]'), result);
             }
@@ -1426,7 +1642,7 @@
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="hidden" name="operations[${index}][time_setup]" value="0:00:00"></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="hidden" name="operations[${index}][runtime_pcs]" value="0:00:00"></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field js-runtime-total-field" type="hidden" name="operations[${index}][runtime_total]" value="0:00:00"></td>
-                        <td><input class="costing-form-control costing-duration-input js-duration-field js-row-total-time" type="hidden" name="operations[${index}][total_time_operation]" value="${isFirstRow ? '1:00:00' : '0:00:00'}"></td>
+                        <td><input class="costing-form-control costing-duration-input js-duration-field js-row-total-time" type="hidden" name="operations[${index}][total_time_operation]" value="0:00:00"></td>
                     </tr>
                 `;
             }
@@ -1486,6 +1702,93 @@
                     });
             });
 
+            $(document).on('submit', '.js-costing-delete-pdf-form', function (event) {
+                const form = this;
+                const pdfLabel = $(form).data('pdf-label') || 'PDF';
+
+                if (typeof Swal === 'undefined') {
+                    if (!confirm(`Delete current ${pdfLabel}?`)) {
+                        event.preventDefault();
+                    }
+                    return;
+                }
+
+                event.preventDefault();
+
+                Swal.fire({
+                    title: 'Delete PDF?',
+                    text: `The current ${pdfLabel} will be removed immediately.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Delete',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'erp-swal',
+                        title: 'erp-swal-title',
+                        htmlContainer: 'erp-swal-text',
+                        icon: 'erp-swal-icon',
+                        confirmButton: 'erp-swal-confirm',
+                        cancelButton: 'erp-swal-cancel',
+                    },
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+
+            $(document).on('click', '.js-costing-delete-form-trigger', function (event) {
+                const form = document.getElementById('costingDeleteForm');
+
+                if (!form) {
+                    return;
+                }
+
+                if (typeof Swal === 'undefined') {
+                    if (confirm('Delete this costing and all its operations?')) {
+                        form.submit();
+                    }
+                    return;
+                }
+
+                event.preventDefault();
+
+                Swal.fire({
+                    title: 'Delete costing?',
+                    text: 'This will remove the costing, its operations, and attached PDFs.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Delete',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'erp-swal',
+                        title: 'erp-swal-title',
+                        htmlContainer: 'erp-swal-text',
+                        icon: 'erp-swal-icon',
+                        confirmButton: 'erp-swal-confirm',
+                        cancelButton: 'erp-swal-cancel',
+                    },
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+
+            $(document).on('change', '.js-costing-file-input', function () {
+                const fileName = this.files && this.files[0] ? this.files[0].name : 'No file chosen';
+                const target = $(this).data('target');
+                if (target) {
+                    $(target).text(fileName);
+                }
+            });
+
             $(document).on('click', '.js-costing-pdf-preview', function (event) {
                 event.preventDefault();
 
@@ -1508,6 +1811,21 @@
                     $input.val(formatMoney($input.val()));
                 }
             });
+
+            const $flashSuccess = $('#costingFlashSuccess');
+            if ($flashSuccess.length) {
+                $('#costingFlashClose').on('click', function () {
+                    $flashSuccess.stop(true, true).fadeOut(200, function () {
+                        $(this).remove();
+                    });
+                });
+
+                setTimeout(function () {
+                    $flashSuccess.fadeOut(250, function () {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
 
             $('input[name="total_material"], input[name="total_outsource"], input[name="sale_price"], input[name="price_pcs"]').on('blur', function () {
                 const $input = $(this);
