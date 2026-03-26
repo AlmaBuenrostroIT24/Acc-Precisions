@@ -38,7 +38,7 @@
 
         .costing-kpi-label {
             display: block;
-            font-size: 0.76rem;
+            font-size: 0.82rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
@@ -47,7 +47,7 @@
         }
 
         .costing-kpi-value {
-            font-size: 1.45rem;
+            font-size: 1.58rem;
             font-weight: 800;
             line-height: 1;
             color: #17212b;
@@ -63,48 +63,69 @@
 
         .fai-global-search {
             max-width: 360px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #cfd8e3;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+            padding: 0 12px;
+        }
+
+        .costing-search-clear {
+            border: 0;
+            background: transparent;
+            color: #94a3b8;
+            padding: 0;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: color 0.15s ease, opacity 0.15s ease;
+        }
+
+        .costing-search-clear.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .costing-search-clear:hover,
+        .costing-search-clear:focus {
+            color: #475569;
+            outline: none;
         }
 
         .fai-global-search .input-group-text {
-            border-radius: 10px 0 0 10px;
-            border: 1px solid #d5d8dd;
-            background: #eef2f7;
-            color: #334155;
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            padding: 0;
         }
 
         .fai-global-search .form-control {
-            border-top: 1px solid #d5d8dd;
-            border-bottom: 1px solid #d5d8dd;
-            border-left: 0;
-            border-right: 0;
+            border: 0;
             font-weight: 600;
+            box-shadow: none;
+            padding: 0.62rem 0;
+            height: auto;
+            font-size: 1rem;
         }
 
-        .fai-global-search .form-control,
-        .fai-global-search .btn,
-        .fai-global-search .input-group-text {
-            height: 36px;
+        .fai-global-search .form-control:focus {
+            box-shadow: none;
+            background: transparent;
         }
 
-        .fai-global-search .btn {
-            border: 1px solid #d5d8dd;
-        }
-
-        .fai-global-search .btn-secondary {
-            background: #e2e8f0;
-            border-color: #d5d8dd;
-            color: #334155;
-        }
-
-        .fai-global-search .btn-secondary:hover,
-        .fai-global-search .btn-secondary:focus {
-            background: #cbd5e1;
-            border-color: #cbd5e1;
-            color: #0f172a;
-        }
-
-        .fai-global-search .input-group-append .btn:last-child {
-            border-radius: 0 10px 10px 0;
+        .fai-global-search:hover,
+        .fai-global-search:focus-within {
+            border-color: #b7c7d8;
+            box-shadow: 0 3px 12px rgba(16, 24, 40, 0.08);
         }
 
         #costingSearchForm input[type="search"]::-webkit-search-cancel-button {
@@ -155,7 +176,7 @@
         }
 
         .fai-title-text {
-            font-size: 1.05rem;
+            font-size: 1.12rem;
             font-weight: 800;
             letter-spacing: 0.02em;
             text-transform: uppercase;
@@ -163,7 +184,7 @@
         }
 
         .fai-title-sub {
-            font-size: 0.9rem;
+            font-size: 0.96rem;
             line-height: 1.15;
         }
 
@@ -174,6 +195,7 @@
             border: 1px solid #d5d8dd;
             background: #f8fafc;
             color: #334155;
+            font-size: 0.94rem;
         }
 
         .costing-pagination {
@@ -183,21 +205,64 @@
         }
 
         .costing-pagination .pagination {
-            margin-bottom: 0;
+            margin: 0;
+            gap: 4px;
+        }
+
+        .costing-pagination .page-item {
+            border: 1px solid rgba(15, 23, 42, 0.18);
+            background: rgba(241, 245, 249, 0.95);
+            color: #0f172a;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+            transition: background-color .12s ease, transform .08s ease, box-shadow .12s ease;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .costing-pagination .page-link {
-            color: #0f5f8f;
-            border-color: #d6dde6;
+            padding: 0.34rem 0.68rem;
+            font-size: 1rem;
+            line-height: 1.4;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            border-radius: 8px;
+        }
+
+        .costing-pagination .page-item:hover {
+            background: rgba(226, 232, 240, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
+        }
+
+        .costing-pagination .page-link:focus {
+            box-shadow: none;
+            outline: none;
         }
 
         .costing-pagination .page-item.active .page-link {
-            background-color: #0f5f8f;
-            border-color: #0f5f8f;
+            background: transparent;
+            color: #fff;
+        }
+
+        .costing-pagination .page-item.active {
+            background: #0b5ed7;
+            border-color: #0b5ed7;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .costing-pagination .page-item.disabled {
+            color: #94a3b8;
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            box-shadow: none;
+            transform: none;
         }
 
         .costing-pagination .page-item.disabled .page-link {
-            color: #94a3b8;
+            color: inherit;
+            cursor: default;
         }
 
         .costing-results {
@@ -251,7 +316,7 @@
 
         .fai-dt-table thead th {
             white-space: normal;
-            font-size: 0.86rem;
+            font-size: 0.94rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.02em;
@@ -267,7 +332,7 @@
         }
 
         .fai-dt-table tbody td {
-            font-size: 0.85rem;
+            font-size: 0.94rem;
             color: #0f172a;
             vertical-align: middle;
             padding: var(--sp-2) var(--sp-2);
@@ -296,7 +361,7 @@
             min-width: 2rem;
             padding: 0.35rem 0.7rem;
             border-radius: 999px;
-            font-size: 0.78rem;
+            font-size: 0.88rem;
             font-weight: 800;
             background: rgba(15, 95, 143, 0.12);
             color: #0a4366;
@@ -309,7 +374,7 @@
             min-width: 92px;
             padding: 0.28rem 0.6rem;
             border-radius: 999px;
-            font-size: 0.78rem;
+            font-size: 0.84rem;
             font-weight: 800;
             line-height: 1;
         }
@@ -331,7 +396,7 @@
             min-width: 92px;
             padding: 0.28rem 0.6rem;
             border-radius: 999px;
-            font-size: 0.78rem;
+            font-size: 0.84rem;
             font-weight: 800;
             line-height: 1;
             background: #fef3c7;
@@ -591,24 +656,19 @@
 
                     <div class="costing-table-tools">
                         <form method="GET" action="{{ route('costing') }}" class="costing-table-search" id="costingSearchForm">
-                            <div class="input-group fai-global-search">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                </div>
+                            <div class="fai-global-search">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input
                                     name="search"
                                     type="search"
                                     class="form-control"
-                                    placeholder="Search PN, customer, work_id..."
+                                    placeholder="Search..."
                                     autocomplete="off"
                                     value="{{ $search }}"
                                 >
-                                <div class="input-group-append">
-                                    <button type="submit" class="btn btn-secondary">Search</button>
-                                    @if($search !== '')
-                                        <a href="{{ route('costing') }}" class="btn btn-outline-secondary">Clear</a>
-                                    @endif
-                                </div>
+                                <button type="button" class="costing-search-clear {{ $search !== '' ? 'is-visible' : '' }}" id="costingSearchClear" aria-label="Clear search" title="Clear search">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -644,6 +704,11 @@
             const $results = $('#costingResults');
             const $searchForm = $('#costingSearchForm');
             const $searchInput = $searchForm.find('input[name="search"]');
+            const $searchClear = $('#costingSearchClear');
+
+            function syncSearchClear() {
+                $searchClear.toggleClass('is-visible', $.trim($searchInput.val()) !== '');
+            }
 
             function bindResultEvents() {
                 const totalRecords = $results.find('[data-total-records]').data('total-records');
@@ -653,14 +718,19 @@
 
                 $results.find('.pagination a').off('click.costing').on('click.costing', function (event) {
                     event.preventDefault();
-                    loadResults($(this).attr('href'));
+                    loadResults($(this).attr('href'), { syncUrl: false });
                 });
             }
 
-            function loadResults(url) {
+            function loadResults(url, options = {}) {
                 if (!url) {
                     return;
                 }
+
+                const settings = {
+                    syncUrl: true,
+                    ...options
+                };
 
                 if (activeRequest) {
                     activeRequest.abort();
@@ -676,8 +746,13 @@
                     }
                 }).done(function (html) {
                     $results.html(html);
-                    const nextUrl = new URL(url, window.location.origin);
-                    window.history.replaceState({}, '', nextUrl.toString());
+                    if (settings.syncUrl) {
+                        const nextUrl = new URL(url, window.location.origin);
+                        nextUrl.searchParams.delete('page');
+                        window.history.replaceState({}, '', nextUrl.toString());
+                    } else {
+                        window.history.replaceState({}, '', $searchForm.attr('action'));
+                    }
                     bindResultEvents();
                 }).always(function () {
                     $results.removeClass('is-loading');
@@ -689,17 +764,25 @@
                 event.preventDefault();
                 const query = $searchForm.serialize();
                 const url = `${$searchForm.attr('action')}?${query}`;
-                loadResults(url);
+                loadResults(url, { syncUrl: false });
             });
 
             $searchInput.on('input', function () {
+                syncSearchClear();
                 clearTimeout(searchDebounce);
 
                 searchDebounce = setTimeout(function () {
                     const query = $searchForm.serialize();
                     const url = `${$searchForm.attr('action')}?${query}`;
-                    loadResults(url);
+                    loadResults(url, { syncUrl: false });
                 }, 300);
+            });
+
+            $searchClear.on('click', function () {
+                $searchInput.val('');
+                syncSearchClear();
+                loadResults($searchForm.attr('action'), { syncUrl: false });
+                $searchInput.trigger('focus');
             });
 
             $(document).on('click', '.toggle-detail', function () {
@@ -743,6 +826,7 @@
             });
 
             bindResultEvents();
+            syncSearchClear();
         });
     </script>
 @stop
