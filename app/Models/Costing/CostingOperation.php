@@ -32,13 +32,13 @@ class CostingOperation extends Model
 
     protected $casts = [
         'status' => 'string',
-        'time_programming' => 'decimal:2',
-        'time_setup' => 'decimal:2',
+        'time_programming' => 'decimal:4',
+        'time_setup' => 'decimal:4',
         'runtime_pcs' => 'decimal:4',
-        'runtime_total' => 'decimal:2',
-        'total_time_operation' => 'decimal:2',
-        'labor_rate' => 'decimal:2',
-        'operation_cost' => 'decimal:2',
+        'runtime_total' => 'decimal:4',
+        'total_time_operation' => 'decimal:4',
+        'labor_rate' => 'decimal:4',
+        'operation_cost' => 'decimal:4',
         'deleted_at' => 'datetime',
     ];
 

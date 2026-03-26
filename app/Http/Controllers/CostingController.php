@@ -19,7 +19,7 @@ class CostingController extends Controller
     {
         $search = trim((string) request('search'));
         $costingsByOrder = Costing::query()
-            ->select(['order_schedule_id', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost'])
+            ->select(['order_schedule_id', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost', 'notes', 'updated_at'])
             ->get()
             ->keyBy('order_schedule_id');
 
@@ -50,6 +50,8 @@ class CostingController extends Controller
             $order->sale_price = (float) ($costing->sale_price ?? 0);
             $order->grandtotal_cost = (float) ($costing->grandtotal_cost ?? 0);
             $order->difference_cost = (float) ($costing->difference_cost ?? 0);
+            $order->costing_notes = trim((string) ($costing->notes ?? ''));
+            $order->costing_notes_date = optional($costing?->updated_at)->format('Y-m-d H:i:s');
             $storedPricePcs = (float) ($costing->price_pcs ?? 0);
             $order->price_pcs = $storedPricePcs > 0
                 ? $storedPricePcs
@@ -85,6 +87,18 @@ class CostingController extends Controller
                     ->unique()
                     ->values();
 
+                $notes = $group
+                    ->filter(fn ($order) => filled($order->costing_notes))
+                    ->map(function ($order) {
+                        return [
+                            'work_id' => $order->work_id,
+                            'note' => $order->costing_notes,
+                            'date' => $order->costing_notes_date ?: 'N/A',
+                        ];
+                    })
+                    ->unique(fn ($item) => $item['work_id'] . '|' . $item['note'] . '|' . $item['date'])
+                    ->values();
+
                 return (object) [
                     'pn' => $pn,
                     'total_orders' => $group->count(),
@@ -92,6 +106,9 @@ class CostingController extends Controller
                     'customer_summary' => $customers->take(2)->implode(', '),
                     'customer_count' => $customers->count(),
                     'has_costing' => $group->contains(fn ($order) => !empty($order->has_costing)),
+                    'notes_summary' => $notes->take(2)->pluck('note')->implode(' | '),
+                    'notes_count' => $notes->count(),
+                    'notes_items' => $notes,
                     'sale_price' => (float) $group->sum(fn ($order) => (float) ($order->sale_price ?? 0)),
                     'grandtotal_cost' => (float) $group->sum(fn ($order) => (float) ($order->grandtotal_cost ?? 0)),
                     'difference_cost' => (float) $group->sum(fn ($order) => (float) ($order->difference_cost ?? 0)),
@@ -182,9 +199,6 @@ class CostingController extends Controller
 
         DB::transaction(function () use ($validated, $request, $order) {
             $notes = trim((string) ($validated['notes_bottom'] ?? ''));
-            if ($notes === '') {
-                $notes = trim((string) ($validated['notes'] ?? ''));
-            }
 
             $grandTotalCost = $this->parseMoney($validated['grandtotal_cost'] ?? null);
             $woQty = (float) ($order->wo_qty ?? 0);
@@ -357,13 +371,32 @@ class CostingController extends Controller
 
     public function pdf(OrderSchedule $order)
     {
+        $order->loadMissing('costing.operations');
+
         $pdf = Pdf::loadView('quotes.costing.pdf', [
             'order' => $order,
+            'costing' => $order->costing,
+            'operations' => $order->costing?->operations ?? collect(),
         ])->setPaper('letter', 'portrait');
 
         $cleanWorkId = preg_replace('/[\/\\\\]/', '_', (string) $order->work_id);
 
         return $pdf->stream("costing_{$cleanWorkId}.pdf");
+    }
+
+    public function pdfSheet(OrderSchedule $order)
+    {
+        $order->loadMissing('costing.operations');
+
+        $pdf = Pdf::loadView('quotes.costing.pdf_sheet', [
+            'order' => $order,
+            'costing' => $order->costing,
+            'operations' => $order->costing?->operations ?? collect(),
+        ])->setPaper('letter', 'portrait');
+
+        $cleanWorkId = preg_replace('/[\/\\\\]/', '_', (string) $order->work_id);
+
+        return $pdf->stream("costing_sheet_{$cleanWorkId}.pdf");
     }
 
     private function parseMoney($value): float

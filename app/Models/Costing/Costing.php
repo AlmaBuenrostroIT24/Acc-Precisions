@@ -37,16 +37,16 @@ class Costing extends Model
     ];
 
     protected $casts = [
-        'qty_material' => 'decimal:2',
-        'price_material' => 'decimal:2',
-        'total_material' => 'decimal:2',
-        'total_outsource' => 'decimal:2',
-        'total_time_order' => 'decimal:2',
-        'total_labor' => 'decimal:2',
-        'sale_price' => 'decimal:2',
-        'price_pcs' => 'decimal:2',
-        'grandtotal_cost' => 'decimal:2',
-        'difference_cost' => 'decimal:2',
+        'qty_material' => 'decimal:4',
+        'price_material' => 'decimal:4',
+        'total_material' => 'decimal:4',
+        'total_outsource' => 'decimal:4',
+        'total_time_order' => 'decimal:4',
+        'total_labor' => 'decimal:4',
+        'sale_price' => 'decimal:4',
+        'price_pcs' => 'decimal:4',
+        'grandtotal_cost' => 'decimal:4',
+        'difference_cost' => 'decimal:4',
         'percentage' => 'decimal:2',
         'deleted_at' => 'datetime',
     ];

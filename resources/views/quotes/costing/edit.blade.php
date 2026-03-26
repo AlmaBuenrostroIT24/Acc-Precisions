@@ -33,6 +33,88 @@
             flex-wrap: wrap;
         }
 
+        .costing-header-icon-btn {
+            width: 34px;
+            min-width: 34px;
+            padding: 0;
+        }
+
+        .costing-erp-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0.42rem 0.8rem;
+            border-radius: 9px;
+            border: 1px solid #d6e4f5;
+            background: #f8fbff;
+            color: #0d6efd;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+        }
+
+        .costing-erp-btn:hover,
+        .costing-erp-btn:focus {
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(16, 24, 40, 0.12);
+        }
+
+        .costing-erp-btn-primary {
+            background: #f8fbff;
+            border-color: #bfd6f3;
+            color: #0d6efd;
+        }
+
+        .costing-erp-btn-primary:hover,
+        .costing-erp-btn-primary:focus {
+            background: #eef6ff;
+            border-color: #9ec5fe;
+            color: #0b5ed7;
+        }
+
+        .costing-erp-btn-info {
+            background: #f4fbff;
+            border-color: #b6e0fe;
+            color: #0ea5e9;
+        }
+
+        .costing-erp-btn-info:hover,
+        .costing-erp-btn-info:focus {
+            background: #e0f2fe;
+            border-color: #7dd3fc;
+            color: #0284c7;
+        }
+
+        .costing-erp-btn-neutral {
+            background: #fbfcfe;
+            border-color: #d5deea;
+            color: #64748b;
+        }
+
+        .costing-erp-btn-neutral:hover,
+        .costing-erp-btn-neutral:focus {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
+
+        .costing-erp-btn-danger {
+            background: #fff7f7;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+
+        .costing-erp-btn-danger:hover,
+        .costing-erp-btn-danger:focus {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+
         .costing-edit-title,
         .costing-files-title {
             font-size: 1.05rem;
@@ -415,6 +497,12 @@
             margin-bottom: 10px;
         }
 
+        .costing-row-icon-btn {
+            width: 34px;
+            min-width: 34px;
+            padding: 0;
+        }
+
         .costing-duration-input {
             display: none;
         }
@@ -613,6 +701,12 @@
         $sumRuntimePcs = $operations->sum(fn ($operation) => (float) ($operation->runtime_pcs ?? 0));
         $sumRuntimeTotal = $operations->sum(fn ($operation) => (float) ($operation->runtime_total ?? 0));
         $sumTotalTimeOperation = $operations->sum(fn ($operation) => (float) ($operation->total_time_operation ?? 0));
+        $resolvedRevision = trim((string) ($order->revision ?? ''));
+
+        if ($resolvedRevision === '' || strtolower($resolvedRevision) === 'default_value') {
+            preg_match('/\bREV(?:ISION)?\.?\s*[:\-]?\s*([A-Z0-9\-]+)/i', (string) ($order->Part_description ?? ''), $revisionMatches);
+            $resolvedRevision = isset($revisionMatches[1]) ? 'REV. ' . trim($revisionMatches[1]) : '';
+        }
     @endphp
 
     <div class="row mx-0">
@@ -623,8 +717,15 @@
                         <div class="costing-edit-header">
                             <div class="costing-edit-title">Quote</div>
                             <div class="costing-header-actions">
-                                <button type="button" class="btn btn-outline-info btn-sm" id="openCostingLogs">History</button>
-                                <a href="{{ route('costing') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+                                <a href="{{ route('costing.pdf', $order) }}" target="_blank" class="costing-erp-btn costing-erp-btn-primary costing-header-icon-btn" title="Print" aria-label="Print">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <button type="button" class="costing-erp-btn costing-erp-btn-info costing-header-icon-btn" id="openCostingLogs" title="History" aria-label="History">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <a href="{{ route('costing') }}" class="costing-erp-btn costing-erp-btn-neutral costing-header-icon-btn" title="Back" aria-label="Back">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
                             </div>
                         </div>
 
@@ -684,7 +785,7 @@
                                         </div>
                                         <div class="costing-info-row">
                                             <div class="costing-info-label">Revision:</div>
-                                            <div class="costing-info-value">{{ $order->revision ?: 'N/A' }}</div>
+                                            <div class="costing-info-value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</div>
                                         </div>
                                         <div class="costing-info-row">
                                             <div class="costing-info-label">Date:</div>
@@ -696,19 +797,17 @@
                                                 <input class="costing-inline-input" type="text" name="type_material" value="{{ old('type_material', $costing->type_material ?? '') }}">
                                             </div>
                                         </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Quote Notes:</div>
-                                            <div class="costing-info-value">
-                                                <textarea class="costing-inline-input costing-inline-textarea" name="notes">{{ old('notes', $costing->notes ?? '') }}</textarea>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="costing-row-actions">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="addOperationRow">Add Row</button>
-                                <button type="button" class="btn btn-outline-danger btn-sm" id="removeOperationRow">Remove Row</button>
+                                <button type="button" class="costing-erp-btn costing-erp-btn-primary costing-row-icon-btn" id="addOperationRow" title="Add Row" aria-label="Add Row">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button type="button" class="costing-erp-btn costing-erp-btn-danger costing-row-icon-btn" id="removeOperationRow" title="Remove Row" aria-label="Remove Row">
+                                    <i class="fas fa-minus"></i>
+                                </button>
                             </div>
 
                             <div class="costing-table-wrap">
@@ -721,7 +820,7 @@
                                             <th>Setup</th>
                                             <th>Run Time * Pcs</th>
                                             <th>Run Time Total</th>
-                                            <th>Total Time Hrs</th>
+                                            <th>Total Tme OP</th>
                                         </tr>
                                     </thead>
                                     <tbody id="operationsTableBody">
@@ -857,7 +956,7 @@
                                             <tr>
                                                 <td colspan="6" class="costing-notes-box">
                                                     <span class="costing-notes-label">Notes:</span>
-                                                    <textarea class="costing-form-control" name="notes_bottom" rows="3">{{ old('notes_bottom', $costing->notes ?? 'Programming to 5 Axes') }}</textarea>
+                                                    <textarea class="costing-form-control" name="notes_bottom" rows="3">{{ old('notes_bottom', $costing->notes ?? '') }}</textarea>
                                                 </td>
                                             </tr>
                                         </table>
@@ -912,7 +1011,7 @@
                             <div class="costing-form-actions">
                                 <div class="costing-save-status" id="costingSaveStatus">Use Save to store costing and operations for this order.</div>
                                 <div>
-                                    <button type="submit" class="btn btn-primary">Save</button>
+                                    <button type="submit" class="costing-erp-btn costing-erp-btn-primary">Save</button>
                                 </div>
                             </div>
                         </form>

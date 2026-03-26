@@ -357,6 +357,82 @@
             color: #617182;
         }
 
+        .costing-note-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 88px;
+            padding: 0.32rem 0.68rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            line-height: 1;
+            border: 1px solid #fecaca;
+            background: #fee2e2;
+            color: #b91c1c;
+            cursor: pointer;
+        }
+
+        .costing-note-trigger:hover {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .costing-notes-modal .modal-content {
+            border: 1px solid #cfe0f5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .costing-notes-modal .modal-header {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+            border-bottom: 1px solid #dbe7f5;
+        }
+
+        .costing-notes-modal .modal-body {
+            background: #f8fbff;
+            padding: 16px;
+        }
+
+        .costing-note-card {
+            border: 1px solid #dbe7f5;
+            border-radius: 10px;
+            background: #fff;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+
+        .costing-note-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .costing-note-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .costing-note-card-work {
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #0f172a;
+        }
+
+        .costing-note-card-date {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .costing-note-card-body {
+            font-size: 0.9rem;
+            color: #334155;
+            white-space: pre-wrap;
+        }
+
         .costing-detail-row td {
             background: #f7fafc;
             border-top: 0;
@@ -401,21 +477,36 @@
             white-space: normal !important;
         }
 
+        .costing-detail-actions {
+            display: inline-grid;
+            grid-template-columns: repeat(2, 32px);
+            gap: 6px;
+            justify-content: center;
+        }
+
         .costing-edit-btn {
-            min-width: 38px;
+            min-width: 32px;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 8px;
         }
 
         .erp-table-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 34px;
-            height: 34px;
-            padding: 0.35rem 0.55rem;
-            border-radius: 10px;
-            border: 1px solid transparent;
-            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+            min-width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid #d7e3f0;
+            box-shadow: 0 1px 1px rgba(16, 24, 40, 0.04);
             transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+
+        .erp-table-btn i {
+            font-size: 0.86rem;
         }
 
         .erp-table-btn:hover {
@@ -424,16 +515,24 @@
         }
 
         .btn-erp-primary {
-            background: #dbeafe;
-            border-color: #bfdbfe;
-            color: #1d4ed8;
+            background: #ffffff;
+            border-color: #d7e3f0;
+            color: #0d6efd;
         }
 
         .btn-erp-primary:hover,
         .btn-erp-primary:focus {
-            background: #bfdbfe;
-            border-color: #93c5fd;
-            color: #1e40af;
+            background: #f7fbff;
+            border-color: #c6d8eb;
+            color: #0b5ed7;
+        }
+
+        .costing-action-pdf {
+            color: #2563eb;
+        }
+
+        .costing-action-edit {
+            color: #f59e0b;
         }
 
         @media (max-width: 767.98px) {
@@ -521,6 +620,20 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade costing-notes-modal" id="costingNotesModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="costingNotesModalTitle">PN Notes</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="costingNotesModalBody"></div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('js')
@@ -598,6 +711,35 @@
                 $(this).attr('aria-expanded', isHidden ? 'true' : 'false');
                 $(this).find('.label-show').toggleClass('d-none', isHidden);
                 $(this).find('.label-hide').toggleClass('d-none', !isHidden);
+            });
+
+            $(document).on('click', '.js-costing-notes-trigger', function () {
+                const pn = $(this).data('pn');
+                const notes = $(this).data('notes') || [];
+                const $body = $('#costingNotesModalBody');
+
+                $('#costingNotesModalTitle').text(`Notes - ${pn}`);
+
+                if (!notes.length) {
+                    $body.html('<div class="text-center text-muted py-4">No notes available.</div>');
+                    $('#costingNotesModal').modal('show');
+                    return;
+                }
+
+                const html = notes.map(function (item) {
+                    return `
+                        <div class="costing-note-card">
+                            <div class="costing-note-card-head">
+                                <div class="costing-note-card-work">${item.work_id || 'N/A'}</div>
+                                <div class="costing-note-card-date">${item.date || 'N/A'}</div>
+                            </div>
+                            <div class="costing-note-card-body">${$('<div>').text(item.note || '').html()}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                $body.html(html);
+                $('#costingNotesModal').modal('show');
             });
 
             bindResultEvents();

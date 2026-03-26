@@ -65,6 +65,7 @@ Route::get('/quote/costing/{order}/edit', [CostingController::class, 'edit'])->m
 Route::put('/quote/costing/{order}', [CostingController::class, 'update'])->middleware(['auth'])->name('costing.update');
 Route::get('/quote/costing/{order}/logs', [CostingController::class, 'logs'])->middleware(['auth'])->name('costing.logs');
 Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->middleware(['auth'])->name('costing.pdf');
+Route::get('/quote/costing/{order}/pdf-sheet', [CostingController::class, 'pdfSheet'])->middleware(['auth'])->name('costing.pdfSheet');
 Route::get('/costing', function () {
     return redirect()->route('costing');
 })->middleware(['auth']);

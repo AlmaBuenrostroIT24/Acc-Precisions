@@ -85,15 +85,6 @@
             vertical-align: top;
         }
 
-        .title {
-            font-size: 14pt;
-            font-weight: 800;
-            text-transform: uppercase;
-            border: 0;
-            padding: 0 0 8pt;
-            color: #1f3a66;
-        }
-
         .section {
             margin-bottom: 10pt;
         }
@@ -134,6 +125,11 @@
             font-size: 8.5pt;
         }
 
+        .operations-row td {
+            height: 15pt;
+            vertical-align: middle;
+        }
+
         .text-right {
             text-align: right;
         }
@@ -162,18 +158,6 @@
             min-height: 78pt;
             white-space: pre-wrap;
         }
-
-        .costing-pdf-costpcs {
-            background: #fef3c7;
-        }
-
-        .costing-pdf-difference {
-            background: #dcfce7;
-        }
-
-        .costing-pdf-result {
-            background: #dcfce7;
-        }
     </style>
 </head>
 <body>
@@ -188,6 +172,16 @@
             return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
         };
 
+        $formatHoursForPrint = function ($value) use ($formatHours) {
+            $value = (float) ($value ?? 0);
+
+            if (abs($value) < 0.00001 || abs($value - 1) < 0.00001) {
+                return '';
+            }
+
+            return $formatHours($value);
+        };
+
         $formatMoney = function ($value, $blankWhenZero = false) {
             $value = (float) ($value ?? 0);
 
@@ -199,6 +193,46 @@
         };
 
         $operations = $operations->values();
+
+        if (($operations->first()->name_operation ?? null) !== 'Traveler Process') {
+            $operations = collect([(object) [
+                'name_operation' => 'Traveler Process',
+                'resource_name' => '-----',
+                'time_programming' => 0,
+                'time_setup' => 0,
+                'runtime_pcs' => 0,
+                'runtime_total' => 0,
+                'total_time_operation' => 1,
+            ]])->merge($operations)->values();
+        }
+
+        $minimumRows = 7;
+        if ($operations->count() < $minimumRows) {
+            for ($index = $operations->count(); $index < $minimumRows; $index++) {
+                $operations->push((object) [
+                    'name_operation' => 'OP' . $index,
+                    'resource_name' => null,
+                    'time_programming' => 0,
+                    'time_setup' => 0,
+                    'runtime_pcs' => 0,
+                    'runtime_total' => 0,
+                    'total_time_operation' => 0,
+                ]);
+            }
+        }
+
+        for ($index = 0; $index < 4; $index++) {
+            $operations->push((object) [
+                'name_operation' => null,
+                'resource_name' => null,
+                'time_programming' => 0,
+                'time_setup' => 0,
+                'runtime_pcs' => 0,
+                'runtime_total' => 0,
+                'total_time_operation' => 0,
+            ]);
+        }
+
         $sumProgramming = $operations->sum(fn ($operation) => (float) ($operation->time_programming ?? 0));
         $sumSetup = $operations->sum(fn ($operation) => (float) ($operation->time_setup ?? 0));
         $sumRuntimePcs = $operations->sum(fn ($operation) => (float) ($operation->runtime_pcs ?? 0));
@@ -264,28 +298,28 @@
                 <td class="value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
             </tr>
             <tr>
-                <td class="label">WO Qty:</td>
-                <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
+                <td class="label">CO:</td>
+                <td class="value">{{ $order->co ?: 'N/A' }}</td>
                 <td class="label">Date:</td>
                 <td class="value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</td>
             </tr>
             <tr>
-                <td class="label">CO:</td>
-                <td class="value">{{ $order->co ?: 'N/A' }}</td>
-                <td class="label">Material Type:</td>
-                <td class="value">{{ $costing->type_material ?? '' }}</td>
-            </tr>
-            <tr>
                 <td class="label">Cust PO:</td>
                 <td class="value">{{ $order->cust_po ?: 'N/A' }}</td>
-                <td class="label">Quote Notes:</td>
-                <td class="value">{{ $costing->notes ?? '' }}</td>
+                <td class="label">Material Type:</td>
+                <td class="value">{{ $costing->type_material ?? '' }}</td>
             </tr>
             <tr>
                 <td class="label">Qty:</td>
                 <td class="value">{{ $order->qty ?? 'N/A' }}</td>
                 <td class="label">Part Description:</td>
                 <td class="value">{{ $order->Part_description ?: 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">WO Qty:</td>
+                <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
+                <td class="label"></td>
+                <td class="value"></td>
             </tr>
         </table>
     </div>
@@ -305,14 +339,14 @@
             </thead>
             <tbody>
                 @forelse($operations as $operation)
-                    <tr>
+                    <tr class="operations-row">
                         <td>{{ $operation->name_operation }}</td>
-                        <td>{{ $operation->resource_name ?: '-----' }}</td>
-                        <td class="text-center">{{ $formatHours($operation->time_programming ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->time_setup ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->runtime_pcs ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->runtime_total ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->total_time_operation ?? 0) }}</td>
+                        <td>{{ $operation->resource_name ?: '' }}</td>
+                        <td class="text-center">{{ $formatHoursForPrint($operation->time_programming ?? 0) }}</td>
+                        <td class="text-center">{{ $formatHoursForPrint($operation->time_setup ?? 0) }}</td>
+                        <td class="text-center">{{ $formatHoursForPrint($operation->runtime_pcs ?? 0) }}</td>
+                        <td class="text-center">{{ $formatHoursForPrint($operation->runtime_total ?? 0) }}</td>
+                        <td class="text-center">{{ $formatHoursForPrint($operation->total_time_operation ?? 0) }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -321,11 +355,11 @@
                 @endforelse
                 <tr>
                     <td colspan="2" class="summary-label">Total Times:</td>
-                    <td class="text-center">{{ $formatHours($sumProgramming) }}</td>
-                    <td class="text-center">{{ $formatHours($sumSetup) }}</td>
-                    <td class="text-center">{{ $formatHours($sumRuntimePcs) }}</td>
-                    <td class="text-center">{{ $formatHours($sumRuntimeTotal) }}</td>
-                    <td class="text-center"><strong>{{ $formatHours($costing->total_time_order ?? $sumTotalTimeOperation) }}</strong></td>
+                    <td class="text-center">{{ $formatHoursForPrint($sumProgramming) }}</td>
+                    <td class="text-center">{{ $formatHoursForPrint($sumSetup) }}</td>
+                    <td class="text-center">{{ $formatHoursForPrint($sumRuntimePcs) }}</td>
+                    <td class="text-center">{{ $formatHoursForPrint($sumRuntimeTotal) }}</td>
+                    <td class="text-center"><strong>{{ $formatHoursForPrint($costing->total_time_order ?? $sumTotalTimeOperation) }}</strong></td>
                 </tr>
             </tbody>
         </table>
@@ -339,17 +373,17 @@
                         <tr>
                             <td class="summary-label" style="width:48%;">Total Labor:</td>
                             <td style="width:6%;" class="text-center">$</td>
-                            <td class="text-right">{{ $formatMoney($costing->total_labor ?? 0) }}</td>
+                            <td class="text-right">{{ $formatMoney($costing->total_labor ?? 0, true) }}</td>
                         </tr>
                         <tr>
                             <td class="summary-label">Total Materials:</td>
                             <td class="text-center">$</td>
-                            <td class="text-right">{{ $formatMoney($costing->total_material ?? 0) }}</td>
+                            <td class="text-right">{{ $formatMoney($costing->total_material ?? 0, true) }}</td>
                         </tr>
                         <tr>
                             <td class="summary-label">Total Outsource Process:</td>
                             <td class="text-center">$</td>
-                            <td class="text-right">{{ $formatMoney($costing->total_outsource ?? 0) }}</td>
+                            <td class="text-right">{{ $formatMoney($costing->total_outsource ?? 0, true) }}</td>
                         </tr>
                         <tr>
                             <td colspan="3" class="notes-box">
@@ -377,17 +411,17 @@
                         <tr>
                             <td class="summary-label">Cost Pcs:</td>
                             <td class="text-center">$</td>
-                            <td colspan="2" class="text-right costing-pdf-costpcs">{{ $formatMoney($costing->price_pcs ?? 0, true) }}</td>
+                            <td colspan="2" class="text-right">{{ $formatMoney($costing->price_pcs ?? 0, true) }}</td>
                         </tr>
                         <tr>
                             <td class="summary-label">Difference:</td>
                             <td class="text-center">$</td>
-                            <td colspan="2" class="text-right costing-pdf-difference">{{ $formatMoney($difference, true) }}</td>
+                            <td colspan="2" class="text-right">{{ $formatMoney($difference, true) }}</td>
                         </tr>
                         <tr>
                             <td class="summary-label">Result:</td>
                             <td class="text-center">$</td>
-                            <td class="text-right costing-pdf-result">{{ abs($result) > 0.00001 ? number_format($result, 2) : '' }}</td>
+                            <td class="text-right">{{ abs($result) > 0.00001 ? number_format($result, 2) : '' }}</td>
                             <td class="text-center">%</td>
                         </tr>
                     </table>

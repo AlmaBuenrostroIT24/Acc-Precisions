@@ -32,6 +32,15 @@
                     </td>
                     <td>
                         <span class="costing-badge">{{ $pnOrder->total_orders }}</span>
+                        @if($pnOrder->notes_count > 0)
+                            <span
+                                class="costing-note-trigger js-costing-notes-trigger ml-2"
+                                data-pn="{{ $pnOrder->pn }}"
+                                data-notes='@json($pnOrder->notes_items)'
+                            >
+                                {{ $pnOrder->notes_count }} note{{ $pnOrder->notes_count === 1 ? '' : 's' }}
+                            </span>
+                        @endif
                     </td>
                     <td>
                         {{ $pnOrder->customer_summary ?: 'N/A' }}
@@ -62,7 +71,7 @@
                                             <th class="text-right">difference</th>
                                             <th class="text-right">cost pcs</th>
                                             <th>due_date</th>
-                                            <th>Edit</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -94,13 +103,23 @@
                                                 </td>
                                                 <td>{{ $order->due_date ? \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') : '' }}</td>
                                                 <td class="text-center">
-                                                    <a
-                                                        href="{{ route('costing.edit', $order->id) }}"
-                                                        class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn"
-                                                        title="Edit costing"
-                                                    >
-                                                        <i class="fas fa-pen"></i>
-                                                    </a>
+                                                    <div class="costing-detail-actions">
+                                                        <a
+                                                            href="{{ route('costing.pdfSheet', $order->id) }}"
+                                                            target="_blank"
+                                                            class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-pdf"
+                                                            title="Open costing PDF"
+                                                        >
+                                                            <i class="fas fa-print"></i>
+                                                        </a>
+                                                        <a
+                                                            href="{{ route('costing.edit', $order->id) }}"
+                                                            class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-edit"
+                                                            title="Edit costing"
+                                                        >
+                                                            <i class="fas fa-pen"></i>
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
