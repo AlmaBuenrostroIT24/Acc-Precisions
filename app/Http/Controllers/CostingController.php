@@ -535,6 +535,7 @@ class CostingController extends Controller
             'order' => $order,
             'costing' => $order->costing,
             'operations' => $order->costing?->operations ?? collect(),
+            'printedBy' => Auth::user()?->name ?? 'N/A',
         ])->setPaper('letter', 'portrait');
 
         $cleanWorkId = preg_replace('/[\/\\\\]/', '_', (string) $order->work_id);

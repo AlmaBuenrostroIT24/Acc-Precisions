@@ -239,7 +239,7 @@
         <table class="footer-table">
             <tr>
                 <td style="width: 33%;">ACC Precision</td>
-                <td style="width: 34%;" class="text-center">Generated {{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</td>
+                <td style="width: 34%;" class="text-center">Generated {{ \Carbon\Carbon::now()->format('Y-m-d H:i') }} by {{ $printedBy ?? 'N/A' }}</td>
                 <td style="width: 33%;" class="text-right">Costing {{ $order->work_id }}</td>
             </tr>
         </table>
