@@ -52,6 +52,7 @@ class CostingController extends Controller
             $order->difference_cost = (float) ($costing->difference_cost ?? 0);
             $order->costing_notes = trim((string) ($costing->notes ?? ''));
             $order->costing_notes_date = optional($costing?->updated_at)->format('Y-m-d H:i:s');
+            $order->costing_updated_at = optional($costing?->updated_at)->format('Y-m-d H:i:s');
             $storedPricePcs = (float) ($costing->price_pcs ?? 0);
             $order->price_pcs = $storedPricePcs > 0
                 ? $storedPricePcs
@@ -132,6 +133,18 @@ class CostingController extends Controller
 
         $pnOrders = $pnOrders->values();
 
+        $summary = [
+            'pn_count' => $pnOrders->count(),
+            'order_count' => $pnOrders->sum('total_orders'),
+            'latest_costing_date' => $pnOrders
+                ->flatMap(fn ($item) => $item->orders->pluck('costing_updated_at'))
+                ->filter()
+                ->sortDesc()
+                ->first(),
+            'costed_pn_count' => $pnOrders->filter(fn ($item) => !empty($item->has_costing))->count(),
+            'notes_pn_count' => $pnOrders->filter(fn ($item) => (int) ($item->notes_count ?? 0) > 0)->count(),
+        ];
+
         $perPage = 10;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $currentItems = $pnOrders->slice(($currentPage - 1) * $perPage, $perPage)->values();
@@ -148,10 +161,10 @@ class CostingController extends Controller
         );
 
         if (request()->ajax()) {
-            return view('quotes.costing._results', compact('pnOrders'));
+            return view('quotes.costing._results', compact('pnOrders', 'summary'));
         }
 
-        return view('quotes.costing.index', compact('orders', 'pnOrders', 'search'));
+        return view('quotes.costing.index', compact('orders', 'pnOrders', 'search', 'summary'));
     }
 
     public function edit(OrderSchedule $order)

@@ -11,29 +11,86 @@
             --sp-4: 16px;
         }
 
-        .costing-hero {
-            background:
-                radial-gradient(circle at right top, rgba(217, 143, 43, 0.18), transparent 30%),
-                linear-gradient(135deg, #ffffff 0%, #f5f8fb 100%);
-            border: 1px solid rgba(15, 95, 143, 0.12);
-            border-radius: 18px;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-            padding: 1.25rem 1.35rem;
+        .costing-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.85rem;
             margin-bottom: 1rem;
         }
 
-        .costing-kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.85rem;
-        }
-
         .costing-kpi-card {
+            position: relative;
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
             background: #fff;
             border: 1px solid #d6dde6;
-            border-radius: 12px;
-            padding: 0.95rem 1rem;
+            border-radius: 14px;
+            padding: 1rem 1rem 1rem 1.05rem;
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+        }
+
+        .costing-kpi-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: #cbd5e1;
+        }
+
+        .costing-kpi-card.is-blue::before {
+            background: #3b82f6;
+        }
+
+        .costing-kpi-card.is-green::before {
+            background: #22c55e;
+        }
+
+        .costing-kpi-card.is-amber::before {
+            background: #f59e0b;
+        }
+
+        .costing-kpi-card.is-slate::before {
+            background: #64748b;
+        }
+
+        .costing-kpi-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        }
+
+        .costing-kpi-card.is-blue .costing-kpi-icon {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .costing-kpi-card.is-green .costing-kpi-icon {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .costing-kpi-card.is-amber .costing-kpi-icon {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .costing-kpi-card.is-slate .costing-kpi-icon {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .costing-kpi-copy {
+            min-width: 0;
         }
 
         .costing-kpi-label {
@@ -43,11 +100,11 @@
             letter-spacing: 0.06em;
             text-transform: uppercase;
             color: #617182;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.3rem;
         }
 
         .costing-kpi-value {
-            font-size: 1.58rem;
+            font-size: 1.72rem;
             font-weight: 800;
             line-height: 1;
             color: #17212b;
@@ -198,8 +255,25 @@
             font-size: 0.94rem;
         }
 
-        .costing-pagination {
+        .costing-pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
             margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .costing-results-summary {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #617182;
+        }
+
+        .costing-pagination {
             display: flex;
             justify-content: flex-end;
         }
@@ -295,6 +369,16 @@
             width: 100%;
         }
 
+        .costing-results-summary {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin: 0 0 0.7rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #617182;
+        }
+
         .fai-dt-table {
             background: #fff;
             border-radius: 10px;
@@ -321,11 +405,13 @@
             text-transform: uppercase;
             letter-spacing: 0.02em;
             color: #0b0b0b !important;
-            padding: var(--sp-2) var(--sp-3);
-            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+            padding: 0.82rem var(--sp-3);
+            background: linear-gradient(180deg, #edf3f9 0%, #dde7f2 100%);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.16);
             vertical-align: middle;
-            box-shadow: inset 0 -2px 0 rgba(15, 23, 42, 0.06);
+            box-shadow:
+                inset 0 -2px 0 rgba(15, 23, 42, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.65);
             position: sticky;
             top: 0;
             z-index: 2;
@@ -352,6 +438,59 @@
 
         .fai-summary-table {
             margin-bottom: 0;
+        }
+
+        .fai-summary-table th:nth-child(1),
+        .fai-summary-table td:nth-child(1) {
+            width: 78px;
+        }
+
+        .fai-summary-table th:nth-child(2),
+        .fai-summary-table td:nth-child(2) {
+            width: 30%;
+        }
+
+        .fai-summary-table th:nth-child(3),
+        .fai-summary-table td:nth-child(3) {
+            width: 22%;
+            text-align: center;
+        }
+
+        .fai-summary-table th:nth-child(4),
+        .fai-summary-table td:nth-child(4) {
+            width: 20%;
+        }
+
+        .fai-summary-table th:nth-child(5),
+        .fai-summary-table td:nth-child(5) {
+            width: 20%;
+            text-align: center;
+        }
+
+        .fai-summary-table tbody td {
+            padding-top: 0.72rem;
+            padding-bottom: 0.72rem;
+        }
+
+        .costing-pn-cell {
+            position: relative;
+            padding-left: 1.05rem !important;
+        }
+
+        .costing-pn-cell::before {
+            content: "";
+            position: absolute;
+            left: 0.45rem;
+            top: 50%;
+            width: 5px;
+            height: 24px;
+            border-radius: 999px;
+            background: transparent;
+            transform: translateY(-50%);
+        }
+
+        .costing-row-has-costing .costing-pn-cell::before {
+            background: #8fd19e;
         }
 
         .costing-badge {
@@ -409,7 +548,13 @@
             color: #0f5f8f;
             background: #fff;
             font-weight: 700;
-            min-width: 42px;
+            min-width: 48px;
+            min-height: 38px;
+        }
+
+        .costing-open-cell {
+            text-align: left;
+            padding-left: 0.95rem !important;
         }
 
         .costing-toggle-btn:hover,
@@ -511,48 +656,146 @@
             background: #dff1e7 !important;
         }
 
-        .costing-detail-panel {
-            background: #ffffff;
-            border: 1px solid #d6dde6;
-            border-radius: 14px;
-            padding: 0.85rem;
-        }
-
         .costing-detail-table {
             margin-bottom: 0;
+            table-layout: fixed;
+            width: 100%;
+            border: 1px solid #d6dde6;
+            border-radius: 10px;
+            overflow: hidden;
         }
+
+        .costing-detail-table th:nth-child(1),
+        .costing-detail-table td:nth-child(1) { width: 84px; }
+        .costing-detail-table th:nth-child(2),
+        .costing-detail-table td:nth-child(2) { width: 88px; }
+        .costing-detail-table th:nth-child(3),
+        .costing-detail-table td:nth-child(3) { width: 116px; }
+        .costing-detail-table th:nth-child(4),
+        .costing-detail-table td:nth-child(4) { width: 118px; }
+        .costing-detail-table th:nth-child(5),
+        .costing-detail-table td:nth-child(5) { width: 320px; }
+        .costing-detail-table th:nth-child(6),
+        .costing-detail-table td:nth-child(6) { width: 110px; }
+        .costing-detail-table th:nth-child(7),
+        .costing-detail-table td:nth-child(7) { width: 70px; }
+        .costing-detail-table th:nth-child(8),
+        .costing-detail-table td:nth-child(8) { width: 78px; }
+        .costing-detail-table th:nth-child(9),
+        .costing-detail-table td:nth-child(9) { width: 86px; }
+        .costing-detail-table th:nth-child(10),
+        .costing-detail-table td:nth-child(10) { width: 112px; }
+        .costing-detail-table th:nth-child(11),
+        .costing-detail-table td:nth-child(11) { width: 126px; }
+        .costing-detail-table th:nth-child(12),
+        .costing-detail-table td:nth-child(12) { width: 114px; }
+        .costing-detail-table th:nth-child(13),
+        .costing-detail-table td:nth-child(13) { width: 110px; }
+        .costing-detail-table th:nth-child(14),
+        .costing-detail-table td:nth-child(14) { width: 96px; }
+        .costing-detail-table th:nth-child(15),
+        .costing-detail-table td:nth-child(15) { width: 92px; }
 
         .costing-detail-table thead th {
             background: #eff5fa;
             border-top: 0;
             border-bottom: 1px solid #c3ceda;
-            font-size: 0.76rem;
+            font-size: 0.84rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             white-space: nowrap;
         }
 
+        .costing-detail-table .costing-col-num {
+            text-align: right;
+        }
+
+        .costing-detail-table th:nth-child(9),
+        .costing-detail-table td:nth-child(9),
+        .costing-detail-table th:nth-child(10),
+        .costing-detail-table td:nth-child(10),
+        .costing-detail-table th:nth-child(11),
+        .costing-detail-table td:nth-child(11),
+        .costing-detail-table th:nth-child(12),
+        .costing-detail-table td:nth-child(12),
+        .costing-detail-table th:nth-child(13),
+        .costing-detail-table td:nth-child(13) {
+            text-align: center !important;
+        }
+
+        .costing-due-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 104px;
+            padding: 0.36rem 0.72rem;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            font-weight: 800;
+            line-height: 1;
+            border: 1px solid #d5dde7;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
         .costing-detail-table td {
             white-space: nowrap;
+            font-size: 0.94rem;
         }
 
         .costing-description-cell {
-            min-width: 260px;
+            min-width: 290px;
+            max-width: 380px;
             white-space: normal !important;
+            line-height: 1.3;
+            text-align: left;
+        }
+
+        .costing-workid-cell,
+        .costing-pn-detail-cell {
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .costing-pn-detail-cell {
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.25;
+        }
+
+        .costing-customer-cell {
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .costing-operation-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            padding: 0.28rem 0.52rem;
+            border-radius: 999px;
+            background: #eef2f7;
+            border: 1px solid #d8e1eb;
+            color: #334155;
+            font-size: 0.88rem;
+            font-weight: 800;
+            line-height: 1;
         }
 
         .costing-detail-actions {
             display: inline-grid;
-            grid-template-columns: repeat(2, 32px);
-            gap: 6px;
+            grid-template-columns: repeat(2, 36px);
+            gap: 8px;
             justify-content: center;
         }
 
         .costing-edit-btn {
-            min-width: 32px;
-            width: 32px;
-            height: 32px;
+            min-width: 36px;
+            width: 36px;
+            height: 36px;
             padding: 0;
             border-radius: 8px;
         }
@@ -561,8 +804,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 32px;
-            height: 32px;
+            min-width: 36px;
+            height: 36px;
             padding: 0;
             border-radius: 8px;
             border: 1px solid #d7e3f0;
@@ -571,7 +814,7 @@
         }
 
         .erp-table-btn i {
-            font-size: 0.86rem;
+            font-size: 0.95rem;
         }
 
         .erp-table-btn:hover {
@@ -611,25 +854,49 @@
 
 @section('content')
     @php
-        $pnCount = $pnOrders->total();
-        $orderCount = $pnOrders->getCollection()->sum('total_orders');
-        $latestDueDate = $pnOrders->getCollection()->pluck('latest_due_date')->filter()->sortDesc()->first();
+        $pnCount = $summary['pn_count'] ?? $pnOrders->total();
+        $orderCount = $summary['order_count'] ?? $pnOrders->getCollection()->sum('total_orders');
+        $latestCostingDate = $summary['latest_costing_date'] ?? null;
+        $costedPnCount = $summary['costed_pn_count'] ?? $pnOrders->getCollection()->filter(fn ($item) => !empty($item->has_costing))->count();
+        $notesPnCount = $summary['notes_pn_count'] ?? $pnOrders->getCollection()->filter(fn ($item) => (int) ($item->notes_count ?? 0) > 0)->count();
     @endphp
 
-    <div class="costing-hero">
-        <div class="costing-kpi-grid">
-            <div class="costing-kpi-card">
+    <div class="costing-kpi-grid">
+        <div class="costing-kpi-card is-blue">
+            <span class="costing-kpi-icon">
+                <i class="fas fa-layer-group"></i>
+            </span>
+            <div class="costing-kpi-copy">
                 <span class="costing-kpi-label">Part Numbers</span>
-                <span class="costing-kpi-value">{{ number_format($pnCount) }}</span>
+                <span class="costing-kpi-value" id="costingKpiPn">{{ number_format($pnCount) }}</span>
             </div>
-            <div class="costing-kpi-card">
-                <span class="costing-kpi-label">Orders On Page</span>
-                <span class="costing-kpi-value">{{ number_format($orderCount) }}</span>
+        </div>
+        <div class="costing-kpi-card is-green">
+            <span class="costing-kpi-icon">
+                <i class="fas fa-calculator"></i>
+            </span>
+            <div class="costing-kpi-copy">
+                <span class="costing-kpi-label">PN With Costing</span>
+                <span class="costing-kpi-value" id="costingKpiCosted">{{ number_format($costedPnCount) }}</span>
             </div>
-            <div class="costing-kpi-card">
-                <span class="costing-kpi-label">Latest Due Date</span>
-                <span class="costing-kpi-value" style="font-size: 1.05rem;">
-                    {{ $latestDueDate ? \Carbon\Carbon::parse($latestDueDate)->format('Y-m-d') : 'N/A' }}
+        </div>
+        <div class="costing-kpi-card is-amber">
+            <span class="costing-kpi-icon">
+                <i class="fas fa-sticky-note"></i>
+            </span>
+            <div class="costing-kpi-copy">
+                <span class="costing-kpi-label">PN With Notes</span>
+                <span class="costing-kpi-value" id="costingKpiNotes">{{ number_format($notesPnCount) }}</span>
+            </div>
+        </div>
+        <div class="costing-kpi-card is-slate">
+            <span class="costing-kpi-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </span>
+            <div class="costing-kpi-copy">
+                <span class="costing-kpi-label">Latest Costing Date</span>
+                <span class="costing-kpi-value" id="costingKpiLatestDue" style="font-size: 1.1rem;">
+                    {{ $latestCostingDate ? \Carbon\Carbon::parse($latestCostingDate)->format('M-d-Y') : 'N/A' }}
                 </span>
             </div>
         </div>
@@ -711,9 +978,17 @@
             }
 
             function bindResultEvents() {
-                const totalRecords = $results.find('[data-total-records]').data('total-records');
+                const $summaryData = $results.find('[data-total-records]');
+                const totalRecords = $summaryData.data('total-records');
                 if (typeof totalRecords !== 'undefined') {
                     $('#costingRecordCount').text(`Total ${totalRecords}`);
+                }
+
+                if ($summaryData.length) {
+                    $('#costingKpiPn').text(Number($summaryData.data('summary-pn') || 0).toLocaleString());
+                    $('#costingKpiCosted').text(Number($summaryData.data('summary-costed') || 0).toLocaleString());
+                    $('#costingKpiNotes').text(Number($summaryData.data('summary-notes') || 0).toLocaleString());
+                    $('#costingKpiLatestDue').text($summaryData.data('summary-latest-due') || 'N/A');
                 }
 
                 $results.find('.pagination a').off('click.costing').on('click.costing', function (event) {

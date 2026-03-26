@@ -1,4 +1,11 @@
-<div class="d-none" data-total-records="{{ $pnOrders->total() }}"></div>
+<div
+    class="d-none"
+    data-total-records="{{ $pnOrders->total() }}"
+    data-summary-pn="{{ $summary['pn_count'] ?? $pnOrders->total() }}"
+    data-summary-costed="{{ $summary['costed_pn_count'] ?? 0 }}"
+    data-summary-notes="{{ $summary['notes_pn_count'] ?? 0 }}"
+    data-summary-latest-due="{{ !empty($summary['latest_costing_date']) ? \Carbon\Carbon::parse($summary['latest_costing_date'])->format('M-d-Y') : 'N/A' }}"
+></div>
 
 <div class="table-responsive position-relative fai-table-shell">
     <table id="pnBreakdownTable" class="table table-sm table-hover align-middle w-100 fai-dt-table fai-summary-table">
@@ -15,7 +22,7 @@
             @forelse($pnOrders as $pnOrder)
                 @php($detailId = 'pn-detail-' . \Illuminate\Support\Str::slug($pnOrder->pn . '-' . $loop->index . '-' . $pnOrders->currentPage()))
                 <tr class="{{ !empty($pnOrder->has_costing) ? 'costing-row-has-costing' : '' }}">
-                    <td class="text-center">
+                    <td class="costing-open-cell">
                         <button
                             class="btn btn-sm costing-toggle-btn toggle-detail"
                             type="button"
@@ -27,10 +34,10 @@
                             <i class="fas fa-chevron-up label-hide d-none"></i>
                         </button>
                     </td>
-                    <td>
+                    <td class="costing-pn-cell">
                         <strong>{{ $pnOrder->pn }}</strong>
                     </td>
-                    <td>
+                    <td class="text-center">
                         <span class="costing-badge">{{ $pnOrder->total_orders }}</span>
                         @if($pnOrder->notes_count > 0)
                             <span
@@ -48,84 +55,92 @@
                             <span class="costing-muted">+{{ $pnOrder->customer_count - 2 }} more</span>
                         @endif
                     </td>
-                    <td>{{ $pnOrder->latest_due_date ? \Carbon\Carbon::parse($pnOrder->latest_due_date)->format('Y-m-d') : 'N/A' }}</td>
+                    <td>
+                        @if($pnOrder->latest_due_date)
+                            <span class="costing-due-pill">{{ \Carbon\Carbon::parse($pnOrder->latest_due_date)->format('M-d-Y') }}</span>
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </td>
                 </tr>
                 <tr id="{{ $detailId }}" class="pn-detail-row costing-detail-row d-none">
                     <td colspan="5" class="p-3">
-                        <div class="costing-detail-panel">
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered bg-white mb-0 costing-detail-table">
-                                    <thead>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered bg-white mb-0 costing-detail-table">
+                                <thead>
+                                    <tr>
+                                        <th>work_id</th>
+                                        <th>co</th>
+                                        <th>cust_po</th>
+                                        <th>pn</th>
+                                        <th>Part_description</th>
+                                        <th>customer</th>
+                                        <th class="costing-col-num">qty</th>
+                                        <th class="costing-col-num">wo_qty</th>
+                                        <th>operation</th>
+                                        <th class="costing-col-num">sale price</th>
+                                        <th class="costing-col-num">total cost</th>
+                                        <th class="costing-col-num">difference</th>
+                                        <th class="costing-col-num">cost pcs</th>
+                                        <th>due_date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($pnOrder->orders as $order)
                                         <tr>
-                                            <th>work_id</th>
-                                            <th>co</th>
-                                            <th>cust_po</th>
-                                            <th>pn</th>
-                                            <th>Part_description</th>
-                                            <th>customer</th>
-                                            <th class="text-right">qty</th>
-                                            <th class="text-right">wo_qty</th>
-                                            <th>operation</th>
-                                            <th class="text-right">sale price</th>
-                                            <th class="text-right">grandtotal cost</th>
-                                            <th class="text-right">difference</th>
-                                            <th class="text-right">cost pcs</th>
-                                            <th>due_date</th>
-                                            <th>Actions</th>
+                                            <td class="costing-workid-cell {{ !empty($order->has_costing) ? 'text-success' : '' }}">
+                                                {{ $order->work_id }}
+                                            </td>
+                                            <td>{{ $order->co }}</td>
+                                            <td>{{ $order->cust_po }}</td>
+                                            <td class="costing-pn-detail-cell">{{ $order->pn }}</td>
+                                            <td class="costing-description-cell">{{ $order->Part_description }}</td>
+                                            <td class="costing-customer-cell">{{ $order->customer }}</td>
+                                            <td class="text-right">{{ $order->qty }}</td>
+                                            <td class="text-right">{{ $order->wo_qty }}</td>
+                                            <td><span class="costing-operation-pill">{{ $order->operation }}</span></td>
+                                            <td class="text-right">${{ number_format((float) ($order->sale_price ?? 0), 2) }}</td>
+                                            <td class="text-right">${{ number_format((float) ($order->grandtotal_cost ?? 0), 2) }}</td>
+                                            @php($difference = (float) ($order->difference_cost ?? 0))
+                                            <td class="text-right">
+                                                <span class="costing-diff-pill {{ $difference >= 0 ? 'is-positive' : 'is-negative' }}">
+                                                    ${{ number_format($difference, 2) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-right">
+                                                <span class="costing-cost-pill">
+                                                    ${{ number_format((float) ($order->price_pcs ?? 0), 2) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($order->due_date)
+                                                    {{ \Illuminate\Support\Str::ucfirst(str_replace('.', '', \Carbon\Carbon::parse($order->due_date)->locale('es')->translatedFormat('M-d-Y'))) }}
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="costing-detail-actions">
+                                                    <a
+                                                        href="{{ route('costing.pdfSheet', $order->id) }}"
+                                                        target="_blank"
+                                                        class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-pdf"
+                                                        title="Open costing PDF"
+                                                    >
+                                                        <i class="fas fa-print"></i>
+                                                    </a>
+                                                    <a
+                                                        href="{{ route('costing.edit', $order->id) }}"
+                                                        class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-edit"
+                                                        title="Edit costing"
+                                                    >
+                                                        <i class="fas fa-pen"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($pnOrder->orders as $order)
-                                            <tr>
-                                                <td class="{{ !empty($order->has_costing) ? 'text-success font-weight-bold' : '' }}">
-                                                    {{ $order->work_id }}
-                                                </td>
-                                                <td>{{ $order->co }}</td>
-                                                <td>{{ $order->cust_po }}</td>
-                                                <td>{{ $order->pn }}</td>
-                                                <td class="costing-description-cell">{{ $order->Part_description }}</td>
-                                                <td>{{ $order->customer }}</td>
-                                                <td class="text-right">{{ $order->qty }}</td>
-                                                <td class="text-right">{{ $order->wo_qty }}</td>
-                                                <td>{{ $order->operation }}</td>
-                                                <td class="text-right">${{ number_format((float) ($order->sale_price ?? 0), 2) }}</td>
-                                                <td class="text-right">${{ number_format((float) ($order->grandtotal_cost ?? 0), 2) }}</td>
-                                                @php($difference = (float) ($order->difference_cost ?? 0))
-                                                <td class="text-right">
-                                                    <span class="costing-diff-pill {{ $difference >= 0 ? 'is-positive' : 'is-negative' }}">
-                                                        ${{ number_format($difference, 2) }}
-                                                    </span>
-                                                </td>
-                                                <td class="text-right">
-                                                    <span class="costing-cost-pill">
-                                                        ${{ number_format((float) ($order->price_pcs ?? 0), 2) }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ $order->due_date ? \Carbon\Carbon::parse($order->due_date)->format('Y-m-d') : '' }}</td>
-                                                <td class="text-center">
-                                                    <div class="costing-detail-actions">
-                                                        <a
-                                                            href="{{ route('costing.pdfSheet', $order->id) }}"
-                                                            target="_blank"
-                                                            class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-pdf"
-                                                            title="Open costing PDF"
-                                                        >
-                                                            <i class="fas fa-print"></i>
-                                                        </a>
-                                                        <a
-                                                            href="{{ route('costing.edit', $order->id) }}"
-                                                            class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-edit"
-                                                            title="Edit costing"
-                                                        >
-                                                            <i class="fas fa-pen"></i>
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </td>
                 </tr>
@@ -138,6 +153,11 @@
     </table>
 </div>
 
-<div class="costing-pagination">
-    {{ $pnOrders->links('pagination::bootstrap-4') }}
+<div class="costing-pagination-bar">
+    <div class="costing-results-summary">
+        Showing {{ $pnOrders->firstItem() ?? 0 }} to {{ $pnOrders->lastItem() ?? 0 }} of {{ $pnOrders->total() }} PN
+    </div>
+    <div class="costing-pagination">
+        {{ $pnOrders->links('pagination::bootstrap-4') }}
+    </div>
 </div>
