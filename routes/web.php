@@ -60,18 +60,23 @@ Route::get('/dashboard/export/fai-rej-details-excel', [DashboardController::clas
     ->middleware(['auth', 'verified'])
     ->name('dashboard.exportFaiRejDetailsExcel');
 
-Route::get('/quote/costing', [CostingController::class, 'index'])->middleware(['auth'])->name('costing');
-Route::get('/quote/costing/{order}/edit', [CostingController::class, 'edit'])->middleware(['auth'])->name('costing.edit');
-Route::put('/quote/costing/{order}', [CostingController::class, 'update'])->middleware(['auth'])->name('costing.update');
-Route::delete('/quote/costing/{order}', [CostingController::class, 'destroy'])->middleware(['auth'])->name('costing.destroy');
-Route::post('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'uploadPdf'])->middleware(['auth'])->name('costing.pdf.upload');
-Route::delete('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'deletePdf'])->middleware(['auth'])->name('costing.pdf.delete');
-Route::get('/quote/costing/{order}/logs', [CostingController::class, 'logs'])->middleware(['auth'])->name('costing.logs');
-Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->middleware(['auth'])->name('costing.pdf');
-Route::get('/quote/costing/{order}/pdf-sheet', [CostingController::class, 'pdfSheet'])->middleware(['auth'])->name('costing.pdfSheet');
-Route::get('/costing', function () {
-    return redirect()->route('costing');
-})->middleware(['auth']);
+Route::middleware(['auth', 'can:quote/costing'])->group(function () {
+    Route::get('/quote/costing', [CostingController::class, 'index'])->name('costing');
+    Route::get('/quote/costing/{order}/edit', [CostingController::class, 'edit'])->name('costing.edit');
+    Route::put('/quote/costing/{order}', [CostingController::class, 'update'])->name('costing.update');
+    Route::delete('/quote/costing/{order}', [CostingController::class, 'destroy'])->name('costing.destroy');
+    Route::post('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'uploadPdf'])->name('costing.pdf.upload');
+    Route::delete('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'deletePdf'])->name('costing.pdf.delete');
+    Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->name('costing.pdf');
+    Route::get('/quote/costing/{order}/pdf-sheet', [CostingController::class, 'pdfSheet'])->name('costing.pdfSheet');
+    Route::get('/costing', function () {
+        return redirect()->route('costing');
+    });
+});
+
+Route::get('/quote/costing/{order}/logs', [CostingController::class, 'logs'])
+    ->middleware(['auth', 'can:quote/costing/logs'])
+    ->name('costing.logs');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

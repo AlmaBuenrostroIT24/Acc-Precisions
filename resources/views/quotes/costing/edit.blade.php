@@ -879,9 +879,11 @@
                                 <a href="{{ route('costing.pdf', $order) }}" target="_blank" class="costing-erp-btn costing-erp-btn-primary costing-header-icon-btn" title="Print" aria-label="Print">
                                     <i class="fas fa-print"></i>
                                 </a>
-                                <button type="button" class="costing-erp-btn costing-erp-btn-info costing-header-icon-btn" id="openCostingLogs" title="History" aria-label="History">
-                                    <i class="fas fa-history"></i>
-                                </button>
+                                @can('quote/costing/logs')
+                                    <button type="button" class="costing-erp-btn costing-erp-btn-info costing-header-icon-btn" id="openCostingLogs" title="History" aria-label="History">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                @endcan
                                 @if($costing)
                                     <button type="submit" form="costingDeleteForm" class="costing-erp-btn costing-erp-btn-danger costing-header-icon-btn js-costing-delete-form-trigger" title="Delete Costing" aria-label="Delete Costing">
                                         <i class="fas fa-trash-alt"></i>
