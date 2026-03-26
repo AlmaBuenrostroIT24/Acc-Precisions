@@ -135,19 +135,14 @@
 
         .costing-top-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px 34px;
-        }
-
-        .costing-info-col {
-            display: grid;
+            grid-template-columns: 1fr;
             gap: 8px;
         }
 
         .costing-info-row {
             display: grid;
-            grid-template-columns: 140px minmax(0, 1fr);
-            gap: 10px;
+            grid-template-columns: 140px minmax(0, 1fr) 140px minmax(0, 1fr);
+            gap: 10px 18px;
             align-items: start;
         }
 
@@ -163,6 +158,20 @@
             color: #111827;
             min-height: 20px;
             word-break: break-word;
+        }
+
+        .costing-info-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            padding: 0.18rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid #cbd5e1;
+            background: #f8fbff;
+            color: #334155;
+            font-weight: 800;
+            line-height: 1;
         }
 
         .costing-inline-input {
@@ -916,55 +925,48 @@
 
                             <div class="costing-top-card">
                                 <div class="costing-top-grid">
-                                    <div class="costing-info-col">
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Customer:</div>
-                                            <div class="costing-info-value">{{ $order->costumer ?: 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">WO#:</div>
-                                            <div class="costing-info-value">{{ $order->work_id ?: 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">WO Qty:</div>
-                                            <div class="costing-info-value">{{ $order->wo_qty ?? 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">CO:</div>
-                                            <div class="costing-info-value">{{ $order->co ?: 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Cust PO:</div>
-                                            <div class="costing-info-value">{{ $order->cust_po ?: 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Qty:</div>
-                                            <div class="costing-info-value">{{ $order->qty ?? 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Part Description:</div>
-                                            <div class="costing-info-value">{{ $order->Part_description ?: 'N/A' }}</div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label">Customer:</div>
+                                        <div class="costing-info-value">{{ $order->costumer ?: 'N/A' }}</div>
+                                        <div class="costing-info-label">PN:</div>
+                                        <div class="costing-info-value">{{ $order->PN ?: 'N/A' }}</div>
+                                    </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label">WO#:</div>
+                                        <div class="costing-info-value">{{ $order->work_id ?: 'N/A' }}</div>
+                                        <div class="costing-info-label">Revision:</div>
+                                        <div class="costing-info-value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</div>
+                                    </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label">CO:</div>
+                                        <div class="costing-info-value">{{ $order->co ?: 'N/A' }}</div>
+                                        <div class="costing-info-label">Date:</div>
+                                        <div class="costing-info-value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</div>
+                                    </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label">Cust PO:</div>
+                                        <div class="costing-info-value">{{ $order->cust_po ?: 'N/A' }}</div>
+                                        <div class="costing-info-label">Operation:</div>
+                                        <div class="costing-info-value">
+                                            @if(filled($order->operation))
+                                                <span class="costing-info-pill">{{ $order->operation }}</span>
+                                            @else
+                                                N/A
+                                            @endif
                                         </div>
                                     </div>
-
-                                    <div class="costing-info-col">
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">PN:</div>
-                                            <div class="costing-info-value">{{ $order->PN ?: 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Revision:</div>
-                                            <div class="costing-info-value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Date:</div>
-                                            <div class="costing-info-value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</div>
-                                        </div>
-                                        <div class="costing-info-row">
-                                            <div class="costing-info-label">Material Type:</div>
-                                            <div class="costing-info-value">
-                                                <input class="costing-inline-input" type="text" name="type_material" value="{{ old('type_material', $costing->type_material ?? '') }}">
-                                            </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label">Qty:</div>
+                                        <div class="costing-info-value">{{ $order->qty ?? 'N/A' }}</div>
+                                        <div class="costing-info-label">Part Description:</div>
+                                        <div class="costing-info-value">{{ $order->Part_description ?: 'N/A' }}</div>
+                                    </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label">WO Qty:</div>
+                                        <div class="costing-info-value">{{ $order->wo_qty ?? 'N/A' }}</div>
+                                        <div class="costing-info-label">Material Type:</div>
+                                        <div class="costing-info-value">
+                                            <input class="costing-inline-input" type="text" name="type_material" value="{{ old('type_material', $costing->type_material ?? '') }}">
                                         </div>
                                     </div>
                                 </div>
@@ -1182,7 +1184,7 @@
                             </div>
 
                             <div class="costing-form-actions">
-                                <div class="costing-save-status" id="costingSaveStatus">Use Save to store costing and operations for this order.</div>
+                                <div class="costing-save-status" id="costingSaveStatus">{{ $costingAudit ?? 'Use Save to store costing and operations for this order.' }}</div>
                             </div>
                         </form>
                         @if($costing)

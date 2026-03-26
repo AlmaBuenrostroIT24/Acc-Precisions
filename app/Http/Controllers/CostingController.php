@@ -7,6 +7,7 @@ use App\Models\Costing\CostingLog;
 use App\Models\Costing\CostingOperation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\OrderSchedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -174,12 +175,56 @@ class CostingController extends Controller
         $costing = $order->costing;
         $operations = $costing?->operations ?? collect();
         $blankRows = max(6, $operations->count());
+        $costingAudit = null;
+
+        if ($costing) {
+            $userIds = collect([$costing->created_by, $costing->updated_by])
+                ->filter()
+                ->unique()
+                ->values();
+
+            $logUserIds = CostingLog::query()
+                ->where('costing_id', $costing->id)
+                ->whereNotNull('user_id')
+                ->pluck('user_id');
+
+            $userIds = $userIds
+                ->merge($logUserIds)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $userNames = User::query()
+                ->whereIn('id', $userIds)
+                ->pluck('name', 'id');
+
+            $createdByName = $costing->created_by ? ($userNames[$costing->created_by] ?? null) : null;
+            $updatedByName = $costing->updated_by ? ($userNames[$costing->updated_by] ?? null) : null;
+            $otherEditors = $userIds
+                ->reject(fn ($id) => in_array($id, array_filter([$costing->created_by, $costing->updated_by]), true))
+                ->map(fn ($id) => $userNames[$id] ?? null)
+                ->filter()
+                ->values();
+
+            if ($createdByName && $updatedByName && $createdByName !== $updatedByName) {
+                $costingAudit = "Created by {$createdByName}. Last saved by {$updatedByName}.";
+            } else {
+                $costingAudit = $updatedByName
+                    ? "Saved by {$updatedByName}."
+                    : ($createdByName ? "Saved by {$createdByName}." : null);
+            }
+
+            if ($otherEditors->isNotEmpty()) {
+                $costingAudit .= ' Also edited by ' . $otherEditors->implode(', ') . '.';
+            }
+        }
 
         return view('quotes.costing.edit', [
             'order' => $order,
             'costing' => $costing,
             'operations' => $operations,
             'blankRows' => $blankRows,
+            'costingAudit' => $costingAudit,
         ]);
     }
 

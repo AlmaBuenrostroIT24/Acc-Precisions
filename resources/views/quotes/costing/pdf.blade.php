@@ -134,6 +134,18 @@
             font-size: 8.5pt;
         }
 
+        .operation-pill {
+            display: inline-block;
+            min-width: 20pt;
+            padding: 2pt 8pt;
+            border-radius: 999pt;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #1f2937;
+            font-weight: 800;
+            text-align: center;
+        }
+
         .text-right {
             text-align: right;
         }
@@ -264,28 +276,34 @@
                 <td class="value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
             </tr>
             <tr>
-                <td class="label">WO Qty:</td>
-                <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
+                <td class="label">CO:</td>
+                <td class="value">{{ $order->co ?: 'N/A' }}</td>
                 <td class="label">Date:</td>
                 <td class="value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</td>
             </tr>
             <tr>
-                <td class="label">CO:</td>
-                <td class="value">{{ $order->co ?: 'N/A' }}</td>
-                <td class="label">Material Type:</td>
-                <td class="value">{{ $costing->type_material ?? '' }}</td>
-            </tr>
-            <tr>
                 <td class="label">Cust PO:</td>
                 <td class="value">{{ $order->cust_po ?: 'N/A' }}</td>
-                <td class="label">Quote Notes:</td>
-                <td class="value">{{ $costing->notes ?? '' }}</td>
+                <td class="label">Operation:</td>
+                <td class="value">
+                    @if(filled($order->operation))
+                        <span class="operation-pill">{{ $order->operation }}</span>
+                    @else
+                        N/A
+                    @endif
+                </td>
             </tr>
             <tr>
                 <td class="label">Qty:</td>
                 <td class="value">{{ $order->qty ?? 'N/A' }}</td>
                 <td class="label">Part Description:</td>
                 <td class="value">{{ $order->Part_description ?: 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">WO Qty:</td>
+                <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
+                <td class="label">Material Type:</td>
+                <td class="value">{{ $costing->type_material ?? '' }}</td>
             </tr>
         </table>
     </div>
