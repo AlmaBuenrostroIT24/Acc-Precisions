@@ -49,7 +49,7 @@
             border: 1px solid #d6e4f5;
             background: #f8fbff;
             color: #0d6efd;
-            font-size: 0.82rem;
+            font-size: 1.04rem;
             font-weight: 700;
             line-height: 1;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
@@ -117,7 +117,7 @@
 
         .costing-edit-title,
         .costing-files-title {
-            font-size: 1.05rem;
+            font-size: 1.34rem;
             font-weight: 800;
             color: #111827;
             text-transform: uppercase;
@@ -128,19 +128,19 @@
             border: 1px solid #dbe7f5;
             border-radius: 4px;
             background: #fff;
-            padding: 14px 16px;
-            margin-bottom: 18px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
         }
 
         .costing-top-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px 36px;
+            gap: 8px 34px;
         }
 
         .costing-info-col {
             display: grid;
-            gap: 12px;
+            gap: 8px;
         }
 
         .costing-info-row {
@@ -151,14 +151,14 @@
         }
 
         .costing-info-label {
-            font-size: 0.88rem;
+            font-size: 1.08rem;
             font-weight: 800;
             color: #111827;
             padding-top: 2px;
         }
 
         .costing-info-value {
-            font-size: 0.98rem;
+            font-size: 1.18rem;
             color: #111827;
             min-height: 20px;
             word-break: break-word;
@@ -172,7 +172,7 @@
             background: transparent;
             color: #111827;
             padding: 0 0 2px;
-            font-size: 0.98rem;
+            font-size: 1.18rem;
         }
 
         .costing-inline-textarea {
@@ -196,7 +196,7 @@
         .costing-form-table th {
             border: 1px solid #bcd1ec;
             padding: 6px 8px;
-            font-size: 0.94rem;
+            font-size: 1.14rem;
             color: #111827;
             vertical-align: middle;
             line-height: 1.2;
@@ -236,7 +236,7 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            font-size: 0.84rem;
+            font-size: 1.14rem;
             text-align: center;
             line-height: 1.15;
         }
@@ -246,15 +246,24 @@
             border: 0;
             outline: 0;
             background: transparent;
-            font-size: 0.94rem;
+            font-size: 1.14rem;
             color: #111827;
             padding: 0;
             line-height: 1.2;
         }
 
+        .costing-form-control:not([readonly]):not([type="hidden"]),
+        .costing-inline-input,
+        textarea.costing-form-control {
+            background: #eff6ff;
+            box-shadow: inset 0 0 0 1px #cfe0f5;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
         .costing-form-control:focus,
         .costing-inline-input:focus {
-            background: #eff6ff;
+            background: #dbeafe;
         }
 
         .costing-table-total-label {
@@ -305,7 +314,7 @@
         .costing-table-total-row td {
             border: 1px solid #bcd1ec;
             padding: 6px 8px;
-            font-size: 0.94rem;
+            font-size: 1.14rem;
             color: #111827;
             vertical-align: middle;
             line-height: 1.2;
@@ -324,8 +333,8 @@
         .costing-summary-table td,
         .costing-summary-table th {
             border: 1px solid #bcd1ec;
-            padding: 6px 8px;
-            font-size: 0.94rem;
+            padding: 5px 8px;
+            font-size: 1.04rem;
             color: #111827;
             vertical-align: middle;
             line-height: 1.2;
@@ -388,12 +397,12 @@
             font-weight: 900;
             text-transform: uppercase;
             text-align: center;
-            font-size: 1.28rem;
+            font-size: 1.44rem;
             letter-spacing: 0.03em;
         }
 
         .costing-notes-box {
-            min-height: 108px;
+            min-height: 92px;
             vertical-align: top !important;
         }
 
@@ -409,7 +418,7 @@
             background: #fff;
             border-radius: 6px;
             padding: 14px;
-            margin-top: 12px;
+            margin-top: 10px;
         }
 
         .costing-file-head {
@@ -417,11 +426,11 @@
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .costing-file-label {
-            font-size: 0.88rem;
+            font-size: 1rem;
             font-weight: 800;
             color: #111827;
             text-transform: uppercase;
@@ -438,7 +447,7 @@
             display: block;
             width: auto;
             max-width: 220px;
-            font-size: 0.88rem;
+            font-size: 1rem;
             color: #334155;
         }
 
@@ -494,7 +503,7 @@
             display: flex;
             justify-content: flex-end;
             gap: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .costing-row-icon-btn {
@@ -511,32 +520,38 @@
             width: 100%;
             border: 0;
             outline: 0;
-            background: transparent;
+            background: #eff6ff;
+            box-shadow: inset 0 0 0 1px #cfe0f5;
+            border-radius: 4px;
             color: #111827;
-            font-size: 0.92rem;
+            font-size: 1.14rem;
             line-height: 1.2;
-            padding: 0;
+            padding: 2px 6px;
             text-align: center;
             cursor: pointer;
         }
 
         .costing-duration-trigger:focus,
         .costing-duration-trigger:hover {
-            background: #eff6ff;
+            background: #dbeafe;
         }
 
         .costing-duration-trigger[disabled] {
             cursor: default;
+            background: transparent;
+            box-shadow: none;
+            border-radius: 0;
+            padding: 0;
         }
 
         .costing-duration-panel {
             position: fixed;
-            min-width: 148px;
+            min-width: 198px;
             border: 1px solid #bcd1ec;
             border-radius: 6px;
             background: #fff;
             box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
-            padding: 10px;
+            padding: 15px;
             z-index: 2050;
             display: none;
         }
@@ -548,7 +563,7 @@
         .costing-duration-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
+            gap: 12px;
         }
 
         .costing-duration-group {
@@ -558,7 +573,7 @@
 
         .costing-duration-group label {
             margin: 0;
-            font-size: 0.72rem;
+            font-size: 0.88rem;
             font-weight: 800;
             color: #111827;
             text-transform: uppercase;
@@ -572,9 +587,9 @@
             outline: 0;
             background: #fff;
             color: #111827;
-            font-size: 0.9rem;
+            font-size: 1.04rem;
             line-height: 1.2;
-            padding: 4px 6px;
+            padding: 8px 10px;
         }
 
         .costing-duration-group select:focus {
@@ -590,6 +605,7 @@
         .costing-locked-cell {
             color: #111827;
             font-weight: 500;
+            font-size: 1.14rem;
         }
 
         .costing-save-status {
