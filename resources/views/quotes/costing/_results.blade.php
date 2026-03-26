@@ -65,10 +65,14 @@
                 </tr>
                 <tr id="{{ $detailId }}" class="pn-detail-row costing-detail-row d-none">
                     <td colspan="5" class="p-3">
+                        @php($hasKitGroups = collect($pnOrder->display_groups ?? [])->contains(fn ($group) => ($group->type ?? null) === 'kit'))
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered bg-white mb-0 costing-detail-table">
+                            <table class="table table-sm table-bordered bg-white mb-0 costing-detail-table {{ $hasKitGroups ? 'has-tree-column' : 'no-tree-column' }}">
                                 <thead>
                                     <tr>
+                                        @if($hasKitGroups)
+                                            <th>tree</th>
+                                        @endif
                                         <th>work_id</th>
                                         <th>co</th>
                                         <th>cust_po</th>
@@ -87,57 +91,83 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($pnOrder->orders as $order)
-                                        <tr>
-                                            <td class="costing-workid-cell {{ !empty($order->has_costing) ? 'text-success' : '' }}">
-                                                {{ $order->work_id }}
-                                            </td>
-                                            <td>{{ $order->co }}</td>
-                                            <td>{{ $order->cust_po }}</td>
-                                            <td class="costing-pn-detail-cell">{{ $order->pn }}</td>
-                                            <td class="costing-description-cell">{{ $order->Part_description }}</td>
-                                            <td class="costing-customer-cell">{{ $order->customer }}</td>
-                                            <td class="text-right">{{ $order->qty }}</td>
-                                            <td class="text-right">{{ $order->wo_qty }}</td>
-                                            <td><span class="costing-operation-pill">{{ $order->operation }}</span></td>
-                                            <td class="text-right">${{ number_format((float) ($order->sale_price ?? 0), 2) }}</td>
-                                            <td class="text-right">${{ number_format((float) ($order->grandtotal_cost ?? 0), 2) }}</td>
-                                            @php($difference = (float) ($order->difference_cost ?? 0))
-                                            <td class="text-right">
-                                                <span class="costing-diff-pill {{ $difference >= 0 ? 'is-positive' : 'is-negative' }}">
-                                                    ${{ number_format($difference, 2) }}
-                                                </span>
-                                            </td>
-                                            <td class="text-right">
-                                                <span class="costing-cost-pill">
-                                                    ${{ number_format((float) ($order->price_pcs ?? 0), 2) }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if($order->due_date)
-                                                    {{ \Illuminate\Support\Str::ucfirst(str_replace('.', '', \Carbon\Carbon::parse($order->due_date)->locale('es')->translatedFormat('M-d-Y'))) }}
+                                    @foreach($pnOrder->display_groups ?? collect() as $displayGroupIndex => $displayGroup)
+                                        @php($ordersToRender = collect([$displayGroup->header])->merge($displayGroup->items))
+                                        @php($kitGroupId = $detailId . '-kit-' . $displayGroupIndex)
+                                        @foreach($ordersToRender as $orderIndex => $order)
+                                            @php($isKitHeader = $displayGroup->type === 'kit' && $displayGroup->header && $order->id === $displayGroup->header->id)
+                                            @php($isKitChild = $displayGroup->type === 'kit' && !$isKitHeader)
+                                            <tr
+                                                class="{{ $isKitHeader ? 'costing-kit-header-row costing-kit-toggle-row is-open' : ($isKitChild ? 'costing-kit-child-row ' . $kitGroupId : '') }}"
+                                                @if($isKitHeader)
+                                                    data-kit-target=".{{ $kitGroupId }}"
+                                                    aria-expanded="true"
                                                 @endif
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="costing-detail-actions">
-                                                    <a
-                                                        href="{{ route('costing.pdfSheet', $order->id) }}"
-                                                        target="_blank"
-                                                        class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-pdf"
-                                                        title="Open costing PDF"
-                                                    >
-                                                        <i class="fas fa-print"></i>
-                                                    </a>
-                                                    <a
-                                                        href="{{ route('costing.edit', $order->id) }}"
-                                                        class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-edit"
-                                                        title="Edit costing"
-                                                    >
-                                                        <i class="fas fa-pen"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            >
+                                                @if($hasKitGroups)
+                                                    <td class="costing-tree-cell">
+                                                        @if($isKitHeader)
+                                                            <button type="button" class="costing-kit-toggle-btn" title="Toggle kit items">
+                                                                <span class="costing-kit-tag">KIT</span>
+                                                                <span class="costing-kit-chevron">
+                                                                    <i class="fas fa-chevron-down"></i>
+                                                                </span>
+                                                            </button>
+                                                        @elseif($isKitChild)
+                                                            <span class="costing-kit-branch"><i class="fas fa-level-up-alt fa-rotate-90"></i></span>
+                                                        @endif
+                                                    </td>
+                                                @endif
+                                                <td class="costing-workid-cell {{ !empty($order->has_costing) ? 'text-success' : '' }}">
+                                                    {{ $order->work_id }}
+                                                </td>
+                                                <td>{{ $order->co }}</td>
+                                                <td>{{ $order->cust_po }}</td>
+                                                <td class="costing-pn-detail-cell">{{ $order->pn }}</td>
+                                                <td class="costing-description-cell">{{ $order->Part_description }}</td>
+                                                <td class="costing-customer-cell">{{ $order->customer }}</td>
+                                                <td class="text-right">{{ $order->qty }}</td>
+                                                <td class="text-right">{{ $order->wo_qty }}</td>
+                                                <td><span class="costing-operation-pill">{{ $order->operation }}</span></td>
+                                                <td class="text-right">${{ number_format((float) ($order->sale_price ?? 0), 2) }}</td>
+                                                <td class="text-right">${{ number_format((float) ($order->grandtotal_cost ?? 0), 2) }}</td>
+                                                @php($difference = (float) ($order->difference_cost ?? 0))
+                                                <td class="text-right">
+                                                    <span class="costing-diff-pill {{ $difference >= 0 ? 'is-positive' : 'is-negative' }}">
+                                                        ${{ number_format($difference, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span class="costing-cost-pill">
+                                                        ${{ number_format((float) ($order->price_pcs ?? 0), 2) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if($order->due_date)
+                                                        {{ \Illuminate\Support\Str::ucfirst(str_replace('.', '', \Carbon\Carbon::parse($order->due_date)->locale('es')->translatedFormat('M-d-Y'))) }}
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="costing-detail-actions">
+                                                        <a
+                                                            href="{{ route('costing.pdfSheet', $order->id) }}"
+                                                            target="_blank"
+                                                            class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-pdf"
+                                                            title="Open costing PDF"
+                                                        >
+                                                            <i class="fas fa-print"></i>
+                                                        </a>
+                                                        <a
+                                                            href="{{ route('costing.edit', $order->id) }}"
+                                                            class="btn btn-sm btn-erp-primary erp-table-btn costing-edit-btn costing-action-edit"
+                                                            title="Edit costing"
+                                                        >
+                                                            <i class="fas fa-pen"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                     @endforeach
                                 </tbody>
                             </table>

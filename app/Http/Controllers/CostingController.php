@@ -10,6 +10,7 @@ use App\Models\OrderSchedule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,8 @@ class CostingController extends Controller
                 'wo_qty',
                 'operation',
                 'due_date',
+                'group_key',
+                'parent_id',
             ])
             ->orderByDesc('due_date')
             ->get();
@@ -114,6 +117,7 @@ class CostingController extends Controller
                     'sale_price' => (float) $group->sum(fn ($order) => (float) ($order->sale_price ?? 0)),
                     'grandtotal_cost' => (float) $group->sum(fn ($order) => (float) ($order->grandtotal_cost ?? 0)),
                     'difference_cost' => (float) $group->sum(fn ($order) => (float) ($order->difference_cost ?? 0)),
+                    'display_groups' => $this->buildPnDisplayGroups($group),
                     'orders' => $group,
                 ];
             });
@@ -771,5 +775,154 @@ class CostingController extends Controller
         $seconds = $totalSeconds % 60;
 
         return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
+    }
+
+    private function buildPnDisplayGroups(Collection $orders): Collection
+    {
+        $usedIds = [];
+        $displayGroups = collect();
+        $implicitRootGroups = $orders
+            ->groupBy(fn ($order) => $this->extractWorkIdRoot(trim((string) $order->work_id)))
+            ->filter(function (Collection $group, $root) {
+                if ($root === '' || $group->count() <= 1) {
+                    return false;
+                }
+
+                $hasHeader = $group->contains(function ($item) use ($root) {
+                    $workId = trim((string) $item->work_id);
+                    return preg_match('/^' . preg_quote($root, '/') . '\/\d+$/i', $workId) === 1;
+                });
+
+                $hasChild = $group->contains(function ($item) use ($root) {
+                    $workId = trim((string) $item->work_id);
+                    return preg_match('/^' . preg_quote($root, '/') . '\-\d+\/\d+$/i', $workId) === 1;
+                });
+
+                return $hasHeader && $hasChild;
+            });
+
+        foreach ($orders as $order) {
+            if (in_array($order->id, $usedIds, true)) {
+                continue;
+            }
+
+            $groupKey = trim((string) ($order->group_key ?? ''));
+            $explicitGroupOrders = $groupKey !== ''
+                ? $orders->where('group_key', $groupKey)->values()
+                : collect([$order]);
+
+            if ($explicitGroupOrders->count() > 1) {
+                $groupIds = $explicitGroupOrders->pluck('id')->all();
+                $allParentNull = $explicitGroupOrders->every(fn ($item) => empty($item->parent_id));
+                $header = $explicitGroupOrders->firstWhere('parent_id', null);
+
+                if ($allParentNull) {
+                    $header = $this->detectImplicitKitHeader($explicitGroupOrders) ?? $explicitGroupOrders->first();
+                    $items = $explicitGroupOrders
+                        ->reject(fn ($item) => $item->id === $header->id)
+                        ->sortBy('work_id', SORT_NATURAL)
+                        ->values();
+                } else {
+                    $header = $header ?? $explicitGroupOrders->first();
+                    $items = $explicitGroupOrders
+                        ->filter(fn ($item) => (int) ($item->parent_id ?? 0) === (int) $header->id)
+                        ->sortBy('work_id', SORT_NATURAL)
+                        ->values();
+
+                    if ($items->isEmpty()) {
+                        $items = $explicitGroupOrders
+                            ->reject(fn ($item) => $item->id === $header->id)
+                            ->sortBy('work_id', SORT_NATURAL)
+                            ->values();
+                    }
+                }
+
+                $displayGroups->push((object) [
+                    'type' => 'kit',
+                    'header' => $header,
+                    'items' => $items,
+                    'group_key' => $groupKey !== '' ? $groupKey : null,
+                    'is_implicit' => $allParentNull,
+                ]);
+
+                foreach ($groupIds as $groupId) {
+                    $usedIds[] = $groupId;
+                }
+
+                continue;
+            }
+
+            $root = $this->extractWorkIdRoot(trim((string) $order->work_id));
+            $implicitGroupOrders = $implicitRootGroups->get($root);
+
+            if ($implicitGroupOrders && $implicitGroupOrders->count() > 1) {
+                $header = $this->detectImplicitKitHeader($implicitGroupOrders) ?? $implicitGroupOrders->first();
+                $items = $implicitGroupOrders
+                    ->reject(fn ($item) => $item->id === $header->id)
+                    ->sortBy('work_id', SORT_NATURAL)
+                    ->values();
+
+                $displayGroups->push((object) [
+                    'type' => 'kit',
+                    'header' => $header,
+                    'items' => $items,
+                    'group_key' => null,
+                    'is_implicit' => true,
+                ]);
+
+                foreach ($implicitGroupOrders->pluck('id') as $groupId) {
+                    $usedIds[] = $groupId;
+                }
+
+                continue;
+            }
+
+            $displayGroups->push((object) [
+                'type' => 'single',
+                'header' => $order,
+                'items' => collect(),
+                'group_key' => $groupKey !== '' ? $groupKey : null,
+                'is_implicit' => false,
+            ]);
+            $usedIds[] = $order->id;
+        }
+
+        return $displayGroups->values();
+    }
+
+    private function detectImplicitKitHeader(Collection $groupOrders)
+    {
+        foreach ($groupOrders as $candidate) {
+            $candidateWorkId = trim((string) $candidate->work_id);
+            if ($candidateWorkId === '') {
+                continue;
+            }
+
+            $candidateRoot = $this->extractWorkIdRoot($candidateWorkId);
+
+            $isHeader = $groupOrders->every(function ($item) use ($candidateWorkId, $candidateRoot) {
+                $itemWorkId = trim((string) $item->work_id);
+
+                if ($itemWorkId === $candidateWorkId) {
+                    return true;
+                }
+
+                return str_starts_with($itemWorkId, $candidateRoot . '-');
+            });
+
+            if ($isHeader) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractWorkIdRoot(string $workId): string
+    {
+        $parts = explode('/', $workId, 2);
+        $leftSide = $parts[0] ?? $workId;
+
+        return explode('-', $leftSide, 2)[0];
     }
 }
