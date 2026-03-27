@@ -880,6 +880,11 @@
             text-align: left;
         }
 
+        .costing-detail-table.no-tree-column .costing-description-cell,
+        .costing-detail-table.no-tree-column thead th:nth-child(5) {
+            text-align: left !important;
+        }
+
         .costing-workid-cell,
         .costing-pn-detail-cell {
             font-weight: 800;

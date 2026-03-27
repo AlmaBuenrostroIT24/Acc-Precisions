@@ -45,6 +45,7 @@ class CostingController extends Controller
                 'group_key',
                 'parent_id',
             ])
+            ->whereRaw("LOWER(COALESCE(status_order, '')) <> 'inactive'")
             ->orderByDesc('due_date')
             ->get();
 
