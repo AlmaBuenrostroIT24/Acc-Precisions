@@ -788,6 +788,10 @@ class CostingController extends Controller
                     return false;
                 }
 
+                if (!$this->isValidKitGroup($group)) {
+                    return false;
+                }
+
                 $hasHeader = $group->contains(function ($item) use ($root) {
                     $workId = trim((string) $item->work_id);
                     return preg_match('/^' . preg_quote($root, '/') . '\/\d+$/i', $workId) === 1;
@@ -811,7 +815,7 @@ class CostingController extends Controller
                 ? $orders->where('group_key', $groupKey)->values()
                 : collect([$order]);
 
-            if ($explicitGroupOrders->count() > 1) {
+            if ($explicitGroupOrders->count() > 1 && $this->isValidKitGroup($explicitGroupOrders)) {
                 $groupIds = $explicitGroupOrders->pluck('id')->all();
                 $allParentNull = $explicitGroupOrders->every(fn ($item) => empty($item->parent_id));
                 $header = $explicitGroupOrders->firstWhere('parent_id', null);
@@ -916,6 +920,35 @@ class CostingController extends Controller
         }
 
         return null;
+    }
+
+    private function isValidKitGroup(Collection $groupOrders): bool
+    {
+        if ($groupOrders->count() <= 1) {
+            return false;
+        }
+
+        $custPoValues = $groupOrders
+            ->map(fn ($item) => strtoupper(trim((string) ($item->cust_po ?? ''))))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($custPoValues->count() !== 1) {
+            return false;
+        }
+
+        $coValues = $groupOrders
+            ->map(fn ($item) => strtoupper(trim((string) ($item->co ?? ''))))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($coValues->count() !== 1) {
+            return false;
+        }
+
+        return true;
     }
 
     private function extractWorkIdRoot(string $workId): string

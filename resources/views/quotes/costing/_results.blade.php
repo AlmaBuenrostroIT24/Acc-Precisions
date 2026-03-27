@@ -110,7 +110,7 @@
                                                             <button type="button" class="costing-kit-toggle-btn" title="Toggle kit items">
                                                                 <span class="costing-kit-tag">KIT</span>
                                                                 <span class="costing-kit-chevron">
-                                                                    <i class="fas fa-chevron-down"></i>
+                                                                    <i class="fas fa-chevron-right"></i>
                                                                 </span>
                                                             </button>
                                                         @elseif($isKitChild)
