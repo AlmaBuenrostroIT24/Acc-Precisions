@@ -30,10 +30,63 @@
 
 
     {{-- Columna derecha: Tabla --}}
-    <div class="col-lg-10">
+    <div class="col-lg-12">
+        <div class="card mb-3 fai-summary-card fai-summary-card-top">
+            <div class="card-body p-2">
+                <div class="row">
+                    <div class="col-md-6 col-xl-3 mb-2 mb-xl-0">
+                        <div class="info-box info-box-sm bg-info mb-0" id="kpiBoxTotal">
+                            <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Closed inspections</span>
+                                <h5 class="mb-0" id="kpiTotal">0</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3 mb-2 mb-xl-0">
+                        <div class="info-box info-box-sm bg-success mb-0">
+                            <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Completed</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0" id="kpiPass">0</h5>
+                                    <small class="text-black-50">100%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3 mb-2 mb-md-0">
+                        <div class="info-box info-box-sm bg-danger mb-0">
+                            <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Incomplete</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0" id="kpiFail">0</h5>
+                                    <small class="text-black-50">&lt; 100%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="info-box info-box-sm bg-secondary mb-0" id="kpiBoxNoInspection">
+                            <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">No Inspection</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0" id="kpiNoInspection">0</h5>
+                                    <small class="text-black-50">ops/samp 0</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card mb-4">
 
             <div class="card-body p-2">
+                <div id="dtToolbarContainer" class="mb-2"></div>
                 <div class="table-responsive fai-erp-wrap">
                     <table id="faicompleteTable"
                         class="table table-sm align-middle mb-0 fai-erp-table"
@@ -153,18 +206,8 @@
             </div>
         </div>
     </div>
-    {{-- Columna izquierda: KPI / otro contenido --}}
-    <div class="col-lg-2">
-        <div class="row">
-            {{-- Columna A: Filtros --}}
-            <div class="col-md-12">
-                <div class="card mb-3 sticky-top fai-filters-erp" style="top: 10px;">
-                    <div class="card-header py-2">
-                        <strong><i class="fas fa-filter mr-2"></i>Filters</strong>
-                    </div>
-                    <div class="card-body">
-                        {{-- ======= TU FORMULARIO ======= --}}
-                        <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm">
+    <div class="d-none">
+        <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm">
                             {{-- Global Search --}}
 
                             {{-- Location --}}
@@ -269,74 +312,17 @@
                                     <i class="fas fa-file-pdf mr-1 text-danger"></i> PDF
                                 </button>
                             </div>
-                        </form>
+        </form>
 
-                        {{-- Formularios ocultos para enviar ids[] por POST --}}
-                        <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}"
-                            method="POST" target="_blank" class="d-none">
-                            @csrf
-                        </form>
-                        <form id="exportPdfForm" action="{{ route('faisummary.completed.export.pdf') }}" method="POST"
-                            target="_blank" class="d-none">
-                            @csrf
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Columna B: KPI/Resumen --}}
-            <div class="col-md-12">
-                <div class="card mb-3 sticky-top fai-summary-card" style="top: 10px;">
-
-
-                    <div class="card-body p-2">
-                        {{-- KPI principal --}}
-                        <div class="info-box info-box-sm bg-info mb-2" id="kpiBoxTotal">
-                            <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Closed inspections</span>
-                                <h5 class="mb-0" id="kpiTotal">0</h5>
-                            </div>
-                        </div>
-                        <div class="info-box info-box-sm bg-success mb-2">
-                            <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Completed</span>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0" id="kpiPass">0</h5>
-                                    <small class="text-black-50">100%</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="info-box info-box-sm bg-danger mb-2">
-                            <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Incomplete</span>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0" id="kpiFail">0</h5>
-                                    <small class="text-black-50">&lt; 100%</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="info-box info-box-sm bg-secondary mb-2" id="kpiBoxNoInspection">
-                            <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">No Inspection</span>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0" id="kpiNoInspection">0</h5>
-                                    <small class="text-black-50">ops/samp 0</small>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        {{-- Fin fila --}}
-                    </div>
-                </div>
-            </div>
-        </div>
+        {{-- Formularios ocultos para enviar ids[] por POST --}}
+        <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}"
+            method="POST" target="_blank" class="d-none">
+            @csrf
+        </form>
+        <form id="exportPdfForm" action="{{ route('faisummary.completed.export.pdf') }}" method="POST"
+            target="_blank" class="d-none">
+            @csrf
+        </form>
     </div>
 </div>
 
@@ -594,6 +580,16 @@
     .fai-summary-card .card-header {
         background: linear-gradient(135deg, #e0f2fe 0%, #d1fae5 100%);
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .fai-summary-card-top {
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .fai-summary-card-top .card-body {
+        padding: .6rem .7rem !important;
     }
 
     /* Contenedor tabla estilo ERP */
@@ -920,6 +916,217 @@
         box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
     }
 
+    .fai-table-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: .45rem;
+    }
+
+    .fai-table-toolbar .toolbar-top,
+    .fai-table-toolbar .toolbar-bottom,
+    .fai-table-toolbar .toolbar-left {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .fai-table-toolbar .toolbar-top {
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .fai-table-toolbar .toolbar-left {
+        align-items: center;
+    }
+
+    .fai-table-toolbar .toolbar-bottom {
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .fai-table-toolbar .toolbar-filters .form-group {
+        margin-bottom: 0 !important;
+        min-width: 160px;
+    }
+
+    .fai-table-toolbar .toolbar-filters label {
+        display: none !important;
+    }
+
+    .fai-table-toolbar .input-group,
+    .fai-table-toolbar .btn-group,
+    .fai-table-toolbar .dataTables_length {
+        margin-bottom: 0 !important;
+    }
+
+    .fai-table-toolbar .dataTables_length label {
+        margin-bottom: 0 !important;
+    }
+
+    .fai-table-toolbar .toolbar-search {
+        width: 320px;
+        max-width: 100%;
+    }
+
+    .fai-table-toolbar .btn-erp-active {
+        background: linear-gradient(180deg, #e7f6ee 0%, #d4eddf 100%) !important;
+        border: 1px solid #9fd0b1 !important;
+        color: #1f5d3f !important;
+        box-shadow: 0 1px 3px rgba(31, 93, 63, 0.14);
+    }
+
+    .fai-table-toolbar .btn-erp-active:hover,
+    .fai-table-toolbar .btn-erp-active:focus,
+    .fai-table-toolbar .btn-erp-active:active {
+        background: linear-gradient(180deg, #dcf1e5 0%, #cbe7d8 100%) !important;
+        color: #174b32 !important;
+        border-color: #96c9aa !important;
+        box-shadow: 0 0 0 2px rgba(52, 168, 83, 0.2) !important;
+    }
+
+    .fai-table-toolbar .btn.btn-sm {
+        min-height: 36px;
+        padding: .3rem .68rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        line-height: 1.1;
+    }
+
+    .fai-table-toolbar .btn-outline-secondary {
+        color: #0f172a;
+        border-color: #bfc9d6;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .fai-table-toolbar .btn-outline-secondary:hover {
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+        border-color: #9fb7d9;
+    }
+
+    .fai-table-toolbar #filterLocationGroup .input-group,
+    .fai-table-toolbar #yearPickerWrapper,
+    .fai-table-toolbar #monthPickerWrapper,
+    .fai-table-toolbar #dayPickerWrapper {
+        height: 36px;
+        border: 1px solid #bfc9d6;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        align-items: stretch;
+        padding: 0;
+    }
+
+    .fai-table-toolbar #filterLocationGroup .input-group:focus-within,
+    .fai-table-toolbar #yearPickerWrapper:focus-within,
+    .fai-table-toolbar #monthPickerWrapper:focus-within,
+    .fai-table-toolbar #dayPickerWrapper:focus-within {
+        border-color: #5b8ee6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.16);
+    }
+
+    .fai-table-toolbar #filterLocationGroup .input-group-text,
+    .fai-table-toolbar #yearPickerWrapper .input-group-text,
+    .fai-table-toolbar #monthPickerWrapper .input-group-text,
+    .fai-table-toolbar #dayPickerWrapper .input-group-text {
+        border: 0 !important;
+        border-right: 1px solid #d8e0ea !important;
+        background: #eef2f7 !important;
+        color: #334155 !important;
+        min-width: 36px;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        display: inline-flex;
+        margin: 0 !important;
+        border-radius: 10px 0 0 10px !important;
+    }
+
+    .fai-table-toolbar #filterLocationGroup .form-control,
+    .fai-table-toolbar #yearPickerWrapper .form-control,
+    .fai-table-toolbar #monthPickerWrapper .form-control,
+    .fai-table-toolbar #dayPickerWrapper .form-control {
+        border: 0 !important;
+        box-shadow: none !important;
+        height: 100% !important;
+        padding: .3rem .55rem;
+        font-weight: 600;
+        line-height: 1.2;
+        background: #fff !important;
+        margin: 0 !important;
+        border-radius: 0 10px 10px 0 !important;
+        outline: none !important;
+    }
+
+    .fai-table-toolbar #locationFilter,
+    .fai-table-toolbar #year,
+    .fai-table-toolbar #monthDisplay,
+    .fai-table-toolbar #day {
+        border: 0 !important;
+        background-image: none !important;
+        -webkit-appearance: none;
+    }
+
+    .fai-table-toolbar .toolbar-search {
+        border: 1px solid #bfc9d6;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        transition: border-color .15s ease, box-shadow .15s ease;
+        min-height: 36px;
+    }
+
+    .fai-table-toolbar .toolbar-search:focus-within {
+        border-color: #5b8ee6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.16);
+    }
+
+    .fai-table-toolbar .toolbar-search .input-group-text {
+        border: 0 !important;
+        border-right: 1px solid #d8e0ea !important;
+        background: #eef2f7 !important;
+        color: #334155 !important;
+        min-width: 36px;
+        min-height: 36px;
+        justify-content: center;
+    }
+
+    .fai-table-toolbar .toolbar-search .form-control {
+        border: 0 !important;
+        box-shadow: none !important;
+        font-weight: 600;
+        color: #0f172a;
+        padding: .3rem .58rem;
+        min-height: 36px;
+        background: #fff !important;
+    }
+
+    .fai-table-toolbar .toolbar-search .form-control::placeholder {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .fai-table-toolbar .toolbar-search #dtToolbarClear {
+        border: 0 !important;
+        border-left: 1px solid #d8e0ea !important;
+        background: #f8fafc !important;
+        color: #475569 !important;
+        min-width: 36px;
+        min-height: 36px;
+        padding: .28rem .52rem;
+    }
+
+    .fai-table-toolbar .toolbar-search #dtToolbarClear:hover {
+        background: #eef2f7 !important;
+        color: #0f172a !important;
+    }
+
     /* Texto de encabezados en negro (consistente) */
     #faicompleteTable thead th,
     .fai-erp-table thead th,
@@ -988,7 +1195,7 @@
             ],
             scrollX: false,
             autoWidth: false,
-            dom: '<"row mb-2 align-items-center"<"col-sm-6"l><"col-sm-6 text-right"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
+            dom: 'rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
             columnDefs: [{
                     // PROGRESS
                     targets: COLS.prog,
@@ -1036,9 +1243,8 @@
         $('#locationFilter option[value=\"\"]').text('- All -');
         $('label[for=\"year\"]').text('Date');
 
-        // Toolbar: agrupa Show entries + search + export junto a la tabla (sin quitar filtros laterales)
+        // Toolbar tipo summary: filtros a la izquierda, search a la derecha, length abajo
         const $wrapper = $tbl.closest('.dataTables_wrapper');
-        const $length = $wrapper.find('.dataTables_length');
 
         // Buscador inline para la tabla
         const $toolbarSearch = $(`
@@ -1061,7 +1267,6 @@
             $('#dtToolbarSearch').trigger('focus');
         });
 
-        if (false) {
         // Botones de export en la misma barra (reutilizan handlers existentes)
         const $exportGroup = $(`
             <div class="btn-group btn-group-sm mb-0">
@@ -1076,29 +1281,72 @@
         $exportGroup.on('click', '#toolbarExportExcel', () => submitExport('exportExcelForm'));
         $exportGroup.on('click', '#toolbarExportPdf', () => submitExport('exportPdfForm'));
 
-        // Fila de filtros (location + fechas)
-        const $filtersRow = $('<div class="dt-toolbar dt-filters-row d-flex align-items-center flex-wrap gap-2 mb-2"></div>');
         const $loc = $('#filterLocationGroup').detach().addClass('mb-0');
         const $year = $('#filterYearGroup').detach().addClass('mb-0');
         const $month = $('#filterMonthGroup').detach().addClass('mb-0');
         const $day = $('#filterDayGroup').detach().addClass('mb-0');
-        $filtersRow.append($loc, $year, $month, $day);
-        $filtersRow.find('.input-group').addClass('input-group-sm');
+        const $clean = $('#filtersForm a.btn-secondary').first().detach().removeClass('btn-secondary').addClass('btn-erp-gray');
+        const $quickActions = $('#filtersForm .btn-group').eq(0).detach().removeClass('d-flex');
+        const $exportButtons = $('#filtersForm .btn-group').eq(0).detach().removeClass('d-flex');
 
-        // Fila superior: búsqueda + export
-        const $toolbarTop = $('<div class="dt-toolbar d-flex align-items-center flex-wrap justify-content-between"></div>');
-        const $topRight = $('<div class="d-flex align-items-center flex-wrap gap-2"></div>');
-        $topRight.append($toolbarSearch);
-        $topRight.append($exportGroup);
-        $toolbarTop.append($topRight);
+        $loc.find('.input-group, select').addClass('input-group-sm');
+        $year.find('.input-group').addClass('input-group-sm');
+        $month.find('.input-group').addClass('input-group-sm');
+        $day.find('.input-group').addClass('input-group-sm');
 
-        // Fila inferior: selector de longitud (Show entries)
-        const $toolbarBottom = $('<div class="dt-toolbar d-flex align-items-center flex-wrap justify-content-start"></div>');
-        if ($length.length) $toolbarBottom.append($length);
+        const now = new Date();
+        const reqDay = '{{ trim((string) request("day", "")) }}';
+        const reqMonth = '{{ trim((string) request("month", "")) }}';
+        const reqYear = '{{ trim((string) request("year", "")) }}';
+        const nowDate = '{{ now()->toDateString() }}';
+        const nowMonth = String(now.getMonth() + 1);
+        const nowYear = String(now.getFullYear());
+        const isTodayActive = (reqDay !== '' && reqDay === nowDate);
+        const isCleanDefault = (reqDay === '' && reqMonth === '' && reqYear === '');
+        const isCurrentMonthFilter = (reqDay === '' && reqMonth === nowMonth && reqYear === nowYear);
+        const isMonthActive = (isCleanDefault || isCurrentMonthFilter);
+        const isYearActive = (reqDay === '' && reqMonth === '' && reqYear === nowYear);
+
+        const todayHref = `{{ route('faisummary.completed', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}`;
+        const monthHref = `{{ route('faisummary.completed', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}`;
+        const yearHref = `{{ route('faisummary.completed', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}`;
+
+        const $quickLinks = $(`
+            <div class="d-flex flex-wrap align-items-center">
+                <a class="btn btn-sm ${isTodayActive ? 'btn-erp-active' : 'btn-outline-secondary'}" href="${todayHref}">
+                    <i class="fas fa-bolt mr-1"></i> Today
+                </a>
+                <a class="btn btn-sm ${isMonthActive ? 'btn-erp-active' : 'btn-outline-secondary'}" href="${monthHref}">
+                    <i class="far fa-calendar-alt mr-1"></i> Month
+                </a>
+                <a class="btn btn-sm ${isYearActive ? 'btn-erp-active' : 'btn-outline-secondary'}" href="${yearHref}">
+                    <i class="far fa-calendar mr-1"></i> Year
+                </a>
+            </div>
+        `);
+        $quickLinks.find('.btn').addClass('mr-2');
+        $exportButtons.find('.btn').addClass('mr-2');
+
+        const $toolbar = $('<div class="fai-table-toolbar mb-2"></div>');
+        const $toolbarTop = $('<div class="toolbar-top"></div>');
+        const $toolbarLeft = $('<div class="toolbar-left toolbar-filters"></div>');
+        const $toolbarBottom = $('<div class="toolbar-bottom"></div>');
+
+        $toolbarLeft
+            .append($loc)
+            .append($year)
+            .append($month)
+            .append($day)
+            .append($clean.addClass('btn-sm mb-0'))
+            .append($quickLinks)
+            .append($exportButtons);
+
+        $toolbarSearch.addClass('toolbar-search');
+        $toolbarTop.append($toolbarLeft).append($toolbarSearch);
 
         const $toolbarContainer = $('#dtToolbarContainer');
-        $toolbarContainer.empty().append($filtersRow).append($toolbarTop).append($toolbarBottom);
-        }
+        $toolbarContainer.empty().append($toolbar);
+        $toolbar.append($toolbarTop);
 
         window.faiDT = dt; // útil en consola
 
