@@ -60,23 +60,7 @@ Route::get('/dashboard/export/fai-rej-details-excel', [DashboardController::clas
     ->middleware(['auth', 'verified'])
     ->name('dashboard.exportFaiRejDetailsExcel');
 
-Route::middleware(['auth', 'can:quote/costing'])->group(function () {
-    Route::get('/quote/costing', [CostingController::class, 'index'])->name('costing');
-    Route::get('/quote/costing/{order}/edit', [CostingController::class, 'edit'])->name('costing.edit');
-    Route::put('/quote/costing/{order}', [CostingController::class, 'update'])->name('costing.update');
-    Route::delete('/quote/costing/{order}', [CostingController::class, 'destroy'])->name('costing.destroy');
-    Route::post('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'uploadPdf'])->name('costing.pdf.upload');
-    Route::delete('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'deletePdf'])->name('costing.pdf.delete');
-    Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->name('costing.pdf');
-    Route::get('/quote/costing/{order}/pdf-sheet', [CostingController::class, 'pdfSheet'])->name('costing.pdfSheet');
-    Route::get('/costing', function () {
-        return redirect()->route('costing');
-    });
-});
 
-Route::get('/quote/costing/{order}/logs', [CostingController::class, 'logs'])
-    ->middleware(['auth', 'can:quote/costing/logs'])
-    ->name('costing.logs');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -204,13 +188,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/faicompleted/{order}/events', [QaFaiSummaryController::class, 'completedOrderEvents'])->name('faisummary.completed.events');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
     Route::get('/qa/rejectedfaiorders', [QaFaiSummaryController::class, 'rejectedfaiorders'])->name('faisummary.rejectedfaiorders');
-	    Route::get('/qa/ncar/next-number', [QaFaiSummaryController::class, 'nextNcarNumber'])->name('qa.ncar.nextNumber');
-	    Route::get('/qa/ncar/types', [QaFaiSummaryController::class, 'ncarTypes'])->name('qa.ncar.types');
-	    Route::get('/qa/ncar/stages', [QaFaiSummaryController::class, 'ncarStages'])->name('qa.ncar.stages');
-	    Route::post('/qa/ncar/stages', [QaFaiSummaryController::class, 'storeNcarStage'])->name('qa.ncar.stages.store');
-	    Route::put('/qa/ncar/stages/{id}', [QaFaiSummaryController::class, 'updateNcarStage'])->name('qa.ncar.stages.update');
-	    Route::post('/qa/ncar', [QaFaiSummaryController::class, 'storeNcar'])->name('qa.ncar.store');
-	});
+    Route::get('/qa/ncar/next-number', [QaFaiSummaryController::class, 'nextNcarNumber'])->name('qa.ncar.nextNumber');
+    Route::get('/qa/ncar/types', [QaFaiSummaryController::class, 'ncarTypes'])->name('qa.ncar.types');
+    Route::get('/qa/ncar/stages', [QaFaiSummaryController::class, 'ncarStages'])->name('qa.ncar.stages');
+    Route::post('/qa/ncar/stages', [QaFaiSummaryController::class, 'storeNcarStage'])->name('qa.ncar.stages.store');
+    Route::put('/qa/ncar/stages/{id}', [QaFaiSummaryController::class, 'updateNcarStage'])->name('qa.ncar.stages.update');
+    Route::post('/qa/ncar', [QaFaiSummaryController::class, 'storeNcar'])->name('qa.ncar.store');
+});
 //=========================================================================================================
 // -----------------------------------faisummary-------------------------------------------------------
 //===========================================================================================================
@@ -244,15 +228,19 @@ Route::post('/qa/faisummary/completed/export/pdf', [QaFaiSummaryController::clas
 // -----------------------------------Rejected FAI Orders-------------------------------------------------------
 //=========================================================================================================
 Route::get(
-    '/qa/rejectedfaiorders/{order}/inspections',[QaFaiSummaryController::class, 'orderInspections'])->name('faisummary.orderInspections');
+    '/qa/rejectedfaiorders/{order}/inspections',
+    [QaFaiSummaryController::class, 'orderInspections']
+)->name('faisummary.orderInspections');
 //=========================================================================================================
 // -----------------------------------faistatiscs-------------------------------------------------------
 //=========================================================================================================
 Route::get('/qa/faistatistics/data', [QaFaiSummaryController::class, 'faistatisticsData'])->name('faisummary.statistics.data');
-    // NUEVO: breakdown por operador/inspector
+// NUEVO: breakdown por operador/inspector
 Route::get('/qa/faistatistics/by', [QaFaiSummaryController::class, 'faistatisticsBy'])->name('faisummary.statistics.by'); // ?year=2025&group=operator|inspector
 Route::get('/qa/faistatistics/operators', [QaFaiSummaryController::class, 'operatorsList'])->name('faisummary.operators');
+
 use App\Http\Controllers\FaiSummaryController;
+
 Route::get('/faisummary/statistics/by-quarter-operator', [QaFaiSummaryController::class, 'faistatisticsByQuarterOperator'])->name('faisummary.statistics.byQuarterOperator');
 
 //++++++++++++++++++++++++++++++++++++++++ <-END-> QA FAI/IPI +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -297,3 +285,26 @@ Route::post('/machines-codes/{id}/toggle-status', [MachCodeController::class, 't
 Route::prefix('machines')->name('machines.')->group(function () {
     Route::resource('machinary', MachMachinaryController::class);
 });
+
+//++++++++++++++++++++++++++++++++++++++++<-COSTING QUOTES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//--------------------------------------------------------------------------------------------------------------------------
+
+Route::middleware(['auth', 'can:quote/costing'])->group(function () {
+    Route::get('/quote/costing', [CostingController::class, 'index'])->name('costing');
+    Route::get('/quote/costing/{order}/edit', [CostingController::class, 'edit'])->name('costing.edit');
+    Route::put('/quote/costing/{order}', [CostingController::class, 'update'])->name('costing.update');
+    Route::delete('/quote/costing/{order}', [CostingController::class, 'destroy'])->name('costing.destroy');
+    Route::post('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'uploadPdf'])->name('costing.pdf.upload');
+    Route::delete('/quote/costing/{order}/pdf/{type}', [CostingController::class, 'deletePdf'])->name('costing.pdf.delete');
+    Route::get('/quote/costing/{order}/pdf', [CostingController::class, 'pdf'])->name('costing.pdf');
+    Route::get('/quote/costing/{order}/pdf-sheet', [CostingController::class, 'pdfSheet'])->name('costing.pdfSheet');
+    Route::get('/costing', function () {
+        return redirect()->route('costing');
+    });
+});
+
+Route::get('/quote/costing/{order}/logs', [CostingController::class, 'logs'])
+    ->middleware(['auth', 'can:quote/costing/logs'])
+    ->name('costing.logs');
+
+    //--------------------------------------------------------------------------------------------------------------------------

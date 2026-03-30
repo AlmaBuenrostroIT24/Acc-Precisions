@@ -969,6 +969,18 @@
                                             <input class="costing-inline-input" type="text" name="type_material" value="{{ old('type_material', $costing->type_material ?? '') }}">
                                         </div>
                                     </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label"></div>
+                                        <div class="costing-info-value"></div>
+                                        <div class="costing-info-label">Setup:</div>
+                                        <div class="costing-info-value">
+                                            @if(!empty($faiPassSummary))
+                                                {{ $faiPassSummary }}
+                                            @else
+                                                N/A
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

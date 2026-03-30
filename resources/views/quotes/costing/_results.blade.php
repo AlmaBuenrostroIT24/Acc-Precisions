@@ -82,6 +82,7 @@
                                         <th class="costing-col-num">qty</th>
                                         <th class="costing-col-num">wo_qty</th>
                                         <th>operation</th>
+                                        <th>Setup</th>
                                         <th class="costing-col-num">sale price</th>
                                         <th class="costing-col-num">total cost</th>
                                         <th class="costing-col-num">difference</th>
@@ -129,6 +130,9 @@
                                                 <td class="text-right">{{ $order->qty }}</td>
                                                 <td class="text-right">{{ $order->wo_qty }}</td>
                                                 <td><span class="costing-operation-pill">{{ $order->operation }}</span></td>
+                                                <td class="costing-setup-cell">
+                                                    <span class="costing-setup-lines">{{ $order->setup_summary ?: 'N/A' }}</span>
+                                                </td>
                                                 <td class="text-right">${{ number_format((float) ($order->sale_price ?? 0), 2) }}</td>
                                                 <td class="text-right">${{ number_format((float) ($order->grandtotal_cost ?? 0), 2) }}</td>
                                                 @php($difference = (float) ($order->difference_cost ?? 0))

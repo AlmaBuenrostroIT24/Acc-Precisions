@@ -686,17 +686,19 @@
         .costing-detail-table.has-tree-column th:nth-child(10),
         .costing-detail-table.has-tree-column td:nth-child(10) { width: 86px; }
         .costing-detail-table.has-tree-column th:nth-child(11),
-        .costing-detail-table.has-tree-column td:nth-child(11) { width: 112px; }
+        .costing-detail-table.has-tree-column td:nth-child(11) { width: 132px; }
         .costing-detail-table.has-tree-column th:nth-child(12),
-        .costing-detail-table.has-tree-column td:nth-child(12) { width: 112px; }
+        .costing-detail-table.has-tree-column td:nth-child(12) { width: 96px; }
         .costing-detail-table.has-tree-column th:nth-child(13),
-        .costing-detail-table.has-tree-column td:nth-child(13) { width: 114px; }
+        .costing-detail-table.has-tree-column td:nth-child(13) { width: 108px; }
         .costing-detail-table.has-tree-column th:nth-child(14),
-        .costing-detail-table.has-tree-column td:nth-child(14) { width: 110px; }
+        .costing-detail-table.has-tree-column td:nth-child(14) { width: 104px; }
         .costing-detail-table.has-tree-column th:nth-child(15),
         .costing-detail-table.has-tree-column td:nth-child(15) { width: 96px; }
         .costing-detail-table.has-tree-column th:nth-child(16),
         .costing-detail-table.has-tree-column td:nth-child(16) { width: 92px; }
+        .costing-detail-table.has-tree-column th:nth-child(17),
+        .costing-detail-table.has-tree-column td:nth-child(17) { width: 92px; }
 
         .costing-detail-table.no-tree-column th:nth-child(1),
         .costing-detail-table.no-tree-column td:nth-child(1) { width: 110px; }
@@ -717,13 +719,13 @@
         .costing-detail-table.no-tree-column th:nth-child(9),
         .costing-detail-table.no-tree-column td:nth-child(9) { width: 86px; }
         .costing-detail-table.no-tree-column th:nth-child(10),
-        .costing-detail-table.no-tree-column td:nth-child(10) { width: 112px; }
+        .costing-detail-table.no-tree-column td:nth-child(10) { width: 132px; }
         .costing-detail-table.no-tree-column th:nth-child(11),
-        .costing-detail-table.no-tree-column td:nth-child(11) { width: 112px; }
+        .costing-detail-table.no-tree-column td:nth-child(11) { width: 96px; }
         .costing-detail-table.no-tree-column th:nth-child(12),
-        .costing-detail-table.no-tree-column td:nth-child(12) { width: 114px; }
+        .costing-detail-table.no-tree-column td:nth-child(12) { width: 108px; }
         .costing-detail-table.no-tree-column th:nth-child(13),
-        .costing-detail-table.no-tree-column td:nth-child(13) { width: 110px; }
+        .costing-detail-table.no-tree-column td:nth-child(13) { width: 104px; }
         .costing-detail-table.no-tree-column th:nth-child(14),
         .costing-detail-table.no-tree-column td:nth-child(14) { width: 96px; }
         .costing-detail-table.no-tree-column th:nth-child(15),
@@ -751,22 +753,22 @@
 
         .costing-detail-table.has-tree-column th:nth-child(10),
         .costing-detail-table.has-tree-column td:nth-child(10),
-        .costing-detail-table.has-tree-column th:nth-child(11),
-        .costing-detail-table.has-tree-column td:nth-child(11),
         .costing-detail-table.has-tree-column th:nth-child(12),
         .costing-detail-table.has-tree-column td:nth-child(12),
         .costing-detail-table.has-tree-column th:nth-child(13),
         .costing-detail-table.has-tree-column td:nth-child(13),
+        .costing-detail-table.has-tree-column th:nth-child(14),
+        .costing-detail-table.has-tree-column td:nth-child(14),
         .costing-detail-table.no-tree-column th:nth-child(8),
         .costing-detail-table.no-tree-column td:nth-child(8),
         .costing-detail-table.no-tree-column th:nth-child(9),
         .costing-detail-table.no-tree-column td:nth-child(9),
-        .costing-detail-table.no-tree-column th:nth-child(10),
-        .costing-detail-table.no-tree-column td:nth-child(10),
         .costing-detail-table.no-tree-column th:nth-child(11),
         .costing-detail-table.no-tree-column td:nth-child(11),
         .costing-detail-table.no-tree-column th:nth-child(12),
-        .costing-detail-table.no-tree-column td:nth-child(12) {
+        .costing-detail-table.no-tree-column td:nth-child(12),
+        .costing-detail-table.no-tree-column th:nth-child(13),
+        .costing-detail-table.no-tree-column td:nth-child(13) {
             text-align: center !important;
         }
 
@@ -788,6 +790,20 @@
         .costing-detail-table td {
             white-space: nowrap;
             font-size: 0.94rem;
+        }
+
+        .costing-setup-cell {
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.25;
+            font-size: 0.88rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .costing-setup-lines {
+            white-space: pre-line;
         }
 
         .costing-detail-table tbody tr.costing-kit-header-row td {

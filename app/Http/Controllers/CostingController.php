@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Costing\Costing;
 use App\Models\Costing\CostingLog;
 use App\Models\Costing\CostingOperation;
+use App\Models\QaFaiSummary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\OrderSchedule;
 use App\Models\User;
@@ -20,6 +21,40 @@ class CostingController extends Controller
     public function index()
     {
         $search = trim((string) request('search'));
+        $faiPassSetupByOrder = QaFaiSummary::query()
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) = 'pass'")
+            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get(['order_schedule_id', 'operation', 'operator'])
+            ->groupBy('order_schedule_id')
+            ->map(function ($rows) {
+                $items = $rows
+                    ->map(function ($row) {
+                        return [
+                            'operation' => trim((string) ($row->operation ?? '')),
+                            'operator' => trim((string) ($row->operator ?? '')),
+                        ];
+                    })
+                    ->filter(fn ($item) => $item['operator'] !== '')
+                    ->values();
+
+                if ($items->isEmpty()) {
+                    return null;
+                }
+
+                $uniqueOperators = $items->pluck('operator')->unique()->values();
+
+                if ($uniqueOperators->count() === 1) {
+                    return $uniqueOperators->first();
+                }
+
+                return $items
+                    ->map(fn ($item) => ($item['operation'] !== '' ? $item['operation'] . ': ' : '') . $item['operator'])
+                    ->implode("\n");
+            });
+
         $costingsByOrder = Costing::query()
             ->select(['order_schedule_id', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost', 'notes', 'updated_at'])
             ->get()
@@ -49,7 +84,7 @@ class CostingController extends Controller
             ->orderByDesc('due_date')
             ->get();
 
-        $orders->transform(function ($order) use ($costingOrderIds, $costingsByOrder) {
+        $orders->transform(function ($order) use ($costingOrderIds, $costingsByOrder, $faiPassSetupByOrder) {
             $order->has_costing = $costingOrderIds->has($order->id);
             $costing = $costingOrderIds->has($order->id) ? $costingsByOrder->get($order->id) : null;
             $order->sale_price = (float) ($costing->sale_price ?? 0);
@@ -64,6 +99,7 @@ class CostingController extends Controller
                 : ((float) ($order->wo_qty ?? 0) > 0
                     ? round($order->grandtotal_cost / (float) $order->wo_qty, 2)
                     : 0);
+            $order->setup_summary = $faiPassSetupByOrder->get($order->id);
             return $order;
         });
 
@@ -181,6 +217,57 @@ class CostingController extends Controller
         $operations = $costing?->operations ?? collect();
         $blankRows = max(6, $operations->count());
         $costingAudit = null;
+        $firstFaiBy = QaFaiSummary::query()
+            ->where('order_schedule_id', $order->id)
+            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('date', 'asc')
+            ->orderBy('id', 'asc')
+            ->pluck('operator')
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->first();
+        $faiPassOperators = QaFaiSummary::query()
+            ->where('order_schedule_id', $order->id)
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) IN ('pass')")
+            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get(['operation', 'operator'])
+            ->groupBy(function ($row) {
+                return trim((string) ($row->operation ?? ''));
+            })
+            ->map(function ($rows, $operation) {
+                $operator = $rows
+                    ->pluck('operator')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->filter()
+                    ->first();
+
+                if ($operation === '' || !$operator) {
+                    return null;
+                }
+
+                return [
+                    'operation' => $operation,
+                    'operator' => $operator,
+                ];
+            })
+            ->filter()
+            ->values();
+        $faiPassSummary = null;
+
+        if ($faiPassOperators->isNotEmpty()) {
+            $uniqueOperators = $faiPassOperators
+                ->pluck('operator')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $faiPassSummary = $uniqueOperators->count() === 1
+                ? $uniqueOperators->first()
+                : $faiPassOperators->map(fn ($item) => $item['operation'] . ': ' . $item['operator'])->implode(' | ');
+        }
 
         if ($costing) {
             $userIds = collect([$costing->created_by, $costing->updated_by])
@@ -230,6 +317,9 @@ class CostingController extends Controller
             'operations' => $operations,
             'blankRows' => $blankRows,
             'costingAudit' => $costingAudit,
+            'firstFaiBy' => $firstFaiBy,
+            'faiPassOperators' => $faiPassOperators,
+            'faiPassSummary' => $faiPassSummary,
         ]);
     }
 
