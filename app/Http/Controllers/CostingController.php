@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CostingController extends Controller
 {
+    //Se merge la rama quotes a master
     public function index()
     {
         $search = trim((string) request('search'));
