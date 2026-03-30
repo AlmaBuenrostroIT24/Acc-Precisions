@@ -1340,7 +1340,7 @@
             color: #000 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            zoom: 78%;
+            zoom: 82%;
             font-family: Arial, Helvetica, sans-serif !important;
         }
 
@@ -1406,47 +1406,53 @@
             max-width: 100% !important;
         }
 
-        /* Top area layout de dos columnas debajo de la banda superior */
+        /* Banda superior 8/4 */
         .card-body > .row:first-child {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 6px 0 !important;
-            align-items: flex-start !important;
-        }
-        .card-body > .row:first-child > [class*="col-"] {
-            flex: 0 0 100% !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            padding-right: 0 !important;
-            padding-left: 0 !important;
-        }
-        .card-body > .row:nth-child(2) {
             display: flex !important;
             flex-wrap: nowrap !important;
             gap: 8px !important;
             align-items: flex-start !important;
         }
-        .card-body > .row:nth-child(2) > .col-lg-8 {
+        .card-body > .row:first-child > .col-lg-8 {
             flex: 0 0 64% !important;
             max-width: 64% !important;
             width: 64% !important;
             padding-right: 4px !important;
+            padding-left: 0 !important;
+        }
+        .card-body > .row:first-child > .col-lg-4 {
+            flex: 0 0 36% !important;
+            max-width: 36% !important;
+            width: 36% !important;
+            padding-left: 4px !important;
+            padding-right: 0 !important;
+        }
+
+        /* Fila de graficas alineada a la derecha */
+        .card-body > .row:nth-child(2) {
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: flex-start !important;
+            margin-top: 4px !important;
         }
         .card-body > .row:nth-child(2) > .col-lg-4 {
             flex: 0 0 36% !important;
             max-width: 36% !important;
             width: 36% !important;
             padding-left: 4px !important;
-            padding-right: 4px !important;
+            padding-right: 0 !important;
         }
         .card,
         .packet-table-wrap,
         .evt-table-wrap {
             border: 1px solid #cbd5e1 !important;
             box-shadow: none !important;
-            break-inside: avoid;
-            page-break-inside: avoid;
             border-radius: 0 !important;
+        }
+
+        .card {
+            break-inside: auto !important;
+            page-break-inside: auto !important;
         }
 
         .modal-header-like {
@@ -1470,6 +1476,17 @@
             max-height: none !important;
         }
 
+        .evt-left-panel,
+        .ops-journey,
+        .donut-card {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0 !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
         .evt-table thead th,
         .packet-table thead th {
             position: static !important;
@@ -1486,6 +1503,16 @@
             padding: 2px 5px !important;
             border-bottom: 1px solid #e2e8f0 !important;
         }
+        .evt-table thead th {
+            font-size: 7.7pt !important;
+            padding: 2px 3px !important;
+            letter-spacing: 0 !important;
+        }
+        .evt-table tbody td {
+            font-size: 7.1pt !important;
+            padding: 1px 3px !important;
+            line-height: 1.1 !important;
+        }
 
         .evt-readonly,
         .evt-note-view {
@@ -1500,10 +1527,44 @@
             min-height: 36px !important;
         }
 
+        .ops-journey {
+            margin-top: 4px !important;
+            padding: 5px !important;
+        }
+        .ops-journey-head {
+            margin-bottom: 4px !important;
+        }
+        .ops-journey-title {
+            font-size: 8.6pt !important;
+        }
+        .ops-simple-track {
+            padding: 2px 4px 0 !important;
+            overflow: visible !important;
+        }
+        .ops-simple-step {
+            min-width: 110px !important;
+        }
+        .ops-simple-label,
+        .ops-final-status-date,
+        .ops-simple-metric {
+            font-size: 7.2pt !important;
+        }
+        .ops-grid-node {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 8pt !important;
+        }
+        .ops-journey-final-circle-only {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 8.5pt !important;
+        }
+
         .donut-card {
             border-color: #cbd5e1 !important;
             background: #fff !important;
             padding: 4px !important;
+            min-height: 112px !important;
         }
         .erp-donut {
             width: 62px !important;
@@ -1532,16 +1593,65 @@
 
         /* Tabla principal: evitar cortes raros */
         .evt-table {
-            table-layout: fixed !important;
+            table-layout: auto !important;
             width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+        }
+        .evt-table th,
+        .evt-table td,
+        .evt-table th.col-date,
+        .evt-table td:nth-child(1),
+        .evt-table th.col-type,
+        .evt-table td:nth-child(2),
+        .evt-table th.col-operation,
+        .evt-table td:nth-child(3),
+        .evt-table th.col-operator,
+        .evt-table td:nth-child(4),
+        .evt-table th.col-results,
+        .evt-table td:nth-child(5),
+        .evt-table th.col-sbis,
+        .evt-table td:nth-child(6),
+        .evt-table th.col-observation,
+        .evt-table td:nth-child(7),
+        .evt-table th.col-station,
+        .evt-table td:nth-child(8),
+        .evt-table th.col-method,
+        .evt-table td:nth-child(9),
+        .evt-table th.col-qty-insp,
+        .evt-table td:nth-child(10),
+        .evt-table th.col-qty-process,
+        .evt-table td:nth-child(11),
+        .evt-table th.col-actions,
+        .evt-table td:nth-child(12) {
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
         }
         .evt-table th,
         .evt-table td {
             word-break: break-word !important;
+            white-space: normal !important;
+        }
+        .evt-table th.col-actions,
+        .evt-table td:last-child {
+            display: none !important;
         }
         .evt-obs {
             min-width: 0 !important;
             max-width: none !important;
+        }
+        .evt-field,
+        .evt-field-select,
+        .evt-field-textarea {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 22px !important;
+            font-size: 7.1pt !important;
+            padding: 1px 4px !important;
+            border-radius: 6px !important;
         }
 
         .card-body {
