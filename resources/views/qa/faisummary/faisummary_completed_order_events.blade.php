@@ -137,51 +137,120 @@
     </div>
 
     <div class="card-body p-2 p-md-3 evt-main-body">
-        <div class="row evt-top-grid">
-            <div class="col-lg-6 evt-main-col">
-                <div class="row">
-                    <div class="col-md-3 mb-2">
+        <div class="row evt-order-band">
+            <div class="col-lg-8">
+                <div class="evt-left-panel">
+                    <div class="row">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
                         <label class="evt-label">Inspector</label>
                         <input type="text" class="form-control evt-readonly" value="{{ $inspectorName }}" readonly>
-                    </div>
-                    <div class="col-md-5 mb-2">
+                        </div>
+                        <div class="col-xl-5 col-md-8 col-sm-6 mb-2">
                         <label class="evt-label">Part# Rev.</label>
                         <input type="text" class="form-control evt-readonly" value="{{ $partRev }}" readonly>
-                    </div>
-                    <div class="col-md-2 mb-2">
+                        </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
                         <label class="evt-label">Job</label>
                         <input type="text" class="form-control evt-readonly" value="{{ $order->work_id }}" readonly>
-                    </div>
-                    <div class="col-md-2 mb-2">
+                        </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
                         <label class="evt-label">WO Qty</label>
                         <input type="text" class="form-control evt-readonly" value="{{ (int) ($order->group_wo_qty ?? 0) }}" readonly>
-                    </div>
-                </div>
-
-                <div class="row align-items-end">
-                    <div class="col-md-3 mb-2">
+                        </div>
+                        <div class="col-xl-4 col-md-4 col-sm-6 mb-2">
                         <label class="evt-label">Qty. to check</label>
                         <input type="text" class="form-control evt-readonly" value="{{ ucfirst((string) ($order->sampling_check ?? 'Normal')) }}" readonly>
-                    </div>
-                    <div class="col-md-2 mb-2">
+                        </div>
+                        <div class="col-xl-2 col-md-3 col-sm-6 mb-2">
                         <label class="evt-label">Sampling</label>
                         <input type="text" class="form-control evt-readonly" value="{{ $sampling }}" readonly>
-                    </div>
-                    <div class="col-md-2 mb-2">
+                        </div>
+                        <div class="col-xl-2 col-md-3 col-sm-6 mb-2">
                         <label class="evt-label">No.Ops</label>
                         <input type="text" class="form-control evt-readonly" value="{{ $ops }}" readonly>
+                        </div>
                     </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-12 mb-2">
-                        <label class="evt-label">Inspection Note</label>
-                        <textarea class="form-control evt-readonly evt-note-view" readonly>{{ (string) ($order->inspection_note ?? $order->notes ?? '') }}</textarea>
+                    <div class="row">
+                        <div class="col-12 mb-0">
+                            <label class="evt-label">Inspection Note</label>
+                            <textarea class="form-control evt-readonly evt-note-view" readonly>{{ (string) ($order->inspection_note ?? $order->notes ?? '') }}</textarea>
+                        </div>
                     </div>
+
+                    @if(count($statusRows))
+                        <div class="ops-journey ops-journey-embedded mt-2 {{ count($statusRows) <= 1 ? 'ops-journey-single' : '' }}">
+                            <div class="ops-journey-head">
+                                <span class="ops-journey-title">Inspection Journey</span>
+                            </div>
+                            <div class="ops-journey-track">
+                                <div class="ops-simple-track">
+                                    <div class="ops-simple-steps {{ count($statusRows) >= 5 ? 'ops-simple-steps-compact' : '' }} {{ count($statusRows) >= 7 ? 'ops-simple-steps-dense' : '' }}" style="grid-template-columns: repeat({{ max(1, count($statusRows) + 1) }}, minmax(0, 1fr));">
+                                        @foreach($statusRows as $r)
+                                            @php
+                                                $faiState = $r['fai_pass'] >= $r['fai_req'] ? 'ok' : ($r['fai_np'] > 0 ? 'warn' : 'pending');
+                                                $ipiState = $r['ipi_pass'] >= $r['ipi_req'] ? 'ok' : ($r['ipi_np'] > 0 ? 'warn' : 'pending');
+                                                $opState = ($faiState === 'ok' && $ipiState === 'ok') ? 'ok' : (($faiState === 'warn' || $ipiState === 'warn') ? 'warn' : 'pending');
+                                            @endphp
+                                            <div class="ops-simple-step">
+                                                <div class="ops-simple-head">
+                                                    <div class="ops-simple-label">{{ $r['label'] }}</div>
+                                                    <div class="ops-grid-node ops-grid-node-{{ $opState }}">
+                                                        <i class="fas {{ $opState === 'ok' ? 'fa-check' : ($opState === 'warn' ? 'fa-times' : 'fa-minus') }}"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="ops-simple-body">
+                                                    <div class="ops-simple-row">
+                                                        <span class="ops-mini-pill ops-mini-pill-fai">FAI</span>
+                                                        <span class="ops-simple-metric">{{ $r['fai_pass'] }}/{{ $r['fai_req'] }}</span>
+                                                        <div class="ops-grid-mini">
+                                                            @for($i = 1; $i <= max(1, (int) $r['fai_req']); $i++)
+                                                                @php
+                                                                    $faiPass = (int) $r['fai_pass'];
+                                                                    $faiFail = (int) $r['fai_np'];
+                                                                    $faiClass = $i <= $faiPass ? 'is-done' : (($i > $faiPass && $i <= ($faiPass + $faiFail)) ? 'is-fail' : '');
+                                                                @endphp
+                                                                <span class="ops-chain-done {{ $faiClass }}"><i class="fas fa-check"></i></span>
+                                                            @endfor
+                                                        </div>
+                                                    </div>
+                                                    <div class="ops-simple-row">
+                                                        <span class="ops-mini-pill ops-mini-pill-ipi">IPI</span>
+                                                        <span class="ops-simple-metric">{{ $r['ipi_pass'] }}/{{ $r['ipi_req'] }}</span>
+                                                        <div class="ops-grid-mini ops-grid-mini-ipi">
+                                                            @for($i = 1; $i <= max(1, (int) $r['ipi_req']); $i++)
+                                                                @php
+                                                                    $ipiPass = (int) $r['ipi_pass'];
+                                                                    $ipiFail = (int) $r['ipi_np'];
+                                                                    $ipiClass = $i <= $ipiPass ? 'is-done' : (($i > $ipiPass && $i <= ($ipiPass + $ipiFail)) ? 'is-fail' : '');
+                                                                @endphp
+                                                                <span class="ops-chain-done {{ $ipiClass }}"><i class="fas fa-check"></i></span>
+                                                            @endfor
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                        <div class="ops-simple-step ops-simple-step-final">
+                                            <div class="ops-simple-head">
+                                                <div class="ops-journey-final-circle-only {{ $inspectionCompleted ? 'ops-journey-final-circle-only-complete' : 'ops-journey-final-circle-only-pending' }}"
+                                                    title="Status: {{ $inspectionStatusLabel }} | Updated: {{ $inspectionUpdatedLabel }} | Completed On: {{ $completedOnLabel }} | Last Inspection: {{ $lastInspectionLabel }}">
+                                                    <i class="fas {{ $inspectionCompleted ? 'fa-check-circle' : ($inspectionStatusLabel === 'In Progress' ? 'fa-hourglass-half' : 'fa-pause-circle') }}"></i>
+                                                </div>
+                                                <div class="ops-simple-label">{{ $inspectionStatusLabel }}</div>
+                                            </div>
+                                            <div class="ops-simple-body">
+                                                <div class="ops-final-status-date">Updated {{ $inspectionUpdatedLabel }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
-
-            <div class="col-lg-4 evt-side-col evt-report-col">
+            <div class="col-lg-4 evt-side-col">
                 <div class="packet-head mb-2">
                     <div class="d-flex align-items-center">
                         <a href="{{ route('qa.faisummary.pdf', $order->id) }}" target="_blank" class="evt-doc-icon evt-doc-btn mr-2" id="btnPrintPacket" title="Open/Print PDF">
@@ -234,11 +303,9 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
 
-            <div class="col-lg-2 evt-side-col evt-chart-col">
-                <div class="row mt-0">
-                    <div class="col-12 col-md-6 col-lg-12 mb-2">
+                <div class="row mt-2 evt-donut-row">
+                    <div class="col-12 col-md-6 col-lg-6 mb-2">
                         <div class="donut-card">
                             <div class="donut-title">FAI</div>
                             <div class="erp-donut" style="--pct: {{ $faiPct }}; --tone: #22c55e;">
@@ -248,7 +315,7 @@
                             <div class="donut-sub text-danger">No Pass: {{ $faiFailTotal }}</div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-6 col-lg-12">
+                    <div class="col-12 col-md-6 col-lg-6">
                         <div class="donut-card">
                             <div class="donut-title">IPI</div>
                             <div class="erp-donut" style="--pct: {{ $ipiPct }}; --tone: #0ea5e9;">
@@ -262,78 +329,7 @@
             </div>
         </div>
 
-        @if(count($statusRows))
-            <div class="ops-journey mt-2 {{ count($statusRows) <= 1 ? 'ops-journey-single' : '' }}">
-                <div class="ops-journey-head">
-                    <span class="ops-journey-title">Inspection Journey</span>
-                </div>
-                <div class="ops-journey-track">
-                    <div class="ops-simple-track">
-                        <div class="ops-simple-steps {{ count($statusRows) >= 5 ? 'ops-simple-steps-compact' : '' }} {{ count($statusRows) >= 7 ? 'ops-simple-steps-dense' : '' }}" style="grid-template-columns: repeat({{ max(1, count($statusRows) + 1) }}, minmax(0, 1fr));">
-                            @foreach($statusRows as $r)
-                                @php
-                                    $faiState = $r['fai_pass'] >= $r['fai_req'] ? 'ok' : ($r['fai_np'] > 0 ? 'warn' : 'pending');
-                                    $ipiState = $r['ipi_pass'] >= $r['ipi_req'] ? 'ok' : ($r['ipi_np'] > 0 ? 'warn' : 'pending');
-                                    $opState = ($faiState === 'ok' && $ipiState === 'ok') ? 'ok' : (($faiState === 'warn' || $ipiState === 'warn') ? 'warn' : 'pending');
-                                @endphp
-                                <div class="ops-simple-step">
-                                    <div class="ops-simple-head">
-                                        <div class="ops-simple-label">{{ $r['label'] }}</div>
-                                        <div class="ops-grid-node ops-grid-node-{{ $opState }}">
-                                            <i class="fas {{ $opState === 'ok' ? 'fa-check' : ($opState === 'warn' ? 'fa-times' : 'fa-minus') }}"></i>
-                                        </div>
-                                    </div>
-                                    <div class="ops-simple-body">
-                                        <div class="ops-simple-row">
-                                            <span class="ops-mini-pill ops-mini-pill-fai">FAI</span>
-                                            <span class="ops-simple-metric">{{ $r['fai_pass'] }}/{{ $r['fai_req'] }}</span>
-                                            <div class="ops-grid-mini">
-                                                @for($i = 1; $i <= max(1, (int) $r['fai_req']); $i++)
-                                                    @php
-                                                        $faiPass = (int) $r['fai_pass'];
-                                                        $faiFail = (int) $r['fai_np'];
-                                                        $faiClass = $i <= $faiPass ? 'is-done' : (($i > $faiPass && $i <= ($faiPass + $faiFail)) ? 'is-fail' : '');
-                                                    @endphp
-                                                    <span class="ops-chain-done {{ $faiClass }}"><i class="fas fa-check"></i></span>
-                                                @endfor
-                                            </div>
-                                        </div>
-                                        <div class="ops-simple-row">
-                                            <span class="ops-mini-pill ops-mini-pill-ipi">IPI</span>
-                                            <span class="ops-simple-metric">{{ $r['ipi_pass'] }}/{{ $r['ipi_req'] }}</span>
-                                            <div class="ops-grid-mini ops-grid-mini-ipi">
-                                                @for($i = 1; $i <= max(1, (int) $r['ipi_req']); $i++)
-                                                    @php
-                                                        $ipiPass = (int) $r['ipi_pass'];
-                                                        $ipiFail = (int) $r['ipi_np'];
-                                                        $ipiClass = $i <= $ipiPass ? 'is-done' : (($i > $ipiPass && $i <= ($ipiPass + $ipiFail)) ? 'is-fail' : '');
-                                                    @endphp
-                                                    <span class="ops-chain-done {{ $ipiClass }}"><i class="fas fa-check"></i></span>
-                                                @endfor
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                            <div class="ops-simple-step ops-simple-step-final">
-                                <div class="ops-simple-head">
-                                    <div class="ops-journey-final-circle-only {{ $inspectionCompleted ? 'ops-journey-final-circle-only-complete' : 'ops-journey-final-circle-only-pending' }}"
-                                        title="Status: {{ $inspectionStatusLabel }} | Updated: {{ $inspectionUpdatedLabel }} | Completed On: {{ $completedOnLabel }} | Last Inspection: {{ $lastInspectionLabel }}">
-                                        <i class="fas {{ $inspectionCompleted ? 'fa-check-circle' : ($inspectionStatusLabel === 'In Progress' ? 'fa-hourglass-half' : 'fa-pause-circle') }}"></i>
-                                    </div>
-                                    <div class="ops-simple-label">{{ $inspectionStatusLabel }}</div>
-                                </div>
-                                <div class="ops-simple-body">
-                                    <div class="ops-final-status-date">Updated {{ $inspectionUpdatedLabel }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <div class="table-responsive evt-table-wrap mt-3">
+        <div class="table-responsive evt-table-wrap mt-2">
             <table class="table table-sm table-hover mb-0 evt-table" id="orderEventsTable">
                 <thead>
                     <tr>
@@ -511,13 +507,34 @@
         gap: .35rem;
     }
     .evt-top-grid {
-        row-gap: .5rem;
+        row-gap: .35rem;
+        align-items: start;
+    }
+    .evt-order-band {
+        row-gap: .2rem;
+        margin-bottom: .15rem;
+    }
+    .evt-left-panel {
+        border: 1px solid #d8e0ea;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #fcfdff 0%, #f7fafc 100%);
+        padding: .7rem .85rem .8rem;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    .evt-secondary-band {
+        row-gap: .25rem;
+        align-items: start;
+        margin-bottom: .1rem;
+    }
+    .evt-secondary-band > .evt-side-col {
+        padding-top: 0;
     }
     .evt-chart-col .row {
-        row-gap: .35rem;
+        row-gap: .25rem;
     }
-    .evt-chart-col {
-        max-width: 200px;
+    .evt-donut-row {
+        row-gap: .25rem;
+        margin-top: .1rem;
     }
     .evt-report-col {
         min-width: 0;
@@ -542,7 +559,7 @@
         font-size: .98rem;
     }
     .evt-note-view {
-        min-height: 74px;
+        min-height: 50px;
         height: auto;
         resize: vertical;
         white-space: pre-wrap;
@@ -551,7 +568,8 @@
     }
     .packet-head {
         border-bottom: 1px solid rgba(15,23,42,.08);
-        padding: .05rem 0 .38rem;
+        padding: 0 0 .34rem;
+        margin-top: 0;
     }
     .packet-table-wrap {
         border: 1px solid #d8e0ea;
@@ -559,6 +577,7 @@
         overflow: auto;
         background: #fff;
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0;
     }
     .packet-table thead th {
         background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
@@ -609,7 +628,7 @@
         border: 1px solid #d8e0ea;
         border-radius: 16px;
         background: linear-gradient(180deg, #fcfdff 0%, #f7fafc 100%);
-        padding: .72rem .8rem .78rem;
+        padding: .62rem .95rem .7rem;
         overflow: hidden;
         box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
     }
@@ -621,7 +640,7 @@
         align-items: center;
         justify-content: flex-start;
         gap: .75rem;
-        margin-bottom: .75rem;
+        margin-bottom: .5rem;
     }
     .ops-journey-title {
         font-size: .92rem;
@@ -661,7 +680,7 @@
     }
     .ops-simple-track {
         position: relative;
-        padding: .55rem .35rem .1rem;
+        padding: .3rem .7rem .05rem .45rem;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: thin;
@@ -1005,15 +1024,15 @@
         border: 1px solid #d8e0ea;
         border-radius: 14px;
         background: #fbfdff;
-        padding: .5rem .5rem;
+        padding: .42rem .42rem;
         text-align: center;
-        min-height: 172px;
+        min-height: 142px;
     }
     .donut-title {
         font-weight: 800;
         font-size: .84rem;
         color: #0f172a;
-        margin-bottom: .18rem;
+        margin-bottom: .14rem;
         letter-spacing: .03em;
     }
     .erp-donut {
@@ -1040,7 +1059,7 @@
         font-size: .94rem;
     }
     .donut-sub {
-        font-size: .8rem;
+        font-size: .76rem;
         color: #334155;
         line-height: 1.15;
     }
@@ -1387,34 +1406,39 @@
             max-width: 100% !important;
         }
 
-        /* Top area layout fijo 50/33/17 para que se vea acomodado */
+        /* Top area layout de dos columnas debajo de la banda superior */
         .card-body > .row:first-child {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 6px 0 !important;
+            align-items: flex-start !important;
+        }
+        .card-body > .row:first-child > [class*="col-"] {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+        }
+        .card-body > .row:nth-child(2) {
             display: flex !important;
             flex-wrap: nowrap !important;
             gap: 8px !important;
             align-items: flex-start !important;
         }
-        .card-body > .row:first-child > .col-lg-6 {
-            flex: 0 0 50% !important;
-            max-width: 50% !important;
-            width: 50% !important;
+        .card-body > .row:nth-child(2) > .col-lg-8 {
+            flex: 0 0 64% !important;
+            max-width: 64% !important;
+            width: 64% !important;
             padding-right: 4px !important;
         }
-        .card-body > .row:first-child > .col-lg-4 {
-            flex: 0 0 33.333333% !important;
-            max-width: 33.333333% !important;
-            width: 33.333333% !important;
+        .card-body > .row:nth-child(2) > .col-lg-4 {
+            flex: 0 0 36% !important;
+            max-width: 36% !important;
+            width: 36% !important;
             padding-left: 4px !important;
             padding-right: 4px !important;
         }
-        .card-body > .row:first-child > .col-lg-2 {
-            flex: 0 0 16.666667% !important;
-            max-width: 16.666667% !important;
-            width: 16.666667% !important;
-            padding-left: 4px !important;
-            padding-right: 4px !important;
-        }
-
         .card,
         .packet-table-wrap,
         .evt-table-wrap {
