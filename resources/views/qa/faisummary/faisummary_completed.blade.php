@@ -31,52 +31,48 @@
 
     {{-- Columna derecha: Tabla --}}
     <div class="col-lg-12">
-        <div class="card mb-3 fai-summary-card fai-summary-card-top">
-            <div class="card-body p-2">
-                <div class="row">
-                    <div class="col-md-6 col-xl-3 mb-2 mb-xl-0">
-                        <div class="info-box info-box-sm bg-info mb-0" id="kpiBoxTotal">
-                            <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Closed inspections</span>
-                                <h5 class="mb-0" id="kpiTotal">0</h5>
-                            </div>
+        <div class="row mb-3">
+            <div class="col-md-6 col-xl-3 mb-2 mb-xl-0">
+                <div class="info-box info-box-sm bg-info mb-0" id="kpiBoxTotal">
+                    <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Closed inspections</span>
+                        <h5 class="mb-0" id="kpiTotal">0</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-2 mb-xl-0">
+                <div class="info-box info-box-sm bg-success mb-0">
+                    <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Completed</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0" id="kpiPass">0</h5>
+                            <small class="text-black-50">100%</small>
                         </div>
                     </div>
-                    <div class="col-md-6 col-xl-3 mb-2 mb-xl-0">
-                        <div class="info-box info-box-sm bg-success mb-0">
-                            <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Completed</span>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0" id="kpiPass">0</h5>
-                                    <small class="text-black-50">100%</small>
-                                </div>
-                            </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-2 mb-md-0">
+                <div class="info-box info-box-sm bg-danger mb-0">
+                    <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Incomplete</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0" id="kpiFail">0</h5>
+                            <small class="text-black-50">&lt; 100%</small>
                         </div>
                     </div>
-                    <div class="col-md-6 col-xl-3 mb-2 mb-md-0">
-                        <div class="info-box info-box-sm bg-danger mb-0">
-                            <span class="info-box-icon"><i class="fas fa-times-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Incomplete</span>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0" id="kpiFail">0</h5>
-                                    <small class="text-black-50">&lt; 100%</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-3">
-                        <div class="info-box info-box-sm bg-secondary mb-0" id="kpiBoxNoInspection">
-                            <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">No Inspection</span>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0" id="kpiNoInspection">0</h5>
-                                    <small class="text-black-50">ops/samp 0</small>
-                                </div>
-                            </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="info-box info-box-sm bg-secondary mb-0" id="kpiBoxNoInspection">
+                    <span class="info-box-icon"><i class="fas fa-minus-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">No Inspection</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0" id="kpiNoInspection">0</h5>
+                            <small class="text-black-50">ops/samp 0</small>
                         </div>
                     </div>
                 </div>
@@ -86,7 +82,88 @@
         <div class="card mb-4">
 
             <div class="card-body p-2">
-                <div id="dtToolbarContainer" class="mb-2"></div>
+                <div class="fai-table-toolbar mb-2">
+                    <div class="toolbar-top">
+                        <div class="toolbar-left toolbar-filters">
+                            <div class="form-group mb-0" id="filterLocationGroup">
+                                <div class="input-group input-group-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-danger"></i></span>
+                                    </div>
+                                    <select id="locationFilter" class="form-control dt-filter" name="location" form="filtersForm">
+                                        <option value="">— All —</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group mb-0" id="filterYearGroup">
+                                <div class="input-group input-group-sm date" id="yearPickerWrapper" data-target-input="nearest" data-initial-year="{{ request('year', now()->year) }}" style="width:132px;">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-calendar-alt text-success"></i></span>
+                                    </div>
+                                    <input type="text" id="year" name="year" class="form-control datetimepicker-input" data-toggle="datetimepicker" data-target="#yearPickerWrapper" value="{{ request('year', now()->year) }}" placeholder="Year" autocomplete="off" form="filtersForm">
+                                </div>
+                            </div>
+                            <div class="form-group mb-0" id="filterMonthGroup">
+                                <div class="input-group input-group-sm date" id="monthPickerWrapper" data-target-input="nearest" style="width:132px;">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-calendar-alt text-danger"></i></span>
+                                    </div>
+                                    <input type="text" id="monthDisplay" class="form-control datetimepicker-input" data-toggle="datetimepicker" data-target="#monthPickerWrapper" placeholder="Month" autocomplete="off">
+                                </div>
+                                <input type="hidden" id="month" name="month" value="{{ request('month') }}" form="filtersForm">
+                            </div>
+                            <div class="form-group mb-0" id="filterDayGroup">
+                                <div class="input-group input-group-sm date" id="dayPickerWrapper" data-target-input="nearest" style="width:148px;">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light"><i class="fas fa-calendar-day text-warning"></i></span>
+                                    </div>
+                                    <input type="text" id="day" name="day" class="form-control datetimepicker-input" data-toggle="datetimepicker" data-target="#dayPickerWrapper" value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}" placeholder="Day" autocomplete="off" form="filtersForm">
+                                </div>
+                            </div>
+                            <a href="{{ route('faisummary.completed') }}" class="btn btn-sm btn-erp-gray">
+                                <i class="fas fa-eraser mr-1"></i> Clean
+                            </a>
+                            @php
+                                $reqDay = trim((string) request('day', ''));
+                                $reqMonth = trim((string) request('month', ''));
+                                $reqYear = trim((string) request('year', ''));
+                                $nowDate = now()->toDateString();
+                                $nowMonth = (string) now()->month;
+                                $nowYear = (string) now()->year;
+                                $isTodayActive = ($reqDay !== '' && $reqDay === $nowDate);
+                                $isCleanDefault = ($reqDay === '' && $reqMonth === '' && ($reqYear === '' || $reqYear === $nowYear));
+                                $isCurrentMonthFilter = ($reqDay === '' && $reqMonth === $nowMonth && $reqYear === $nowYear);
+                                $isMonthActive = $isCurrentMonthFilter;
+                                $isYearOnlyFilter = ($reqDay === '' && $reqMonth === '' && $reqYear === $nowYear);
+                                $isYearActive = ($isCleanDefault || $isYearOnlyFilter);
+                            @endphp
+                            <a class="btn btn-sm {{ $isTodayActive ? 'btn-erp-active' : 'btn-outline-secondary' }}" href="{{ route('faisummary.completed', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
+                                <i class="fas fa-bolt mr-1"></i> Today
+                            </a>
+                            <a class="btn btn-sm {{ $isMonthActive ? 'btn-erp-active' : 'btn-outline-secondary' }}" href="{{ route('faisummary.completed', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
+                                <i class="far fa-calendar-alt mr-1"></i> Month
+                            </a>
+                            <a class="btn btn-sm {{ $isYearActive ? 'btn-erp-active' : 'btn-outline-secondary' }}" href="{{ route('faisummary.completed', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
+                                <i class="far fa-calendar mr-1"></i> Year
+                            </a>
+                            <button id="toolbarExportExcel" type="button" class="btn btn-sm btn-erp-gray">
+                                <i class="fas fa-file-excel mr-1 text-success"></i> Excel
+                            </button>
+                            <button id="toolbarExportPdf" type="button" class="btn btn-sm btn-erp-gray">
+                                <i class="fas fa-file-pdf mr-1 text-danger"></i> PDF
+                            </button>
+                        </div>
+                        <div class="input-group input-group-sm toolbar-search">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                            </div>
+                            <input type="text" class="form-control" id="dtToolbarSearch" placeholder="Search table..." autocomplete="off">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="dtToolbarClear"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive fai-erp-wrap">
                     <table id="faicompleteTable"
                         class="table table-sm align-middle mb-0 fai-erp-table"
@@ -207,112 +284,7 @@
         </div>
     </div>
     <div class="d-none">
-        <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm">
-                            {{-- Global Search --}}
-
-                            {{-- Location --}}
-                            <div class="form-group mb-2" id="filterLocationGroup">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-light"><i
-                                                class="fas fa-map-marker-alt text-danger"></i></span>
-                                    </div>
-                                    <select id="locationFilter" class="form-control dt-filter" name="location">
-                                        <option value="">— All —</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {{-- YEAR --}}
-                            <div class="form-group mb-2" id="filterYearGroup">
-                                <label for="year">Date</label>
-                                <div class="input-group input-group date" id="yearPickerWrapper"
-                                    data-target-input="nearest" data-initial-year="{{ request('year') ?? '' }}"
-                                    style="min-width:160px">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-calendar-alt text-success"></i>
-                                        </span>
-                                    </div>
-                                    <input type="text" id="year" name="year" class="form-control datetimepicker-input"
-                                        data-toggle="datetimepicker" data-target="#yearPickerWrapper"
-                                        value="{{ request('year') }}" placeholder="Year" autocomplete="off">
-                                </div>
-                            </div>
-
-                            {{-- MONTH --}}
-                            <div class="form-group mb-2" id="filterMonthGroup">
-                                <label for="monthDisplay" class="mb-1 sr-only">Month</label>
-                                <div class="input-group input-group date" id="monthPickerWrapper"
-                                    data-target-input="nearest" style="min-width:160px">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-calendar-alt text-danger"></i>
-                                        </span>
-                                    </div>
-                                    <input type="text" id="monthDisplay" class="form-control datetimepicker-input"
-                                        data-toggle="datetimepicker" data-target="#monthPickerWrapper"
-                                        placeholder="Month" autocomplete="off">
-                                </div>
-                                <input type="hidden" id="month" name="month" value="{{ request('month') }}">
-                            </div>
-
-                            {{-- DAY --}}
-                            <div class="form-group mb-2" id="filterDayGroup">
-                                <label for="day" class="mb-1 sr-only">Day</label>
-                                <div class="input-group input-group date" id="dayPickerWrapper"
-                                    data-target-input="nearest" style="min-width:180px">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-calendar-day text-warning"></i>
-                                        </span>
-                                    </div>
-                                    <input type="text" id="day" name="day" class="form-control datetimepicker-input"
-                                        data-toggle="datetimepicker" data-target="#dayPickerWrapper"
-                                        value="{{ request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '' }}"
-                                        placeholder="Day" autocomplete="off">
-                                </div>
-                            </div>
-
-                            {{-- Clean + Total --}}
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <a href="{{ route('faisummary.completed') }}" class="btn btn-secondary btn-sm">
-                                    <i class="fas fa-eraser mr-1"></i> Clean
-                                </a>
-                                <span class="badge badge-info py-2 px-3" style="font-size: 1rem;">
-                                    <i class="fas fa-list-ol mr-1"></i>
-                                    Total: <span
-                                        id="badgeFinished">{{ isset($orderscompleted) ? $orderscompleted->count() : 0 }}</span>
-
-                                </span>
-                            </div>
-
-                            {{-- Quick actions --}}
-                            <div class="btn-group btn-group-sm d-flex mb-2">
-                                <a class="btn btn-outline-secondary flex-fill"
-                                    href="{{ route('faisummary.completed', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}">
-                                    <i class="fas fa-bolt mr-1"></i> Today
-                                </a>
-                                <a class="btn btn-outline-secondary flex-fill"
-                                    href="{{ route('faisummary.completed', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}">
-                                    <i class="far fa-calendar-alt mr-1"></i> Month
-                                </a>
-                                <a class="btn btn-outline-secondary flex-fill"
-                                    href="{{ route('faisummary.completed', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}">
-                                    <i class="far fa-calendar mr-1"></i> Year
-                                </a>
-                            </div>
-
-                            {{-- Export botones debajo de los quick filters --}}
-                            <div class="btn-group btn-group-sm d-flex mb-2">
-                                <button id="btnExportExcel" type="button" class="btn btn-erp-gray flex-fill">
-                                    <i class="fas fa-file-excel mr-1 text-success"></i> Excel
-                                </button>
-                                <button id="btnExportPdf" type="button" class="btn btn-erp-gray flex-fill">
-                                    <i class="fas fa-file-pdf mr-1 text-danger"></i> PDF
-                                </button>
-                            </div>
-        </form>
+        <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm"></form>
 
         {{-- Formularios ocultos para enviar ids[] por POST --}}
         <form id="exportExcelForm" action="{{ route('faisummary.completed.export.excel') }}"
@@ -354,34 +326,55 @@
 @section('css')
 
 <style>
-    /* Summary KPI compact */
+    /* KPI cards ERP */
     .info-box-sm {
-        min-height: 48px;
-        padding: .3rem .45rem;
-        border-radius: 8px;
+        min-height: 74px;
+        padding: .42rem .58rem;
+        border-radius: 16px;
         display: flex;
         align-items: center;
+        gap: .5rem;
+        background: #fff !important;
+        border: 1px solid #dbe3ee !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
     }
 
     .info-box-sm .info-box-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 22px;
-        line-height: 36px;
-        border-radius: 7px;
-        background: rgba(255, 255, 255, 0.7);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        font-size: 1.12rem;
+        line-height: 42px;
+        border-radius: 13px;
+        background: linear-gradient(180deg, #f8fafc 0%, #e8eef6 100%);
+        border: 1px solid #d7dfeb;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,.82);
+    }
+
+    .info-box-sm .info-box-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
     }
 
     .info-box-sm .info-box-text {
         font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: .01em;
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #475569;
+        margin-bottom: .08rem;
     }
 
     .info-box-sm h5 {
-        font-weight: 800;
-        font-size: 1.05rem;
+        font-weight: 900;
+        font-size: 1.34rem;
+        line-height: 1;
+        color: #0f172a;
+        margin-bottom: 0;
     }
 
     /* Color de íconos por variante */
@@ -431,51 +424,58 @@
         color: #0f172a !important;
     }
 
-    /* Overrides: info-box-sm sin fondo de color, solo línea inferior; se colorea al activar */
-    .info-box-sm {
-        background: #fff !important;
-        border: 1px solid #e5e7eb !important;
-        position: relative;
-        overflow: hidden;
-    }
     /* Mantener fondo blanco aunque tengan bg-* por defecto */
     .info-box-sm.bg-success,
     .info-box-sm.bg-danger,
     .info-box-sm.bg-secondary,
     .info-box-sm.bg-info {
         background: #fff !important;
-        border-color: #e5e7eb !important;
+        border-color: #dbe3ee !important;
         color: #0f172a !important;
     }
     .info-box-sm::after {
         content: '';
         position: absolute;
         left: 0;
-        right: 0;
+        top: 0;
         bottom: 0;
-        height: 3px;
+        width: 4px;
         background: transparent;
     }
-    .info-box-sm.bg-secondary::after { background: rgba(108, 117, 125, 0.7); }
-    .info-box-sm.bg-success::after   { background: rgba(25, 135, 84, 0.7); }
-    .info-box-sm.bg-danger::after    { background: rgba(220, 53, 69, 0.7); }
-    .info-box-sm.bg-info::after      { background: rgba(13, 110, 253, 0.7); }
+    .info-box-sm::before {
+        content: '';
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 44px;
+        height: 4px;
+        border-radius: 999px;
+        background: transparent;
+    }
+    .info-box-sm.bg-secondary::after,
+    .info-box-sm.bg-secondary::before { background: rgba(108, 117, 125, 0.78); }
+    .info-box-sm.bg-success::after,
+    .info-box-sm.bg-success::before   { background: rgba(25, 135, 84, 0.82); }
+    .info-box-sm.bg-danger::after,
+    .info-box-sm.bg-danger::before    { background: rgba(220, 53, 69, 0.82); }
+    .info-box-sm.bg-info::after,
+    .info-box-sm.bg-info::before      { background: rgba(13, 110, 253, 0.82); }
 
     /* Activo: pinta el fondo suave al aplicar filtro */
     .info-box-sm.fai-filter-active.bg-success {
-        background: rgba(25, 135, 84, 0.12) !important;
+        background: linear-gradient(180deg, rgba(25, 135, 84, 0.10) 0%, rgba(25, 135, 84, 0.04) 100%) !important;
         border-color: rgba(25, 135, 84, 0.45) !important;
     }
     .info-box-sm.fai-filter-active.bg-danger {
-        background: rgba(220, 53, 69, 0.12) !important;
+        background: linear-gradient(180deg, rgba(220, 53, 69, 0.10) 0%, rgba(220, 53, 69, 0.04) 100%) !important;
         border-color: rgba(220, 53, 69, 0.45) !important;
     }
     .info-box-sm.fai-filter-active.bg-secondary {
-        background: rgba(108, 117, 125, 0.12) !important;
+        background: linear-gradient(180deg, rgba(108, 117, 125, 0.10) 0%, rgba(108, 117, 125, 0.04) 100%) !important;
         border-color: rgba(108, 117, 125, 0.45) !important;
     }
     .info-box-sm.fai-filter-active.bg-info {
-        background: rgba(13, 110, 253, 0.12) !important;
+        background: linear-gradient(180deg, rgba(13, 110, 253, 0.10) 0%, rgba(13, 110, 253, 0.04) 100%) !important;
         border-color: rgba(13, 110, 253, 0.45) !important;
     }
 
@@ -580,16 +580,6 @@
     .fai-summary-card .card-header {
         background: linear-gradient(135deg, #e0f2fe 0%, #d1fae5 100%);
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    }
-
-    .fai-summary-card-top {
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: 12px;
-        background: #fff;
-    }
-
-    .fai-summary-card-top .card-body {
-        padding: .6rem .7rem !important;
     }
 
     /* Contenedor tabla estilo ERP */
@@ -1015,7 +1005,7 @@
         height: 36px;
         border: 1px solid #bfc9d6;
         border-radius: 10px;
-        overflow: hidden;
+        overflow: visible;
         background: #fff;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
         align-items: stretch;
@@ -1238,115 +1228,165 @@
             ]
         });
 
-        // Ajustes de texto en filtros (placeholders/labels)
-        $('#tableSearch').attr('placeholder', 'Type to filter the table...');
         $('#locationFilter option[value=\"\"]').text('- All -');
-        $('label[for=\"year\"]').text('Date');
 
-        // Toolbar tipo summary: filtros a la izquierda, search a la derecha, length abajo
-        const $wrapper = $tbl.closest('.dataTables_wrapper');
+        const serverYear = @json((string) request('year', now()->year));
+        const serverMonth = @json((string) request('month', ''));
+        const serverDay = @json(request('day') ? \Carbon\Carbon::parse(request('day'))->format('Y-m-d') : '');
 
-        // Buscador inline para la tabla
-        const $toolbarSearch = $(`
-            <div class="input-group input-group-sm mb-0">
-                <div class="input-group-prepend">
-                    <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-                </div>
-                <input type="text" class="form-control" id="dtToolbarSearch" placeholder="Search table..." autocomplete="off">
-                <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="button" id="dtToolbarClear"><i class="fas fa-times"></i></button>
-                </div>
-            </div>
-        `);
-        $toolbarSearch.on('input', '#dtToolbarSearch', function() {
+        function syncVisibleDateInputs() {
+            if (serverYear || $('#year').val()) {
+                $('#year').val(serverYear || $('#year').val());
+            }
+            if (serverMonth || $('#month').val()) {
+                const mm = serverMonth || $('#month').val();
+                if (mm) $('#monthDisplay').val(moment(mm, 'M').format('MMM'));
+            }
+            if (serverDay || $('#day').val()) {
+                $('#day').val(serverDay || $('#day').val());
+            }
+        }
+
+        syncVisibleDateInputs();
+
+        $('#dtToolbarSearch').on('input', function() {
             dt.search(this.value || '').page('first').draw('page');
         });
-        $toolbarSearch.on('click', '#dtToolbarClear', function() {
+        $('#dtToolbarClear').on('click', function() {
             $('#dtToolbarSearch').val('');
             dt.search('').page('first').draw('page');
             $('#dtToolbarSearch').trigger('focus');
         });
+        $('#toolbarExportExcel').on('click', function() { submitExport('exportExcelForm'); });
+        $('#toolbarExportPdf').on('click', function() { submitExport('exportPdfForm'); });
 
-        // Botones de export en la misma barra (reutilizan handlers existentes)
-        const $exportGroup = $(`
-            <div class="btn-group btn-group-sm mb-0">
-                <button id="toolbarExportExcel" type="button" class="btn btn-success">
-                    <i class="fas fa-file-excel mr-1"></i> Excel
-                </button>
-                <button id="toolbarExportPdf" type="button" class="btn btn-danger">
-                    <i class="fas fa-file-pdf mr-1"></i> PDF
-                </button>
-            </div>
-        `);
-        $exportGroup.on('click', '#toolbarExportExcel', () => submitExport('exportExcelForm'));
-        $exportGroup.on('click', '#toolbarExportPdf', () => submitExport('exportPdfForm'));
+        function initToolbarDateFilters() {
+            ['#yearPickerWrapper', '#monthPickerWrapper', '#dayPickerWrapper'].forEach(function(sel) {
+                const $w = $(sel);
+                if (!$w.length) return;
+                $w.removeData('df-initialized');
+                try {
+                    $w.datetimepicker('destroy');
+                } catch (_) {}
+            });
 
-        const $loc = $('#filterLocationGroup').detach().addClass('mb-0');
-        const $year = $('#filterYearGroup').detach().addClass('mb-0');
-        const $month = $('#filterMonthGroup').detach().addClass('mb-0');
-        const $day = $('#filterDayGroup').detach().addClass('mb-0');
-        const $clean = $('#filtersForm a.btn-secondary').first().detach().removeClass('btn-secondary').addClass('btn-erp-gray');
-        const $quickActions = $('#filtersForm .btn-group').eq(0).detach().removeClass('d-flex');
-        const $exportButtons = $('#filtersForm .btn-group').eq(0).detach().removeClass('d-flex');
+            const $form = $('#filtersForm');
+            const $yearW = $('#yearPickerWrapper');
+            const $monthW = $('#monthPickerWrapper');
+            const $dayW = $('#dayPickerWrapper');
+            const $year = $('#year');
+            const $month = $('#month');
+            const $monthDisplay = $('#monthDisplay');
+            const $day = $('#day');
 
-        $loc.find('.input-group, select').addClass('input-group-sm');
-        $year.find('.input-group').addClass('input-group-sm');
-        $month.find('.input-group').addClass('input-group-sm');
-        $day.find('.input-group').addClass('input-group-sm');
+            if ($yearW.length) {
+                $yearW.datetimepicker({
+                    format: 'YYYY',
+                    viewMode: 'years',
+                    useCurrent: false,
+                    keepOpen: false
+                });
 
-        const now = new Date();
-        const reqDay = '{{ trim((string) request("day", "")) }}';
-        const reqMonth = '{{ trim((string) request("month", "")) }}';
-        const reqYear = '{{ trim((string) request("year", "")) }}';
-        const nowDate = '{{ now()->toDateString() }}';
-        const nowMonth = String(now.getMonth() + 1);
-        const nowYear = String(now.getFullYear());
-        const isTodayActive = (reqDay !== '' && reqDay === nowDate);
-        const isCleanDefault = (reqDay === '' && reqMonth === '' && reqYear === '');
-        const isCurrentMonthFilter = (reqDay === '' && reqMonth === nowMonth && reqYear === nowYear);
-        const isMonthActive = (isCleanDefault || isCurrentMonthFilter);
-        const isYearActive = (reqDay === '' && reqMonth === '' && reqYear === nowYear);
+                if (($year.val() || '').trim()) {
+                    $yearW.datetimepicker('date', moment($year.val(), 'YYYY'));
+                    $year.val(moment($year.val(), 'YYYY').format('YYYY'));
+                }
 
-        const todayHref = `{{ route('faisummary.completed', array_merge(request()->except(['day','month','year','page']), ['day'=>now()->toDateString()])) }}`;
-        const monthHref = `{{ route('faisummary.completed', array_merge(request()->except(['day','page']), ['year'=>now()->year,'month'=>now()->month])) }}`;
-        const yearHref = `{{ route('faisummary.completed', array_merge(request()->except(['day','month','page']), ['year'=>now()->year])) }}`;
+                $yearW.off('.erpYear')
+                    .on('change.datetimepicker.erpYear', function(e) {
+                        if (!e.date) {
+                            $year.val('');
+                            return;
+                        }
+                        $year.val(e.date.format('YYYY'));
+                        $(this).find('input').val(e.date.format('YYYY'));
+                        $day.val('');
+                    })
+                    .on('hide.datetimepicker.erpYear', function() {
+                        $(this).find('input').val($year.val());
+                        $form.trigger('submit');
+                    });
+            }
 
-        const $quickLinks = $(`
-            <div class="d-flex flex-wrap align-items-center">
-                <a class="btn btn-sm ${isTodayActive ? 'btn-erp-active' : 'btn-outline-secondary'}" href="${todayHref}">
-                    <i class="fas fa-bolt mr-1"></i> Today
-                </a>
-                <a class="btn btn-sm ${isMonthActive ? 'btn-erp-active' : 'btn-outline-secondary'}" href="${monthHref}">
-                    <i class="far fa-calendar-alt mr-1"></i> Month
-                </a>
-                <a class="btn btn-sm ${isYearActive ? 'btn-erp-active' : 'btn-outline-secondary'}" href="${yearHref}">
-                    <i class="far fa-calendar mr-1"></i> Year
-                </a>
-            </div>
-        `);
-        $quickLinks.find('.btn').addClass('mr-2');
-        $exportButtons.find('.btn').addClass('mr-2');
+            if ($monthW.length) {
+                $monthW.datetimepicker({
+                    format: 'MMM',
+                    viewMode: 'months',
+                    useCurrent: false,
+                    keepOpen: false
+                });
 
-        const $toolbar = $('<div class="fai-table-toolbar mb-2"></div>');
-        const $toolbarTop = $('<div class="toolbar-top"></div>');
-        const $toolbarLeft = $('<div class="toolbar-left toolbar-filters"></div>');
-        const $toolbarBottom = $('<div class="toolbar-bottom"></div>');
+                if (($month.val() || '').trim()) {
+                    const y = ($year.val() || moment().format('YYYY'));
+                    const monthMoment = moment(`${y}-${String($month.val()).padStart(2, '0')}-01`, 'YYYY-MM-DD');
+                    $monthW.datetimepicker('date', monthMoment);
+                    $monthDisplay.val(monthMoment.format('MMM'));
+                } else {
+                    $monthDisplay.val('');
+                }
 
-        $toolbarLeft
-            .append($loc)
-            .append($year)
-            .append($month)
-            .append($day)
-            .append($clean.addClass('btn-sm mb-0'))
-            .append($quickLinks)
-            .append($exportButtons);
+                $monthW.off('.erpMonth')
+                    .on('change.datetimepicker.erpMonth', function(e) {
+                        if (!e.date) {
+                            $month.val('');
+                            $monthDisplay.val('');
+                            return;
+                        }
+                        $month.val(e.date.format('M'));
+                        $monthDisplay.val(e.date.format('MMM'));
+                        $(this).find('input').val(e.date.format('MMM'));
+                        $year.val(e.date.format('YYYY'));
+                        $day.val('');
+                    })
+                    .on('hide.datetimepicker.erpMonth', function() {
+                        $(this).find('input').val($monthDisplay.val());
+                        $form.trigger('submit');
+                    });
+            }
 
-        $toolbarSearch.addClass('toolbar-search');
-        $toolbarTop.append($toolbarLeft).append($toolbarSearch);
+            if ($dayW.length) {
+                $dayW.datetimepicker({
+                    format: 'YYYY-MM-DD',
+                    viewMode: 'days',
+                    useCurrent: false,
+                    keepOpen: false
+                });
 
-        const $toolbarContainer = $('#dtToolbarContainer');
-        $toolbarContainer.empty().append($toolbar);
-        $toolbar.append($toolbarTop);
+                if (($day.val() || '').trim()) {
+                    const dayMoment = moment($day.val(), 'YYYY-MM-DD');
+                    $dayW.datetimepicker('date', dayMoment);
+                    $day.val(dayMoment.format('YYYY-MM-DD'));
+                }
+
+                $dayW.off('.erpDay')
+                    .on('change.datetimepicker.erpDay', function(e) {
+                        if (!e.date) {
+                            $day.val('');
+                            return;
+                        }
+                        $day.val(e.date.format('YYYY-MM-DD'));
+                        $(this).find('input').val(e.date.format('YYYY-MM-DD'));
+                        $year.val(e.date.format('YYYY'));
+                        $month.val(e.date.format('M'));
+                        $monthDisplay.val(e.date.format('MMM'));
+                    })
+                    .on('hide.datetimepicker.erpDay', function() {
+                        $(this).find('input').val($day.val());
+                        $form.trigger('submit');
+                    });
+            }
+
+            setTimeout(syncVisibleDateInputs, 0);
+            setTimeout(syncVisibleDateInputs, 100);
+        }
+
+        setTimeout(initToolbarDateFilters, 0);
+
+        try {
+            const cleanUrl = new URL(`{{ route('faisummary.completed') }}`, window.location.origin);
+            cleanUrl.searchParams.set('year', '{{ now()->year }}');
+            window.history.replaceState({}, '', cleanUrl.toString());
+        } catch (_) {}
 
         window.faiDT = dt; // útil en consola
 
@@ -1450,19 +1490,16 @@
         /* ---------------------------
          * Fechas (opcional)
          * --------------------------- */
-        if (window.initTempusFilters) {
-            window.initTempusFilters({
-                form: '#filtersForm',
-                yearWrapper: '#yearPickerWrapper',
-                monthWrapper: '#monthPickerWrapper',
-                dayWrapper: '#dayPickerWrapper',
-                yearInput: '#year',
-                monthHiddenInput: '#month',
-                monthDisplayInput: '#monthDisplay',
-                dayInput: '#day',
-                initialYear: document.querySelector('#yearPickerWrapper')?.dataset.initialYear || '',
+        // Al mover los filtros al toolbar, forzamos la apertura manual del calendario
+        ['#yearPickerWrapper', '#monthPickerWrapper', '#dayPickerWrapper'].forEach(function(sel) {
+            $(document).on('click', `${sel}, ${sel} .input-group-text, ${sel} input`, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                    $(sel).datetimepicker('show');
+                } catch (_) {}
             });
-        }
+        });
 
         /* ---------------------------
          * KPIs: 100% completados vs <100% (incompletos)
