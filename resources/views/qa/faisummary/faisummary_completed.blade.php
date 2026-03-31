@@ -402,78 +402,6 @@
         border-color: rgba(13, 110, 253, 0.45) !important;
     }
 
-    /* Filtros ERP */
-    .fai-filters-erp {
-        background: #fff;
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: 12px;
-    }
-
-    .fai-filters-erp .card-body {
-        padding: 0.75rem 0.75rem 0.6rem;
-    }
-
-    .fai-filters-erp label {
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 0.01em;
-        color: #0f172a;
-    }
-
-    .fai-filters-erp .input-group-text {
-        background: #fff;
-        border-color: rgba(15, 23, 42, 0.12);
-        color: #0d6efd;
-        font-weight: 700;
-    }
-
-    .fai-filters-erp .form-control,
-    .fai-filters-erp select {
-        border-color: rgba(15, 23, 42, 0.12);
-        background: #fff;
-        border-radius: 10px;
-        font-size: 0.9rem;
-        padding: .35rem .5rem;
-    }
-
-    .fai-filters-erp .form-control:focus,
-    .fai-filters-erp select:focus {
-        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.18);
-        border-color: rgba(13, 110, 253, 0.5);
-    }
-
-    .fai-filters-erp .btn {
-        border-radius: 10px;
-        font-weight: 700;
-    }
-
-    .fai-filters-erp .btn-outline-secondary {
-        color: #0f172a;
-        border-color: rgba(15, 23, 42, 0.12);
-        background: #fff;
-    }
-
-    .fai-filters-erp .btn-outline-secondary:hover {
-        background: rgba(13, 110, 253, 0.08);
-        color: #0d6efd;
-    }
-
-    /* Asegurar que los pickers no queden ocultos bajo cards sticky */
-    /* Visibilidad de pickers sobre cards sticky */
-    /* Evitar que las cards sticky tapen el datepicker */
-    .sticky-top {
-        position: static !important;
-        z-index: auto !important;
-        overflow: visible;
-    }
-
-    .fai-summary-card,
-    .fai-filters-erp,
-    .fai-summary-card .card,
-    .fai-filters-erp .card {
-        overflow: visible;
-    }
-
     .content-wrapper,
     .content {
         overflow: visible !important;
@@ -497,12 +425,6 @@
     /* Forzar el widget fuera de contenedores para que no se recorte */
     body>.bootstrap-datetimepicker-widget {
         position: absolute !important;
-    }
-
-    /* Header Summary card */
-    .fai-summary-card .card-header {
-        background: linear-gradient(135deg, #e0f2fe 0%, #d1fae5 100%);
-        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     }
 
     /* Contenedor tabla estilo ERP */
@@ -1083,26 +1005,9 @@
     $(function() {
         $.fn.dataTable.ext.errMode = 'throw';
 
-        // Índices de columnas (ajusta si cambias el <thead>)
-        const COLS = {
-            date: 0,
-            location: 1,
-            work_id: 2,
-            pn: 3,
-            description: 4,
-            samp_plan: 5,
-            wo_qty: 6,
-            sampling: 7,
-            ops: 8,
-            fai: 9,
-            ipi: 10,
-            prog: 11,
-            action: 12
-        };
 
         const $tbl = $('#faicompleteTable');
         if (!$tbl.length) return;
-        let dtBootstrapped = false;
         let filterOnlyCompleted = false;
         let filterOnlyIncomplete = false;
         let filterOnlyNoInspection = false;
@@ -1111,7 +1016,7 @@
         if ($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
 
         const dt = $tbl.DataTable({
-            processing: true,
+            processing: false,
             serverSide: true,
             searching: true,
             ordering: false,
@@ -1149,13 +1054,7 @@
                 { data: 'progress', name: 'progress', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ],
-            createdRow: function(row, data) {
-                row.dataset.progress = data.progress_pct ?? 0;
-                row.dataset.completed = data.completed_flag ?? 0;
-                row.dataset.noInspection = data.no_inspection_flag ?? 0;
-            },
             initComplete: function(settings, json) {
-                dtBootstrapped = true;
                 applyKpis(json?.meta || null);
                 syncKpiActive();
             },
@@ -1166,7 +1065,6 @@
             }
         });
         $('#locationFilter option[value=""]').text('- All -');
-        $('#locationFilter option[value=\"\"]').text('- All -');
 
         const serverYear = @json((string) request('year', now()->year));
         const serverMonth = @json((string) request('month', ''));
@@ -1329,54 +1227,7 @@
 
         window.faiDT = dt; // útil en consola
 
-        /* ---------------------------
-         * Helpers
-         * --------------------------- */
-        const nzText = v => (typeof v === 'string' ? v : ($(v).text?.() ?? String(v ?? '')).trim());
-        const uniqueSorted = arr => [...new Set(arr.map(nzText).filter(Boolean))]
-            .sort((a, b) => a.localeCompare(b, undefined, {
-                sensitivity: 'base'
-            }));
-
-        /* ---------------------------
-         * Buscador global
-         * --------------------------- */
-        /* ---------------------------
-         * Filtros exactos via <select>
-         * --------------------------- */
-        const FILTERS = [{
-                id: 'locationFilter',
-                col: COLS.location
-            },
-            // { id: 'operationFilter', col: COLS.ops },
-        ];
-
-        function populateSelectFromDT(selectId, colIndex) {
-            const sel = document.getElementById(selectId);
-            if (!sel) return;
-
-            const values = dt.column(colIndex, {
-                    search: 'applied'
-                }).data().toArray()
-                .concat(dt.column(colIndex, {
-                    search: 'removed'
-                }).data().toArray());
-            const list = uniqueSorted(values);
-            const keep = sel.value || '';
-
-            while (sel.options.length > 1) sel.remove(1);
-            const frag = document.createDocumentFragment();
-            for (const v of list) {
-                const opt = document.createElement('option');
-                opt.value = v;
-                opt.textContent = v;
-                frag.appendChild(opt);
-            }
-            sel.appendChild(frag);
-            if (keep && list.includes(keep)) sel.value = keep;
-        }
-
-        function bindExactFilter(selectId, colIndex) {
+        function bindExactFilter(selectId) {
             const el = document.getElementById(selectId);
             if (!el) return;
             el.addEventListener('change', function() {
@@ -1384,23 +1235,9 @@
             });
         }
 
-        FILTERS.forEach(f => bindExactFilter(f.id, f.col));
+        bindExactFilter('locationFilter');
 
-        function repopulateAll() { return; }
-        dt.on('search.dt', repopulateAll);
 
-        /* ---------------------------
-         * Badge: total visibles
-         * --------------------------- */
-        const $badge = $('#badgeFinished');
-
-        function refreshBadge() {
-            if (!dtBootstrapped) return;
-            $badge.text(dt.rows({
-                search: 'applied'
-            }).count());
-        }
-        dt.on('draw.dt search.dt page.dt', refreshBadge);
 
         /* ---------------------------
          * Fechas (opcional)
@@ -1440,64 +1277,8 @@
             $('#kpiBoxNoInspection').toggleClass('fai-filter-active', filterOnlyNoInspection);
         }
 
-        function getProgressFromCell(cellVal) {
-            const txt = (typeof cellVal === 'string' ? cellVal : ($(cellVal).text?.() || '')).toString();
-            const m = txt.match(/(\d{1,3})\s*%/);
-            return m ? Number(m[1]) : NaN;
-        }
 
-        function isNoInspection(rowData) {
-            // Detecta filas sin inspección (ops y sampling en cero)
-            const sampText = rowData?.[COLS.sampling] ?? '';
-            const opsText = rowData?.[COLS.ops] ?? '';
-            const sampling = parseInt(String(sampText).replace(/\D/g, ''), 10) || 0;
-            const ops = parseInt(String(opsText).replace(/\D/g, ''), 10) || 0;
-            return sampling === 0 && ops === 0;
-        }
 
-        function isCompleted100(tr) {
-            // 1) data-completed (ideal)
-            const dc = tr.dataset.completed;
-            if (dc !== undefined) return Number(dc) === 1;
-
-            // 2) progress en data-progress
-            const dp = tr.dataset.progress;
-            if (dp !== undefined && !Number.isNaN(Number(dp))) return Number(dp) >= 100;
-
-            // 3) .progress-bar[aria-valuenow]
-            const aria = Number($(tr).find('.progress-bar').attr('aria-valuenow'));
-            if (!Number.isNaN(aria)) return aria >= 100;
-
-            // 4) parsear % de la columna prog
-            try {
-                const data = dt.row(tr).data();
-                const pct = getProgressFromCell(data?.[COLS.prog]);
-                if (!Number.isNaN(pct)) return pct >= 100;
-            } catch (_) {}
-
-            // 5) fallback por texto (si marca "Done" o "Completed")
-            const rowTxt = $(tr).text().toLowerCase();
-            if (/\bdone\b|\bcompleted\b/.test(rowTxt)) return true;
-
-            return false;
-        }
-
-        function updateKpisCompletion() {
-            if (!dtBootstrapped) return;
-            const json = dt.ajax.json();
-            const k = json?.meta?.kpis;
-            if (!k) return;
-            $kpiTotal.text(k.total ?? 0);
-            $kpiPass.text(k.completed ?? 0);
-            $kpiFail.text(k.incomplete ?? 0);
-            $kpiNoInspection.text(k.no_inspection ?? 0);
-        }
-        dt.on('draw.dt search.dt page.dt', updateKpisCompletion);
-
-        // Si tienes filtros externos:
-        $(document).on('change', '.filtro-kpi, #year, #month, #day, #location, #operator, #inspector', function() {
-            dt.draw(false);
-        });
 
         // Toggles KPI filters: Completed 100%, Incomplete, and No Inspection
         const $kpiBoxTotal = $('#kpiBoxTotal');
@@ -1505,23 +1286,6 @@
         const $kpiBoxIncomplete = $('.info-box-sm.bg-danger');
         const $kpiBoxNoInspection = $('#kpiBoxNoInspection');
 
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            if (settings.nTable !== $tbl[0]) return true;
-            const row = dt.row(dataIndex);
-            const tr = row.node();
-            const rowData = row.data();
-
-            if (filterOnlyCompleted) {
-                if (isNoInspection(rowData) || !isCompleted100(tr)) return false;
-            }
-            if (filterOnlyIncomplete) {
-                if (isNoInspection(rowData) || isCompleted100(tr)) return false;
-            }
-            if (filterOnlyNoInspection) {
-                if (!isNoInspection(rowData)) return false;
-            }
-            return true;
-        });
 
         function toggleCompleted() {
             filterOnlyCompleted = !filterOnlyCompleted;
@@ -1591,22 +1355,6 @@
         /* ---------------------------
          * Export (Excel / PDF) con filtros aplicados
          * --------------------------- */
-        function getFilteredIds() {
-            let ids = dt.rows({
-                    search: 'applied'
-                }).ids().toArray()
-                .map(id => String(id).replace(/^row-/, ''));
-            if (!ids.length) {
-                const $nodes = dt.rows({
-                    search: 'applied',
-                    page: 'all'
-                }).nodes().to$();
-                ids = $nodes.map(function() {
-                    return (this.id || '').replace(/^row-/, '');
-                }).get();
-            }
-            return ids;
-        }
 
         function submitExport(formId) {
             const $form = $('#' + formId);
@@ -1657,8 +1405,6 @@
             $form.trigger('submit');
         }
 
-        $('#btnExportExcel').on('click', () => submitExport('exportExcelForm'));
-        $('#btnExportPdf').on('click', () => submitExport('exportPdfForm'));
     });
 
     /* ===========================

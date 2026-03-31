@@ -1619,11 +1619,20 @@ class QaFaiSummaryController extends Controller
                 if ($isNoInspection) {
                     $progressHtml = '<span class="badge" style="background:#6c757d;color:white;padding:4px 10px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-exclamation"></i>No Inspection</span>';
                 } else {
-                    $progressHtml = '<div class="progress" style="height:18px;" title="FAI ' . e($faiPass . '/' . $faiReq) . ' • IPI ' . e($ipiPass . '/' . $ipiReq) . '"><div class="progress-bar ' . e($barClass) . '" style="width: ' . e($overall) . '%;" aria-valuenow="' . e($overall) . '" aria-valuemin="0" aria-valuemax="100">' . e($overall) . '%</div></div>' . PHP_EOL;                    $progressHtml .= $isCompleted ? '<span class="badge badge-success mt-1"><i class="fas fa-check"></i> Done</span>' : '<small class="text-muted d-block mt-1">FAI ' . e($faiPass . '/' . $faiReq) . ' • IPI ' . e($ipiPass . '/' . $ipiReq) . '</small>' . PHP_EOL;                }
+                    $progressHtml = '<div class="progress" style="height:18px;" title="FAI ' . e($faiPass . '/' . $faiReq) . ' • IPI ' . e($ipiPass . '/' . $ipiReq) . '"><div class="progress-bar ' . e($barClass) . '" style="width: ' . e($overall) . '%;" aria-valuenow="' . e($overall) . '" aria-valuemin="0" aria-valuemax="100">' . e($overall) . '%</div></div>';
+                    $progressHtml .= $isCompleted
+                        ? '<span class="badge badge-success mt-1"><i class="fas fa-check"></i> Done</span>'
+                        : '<small class="text-muted d-block mt-1">FAI ' . e($faiPass . '/' . $faiReq) . ' • IPI ' . e($ipiPass . '/' . $ipiReq) . '</small>';
+                }
 
                 $pdfUrl = route('qa.faisummary.pdf', $o->id);
                 $eventsUrl = route('faisummary.completed.events', $o->id);
-                $actionHtml = '<div class="btn-group btn-group-sm" role="group">' . '<a href="#" class="btn btn-danger btn-open-pdf" data-pdf-url="' . e($pdfUrl) . '"><i class="fas fa-print"></i></a>' . '<a href="' . e($pdfUrl) . '?download=1" class="btn btn-info"><i class="fas fa-download"></i></a>' . '<a href="#" class="btn btn-warning btn-edit-pdf" data-id="' . e($o->id) . '"><i class="fas fa-reply"></i></a>' . '<a href="' . e($eventsUrl) . '" class="btn btn-primary btn-edit-row" data-id="' . e($o->id) . '" title="Edit"><i class="fas fa-edit"></i></a>' . '</div>';
+                $actionHtml = '<div class="btn-group btn-group-sm" role="group">'
+                    . '<a href="#" class="btn btn-danger btn-open-pdf" data-pdf-url="' . e($pdfUrl) . '"><i class="fas fa-print"></i></a>'
+                    . '<a href="' . e($pdfUrl) . '?download=1" class="btn btn-info"><i class="fas fa-download"></i></a>'
+                    . '<a href="#" class="btn btn-warning btn-edit-pdf" data-id="' . e($o->id) . '"><i class="fas fa-reply"></i></a>'
+                    . '<a href="' . e($eventsUrl) . '" class="btn btn-primary btn-edit-row" data-id="' . e($o->id) . '" title="Edit"><i class="fas fa-edit"></i></a>'
+                    . '</div>';
 
                 return [
                     'row_id' => 'row-' . $o->id,
@@ -1642,8 +1651,6 @@ class QaFaiSummaryController extends Controller
                     'progress' => $progressHtml,
                     'action' => $actionHtml,
                     'progress_pct' => $overall,
-                    'completed_flag' => $isCompleted ? 1 : 0,
-                    'no_inspection_flag' => $isNoInspection ? 1 : 0,
                 ];
             })->values()->all();
 
