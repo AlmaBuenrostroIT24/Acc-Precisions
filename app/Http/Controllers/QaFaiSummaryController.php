@@ -1606,7 +1606,7 @@ class QaFaiSummaryController extends Controller
                 $ipiPass = (int) ($o->ipi_pass_qty ?? 0);
                 $sampling = (int) ($o->sampling ?? 0);
                 $ops = (int) ($o->operation ?? 0);
-                $isNoInspection = $sampling === 0 && $ops === 0;
+                $isNoInspection = $sampling === 0 || $ops === 0 || ($faiReq === 0 && $ipiReq === 0);
                 $isCompleted = !$isNoInspection && ($faiReq === 0 || $faiPass >= $faiReq) && ($ipiReq === 0 || $ipiPass >= $ipiReq);
                 $totalReq = $faiReq + $ipiReq;
                 $overall = $isNoInspection ? 0 : ($totalReq > 0 ? (int) round((($faiPass + $ipiPass) / $totalReq) * 100) : 100);
@@ -1955,7 +1955,7 @@ class QaFaiSummaryController extends Controller
             $onlyIncomplete = $request->boolean('only_incomplete');
             $onlyNoInspection = $request->boolean('only_no_inspection');
 
-            $noInspectionSql = '(COALESCE(operation,0) = 0 AND COALESCE(sampling,0) = 0)';
+            $noInspectionSql = '(COALESCE(sampling,0) = 0 OR COALESCE(operation,0) = 0 OR (COALESCE(total_fai,0) = 0 AND COALESCE(total_ipi,0) = 0))';
             $completedSql = '((COALESCE(total_fai,0) = 0 OR COALESCE(fai_pass_qty,0) >= COALESCE(total_fai,0)) AND (COALESCE(total_ipi,0) = 0 OR COALESCE(ipi_pass_qty,0) >= COALESCE(total_ipi,0)))';
 
             if ($onlyCompleted) {
@@ -1981,7 +1981,7 @@ class QaFaiSummaryController extends Controller
             $sampling = (int) ($row->sampling ?? 0);
             $ops = (int) ($row->operation ?? 0);
 
-            if ($sampling === 0 && $ops === 0) {
+            if ($sampling === 0 || $ops === 0 || ((int) ($row->total_fai ?? 0) === 0 && (int) ($row->total_ipi ?? 0) === 0)) {
                 $noInspection++;
                 continue;
             }
