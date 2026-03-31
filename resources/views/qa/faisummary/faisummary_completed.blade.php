@@ -546,10 +546,15 @@
         box-shadow: none;
         background-image: none;
     }
-    .fai-erp-table .progress .progress-bar.bg-success { background: #22c55e !important; }
-    .fai-erp-table .progress .progress-bar.bg-info    { background: #38bdf8 !important; }
-    .fai-erp-table .progress .progress-bar.bg-warning { background: #facc15 !important; }
-    .fai-erp-table .progress .progress-bar.bg-danger  { background: #ef4444 !important; }
+    .fai-erp-table .progress .progress-bar.bg-success { background: #d4eddf !important; color: #1f5d3f !important; }
+    .fai-erp-table .progress .progress-bar.bg-info    { background: #93c5fd !important; color: #1d4ed8 !important; }
+    .fai-erp-table .progress .progress-bar.bg-warning { background: #fde68a !important; color: #92400e !important; }
+    .fai-erp-table .progress .progress-bar.bg-danger  { background: #fca5a5 !important; color: #991b1b !important; }
+    .fai-erp-table .badge[style*="#6c757d"] {
+        background: #cbd5e1 !important;
+        color: #334155 !important;
+        border: 1px solid #94a3b8 !important;
+    }
 
     /* Botones de acción estilo ERP */
     .fai-erp-table .btn-group.btn-group-sm .btn {
