@@ -57,6 +57,8 @@ class QaFaiSummaryController extends Controller
                 'parent_id',
                 'work_id',
                 'PN',
+                'co',
+                'cust_po',
                 'Part_description',
                 'operation',
                 'wo_qty',
@@ -1641,7 +1643,9 @@ class QaFaiSummaryController extends Controller
                     'location' => e(ucfirst($this->sanitizeUtf8($o->location))),
                     'work_id' => e($this->sanitizeUtf8($o->work_id)),
                     'pn' => e($this->sanitizeUtf8($o->PN)),
-                    'description' => e(\Illuminate\Support\Str::before($this->sanitizeUtf8($o->Part_description), ',')),
+                    'co' => e($this->sanitizeUtf8($o->co)),
+                    'cust_po' => e($this->sanitizeUtf8($o->cust_po)),
+                    'description' => e($this->sanitizeUtf8($o->Part_description)),
                     'sampling_check' => e(ucfirst($this->sanitizeUtf8($o->sampling_check))),
                     'group_wo_qty' => (int) ($o->group_wo_qty ?? 0),
                     'sampling' => (int) ($o->sampling ?? 0),
@@ -1887,6 +1891,8 @@ class QaFaiSummaryController extends Controller
                 'parent_id',
                 'work_id',
                 'PN',
+                'co',
+                'cust_po',
                 'Part_description',
                 'operation',
                 'wo_qty',
@@ -1937,6 +1943,8 @@ class QaFaiSummaryController extends Controller
             $q->where(function ($w) use ($search) {
                 $w->where('work_id', 'like', "%{$search}%" )
                     ->orWhere('PN', 'like', "%{$search}%" )
+                    ->orWhere('co', 'like', "%{$search}%" )
+                    ->orWhere('cust_po', 'like', "%{$search}%" )
                     ->orWhere('Part_description', 'like', "%{$search}%" )
                     ->orWhere('location', 'like', "%{$search}%" );
             });
@@ -2862,3 +2870,4 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 }
+

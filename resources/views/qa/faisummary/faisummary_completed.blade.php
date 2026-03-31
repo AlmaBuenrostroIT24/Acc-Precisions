@@ -183,6 +183,8 @@
                                 <th style="width: 70px;">LOC.</th>
                                 <th style="width: 100px;">WORK ID</th>
                                 <th style="width: 100px;">PN</th>
+                                <th style="width: 90px;">CO</th>
+                                <th style="width: 120px;">CUST PO</th>
                                 <th style="width: 200px;">DESCRIPTION</th>
                                 <th style="width: 100px;">SAMP. PLAN</th>
                                 <th style="width: 70px;">WO QTY</th>
@@ -284,7 +286,7 @@
     }
 
     .info-box-sm .info-box-text {
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         font-weight: 800;
         letter-spacing: .06em;
         text-transform: uppercase;
@@ -294,7 +296,7 @@
 
     .info-box-sm h5 {
         font-weight: 900;
-        font-size: 1.34rem;
+        font-size: 1.48rem;
         line-height: 1;
         color: #0f172a;
         margin-bottom: 0;
@@ -470,7 +472,7 @@
         border-bottom: 1px solid rgba(15, 23, 42, 0.14);
         padding: 0.55rem 0.7rem;
         vertical-align: middle;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         text-transform: uppercase;
     }
 
@@ -485,7 +487,7 @@
     #faicompleteTable tbody td {
         padding: 0.45rem 0.7rem;
         vertical-align: middle;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
@@ -502,23 +504,25 @@
     #faicompleteTable tbody td:nth-child(1),
     #faicompleteTable tbody td:nth-child(2),
     #faicompleteTable tbody td:nth-child(3),
-    #faicompleteTable tbody td:nth-child(6),
-    #faicompleteTable tbody td:nth-child(7),
     #faicompleteTable tbody td:nth-child(8),
     #faicompleteTable tbody td:nth-child(9),
     #faicompleteTable tbody td:nth-child(10),
     #faicompleteTable tbody td:nth-child(11),
-    #faicompleteTable tbody td:nth-child(12) {
+    #faicompleteTable tbody td:nth-child(12),
+    #faicompleteTable tbody td:nth-child(13),
+    #faicompleteTable tbody td:nth-child(14) {
         text-align: center;
     }
 
     #faicompleteTable tbody td:nth-child(4),
     #faicompleteTable tbody td:nth-child(5),
-    #faicompleteTable tbody td:nth-child(13) {
+    #faicompleteTable tbody td:nth-child(6),
+    #faicompleteTable tbody td:nth-child(7),
+    #faicompleteTable tbody td:nth-child(15) {
         text-align: left;
     }
-    #faicompleteTable thead th:nth-child(13),
-    #faicompleteTable tbody td:nth-child(13) {
+    #faicompleteTable thead th:nth-child(15),
+    #faicompleteTable tbody td:nth-child(15) {
         width: 150px !important;
         min-width: 150px !important;
         white-space: nowrap !important;
@@ -535,7 +539,7 @@
         overflow: hidden;
     }
     .fai-erp-table .progress .progress-bar {
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         font-weight: 700;
         color: #0f172a;
         letter-spacing: 0;
@@ -583,7 +587,7 @@
 
     /* Paginado estilo ERP */
     .dataTables_wrapper .dataTables_paginate {
-        margin-top: 0 !important;
+        margin-top: -10px !important;
         padding-top: 0 !important;
         border-top: 0 !important;
         margin-left: auto !important;
@@ -661,6 +665,7 @@
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 0.4rem;
+        margin-top: -12px !important;
     }
 
     .dataTables_wrapper .dataTables_info,
@@ -899,6 +904,7 @@
         box-shadow: none !important;
         height: 100% !important;
         padding: .3rem .55rem;
+        font-size: 1rem;
         font-weight: 600;
         line-height: 1.2;
         background: #fff !important;
@@ -944,6 +950,7 @@
     .fai-table-toolbar .toolbar-search .form-control {
         border: 0 !important;
         box-shadow: none !important;
+        font-size: 1rem;
         font-weight: 600;
         color: #0f172a;
         padding: .3rem .58rem;
@@ -1044,6 +1051,8 @@
                 { data: 'location', name: 'location' },
                 { data: 'work_id', name: 'work_id' },
                 { data: 'pn', name: 'PN' },
+                { data: 'co', name: 'co' },
+                { data: 'cust_po', name: 'cust_po' },
                 { data: 'description', name: 'Part_description' },
                 { data: 'sampling_check', name: 'sampling_check' },
                 { data: 'group_wo_qty', name: 'group_wo_qty', className: 'text-center' },
