@@ -613,6 +613,62 @@
     #faicompleteTable tbody td:nth-child(15) {
         text-align: left;
     }
+
+    .fai-metric-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        min-height: 24px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        font-weight: 700;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+
+    .fai-metric-pill.is-fai {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #166534;
+    }
+
+    .fai-metric-pill.is-ipi {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+    }
+
+    .fai-metric-pill.is-zero {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #64748b;
+    }
+
+    .fai-metric-text {
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .fai-metric-text.is-zero {
+        color: #94a3b8;
+    }
+
+    .fai-metric-pill.is-alert {
+        background: #fff7ed;
+        border-color: #fdba74;
+        color: #9a3412;
+    }
+
+    .fai-metric-pill.is-danger {
+        background: #fef2f2;
+        border-color: #fca5a5;
+        color: #991b1b;
+    }
+
     #faicompleteTable thead th:nth-child(1),
     #faicompleteTable tbody td:nth-child(1) {
         width: 76px !important;
@@ -1258,10 +1314,48 @@
                 { data: 'description', name: 'Part_description' },
                 { data: 'sampling_check', name: 'sampling_check' },
                 { data: 'group_wo_qty', name: 'group_wo_qty', className: 'text-center' },
-                { data: 'sampling', name: 'sampling', className: 'text-center' },
-                { data: 'operation', name: 'operation', className: 'text-center' },
-                { data: 'total_fai', name: 'total_fai', className: 'text-center' },
-                { data: 'total_ipi', name: 'total_ipi', className: 'text-center' },
+                {
+                    data: 'sampling',
+                    name: 'sampling',
+                    className: 'text-center',
+                    render: function(data, type) {
+                        if (type !== 'display') return data;
+                        const value = parseInt(data, 10) || 0;
+                        const cls = value === 0 ? 'is-danger' : '';
+                        return '<span class="fai-metric-pill ' + cls + '">' + value + '</span>';
+                    }
+                },
+                {
+                    data: 'operation',
+                    name: 'operation',
+                    className: 'text-center',
+                    render: function(data, type) {
+                        if (type !== 'display') return data;
+                        const value = parseInt(data, 10) || 0;
+                        const cls = value === 0 ? 'is-danger' : '';
+                        return '<span class="fai-metric-pill ' + cls + '">' + value + '</span>';
+                    }
+                },
+                {
+                    data: 'total_fai',
+                    name: 'total_fai',
+                    className: 'text-center',
+                    render: function(data, type) {
+                        if (type !== 'display') return data;
+                        const value = parseInt(data, 10) || 0;
+                        return '<span class="fai-metric-pill is-fai ' + (value === 0 ? 'is-zero' : '') + '">' + value + '</span>';
+                    }
+                },
+                {
+                    data: 'total_ipi',
+                    name: 'total_ipi',
+                    className: 'text-center',
+                    render: function(data, type) {
+                        if (type !== 'display') return data;
+                        const value = parseInt(data, 10) || 0;
+                        return '<span class="fai-metric-pill is-ipi ' + (value === 0 ? 'is-zero' : '') + '">' + value + '</span>';
+                    }
+                },
                 { data: 'progress', name: 'progress', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ],
