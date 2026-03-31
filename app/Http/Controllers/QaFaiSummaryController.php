@@ -1600,12 +1600,13 @@ class QaFaiSummaryController extends Controller
             $rows = $query->skip($start)->take($length)->get();
 
             $data = $rows->map(function ($o) {
-                $faiReq = (int) ($o->total_fai ?? 0);
-                $ipiReq = (int) ($o->total_ipi ?? 0);
-                $faiPass = (int) ($o->fai_pass_qty ?? 0);
-                $ipiPass = (int) ($o->ipi_pass_qty ?? 0);
                 $sampling = (int) ($o->sampling ?? 0);
                 $ops = (int) ($o->operation ?? 0);
+                $summaryTotals = app(InspectionSummary::class)->summarize($o, $ops, $sampling)['totals'] ?? [];
+                $faiReq = (int) ($summaryTotals['faiReq'] ?? (int) ($o->total_fai ?? 0));
+                $ipiReq = (int) ($summaryTotals['ipiReq'] ?? (int) ($o->total_ipi ?? 0));
+                $faiPass = (int) ($summaryTotals['faiPass'] ?? 0);
+                $ipiPass = (int) ($summaryTotals['ipiPass'] ?? 0);
                 $isNoInspection = $sampling === 0 || $ops === 0 || ($faiReq === 0 && $ipiReq === 0);
                 $isCompleted = !$isNoInspection && ($faiReq === 0 || $faiPass >= $faiReq) && ($ipiReq === 0 || $ipiPass >= $ipiReq);
                 $totalReq = $faiReq + $ipiReq;
@@ -1613,18 +1614,25 @@ class QaFaiSummaryController extends Controller
                 $barClass = $isCompleted ? 'bg-success' : ($overall >= 75 ? 'bg-info' : ($overall >= 50 ? 'bg-warning' : 'bg-danger'));
 
                 $date = optional($o->inspection_endate);
-                $dateHtml = e(optional($date)->format('M-d-y'));
-                if ($date) {
-                    $dateHtml .= ' <span class="badge badge-light">' . e($date->format('H:i')) . '</span>';
-                }
+                $dateHtml = $date
+                    ? '<div class="fai-date-cell"><span class="fai-date-main">' . e($date->format('M-d-y')) . '</span><span class="fai-date-time">' . e($date->format('H:i')) . '</span></div>'
+                    : '';
+
+                $inspectionNote = trim($this->sanitizeUtf8($o->inspection_note ?? ''));
 
                 if ($isNoInspection) {
                     $progressHtml = '<span class="badge" style="background:#6c757d;color:white;padding:4px 10px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-exclamation"></i>No Inspection</span>';
+                    if ($inspectionNote !== '') {
+                        $completedByName = trim($this->sanitizeUtf8(optional($o->completedByUser)->name ?? ''));
+                        $completedOn = $date ? $date->format('m/d/Y') : '';
+                        $completedInfo = trim($completedByName . ($completedOn !== '' ? ' ( ' . $completedOn . ' )' : ''));
+                        $progressHtml .= ' <button type="button" class="fai-note-chip btn-open-note ml-1" data-note="' . e($inspectionNote) . '" data-completed-by="' . e($completedInfo) . '" title="Inspection note">Note</button>';
+                    }
                 } else {
-                    $progressHtml = '<div class="progress" style="height:18px;" title="FAI ' . e($faiPass . '/' . $faiReq) . ' • IPI ' . e($ipiPass . '/' . $ipiReq) . '"><div class="progress-bar ' . e($barClass) . '" style="width: ' . e($overall) . '%;" aria-valuenow="' . e($overall) . '" aria-valuemin="0" aria-valuemax="100">' . e($overall) . '%</div></div>';
+                    $progressHtml = '<div class="progress" style="height:18px;" title="FAI ' . e($faiPass . '/' . $faiReq) . ' | IPI ' . e($ipiPass . '/' . $ipiReq) . '"><div class="progress-bar ' . e($barClass) . '" style="width: ' . e($overall) . '%;" aria-valuenow="' . e($overall) . '" aria-valuemin="0" aria-valuemax="100">' . e($overall) . '%</div></div>';
                     $progressHtml .= $isCompleted
                         ? '<span class="badge badge-success mt-1"><i class="fas fa-check"></i> Done</span>'
-                        : '<small class="text-muted d-block mt-1">FAI ' . e($faiPass . '/' . $faiReq) . ' • IPI ' . e($ipiPass . '/' . $ipiReq) . '</small>';
+                        : '<small class="text-muted d-block mt-1">FAI ' . e($faiPass . '/' . $faiReq) . ' | IPI ' . e($ipiPass . '/' . $ipiReq) . '</small>';
                 }
 
                 $pdfUrl = route('qa.faisummary.pdf', $o->id);
@@ -1706,6 +1714,7 @@ class QaFaiSummaryController extends Controller
         $parentId = $order->parent_id ?: $order->id;
 
         $generatedAt = now('America/Los_Angeles');
+        $user = auth()->user();
 
         // === Total qty padre + hijos ===
         $totalQty = \App\Models\OrderSchedule::query()
@@ -1903,11 +1912,14 @@ class QaFaiSummaryController extends Controller
                 'total_ipi',
                 'sampling',
                 'sampling_check',
+                'completed_by',
+                'inspection_note',
                 'inspection_endate'
             ])
             ->whereNull('parent_id')
             ->where('status_inspection', 'completed')
             ->orderByDesc('inspection_endate')
+            ->with(['completedByUser:id,name'])
             ->withSum([
                 'faiSummaries as fai_pass_qty' => function ($q) {
                     $q->where('insp_type', 'FAI')->where('results', 'pass');
@@ -2870,4 +2882,8 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 }
+
+
+
+
 

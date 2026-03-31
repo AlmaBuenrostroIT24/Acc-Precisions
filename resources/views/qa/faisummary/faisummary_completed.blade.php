@@ -179,13 +179,13 @@
                         class="table table-sm align-middle mb-0 fai-erp-table">
                         <thead class="sticky-thead">
                             <tr>
-                                <th style="width: 100px;">DATE</th>
+                                <th style="width: 76px;">DATE</th>
                                 <th style="width: 70px;">LOC.</th>
                                 <th style="width: 100px;">WORK ID</th>
                                 <th style="width: 100px;">PN</th>
-                                <th style="width: 90px;">CO</th>
-                                <th style="width: 120px;">CUST PO</th>
-                                <th style="width: 200px;">DESCRIPTION</th>
+                                <th style="width: 76px;">CO</th>
+                                <th style="width: 96px;">CUST PO</th>
+                                <th style="width: 268px;">DESCRIPTION</th>
                                 <th style="width: 100px;">SAMP. PLAN</th>
                                 <th style="width: 70px;">WO QTY</th>
                                 <th style="width: 70px;">SAMP.</th>
@@ -238,6 +238,22 @@
     </div>
 </div>
 
+<div id="inspectionNoteModal" class="fai-note-overlay" tabindex="-1" aria-hidden="true">
+    <div class="fai-note-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Inspection Note</h5>
+                <button type="button" class="close" data-note-close="1" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="inspectionNoteModalBody" class="fai-note-modal-body"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 @endsection
@@ -249,6 +265,82 @@
     html {
         overflow-y: scroll;
         scrollbar-gutter: stable;
+    }
+
+    body.modal-open {
+        padding-right: 0 !important;
+        overflow-y: scroll !important;
+    }
+
+    .fai-note-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(255, 255, 255, 0.04);
+        z-index: 1060;
+    }
+
+    .fai-note-overlay.is-open {
+        display: flex;
+    }
+
+    .fai-note-dialog {
+        width: min(680px, 100%);
+    }
+
+    .fai-note-dialog .modal-content {
+        border: 1px solid #cfd8e3;
+        border-radius: 18px;
+        box-shadow: 0 22px 50px rgba(15, 23, 42, 0.16);
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .fai-note-dialog .modal-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #dbe3ec;
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f6fc 100%);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .fai-note-dialog .modal-title {
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #183153;
+        margin: 0;
+    }
+
+    .fai-note-dialog .close {
+        width: 34px;
+        height: 34px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #fff;
+        color: #475569;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        text-shadow: none;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .fai-note-dialog .close:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        border-color: #b6c3d2;
+    }
+
+    .fai-note-dialog .modal-body {
+        padding: 18px;
+        background: #ffffff;
     }
 
     /* KPI cards ERP */
@@ -521,6 +613,42 @@
     #faicompleteTable tbody td:nth-child(15) {
         text-align: left;
     }
+    #faicompleteTable thead th:nth-child(1),
+    #faicompleteTable tbody td:nth-child(1) {
+        width: 76px !important;
+        min-width: 76px !important;
+    }
+    #faicompleteTable thead th:nth-child(5),
+    #faicompleteTable tbody td:nth-child(5) {
+        width: 76px !important;
+        min-width: 76px !important;
+    }
+    #faicompleteTable thead th:nth-child(6),
+    #faicompleteTable tbody td:nth-child(6) {
+        width: 96px !important;
+        min-width: 96px !important;
+    }
+    #faicompleteTable thead th:nth-child(7),
+    #faicompleteTable tbody td:nth-child(7) {
+        width: 268px !important;
+        min-width: 268px !important;
+    }
+    .fai-date-cell {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1.05;
+        gap: 2px;
+        text-align: left;
+    }
+    .fai-date-cell .fai-date-main {
+        font-weight: 600;
+    }
+    .fai-date-cell .fai-date-time {
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+    }
     #faicompleteTable thead th:nth-child(15),
     #faicompleteTable tbody td:nth-child(15) {
         width: 150px !important;
@@ -554,6 +682,53 @@
         background: #cbd5e1 !important;
         color: #334155 !important;
         border: 1px solid #94a3b8 !important;
+    }
+    .fai-note-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        border: 1px solid #94a3b8;
+        background: #eff6ff;
+        color: #334155;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1.05;
+    }
+    .fai-note-chip:hover {
+        background: #e0ecff;
+    }
+    .fai-note-modal-body {
+        min-height: 96px;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        font-size: 1rem;
+        color: #0f172a;
+        background: linear-gradient(180deg, #f8fbff 0%, #f3f8fe 100%);
+        border: 1px solid #d6e0eb;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    }
+
+    .fai-note-meta {
+        margin-bottom: 10px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+
+    .fai-note-meta span {
+        color: #0f172a;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        margin-left: 6px;
     }
 
     /* Botones de acción estilo ERP */
@@ -1006,10 +1181,32 @@
             const url = $(this).data('pdf-url');
             $('#pdfEmbed').attr('src', url + '#zoom=page-width');
             $('#pdfModal').modal('show');
+        })
+        .on('click', '.btn-open-note', function(e) {
+            e.preventDefault();
+            const note = ($(this).data('note') || '').toString();
+            const completedBy = ($(this).data('completed-by') || '').toString().trim();
+            const metaHtml = '<div class="fai-note-meta">Completed By:<span>' + (completedBy || 'N/A') + '</span></div>';
+            $('#inspectionNoteModalBody').html(metaHtml + $('<div/>').text(note).html());
+            $('#inspectionNoteModal').addClass('is-open').attr('aria-hidden', 'false').trigger('focus');
         });
     $('#pdfModal').on('hidden.bs.modal', function() {
         $('#pdfEmbed').attr('src', '');
     });
+    $(document)
+        .on('click', '[data-note-close="1"]', function() {
+            $('#inspectionNoteModal').removeClass('is-open').attr('aria-hidden', 'true');
+        })
+        .on('click', '#inspectionNoteModal', function(e) {
+            if (e.target === this) {
+                $('#inspectionNoteModal').removeClass('is-open').attr('aria-hidden', 'true');
+            }
+        })
+        .on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                $('#inspectionNoteModal').removeClass('is-open').attr('aria-hidden', 'true');
+            }
+        });
 
     /* ===========================
      *  DataTable + Filtros + Export + KPIs
@@ -1505,3 +1702,4 @@
 
 
 @endpush
+

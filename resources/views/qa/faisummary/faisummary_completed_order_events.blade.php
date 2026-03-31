@@ -32,25 +32,36 @@
             return trim((string) $e->operation) === $label;
         });
 
-        $faiPassQty = (int) $opEvents->filter(function ($e) use ($normResult) {
-            return strtoupper(trim((string) $e->insp_type)) === 'FAI' && $normResult($e->results) === 'pass';
-        })->sum(function ($e) {
-            return (int) ($e->qty_pcs ?? 1);
-        });
+        $faiPassQty = 0;
+        $faiNoPass = 0;
+        $ipiPassQty = 0;
+        $ipiNoPass = 0;
 
-        $faiNoPass = (int) $opEvents->filter(function ($e) use ($normResult) {
-            return strtoupper(trim((string) $e->insp_type)) === 'FAI' && $normResult($e->results) === 'no pass';
-        })->count();
+        foreach ($opEvents as $e) {
+            $type = strtoupper(trim((string) ($e->insp_type ?? '')));
+            $res = $normResult($e->results);
+            $qty = (int) ($e->qty_pcs ?? 0);
 
-        $ipiPassQty = (int) $opEvents->filter(function ($e) use ($normResult) {
-            return strtoupper(trim((string) $e->insp_type)) === 'IPI' && $normResult($e->results) === 'pass';
-        })->sum(function ($e) {
-            return (int) ($e->qty_pcs ?? 1);
-        });
+            if ($type === 'FAI') {
+                $faiQty = min(1, max(0, $qty));
+                $spillToIpi = max(0, $qty - $faiQty);
 
-        $ipiNoPass = (int) $opEvents->filter(function ($e) use ($normResult) {
-            return strtoupper(trim((string) $e->insp_type)) === 'IPI' && $normResult($e->results) === 'no pass';
-        })->count();
+                if ($res === 'pass') {
+                    $faiPassQty += $faiQty;
+                    if ($spillToIpi > 0) {
+                        $ipiPassQty += $spillToIpi;
+                    }
+                } elseif ($res === 'no pass') {
+                    $faiNoPass += $faiQty;
+                }
+            } elseif ($type === 'IPI') {
+                if ($res === 'pass') {
+                    $ipiPassQty += $qty;
+                } elseif ($res === 'no pass') {
+                    $ipiNoPass += $qty;
+                }
+            }
+        }
 
         $doneCount = (int) $opEvents->count();
 
