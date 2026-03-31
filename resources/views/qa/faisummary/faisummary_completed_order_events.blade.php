@@ -135,9 +135,6 @@
             </div>
         </div>
         <div>
-            <button type="button" class="btn btn-sm btn-erp btn-erp-primary mr-2" id="btnAddInspectionTop">
-                <i class="fas fa-plus mr-1"></i> Inspection
-            </button>
             <button type="button" class="btn btn-sm btn-erp btn-erp-danger mr-2" id="btnPrintOrderEvents">
                 <i class="fas fa-print mr-1"></i> Print
             </button>
@@ -336,6 +333,12 @@
                             <div class="donut-sub text-danger">No Pass: {{ $ipiFailTotal }}</div>
                         </div>
                     </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-2 mb-2">
+                    <button type="button" class="btn btn-sm btn-erp btn-erp-primary" id="btnAddInspectionTop">
+                        <i class="fas fa-plus mr-1"></i> Inspection
+                    </button>
                 </div>
             </div>
         </div>
