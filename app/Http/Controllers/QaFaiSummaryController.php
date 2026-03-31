@@ -1561,70 +1561,120 @@ class QaFaiSummaryController extends Controller
         $month = $request->integer('month');  // null/0 si no viene
         $day   = $request->input('day');      // string o null
 
-        $select = [
-            'id',
-            'parent_id',
-            'work_id',
-            'PN',
-            'Part_description',
-            'operation',
-            'wo_qty',
-            'group_wo_qty',
-            'location',
-            'status_inspection',
-            'total_fai',
-            'total_ipi',
-            'sampling',
-            'sampling_check',
-            'inspection_endate',
-        ];
-
-        $orderscompleted = \App\Models\OrderSchedule::query()
-            ->select($select)
+        $kpiRows = $this->baseCompletedQuery($request, true, true)->get();
+        $kpis = $this->computeCompletedKpis($kpiRows);
+        $locations = OrderSchedule::query()
             ->whereNull('parent_id')
             ->where('status_inspection', 'completed')
-
-            // 📅 Filtros por fecha (SOLO si llegan)
-            ->when($day, function ($q) use ($day) {
-                $q->whereDate('inspection_endate', \Carbon\Carbon::parse($day)->toDateString());
-            })
-            ->when($year && $month, function ($q) use ($year, $month) {
-                $q->whereYear('inspection_endate', $year)
-                    ->whereMonth('inspection_endate', $month);
-            })
-            ->when($year && !$month, function ($q) use ($year) {
-                $q->whereYear('inspection_endate', $year);
-            })
-            ->when(!$year && $month, function ($q) use ($month) {
-                $q->whereYear('inspection_endate', now()->year)
-                    ->whereMonth('inspection_endate', $month);
-            })
-
-            // ✅ Sumas de piezas aprobadas (qty_pcs) desde qa_faisummary
-            ->withSum([
-                'faiSummaries as fai_pass_qty' => function ($q) {
-                    $q->where('insp_type', 'FAI')
-                        ->where('results', 'pass'); // ajusta a 'Pass' si en tu BD está con mayúscula
-                },
-            ], 'qty_pcs')
-            ->withSum([
-                'faiSummaries as ipi_pass_qty' => function ($q) {
-                    $q->where('insp_type', 'IPI')
-                        ->where('results', 'pass');
-                },
-            ], 'qty_pcs')
-
-            ->orderByDesc('inspection_endate')
-            ->get();
+            ->whereNotNull('location')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location')
+            ->filter()
+            ->values();
 
         return view('qa.faisummary.faisummary_completed', compact(
-            'orderscompleted',
+            'kpis',
+            'locations',
             'year',
             'month',
             'day'
         ));
     }
 
+    public function faicompletedData(Request $request)
+    {
+        try {
+            $draw = (int) $request->input('draw', 1);
+            $start = max(0, (int) $request->input('start', 0));
+            $length = (int) $request->input('length', 10);
+            $length = $length > 0 ? min($length, 100) : 10;
+
+            $recordsTotal = (clone $this->baseCompletedQuery($request, false, false))->count();
+            $filteredBase = $this->baseCompletedQuery($request, true, false);
+            $kpis = $this->computeCompletedKpis((clone $filteredBase)->get());
+            $query = $this->baseCompletedQuery($request, true, true);
+            $recordsFiltered = (clone $query)->count();
+            $rows = $query->skip($start)->take($length)->get();
+
+            $data = $rows->map(function ($o) {
+                $faiReq = (int) ($o->total_fai ?? 0);
+                $ipiReq = (int) ($o->total_ipi ?? 0);
+                $faiPass = (int) ($o->fai_pass_qty ?? 0);
+                $ipiPass = (int) ($o->ipi_pass_qty ?? 0);
+                $sampling = (int) ($o->sampling ?? 0);
+                $ops = (int) ($o->operation ?? 0);
+                $isNoInspection = $sampling === 0 && $ops === 0;
+                $isCompleted = !$isNoInspection && ($faiReq === 0 || $faiPass >= $faiReq) && ($ipiReq === 0 || $ipiPass >= $ipiReq);
+                $totalReq = $faiReq + $ipiReq;
+                $overall = $isNoInspection ? 0 : ($totalReq > 0 ? (int) round((($faiPass + $ipiPass) / $totalReq) * 100) : 100);
+                $barClass = $isCompleted ? 'bg-success' : ($overall >= 75 ? 'bg-info' : ($overall >= 50 ? 'bg-warning' : 'bg-danger'));
+
+                $date = optional($o->inspection_endate);
+                $dateHtml = e(optional($date)->format('M-d-y'));
+                if ($date) {
+                    $dateHtml .= ' <span class="badge badge-light">' . e($date->format('H:i')) . '</span>';
+                }
+
+                if ($isNoInspection) {
+                    $progressHtml = '<span class="badge" style="background:#6c757d;color:white;padding:4px 10px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-exclamation"></i>No Inspection</span>';
+                } else {
+                    $progressHtml = '<div class="progress" style="height:18px;" title="FAI ' . e($faiPass . '/' . $faiReq) . ' � IPI ' . e($ipiPass . '/' . $ipiReq) . '"><div class="progress-bar ' . e($barClass) . '" style="width: ' . e($overall) . '%;" aria-valuenow="' . e($overall) . '" aria-valuemin="0" aria-valuemax="100">' . e($overall) . '%</div></div>' . PHP_EOL;                    $progressHtml .= $isCompleted ? '<span class="badge badge-success mt-1"><i class="fas fa-check"></i> Done</span>' : '<small class="text-muted d-block mt-1">FAI ' . e($faiPass . '/' . $faiReq) . ' � IPI ' . e($ipiPass . '/' . $ipiReq) . '</small>' . PHP_EOL;                }
+
+                $pdfUrl = route('qa.faisummary.pdf', $o->id);
+                $eventsUrl = route('faisummary.completed.events', $o->id);
+                $actionHtml = '<div class="btn-group btn-group-sm" role="group">' . '<a href="#" class="btn btn-danger btn-open-pdf" data-pdf-url="' . e($pdfUrl) . '"><i class="fas fa-print"></i></a>' . '<a href="' . e($pdfUrl) . '?download=1" class="btn btn-info"><i class="fas fa-download"></i></a>' . '<a href="#" class="btn btn-warning btn-edit-pdf" data-id="' . e($o->id) . '"><i class="fas fa-reply"></i></a>' . '<a href="' . e($eventsUrl) . '" class="btn btn-primary btn-edit-row" data-id="' . e($o->id) . '" title="Edit"><i class="fas fa-edit"></i></a>' . '</div>';
+
+                return [
+                    'row_id' => 'row-' . $o->id,
+                    'id' => (int) $o->id,
+                    'date' => $dateHtml,
+                    'location' => e(ucfirst($this->sanitizeUtf8($o->location))),
+                    'work_id' => e($this->sanitizeUtf8($o->work_id)),
+                    'pn' => e($this->sanitizeUtf8($o->PN)),
+                    'description' => e(\Illuminate\Support\Str::before($this->sanitizeUtf8($o->Part_description), ',')),
+                    'sampling_check' => e(ucfirst($this->sanitizeUtf8($o->sampling_check))),
+                    'group_wo_qty' => (int) ($o->group_wo_qty ?? 0),
+                    'sampling' => (int) ($o->sampling ?? 0),
+                    'operation' => (int) ($o->operation ?? 0),
+                    'total_fai' => (int) ($o->total_fai ?? 0),
+                    'total_ipi' => (int) ($o->total_ipi ?? 0),
+                    'progress' => $progressHtml,
+                    'action' => $actionHtml,
+                    'progress_pct' => $overall,
+                    'completed_flag' => $isCompleted ? 1 : 0,
+                    'no_inspection_flag' => $isNoInspection ? 1 : 0,
+                ];
+            })->values()->all();
+
+            return response()->json(['draw' => $draw, 'recordsTotal' => $recordsTotal, 'recordsFiltered' => $recordsFiltered, 'data' => $data, 'meta' => ['kpis' => $kpis]], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (\Throwable $e) {
+            Log::error('faicompletedData error', ['msg' => $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine(), 'draw' => (int) $request->input('draw', 0), 'start' => (int) $request->input('start', 0), 'length' => (int) $request->input('length', 0), 'search' => (string) data_get($request->all(), 'search.value', ''), 'user_id' => optional(auth()->user())->id]);
+            return response()->json(['draw' => (int) $request->input('draw', 0), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => [], 'error' => 'Server error'], 500);
+        }
+    }
+
+    protected function sanitizeUtf8($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        $text = (string) $value;
+        if ($text === '') {
+            return '';
+        }
+
+        if (!preg_match('//u', $text)) {
+            $converted = @mb_convert_encoding($text, 'UTF-8', 'UTF-8, Windows-1252, ISO-8859-1');
+            if (is_string($converted) && $converted !== '') {
+                $text = $converted;
+            }
+        }
+
+        $clean = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
+        return is_string($clean) ? $clean : $text;
+    }
     public function updateStatus(Request $request, OrderSchedule $order)
     {
         $request->validate([
@@ -1645,7 +1695,6 @@ class QaFaiSummaryController extends Controller
         $parentId = $order->parent_id ?: $order->id;
 
         $generatedAt = now('America/Los_Angeles');
-        $user = auth()->user(); // 👈 usuario logueado
 
         // === Total qty padre + hijos ===
         $totalQty = \App\Models\OrderSchedule::query()
@@ -1823,7 +1872,7 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 
-    protected function baseCompletedQuery(Request $request)
+    protected function baseCompletedQuery(Request $request, bool $includeSearch = true, bool $includeStateFilter = false)
     {
         $q = OrderSchedule::query()
             ->select([
@@ -1845,31 +1894,99 @@ class QaFaiSummaryController extends Controller
             ])
             ->whereNull('parent_id')
             ->where('status_inspection', 'completed')
-            ->orderByDesc('inspection_endate') // o el orden que prefieras
+            ->orderByDesc('inspection_endate')
             ->withSum([
                 'faiSummaries as fai_pass_qty' => function ($q) {
-                    $q->where('insp_type', 'FAI')
-                        ->where('results', 'pass'); // ajusta a 'Pass' si en tu BD está con mayúscula
+                    $q->where('insp_type', 'FAI')->where('results', 'pass');
                 },
             ], 'qty_pcs')
             ->withSum([
                 'faiSummaries as ipi_pass_qty' => function ($q) {
-                    $q->where('insp_type', 'IPI')
-                        ->where('results', 'pass');
+                    $q->where('insp_type', 'IPI')->where('results', 'pass');
                 },
             ], 'qty_pcs');
 
-        // filtro de búsqueda global (igual que el de DataTables.search())
-        if ($search = trim($request->get('q', ''))) {
+        $year = $request->integer('year');
+        $month = $request->integer('month');
+        $day = trim((string) $request->input('day', ''));
+        $location = trim((string) $request->input('location', ''));
+        $search = trim((string) ($request->input('search.value') ?? $request->get('q', '')));
+
+        if ($day !== '') {
+            $q->whereDate('inspection_endate', \Carbon\Carbon::parse($day)->toDateString());
+        } elseif ($year && $month) {
+            $q->whereYear('inspection_endate', $year)->whereMonth('inspection_endate', $month);
+        } elseif ($year && !$month) {
+            $q->whereYear('inspection_endate', $year);
+        } elseif (!$year && $month) {
+            $q->whereYear('inspection_endate', now()->year)->whereMonth('inspection_endate', $month);
+        }
+
+        if ($location !== '') {
+            $q->where('location', $location);
+        }
+
+        if ($includeSearch && $search !== '') {
             $q->where(function ($w) use ($search) {
-                $w->where('work_id', 'like', "%{$search}%")
-                    ->orWhere('PN', 'like', "%{$search}%")
-                    ->orWhere('Part_description', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
+                $w->where('work_id', 'like', "%{$search}%" )
+                    ->orWhere('PN', 'like', "%{$search}%" )
+                    ->orWhere('Part_description', 'like', "%{$search}%" )
+                    ->orWhere('location', 'like', "%{$search}%" );
             });
         }
 
+        if ($includeStateFilter) {
+            $onlyCompleted = $request->boolean('only_completed');
+            $onlyIncomplete = $request->boolean('only_incomplete');
+            $onlyNoInspection = $request->boolean('only_no_inspection');
+
+            $noInspectionSql = '(COALESCE(operation,0) = 0 AND COALESCE(sampling,0) = 0)';
+            $completedSql = '((COALESCE(total_fai,0) = 0 OR COALESCE(fai_pass_qty,0) >= COALESCE(total_fai,0)) AND (COALESCE(total_ipi,0) = 0 OR COALESCE(ipi_pass_qty,0) >= COALESCE(total_ipi,0)))';
+
+            if ($onlyCompleted) {
+                $q->havingRaw("NOT {$noInspectionSql} AND {$completedSql}");
+            } elseif ($onlyIncomplete) {
+                $q->havingRaw("NOT {$noInspectionSql} AND NOT {$completedSql}");
+            } elseif ($onlyNoInspection) {
+                $q->havingRaw($noInspectionSql);
+            }
+        }
+
         return $q;
+    }
+
+    protected function computeCompletedKpis($rows): array
+    {
+        $total = 0;
+        $done = 0;
+        $noInspection = 0;
+
+        foreach ($rows as $row) {
+            $total++;
+            $sampling = (int) ($row->sampling ?? 0);
+            $ops = (int) ($row->operation ?? 0);
+
+            if ($sampling === 0 && $ops === 0) {
+                $noInspection++;
+                continue;
+            }
+
+            $faiReq = (int) ($row->total_fai ?? 0);
+            $ipiReq = (int) ($row->total_ipi ?? 0);
+            $faiPass = (int) ($row->fai_pass_qty ?? 0);
+            $ipiPass = (int) ($row->ipi_pass_qty ?? 0);
+
+            if (($faiReq === 0 || $faiPass >= $faiReq) && ($ipiReq === 0 || $ipiPass >= $ipiReq)) {
+                $done++;
+            }
+        }
+
+        return [
+            'total' => $total,
+            'completed' => $done,
+            'no_inspection' => $noInspection,
+            'incomplete' => max(0, $total - $done - $noInspection),
+        ];
     }
     public function exportCompletedExcel(Request $request)
     {
@@ -1910,7 +2027,7 @@ class QaFaiSummaryController extends Controller
                 ->orderByDesc('inspection_endate')
                 ->get();
         } else {
-            $rows = $this->baseCompletedQuery($request)->get();
+            $rows = $this->baseCompletedQuery($request, true, true)->get();
         }
 
         // ============================
@@ -1985,7 +2102,7 @@ class QaFaiSummaryController extends Controller
                 ->orderByDesc('inspection_endate')
                 ->get();
         } else {
-            $rows = $this->baseCompletedQuery($request)->get();
+            $rows = $this->baseCompletedQuery($request, true, true)->get();
         }
 
         $logoPath = public_path('vendor/adminlte/dist/img/accl.png'); // coloca tu logo aquí

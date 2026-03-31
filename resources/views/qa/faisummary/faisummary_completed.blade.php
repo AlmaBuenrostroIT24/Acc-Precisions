@@ -25,6 +25,12 @@
 
 
 @section('content')
+@php
+    $completedTotal = (int) data_get($kpis ?? [], 'total', 0);
+    $completedDone = (int) data_get($kpis ?? [], 'completed', 0);
+    $completedNoInspection = (int) data_get($kpis ?? [], 'no_inspection', 0);
+    $completedIncomplete = (int) data_get($kpis ?? [], 'incomplete', 0);
+@endphp
 
 <div class="row">
 
@@ -37,7 +43,7 @@
                     <span class="info-box-icon"><i class="fas fa-clipboard-list"></i></span>
                     <div class="info-box-content">
                         <span class="info-box-text">Closed inspections</span>
-                        <h5 class="mb-0" id="kpiTotal">0</h5>
+                        <h5 class="mb-0" id="kpiTotal">{{ $completedTotal }}</h5>
                     </div>
                 </div>
             </div>
@@ -47,7 +53,7 @@
                     <div class="info-box-content">
                         <span class="info-box-text">Completed</span>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0" id="kpiPass">0</h5>
+                            <h5 class="mb-0" id="kpiPass">{{ $completedDone }}</h5>
                             <small class="text-black-50">100%</small>
                         </div>
                     </div>
@@ -59,7 +65,7 @@
                     <div class="info-box-content">
                         <span class="info-box-text">Incomplete</span>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0" id="kpiFail">0</h5>
+                            <h5 class="mb-0" id="kpiFail">{{ $completedIncomplete }}</h5>
                             <small class="text-black-50">&lt; 100%</small>
                         </div>
                     </div>
@@ -71,7 +77,7 @@
                     <div class="info-box-content">
                         <span class="info-box-text">No Inspection</span>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0" id="kpiNoInspection">0</h5>
+                            <h5 class="mb-0" id="kpiNoInspection">{{ $completedNoInspection }}</h5>
                             <small class="text-black-50">ops/samp 0</small>
                         </div>
                     </div>
@@ -82,7 +88,7 @@
         <div class="card mb-4">
 
             <div class="card-body p-2">
-                <div class="fai-table-toolbar mb-2">
+                <div class="fai-table-toolbar mb-2" id="faicompleteToolbar">
                     <div class="toolbar-top">
                         <div class="toolbar-left toolbar-filters">
                             <div class="form-group mb-0" id="filterLocationGroup">
@@ -92,6 +98,9 @@
                                     </div>
                                     <select id="locationFilter" class="form-control dt-filter" name="location" form="filtersForm">
                                         <option value="">— All —</option>
+                                        @foreach(($locations ?? []) as $loc)
+                                            <option value="{{ $loc }}" {{ request('location') === $loc ? 'selected' : '' }}>{{ ucfirst($loc) }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -164,10 +173,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive fai-erp-wrap">
+                <div class="fai-table-stage" id="faicompleteStage">
+                    <div class="table-responsive fai-erp-wrap" id="faicompleteWrap">
                     <table id="faicompleteTable"
-                        class="table table-sm align-middle mb-0 fai-erp-table"
-                        style="table-layout: fixed; width: 100%;">
+                        class="table table-sm align-middle mb-0 fai-erp-table">
                         <thead class="sticky-thead">
                             <tr>
                                 <th style="width: 100px;">DATE</th>
@@ -186,102 +195,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($orderscompleted as $o)
-                            @php
-                            // Requerimientos
-                            $faiReqPcs = (int) ($o->total_fai ?? 0);
-                            $ipiReqPcs = (int) ($o->total_ipi ?? 0);
-
-                            // Piezas aprobadas
-                            $faiPassQty = (int) ($o->fai_pass_qty ?? 0);
-                            $ipiPassQty = (int) ($o->ipi_pass_qty ?? 0);
-
-                            // % individuales (solo si hay requerimiento)
-                            $faiPct = $faiReqPcs > 0 ? (int) round(($faiPassQty / $faiReqPcs) * 100) : null;
-                            $ipiPct = $ipiReqPcs > 0 ? (int) round(($ipiPassQty / $ipiReqPcs) * 100) : null;
-
-                            // ===== Overall por PROMEDIO PONDERADO =====
-                            // (pasa_totales / requeridos_totales) * 100
-                            $totalReq = $faiReqPcs + $ipiReqPcs;
-                            $overall = $totalReq > 0
-                            ? (int) round((($faiPassQty + $ipiPassQty) / $totalReq) * 100)
-                            : 100;
-
-                            // Completado = ambas metas alcanzadas (mantengo tu regla actual)
-                            $completed = ($faiReqPcs === 0 || $faiPassQty >= $faiReqPcs)
-                            && ($ipiReqPcs === 0 || $ipiPassQty >= $ipiReqPcs);
-
-                            // Clase de la barra según el overall
-                            $barClass = $completed ? 'bg-success'
-                            : ($overall >= 75 ? 'bg-info'
-                            : ($overall >= 50 ? 'bg-warning' : 'bg-danger'));
-                            @endphp
-                            <tr id="row-{{ $o->id }}" data-progress="{{ $overall }}"
-                                data-completed="{{ $completed ? 1 : 0 }}">
-                                <td>
-                                    {{ optional($o->inspection_endate)->format('M-d-y') }}
-                                    @if($o->inspection_endate)
-                                    <span class="badge badge-light">
-                                        {{ $o->inspection_endate->format('H:i') }}
-                                    </span>
-                                    @endif
-                                </td>
-                                <td>{{ ucfirst($o->location) }}</td>
-                                <td>{{ $o->work_id }}</td>
-                                <td>{{ $o->PN }}</td>
-                                <td class="td-ellipsis" title="{{ $o->Part_description }}">
-                                    {{ \Illuminate\Support\Str::before($o->Part_description, ',') }}
-                                </td>
-                                <td class="text-center">{{ ucfirst($o->sampling_check) }}</td>
-                                <td class="text-center">{{ $o->group_wo_qty }}</td>
-                                <td class="text-center">{{ $o->sampling }}</td>
-                                <td class="text-center">{{ $o->operation }}</td>
-                                <td class="text-center">{{ $o->total_fai }}</td>
-                                <td class="text-center">{{ $o->total_ipi }}</td>
-                                {{-- Columna PROGRESO --}}
-                                <td>
-                                    <div class="progress" style="height:18px;"
-                                        title="FAI {{ $faiPassQty }}/{{ $faiReqPcs }} ({{ $faiPct !== null ? $faiPct : 100 }}%) • IPI {{ $ipiPassQty }}/{{ $ipiReqPcs }} ({{ $ipiPct !== null ? $ipiPct : 100 }}%)">
-                                        <div class="progress-bar {{ $barClass }}" style="width: {{ $overall }}%;"
-                                            aria-valuenow="{{ $overall }}" aria-valuemin="0" aria-valuemax="100">
-                                            {{ $overall }}%
-                                        </div>
-                                    </div>
-
-                                    @if($completed)
-                                    <span class="badge badge-success mt-1"><i class="fas fa-check"></i> Done</span>
-                                    @else
-                                    <small class="text-muted d-block mt-1">
-                                        FAI {{ $faiPassQty }}/{{ $faiReqPcs }} • IPI {{ $ipiPassQty }}/{{ $ipiReqPcs }}
-                                    </small>
-                                    @endif
-                                </td>
-                                <td class="text-nowrap">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="#" class="btn btn-danger btn-open-pdf"
-                                            data-pdf-url="{{ route('qa.faisummary.pdf', $o->id) }}">
-                                            <i class="fas fa-print"></i>
-                                        </a>
-                                        <a href="{{ route('qa.faisummary.pdf', $o->id) }}?download=1"
-                                            class="btn btn-info">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-warning btn-edit-pdf" data-id="{{ $o->id }}">
-                                            <i class="fas fa-reply"></i>
-                                        </a>
-                                        <a href="{{ route('faisummary.completed.events', $o->id) }}" class="btn btn-primary btn-edit-row" data-id="{{ $o->id }}" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            @endforelse
                         </tbody>
                     </table>
-                </div>
             </div>
         </div>
+
     </div>
     <div class="d-none">
         <form method="GET" action="{{ route('faisummary.completed') }}" id="filtersForm"></form>
@@ -326,6 +244,11 @@
 @section('css')
 
 <style>
+    html {
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+    }
+
     /* KPI cards ERP */
     .info-box-sm {
         min-height: 74px;
@@ -589,6 +512,15 @@
         border-radius: 0;
         padding: 0;
         box-shadow: none;
+    }
+
+    .fai-table-stage {
+        position: relative;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        min-height: 24px;
     }
 
     /* Tabla ERP */
@@ -1170,64 +1102,70 @@
 
         const $tbl = $('#faicompleteTable');
         if (!$tbl.length) return;
+        let dtBootstrapped = false;
+        let filterOnlyCompleted = false;
+        let filterOnlyIncomplete = false;
+        let filterOnlyNoInspection = false;
 
         // Destruye si existía
         if ($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
 
-        // Inicializa (si usas AJAX/serverSide, agrégalo aquí)
         const dt = $tbl.DataTable({
+            processing: true,
+            serverSide: true,
             searching: true,
             ordering: false,
-            pageLength: 11,
-            lengthMenu: [
-                [11, 25, 50, -1],
-                [11, 25, 50, 'All']
-            ],
+            pageLength: 10,
+            searchDelay: 250,
             scrollX: false,
             autoWidth: false,
+            rowId: 'row_id',
             dom: 'rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
-            columnDefs: [{
-                    // PROGRESS
-                    targets: COLS.prog,
-                    orderable: false,
-                    render: function(data, type, row, meta) {
-                        // row es un ARREGLO: usa índices
-                        const sampText = row[COLS.sampling] ?? '0'; // columna SAMP.
-                        const opsText = row[COLS.ops] ?? '0'; // columna OPS.
-
-                        const sampling = parseInt(String(sampText).replace(/\D/g, ''), 10) || 0;
-                        const ops = parseInt(String(opsText).replace(/\D/g, ''), 10) || 0;
-
-                        // 1️⃣ Si NO hay operaciones y NO hay sampling → solo "Done"
-                        if (ops === 0 && sampling === 0) {
-                            return `
-<span class="badge" style="
-    background:#6c757d;   /* Bootstrap secondary */
-    color:white;
-    padding:4px 10px;
-    border-radius:6px;
-    font-weight:600;
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-">
-    <i class="fas fa-exclamation"></i>
-    No Inspection
-</span>
-                    `;
-                        }
-
-                        // 2️⃣ Para el resto, deja lo que venga del backend (barra 100%, etc.)
-                        return data;
-                    }
-                },
-                {
-                    targets: COLS.action,
-                    orderable: false
+            ajax: {
+                url: '{{ route('faisummary.completed.data') }}',
+                type: 'GET',
+                data: function(d) {
+                    d.year = ($('#year').val() || '').trim();
+                    d.month = ($('#month').val() || '').trim();
+                    d.day = ($('#day').val() || '').trim();
+                    d.location = ($('#locationFilter').val() || '').trim();
+                    d.only_completed = filterOnlyCompleted ? 1 : 0;
+                    d.only_incomplete = filterOnlyIncomplete ? 1 : 0;
+                    d.only_no_inspection = filterOnlyNoInspection ? 1 : 0;
                 }
-            ]
+            },
+            columns: [
+                { data: 'date', name: 'inspection_endate' },
+                { data: 'location', name: 'location' },
+                { data: 'work_id', name: 'work_id' },
+                { data: 'pn', name: 'PN' },
+                { data: 'description', name: 'Part_description' },
+                { data: 'sampling_check', name: 'sampling_check' },
+                { data: 'group_wo_qty', name: 'group_wo_qty', className: 'text-center' },
+                { data: 'sampling', name: 'sampling', className: 'text-center' },
+                { data: 'operation', name: 'operation', className: 'text-center' },
+                { data: 'total_fai', name: 'total_fai', className: 'text-center' },
+                { data: 'total_ipi', name: 'total_ipi', className: 'text-center' },
+                { data: 'progress', name: 'progress', orderable: false, searchable: false },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ],
+            createdRow: function(row, data) {
+                row.dataset.progress = data.progress_pct ?? 0;
+                row.dataset.completed = data.completed_flag ?? 0;
+                row.dataset.noInspection = data.no_inspection_flag ?? 0;
+            },
+            initComplete: function(settings, json) {
+                dtBootstrapped = true;
+                applyKpis(json?.meta || null);
+                syncKpiActive();
+            },
+            drawCallback: function() {
+                const json = this.api().ajax.json();
+                applyKpis(json?.meta || null);
+                syncKpiActive();
+            }
         });
-
+        $('#locationFilter option[value=""]').text('- All -');
         $('#locationFilter option[value=\"\"]').text('- All -');
 
         const serverYear = @json((string) request('year', now()->year));
@@ -1376,17 +1314,18 @@
                     });
             }
 
-            setTimeout(syncVisibleDateInputs, 0);
-            setTimeout(syncVisibleDateInputs, 100);
+            syncVisibleDateInputs();
         }
 
-        setTimeout(initToolbarDateFilters, 0);
+        initToolbarDateFilters();
 
-        try {
-            const cleanUrl = new URL(`{{ route('faisummary.completed') }}`, window.location.origin);
-            cleanUrl.searchParams.set('year', '{{ now()->year }}');
-            window.history.replaceState({}, '', cleanUrl.toString());
-        } catch (_) {}
+        window.addEventListener('load', function() {
+            try {
+                const cleanUrl = new URL(`{{ route('faisummary.completed') }}`, window.location.origin);
+                cleanUrl.searchParams.set('year', '{{ now()->year }}');
+                window.history.replaceState({}, '', cleanUrl.toString());
+            } catch (_) {}
+        }, { once: true });
 
         window.faiDT = dt; // útil en consola
 
@@ -1402,21 +1341,6 @@
         /* ---------------------------
          * Buscador global
          * --------------------------- */
-        const $search = $('#tableSearch');
-        const $clear = $('#clearTableSearch');
-
-        $search.off('.faic').on('input.faic', function() {
-            dt.search(this.value || '').page('first').draw('page');
-        }).on('keydown.faic', function(e) {
-            if (e.key === 'Enter') e.preventDefault();
-        });
-
-        $clear.off('.faic').on('click.faic', function() {
-            $search.val('');
-            dt.search('').page('first').draw('page');
-            $search.trigger('focus');
-        });
-
         /* ---------------------------
          * Filtros exactos via <select>
          * --------------------------- */
@@ -1456,22 +1380,13 @@
             const el = document.getElementById(selectId);
             if (!el) return;
             el.addEventListener('change', function() {
-                if (!this.value) {
-                    dt.column(colIndex).search('', true, false);
-                } else {
-                    const re = $.fn.dataTable.util.escapeRegex(this.value);
-                    dt.column(colIndex).search('^' + re + '$', true, false);
-                }
                 dt.page('first').draw('page');
             });
         }
 
         FILTERS.forEach(f => bindExactFilter(f.id, f.col));
 
-        function repopulateAll() {
-            FILTERS.forEach(f => populateSelectFromDT(f.id, f.col));
-        }
-        repopulateAll();
+        function repopulateAll() { return; }
         dt.on('search.dt', repopulateAll);
 
         /* ---------------------------
@@ -1480,11 +1395,11 @@
         const $badge = $('#badgeFinished');
 
         function refreshBadge() {
+            if (!dtBootstrapped) return;
             $badge.text(dt.rows({
                 search: 'applied'
             }).count());
         }
-        refreshBadge();
         dt.on('draw.dt search.dt page.dt', refreshBadge);
 
         /* ---------------------------
@@ -1508,6 +1423,22 @@
         const $kpiPass = $('#kpiPass'); // 100%
         const $kpiFail = $('#kpiFail'); // <100%
         const $kpiNoInspection = $('#kpiNoInspection'); // sin inspección
+
+        function applyKpis(meta) {
+            const k = meta?.kpis;
+            if (!k) return;
+            $kpiTotal.text(k.total ?? 0);
+            $kpiPass.text(k.completed ?? 0);
+            $kpiFail.text(k.incomplete ?? 0);
+            $kpiNoInspection.text(k.no_inspection ?? 0);
+        }
+
+        function syncKpiActive() {
+            $('#kpiBoxTotal').toggleClass('fai-filter-active', !filterOnlyCompleted && !filterOnlyIncomplete && !filterOnlyNoInspection);
+            $('.info-box-sm.bg-success').toggleClass('fai-filter-active', filterOnlyCompleted);
+            $('.info-box-sm.bg-danger').toggleClass('fai-filter-active', filterOnlyIncomplete);
+            $('#kpiBoxNoInspection').toggleClass('fai-filter-active', filterOnlyNoInspection);
+        }
 
         function getProgressFromCell(cellVal) {
             const txt = (typeof cellVal === 'string' ? cellVal : ($(cellVal).text?.() || '')).toString();
@@ -1552,30 +1483,15 @@
         }
 
         function updateKpisCompletion() {
-            const rows = dt.rows({
-                search: 'applied'
-            });
-            const nodes = rows.nodes().toArray();
-
-            let done100 = 0;
-            let noInspection = 0;
-            for (const tr of nodes)
-                if (isNoInspection(dt.row(tr).data())) {
-                    noInspection++;
-                } else if (isCompleted100(tr)) {
-                    done100++;
-                }
-
-            const total = rows.count();
-            const not100 = Math.max(0, total - done100 - noInspection);
-
-            $kpiTotal.text(total);
-            $kpiPass.text(done100);
-            $kpiFail.text(not100);
-            $kpiNoInspection.text(noInspection);
+            if (!dtBootstrapped) return;
+            const json = dt.ajax.json();
+            const k = json?.meta?.kpis;
+            if (!k) return;
+            $kpiTotal.text(k.total ?? 0);
+            $kpiPass.text(k.completed ?? 0);
+            $kpiFail.text(k.incomplete ?? 0);
+            $kpiNoInspection.text(k.no_inspection ?? 0);
         }
-
-        updateKpisCompletion();
         dt.on('draw.dt search.dt page.dt', updateKpisCompletion);
 
         // Si tienes filtros externos:
@@ -1584,9 +1500,6 @@
         });
 
         // Toggles KPI filters: Completed 100%, Incomplete, and No Inspection
-        let filterOnlyCompleted = false;
-        let filterOnlyIncomplete = false;
-        let filterOnlyNoInspection = false;
         const $kpiBoxTotal = $('#kpiBoxTotal');
         const $kpiBoxCompleted = $('.info-box-sm.bg-success');
         const $kpiBoxIncomplete = $('.info-box-sm.bg-danger');
@@ -1696,46 +1609,49 @@
         }
 
         function submitExport(formId) {
-            dt.draw(false);
-
             const $form = $('#' + formId);
-            $form.find('input[name="ids[]"]').remove();
-            $form.find('input[name="year"], input[name="month"], input[name="day"], input[name="location"]')
+            $form.find('input[name="ids[]"], input[name="q"], input[name="year"], input[name="month"], input[name="day"], input[name="location"], input[name="only_completed"], input[name="only_incomplete"], input[name="only_no_inspection"]')
                 .remove();
-
-            const ids = getFilteredIds();
-            if (!ids.length) {
-                alert('No hay filas para exportar con el filtro actual.');
-                return;
-            }
-
-            ids.forEach(id => {
-                $form.append($('<input>', {
-                    type: 'hidden',
-                    name: 'ids[]',
-                    value: id
-                }));
-            });
 
             $form.append($('<input>', {
                 type: 'hidden',
+                name: 'q',
+                value: dt.search() || ''
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
                 name: 'year',
-                value: '{{ request("year") }}'
+                value: $('#year').val() || ''
             }));
             $form.append($('<input>', {
                 type: 'hidden',
                 name: 'month',
-                value: '{{ request("month") }}'
+                value: $('#month').val() || ''
             }));
             $form.append($('<input>', {
                 type: 'hidden',
                 name: 'day',
-                value: '{{ request("day") }}'
+                value: $('#day').val() || ''
             }));
             $form.append($('<input>', {
                 type: 'hidden',
                 name: 'location',
-                value: '{{ request("location") }}'
+                value: $('#locationFilter').val() || ''
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'only_completed',
+                value: filterOnlyCompleted ? 1 : 0
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'only_incomplete',
+                value: filterOnlyIncomplete ? 1 : 0
+            }));
+            $form.append($('<input>', {
+                type: 'hidden',
+                name: 'only_no_inspection',
+                value: filterOnlyNoInspection ? 1 : 0
             }));
 
             $form.trigger('submit');

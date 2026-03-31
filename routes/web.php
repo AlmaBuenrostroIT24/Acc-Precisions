@@ -185,6 +185,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/qa/partsrevision/data', [QaFaiSummaryController::class, 'partsrevisionData'])->name('faisummary.partsrevision.data');
     Route::get('/qa/faisummary', [QaFaiSummaryController::class, 'summary'])->name('faisummary.general');
     Route::get('/qa/faicompleted', [QaFaiSummaryController::class, 'faicompleted'])->name('faisummary.completed');
+    Route::get('/qa/faicompleted/data', [QaFaiSummaryController::class, 'faicompletedData'])->name('faisummary.completed.data');
     Route::get('/qa/faicompleted/{order}/events', [QaFaiSummaryController::class, 'completedOrderEvents'])->name('faisummary.completed.events');
     Route::get('/qa/faistatistics', [QaFaiSummaryController::class, 'faistatistics'])->name('faisummary.statistics');
     Route::get('/qa/rejectedfaiorders', [QaFaiSummaryController::class, 'rejectedfaiorders'])->name('faisummary.rejectedfaiorders');
