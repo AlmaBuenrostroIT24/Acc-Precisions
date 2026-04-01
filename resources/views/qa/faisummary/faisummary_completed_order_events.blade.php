@@ -461,7 +461,7 @@
 @section('css')
 <style>
     .modal-header-like {
-        background: linear-gradient(180deg, #f8fbff 0%, #f1f6fc 100%);
+        background: #f4f8fc;
         border-bottom: 1px solid rgba(15,23,42,.08);
         border-radius: 14px 14px 0 0;
         padding: .55rem .8rem;
@@ -477,7 +477,7 @@
         height: 36px;
         border-radius: 12px;
         border: 1px solid rgba(59,130,246,.26);
-        background: linear-gradient(180deg, rgba(59,130,246,.18) 0%, rgba(59,130,246,.12) 100%);
+        background: #e8f1fb;
         color: #0d6efd;
         display: inline-flex;
         align-items: center;
@@ -497,7 +497,7 @@
         width: 32px;
         height: 32px;
         border-radius: 10px;
-        background: linear-gradient(180deg, #eef3f8 0%, #e7edf5 100%);
+        background: #eef3f8;
         border: 1px solid #d5dde7;
         color: #475569;
         display: inline-flex;
@@ -531,7 +531,7 @@
     .evt-left-panel {
         border: 1px solid #d8e0ea;
         border-radius: 16px;
-        background: linear-gradient(180deg, #fcfdff 0%, #f7fafc 100%);
+        background: #f8fbff;
         padding: .7rem .85rem .8rem;
         box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
     }
@@ -562,7 +562,7 @@
         margin-bottom: .24rem;
     }
     .evt-readonly {
-        background: linear-gradient(180deg, #edf2f8 0%, #e5ebf3 100%);
+        background: #eaf0f7;
         border: 1px solid #d2dbe6;
         font-weight: 600;
         min-height: 40px;
@@ -578,7 +578,7 @@
         resize: vertical;
         white-space: pre-wrap;
         border-radius: 12px;
-        background: linear-gradient(180deg, #edf3fa 0%, #e4ecf6 100%);
+        background: #eaf1f8;
     }
     .packet-head {
         border-bottom: 1px solid rgba(15,23,42,.08);
@@ -594,7 +594,7 @@
         margin-bottom: 0;
     }
     .packet-table thead th {
-        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        background: #e8eef5;
         color: #0f172a;
         font-size: .84rem;
         font-weight: 800;
@@ -641,7 +641,7 @@
         position: relative;
         border: 1px solid #d8e0ea;
         border-radius: 16px;
-        background: linear-gradient(180deg, #fcfdff 0%, #f7fafc 100%);
+        background: #f8fbff;
         padding: .62rem .95rem .7rem;
         overflow: hidden;
         box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
@@ -1090,7 +1090,7 @@
         min-width: 1520px;
     }
     .evt-table thead th {
-        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        background: #e8eef5;
         color: #0f172a;
         font-weight: 800;
         font-size: .9rem;

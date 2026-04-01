@@ -302,7 +302,7 @@
     .fai-note-dialog .modal-header {
         padding: 14px 18px;
         border-bottom: 1px solid #dbe3ec;
-        background: linear-gradient(180deg, #f8fbff 0%, #f1f6fc 100%);
+        background: #f4f8fc;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -365,7 +365,7 @@
         font-size: 1.12rem;
         line-height: 42px;
         border-radius: 13px;
-        background: linear-gradient(180deg, #f8fafc 0%, #e8eef6 100%);
+        background: #eef3f8;
         border: 1px solid #d7dfeb;
         box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,.82);
     }
@@ -404,7 +404,7 @@
     }
 
     .info-box-sm.bg-danger .info-box-icon {
-        color: #c82333 !important;
+        color: #b45309 !important;
     }
 
     .info-box-sm.bg-info .info-box-icon {
@@ -414,13 +414,13 @@
     /* Neutralizar fondo sólido de clases bg-* para usar el estilo ERP */
     /* Neutralizar fondo sólido de clases bg-* para usar el estilo ERP */
     .info-box.bg-secondary {
-        background: rgba(108, 117, 125, 0.16) !important;
+        background: #eef2f7 !important;
         border-color: rgba(108, 117, 125, 0.25) !important;
         color: #1f2937 !important;
     }
 
     .info-box.bg-success {
-        background: rgba(25, 135, 84, 0.16) !important;
+        background: #e8f5ed !important;
         border-color: rgba(25, 135, 84, 0.25) !important;
         color: #0f172a !important;
         cursor: pointer;
@@ -428,28 +428,27 @@
     }
 
     .info-box.bg-danger {
-        background: rgba(220, 53, 69, 0.16) !important;
-        border-color: rgba(220, 53, 69, 0.25) !important;
+        background: #fef3c7 !important;
+        border-color: rgba(245, 158, 11, 0.28) !important;
         color: #0f172a !important;
         cursor: pointer;
         user-select: none;
     }
 
     .info-box.bg-info {
-        background: rgba(13, 110, 253, 0.16) !important;
+        background: #eaf2ff !important;
         border-color: rgba(13, 110, 253, 0.25) !important;
         color: #0f172a !important;
     }
 
-    /* Mantener fondo blanco aunque tengan bg-* por defecto */
     .info-box-sm.bg-success,
     .info-box-sm.bg-danger,
     .info-box-sm.bg-secondary,
-    .info-box-sm.bg-info {
-        background: #fff !important;
-        border-color: #dbe3ee !important;
-        color: #0f172a !important;
-    }
+    .info-box-sm.bg-info { color: #0f172a !important; }
+    .info-box-sm.bg-success { background: #e8f5ed !important; border-color: #d3e7da !important; }
+    .info-box-sm.bg-danger { background: #fef3c7 !important; border-color: #f2d79a !important; }
+    .info-box-sm.bg-secondary { background: #eef2f7 !important; border-color: #d9e0e7 !important; }
+    .info-box-sm.bg-info { background: #eaf2ff !important; border-color: #d6e1f0 !important; }
     .info-box-sm::after {
         content: '';
         position: absolute;
@@ -474,25 +473,25 @@
     .info-box-sm.bg-success::after,
     .info-box-sm.bg-success::before   { background: rgba(25, 135, 84, 0.82); }
     .info-box-sm.bg-danger::after,
-    .info-box-sm.bg-danger::before    { background: rgba(220, 53, 69, 0.82); }
+    .info-box-sm.bg-danger::before    { background: rgba(217, 119, 6, 0.82); }
     .info-box-sm.bg-info::after,
     .info-box-sm.bg-info::before      { background: rgba(13, 110, 253, 0.82); }
 
     /* Activo: pinta el fondo suave al aplicar filtro */
     .info-box-sm.fai-filter-active.bg-success {
-        background: linear-gradient(180deg, rgba(25, 135, 84, 0.10) 0%, rgba(25, 135, 84, 0.04) 100%) !important;
+        background: #dcefe3 !important;
         border-color: rgba(25, 135, 84, 0.45) !important;
     }
     .info-box-sm.fai-filter-active.bg-danger {
-        background: linear-gradient(180deg, rgba(220, 53, 69, 0.10) 0%, rgba(220, 53, 69, 0.04) 100%) !important;
-        border-color: rgba(220, 53, 69, 0.45) !important;
+        background: #fce7b2 !important;
+        border-color: rgba(217, 119, 6, 0.42) !important;
     }
     .info-box-sm.fai-filter-active.bg-secondary {
-        background: linear-gradient(180deg, rgba(108, 117, 125, 0.10) 0%, rgba(108, 117, 125, 0.04) 100%) !important;
+        background: #e4e9ef !important;
         border-color: rgba(108, 117, 125, 0.45) !important;
     }
     .info-box-sm.fai-filter-active.bg-info {
-        background: linear-gradient(180deg, rgba(13, 110, 253, 0.10) 0%, rgba(13, 110, 253, 0.04) 100%) !important;
+        background: #dde9ff !important;
         border-color: rgba(13, 110, 253, 0.45) !important;
     }
 
