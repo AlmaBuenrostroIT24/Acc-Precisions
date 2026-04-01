@@ -28,6 +28,7 @@ class QaFaiSummaryController extends Controller
      * 1. TAB "FAI/IPI SUMMARY" ------------Parts Revision----------------
      * ===================================================================================================================
      */
+    //abr.01.26-(3.12 se completo el diseno faicomplete)
 
     public function partsrevision()
     {
