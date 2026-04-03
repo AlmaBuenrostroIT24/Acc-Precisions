@@ -498,6 +498,18 @@ class Order_ScheduleController extends Controller
             }
             $prevInspection = $inspectionOrder->status_inspection;
 
+            if (
+                $newStatus === 'sent' &&
+                strtolower((string) $inspectionOrder->status_inspection) !== 'completed'
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Before changing the status to 'sent', you must contact Quality Control personnel to complete the inspection.",
+                    'status_inspection' => strtolower((string) $inspectionOrder->status_inspection),
+                    'inspection_progress' => (int) ($inspectionOrder->inspection_progress ?? 0),
+                ], 422);
+            }
+
             $order->status = $newStatus;
 
             // guardar nota si vino

@@ -1717,8 +1717,92 @@ ${error && error.message ? error.message : error}`);
             );
         };
 
-        //  Confirmacion si nuevo estado es 'sent'
+        //  Validacion reforzada antes de confirmar si el nuevo estado es 'sent'
         if (newStatus === "sent") {
+            $.getJSON(`/orders/${orderId}/ops-meta`)
+                .then(function (meta) {
+                    const inspectionStatus = String(
+                        (meta && meta.status_inspection) || ""
+                    ).toLowerCase();
+                    const progressPct = Number(
+                        (meta && meta.inspection_progress) || 0
+                    );
+
+                    if (inspectionStatus !== "completed") {
+                        erpSwalFire({
+                            icon: "warning",
+                            title: "Inspection incomplete",
+                            html: `
+                                <div class="text-left">
+                                    <div class="mb-2">Current inspection progress: <b>${progressPct}%</b></div>
+                                    <div>Before changing the status to <b>'sent'</b>, you must contact Quality Control personnel to complete the inspection.</div>
+                                </div>
+                            `,
+                            confirmButtonText: "OK",
+                        }).then(() => {
+                            select.val(oldStatus).trigger("change");
+                        });
+                        return;
+                    }
+
+                    // 1) Intentar leer WO_QTY de input y, si no, del td
+                    const $inp = row.find(".wo-qty-input");
+
+                    // 2) Normalizar a numero (tolerando comas, espacios, etc.)
+                    const toNumber = (v) => {
+                        if (v === undefined || v === null) return null;
+                        const n = Number(String(v).replace(/[^\d.-]/g, ""));
+                        return Number.isFinite(n) ? n : null;
+                    };
+
+                    // Prioridad: input -> td
+                    const woQtyNum = toNumber($inp.length ? $inp.val() : null);
+
+                    // 3) Validar
+                    if (!Number.isFinite(woQtyNum) || woQtyNum < 0) {
+                        erpSwalFire({
+                            icon: "warning",
+                            title: "WO_QTY required",
+                            text: "Before selecting as 'sent', you must capture a valid value in WO_QTY.",
+                            confirmButtonText: "OK",
+                        }).then(() => {
+                            select.val(oldStatus).trigger("change");
+                            if ($inp.length) $inp.focus().select();
+                        });
+                        return;
+                    }
+
+                    // 4) Confirmar envio
+                    erpSwalFire({
+                        title: "¿Are you sure?",
+                        text: `Changing the status to '${newStatus}'. It will be moved to 'Completed Orders'.`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, Completed",
+                        cancelButtonText: "No, cancel",
+                        reverseButtons: true,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            enviarCambioStatus();
+                        } else {
+                            select.val(oldStatus).trigger("change");
+                        }
+                    });
+                })
+                .catch(function () {
+                    select.val(oldStatus).trigger("change");
+                    erpSwalFire({
+                        icon: "error",
+                        title: "Inspection validation failed",
+                        text: "Unable to verify the inspection status before changing to 'sent'.",
+                        confirmButtonText: "OK",
+                    });
+                });
+            return;
+        }
+
+        //  Confirmacion si nuevo estado es 'sent'
+        if (false && newStatus === "sent") {
             // 1) Intentar leer WO_QTY de input y, si no, del td
             const $inp = row.find(".wo-qty-input");
 

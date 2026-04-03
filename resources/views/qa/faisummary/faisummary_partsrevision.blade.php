@@ -1527,6 +1527,90 @@ body .content {
   color: #111827 !important;
 }
 
+.fai-erp-swal-popup {
+  border-radius: 18px !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22) !important;
+  background: #ffffff !important;
+  padding: 1.2rem 1.2rem 1rem !important;
+}
+
+.fai-erp-swal-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  font-size: 2rem !important;
+  letter-spacing: -0.02em;
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0.35rem !important;
+}
+
+.fai-erp-swal-html {
+  color: #334155 !important;
+  font-weight: 600;
+  font-size: 1.05rem !important;
+}
+
+.fai-erp-swal-label {
+  color: #334155 !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+  font-size: 1rem !important;
+  margin-bottom: 0.45rem !important;
+}
+
+.fai-erp-swal-textarea {
+  border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  min-height: 140px !important;
+  padding: 0.85rem 0.95rem !important;
+  font-size: 0.95rem !important;
+}
+
+.fai-erp-swal-textarea:focus {
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 .15rem rgba(13, 110, 253, 0.15) !important;
+}
+
+.fai-erp-swal-icon {
+  border-color: #f6b26b !important;
+  color: #f4b400 !important;
+  width: 5em !important;
+  height: 5em !important;
+  margin-top: 0.2rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.fai-erp-swal-confirm,
+.fai-erp-swal-cancel {
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em;
+  box-shadow: none !important;
+  padding: 0.7rem 1.35rem !important;
+}
+
+.fai-erp-swal-confirm {
+  background: #165edc !important;
+  border: 1px solid #165edc !important;
+  color: #fff !important;
+}
+
+.fai-erp-swal-cancel {
+  background: #ffffff !important;
+  border: 1px solid #d5d8dd !important;
+  color: #475569 !important;
+}
+
+.fai-erp-swal-confirm:hover,
+.fai-erp-swal-cancel:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.12) !important;
+}
+
 </style>
 @endsection
 
@@ -2573,7 +2657,9 @@ body .content {
       // Campos base
       const id = button.data('id');
       const opIn = (button.data('operation') === 'default_value') ? '' : (button.data('operation') || '');
+      const statusInspection = (button.data('status-inspection') || 'pending').toString().toLowerCase();
       $modal.find('#edit-id, #order-id').val(id);
+      $modal.find('#edit-status-inspection').val(statusInspection);
       $modal.find('#edit-workid').val(button.data('workid'));
       $modal.find('#edit-woqty').val(button.data('woqty'));
       ctx.modal.$operationInput.val(opIn);
@@ -4049,6 +4135,109 @@ body .content {
           Swal.fire('Error', 'There was a server problem.', 'error');
         });
     });
+  });
+  $(document).off('click', '#btnFinishInspection');
+  $(document).on('click', '#btnFinishInspection', function(e) {
+    e.preventDefault();
+
+    const orderId = $('#edit-id').val();
+    const currentStatus = ($('#edit-status-inspection').val() || 'pending').toString().toLowerCase();
+    if (!orderId) {
+      Swal.fire('Error', 'No order selected.', 'error');
+      return;
+    }
+
+    const submitFinishInspection = (inspectionNote = '') => {
+      Swal.fire({
+        title: 'Finish Inspection?',
+        text: "The inspection will change status to 'Completed'.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Yes, Complete'
+      }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        fetch(`/orders-schedule/${orderId}/status-inspection`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': ($('input[name="_token"]').val() || $('meta[name="csrf-token"]').attr('content') || '')
+            },
+            body: JSON.stringify({
+              status_inspection: 'completed',
+              inspection_note: inspectionNote
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              $('#edit-status-inspection').val((data.status_inspection || 'completed').toString().toLowerCase());
+              Swal.fire('Updated!', 'Inspection marked as Completed.', 'success')
+                .then(() => {
+                  $('#editModal').modal('hide');
+                  const $t = $('#faicompleteTable');
+                  if ($.fn.DataTable && $.fn.DataTable.isDataTable($t)) {
+                    const api = $t.DataTable();
+                    const hasAjax = !!api.settings()[0].ajax;
+                    if (hasAjax && api.ajax) api.ajax.reload(null, false);
+                  }
+                });
+            } else {
+              Swal.fire('Error', 'Could not update status.', 'error');
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'There was a server problem.', 'error');
+          });
+      });
+    };
+
+    if (currentStatus === 'pending') {
+      Swal.fire({
+        title: 'Inspection Note',
+        target: document.getElementById('editModal'),
+        icon: 'warning',
+        input: 'textarea',
+        inputLabel: 'Explain why there is no inspection plan',
+        inputPlaceholder: 'Write why there is no inspection plan...',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'fai-erp-swal-popup',
+          title: 'fai-erp-swal-title',
+          htmlContainer: 'fai-erp-swal-html',
+          icon: 'fai-erp-swal-icon',
+          inputLabel: 'fai-erp-swal-label',
+          textarea: 'fai-erp-swal-textarea',
+          confirmButton: 'fai-erp-swal-confirm',
+          cancelButton: 'fai-erp-swal-cancel'
+        },
+        inputAttributes: {
+          'aria-label': 'Inspection note'
+        },
+        didOpen: () => {
+          const input = Swal.getInput();
+          if (input) input.focus();
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Continue',
+        cancelButtonText: 'Cancel',
+        inputValidator: (value) => {
+          const note = String(value || '').trim();
+          if (note.length < 5) return 'Please enter at least 5 characters.';
+          if (note.length > 500) return 'Inspection note must be 500 characters or less.';
+          return null;
+        }
+      }).then((noteResult) => {
+        if (!noteResult.isConfirmed) return;
+        submitFinishInspection(String(noteResult.value || '').trim());
+      });
+      return;
+    }
+
+    submitFinishInspection('');
   });
 </script>
 
