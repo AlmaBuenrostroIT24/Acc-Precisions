@@ -29,6 +29,7 @@ class QaFaiSummaryController extends Controller
      * ===================================================================================================================
      */
     //abr.01.26-(3.12 se completo el diseno faicomplete)
+    //abr.03.26-(4.1 se acomodo el error de guardado de hora en el modal faisummary yla vizuallizacion de la alerta FAI no pass)
 
     public function partsrevision()
     {
@@ -321,7 +322,8 @@ class QaFaiSummaryController extends Controller
               data-pn="' . e($r->PN) . '"
               data-description="' . e($r->Part_description) . '"
               data-sampling="' . e($r->sampling ?? 0) . '"
-              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '"
+              data-status-inspection="' . e(strtolower((string) ($r->status_inspection ?? 'pending'))) . '">
               <i class="fas fa-edit"></i>
             </button>';
 
@@ -903,22 +905,42 @@ class QaFaiSummaryController extends Controller
     {
         $data = $this->getFaiSummaryData($request);
 
-        // ALERTAS: siempre tomar TODOS los pendientes (sin filtrar por fecha de la tabla).
+        // ALERTAS: evaluar el �ltimo FAI por operaci�n. Si alguna operaci�n queda en No Pass,
+        // la orden sigue alertando aunque otra operaci�n m�s reciente tenga Pass.
         $failedOrders = QaFaiSummary::with('orderSchedule')
             ->whereRaw("UPPER(TRIM(insp_type)) = 'FAI'")
             ->whereHas('orderSchedule', function ($q) {
                 $q->whereRaw("LOWER(TRIM(COALESCE(status_inspection,''))) <> 'completed'");
             })
             ->orderByDesc('date')
+            ->orderByDesc('id')
             ->get()
             ->groupBy('order_schedule_id')
-            ->map(function ($group) {
-                return $group->first();
+            ->map(function ($orderGroup) {
+                $pendingByOp = $orderGroup
+                    ->groupBy(function ($row) {
+                        return strtoupper(trim((string) ($row->operation ?? '')));
+                    })
+                    ->map(function ($opGroup) {
+                        return $opGroup->first();
+                    })
+                    ->filter(function ($latestByOp) {
+                        $result = strtolower(trim((string) ($latestByOp->results ?? '')));
+                        return in_array($result, ['fail', 'no pass', 'nopass', 'no_pass'], true);
+                    })
+                    ->sort(function ($a, $b) {
+                        $ad = strtotime((string) ($a->date ?? '')) ?: 0;
+                        $bd = strtotime((string) ($b->date ?? '')) ?: 0;
+                        if ($ad === $bd) {
+                            return ((int) ($b->id ?? 0)) <=> ((int) ($a->id ?? 0));
+                        }
+                        return $bd <=> $ad;
+                    })
+                    ->values();
+
+                return $pendingByOp->first();
             })
-            ->filter(function ($latest) {
-                $result = strtolower(trim((string) $latest->results));
-                return in_array($result, ['fail', 'no pass', 'nopass', 'no_pass'], true);
-            })
+            ->filter()
             ->values();
 
         $data['failedOrders'] = $failedOrders;
