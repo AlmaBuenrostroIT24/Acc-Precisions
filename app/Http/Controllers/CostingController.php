@@ -328,6 +328,7 @@ class CostingController extends Controller
     {
         $validated = $request->validate([
             'type_material' => ['nullable', 'string', 'max:100'],
+            'qty_material' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
             'notes_bottom' => ['nullable', 'string'],
             'drawing_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
@@ -341,6 +342,11 @@ class CostingController extends Controller
             'percentage' => ['nullable', 'string'],
             'total_labor' => ['nullable', 'string'],
             'total_time_order' => ['nullable', 'string'],
+            'sum_programming' => ['nullable', 'string'],
+            'sum_setup' => ['nullable', 'string'],
+            'sum_runtime_pcs' => ['nullable', 'string'],
+            'sum_runtime_total' => ['nullable', 'string'],
+            'hrs_actual' => ['nullable', 'string'],
             'operations' => ['nullable', 'array'],
             'operations.*.name_operation' => ['nullable', 'string', 'max:150'],
             'operations.*.resource_name' => ['nullable', 'string', 'max:150'],
@@ -360,9 +366,16 @@ class CostingController extends Controller
             $payload = [
                 'status' => 'draft',
                 'type_material' => $validated['type_material'] ?? null,
+                'qty_material' => $this->parseMoney($validated['qty_material'] ?? null),
                 'total_material' => $this->parseMoney($validated['total_material'] ?? null),
                 'total_outsource' => $this->parseMoney($validated['total_outsource'] ?? null),
                 'total_time_order' => $this->timeStringToDecimalHours($validated['total_time_order'] ?? null),
+                'hrs_programming' => $this->timeStringToDecimalHours($validated['sum_programming'] ?? null),
+                'hrs_setup' => $this->timeStringToDecimalHours($validated['sum_setup'] ?? null),
+                'hrs_runtime' => $this->timeStringToDecimalHours($validated['sum_runtime_pcs'] ?? null),
+                'hrs_runtimetotal' => $this->timeStringToDecimalHours($validated['sum_runtime_total'] ?? null),
+                'hrs_actual' => $this->timeStringToDecimalHours($validated['hrs_actual'] ?? null),
+                'hrs_variance' => $this->timeStringToDecimalHours($validated['hrs_actual'] ?? null) - $this->timeStringToDecimalHours($validated['total_time_order'] ?? null),
                 'total_labor' => $this->parseMoney($validated['total_labor'] ?? null),
                 'sale_price' => $this->parseMoney($validated['sale_price'] ?? null),
                 'price_pcs' => $woQty > 0 ? round($grandTotalCost / $woQty, 2) : 0,
@@ -734,11 +747,18 @@ class CostingController extends Controller
     {
         $fields = [
             'type_material',
+            'qty_material',
             'drawing_pdf_path',
             'quote_pdf_path',
             'total_material',
             'total_outsource',
             'total_time_order',
+            'hrs_programming',
+            'hrs_setup',
+            'hrs_runtime',
+            'hrs_runtimetotal',
+            'hrs_actual',
+            'hrs_variance',
             'total_labor',
             'sale_price',
             'price_pcs',
@@ -844,7 +864,7 @@ class CostingController extends Controller
             return 'blank';
         }
 
-        if (in_array($field, ['total_material', 'total_outsource', 'total_labor', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost', 'labor_rate', 'operation_cost'], true)) {
+        if (in_array($field, ['qty_material', 'total_material', 'total_outsource', 'total_labor', 'sale_price', 'price_pcs', 'grandtotal_cost', 'difference_cost', 'labor_rate', 'operation_cost'], true)) {
             return number_format((float) $value, 2);
         }
 
@@ -852,7 +872,7 @@ class CostingController extends Controller
             return number_format((float) $value, 2);
         }
 
-        if (in_array($field, ['total_time_order', 'time_programming', 'time_setup', 'runtime_pcs', 'runtime_total', 'total_time_operation'], true)) {
+        if (in_array($field, ['total_time_order', 'hrs_programming', 'hrs_setup', 'hrs_runtime', 'hrs_runtimetotal', 'hrs_actual', 'hrs_variance', 'time_programming', 'time_setup', 'runtime_pcs', 'runtime_total', 'total_time_operation'], true)) {
             return $this->decimalHoursToTimeString((float) $value);
         }
 

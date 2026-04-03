@@ -328,7 +328,11 @@
             color: #111827;
             vertical-align: middle;
             line-height: 1.2;
-            background: #fff;
+            background: #f1f5f9;
+        }
+
+        .costing-table-total-row .costing-form-control {
+            font-weight: 800;
         }
 
         .costing-summary-right {
@@ -600,7 +604,7 @@
         }
 
         .costing-duration-input {
-            display: none;
+            text-align: center;
         }
 
         .costing-duration-trigger {
@@ -970,8 +974,6 @@
                                         </div>
                                     </div>
                                     <div class="costing-info-row">
-                                        <div class="costing-info-label"></div>
-                                        <div class="costing-info-value"></div>
                                         <div class="costing-info-label">Setup:</div>
                                         <div class="costing-info-value">
                                             @if(!empty($faiPassSummary))
@@ -979,6 +981,10 @@
                                             @else
                                                 N/A
                                             @endif
+                                        </div>
+                                        <div class="costing-info-label">Qty Material:</div>
+                                        <div class="costing-info-value">
+                                            <input class="costing-inline-input" type="text" name="qty_material" value="{{ old('qty_material', isset($costing) && (float) ($costing->qty_material ?? 0) !== 0.0 ? number_format((float) $costing->qty_material, 4, '.', '') : '') }}">
                                         </div>
                                     </div>
                                 </div>
@@ -1052,7 +1058,7 @@
                                                 <td>
                                                     <input
                                                         class="costing-form-control costing-duration-input js-duration-field"
-                                                        type="hidden"
+                                                        type="text"
                                                         name="operations[{{ $index }}][time_programming]"
                                                         value="{{ old("operations.$index.time_programming", $formatHours($operation->time_programming ?? 0)) }}"
                                                     >
@@ -1060,7 +1066,7 @@
                                                 <td>
                                                     <input
                                                         class="costing-form-control costing-duration-input js-duration-field"
-                                                        type="hidden"
+                                                        type="text"
                                                         name="operations[{{ $index }}][time_setup]"
                                                         value="{{ old("operations.$index.time_setup", $formatHours($operation->time_setup ?? 0)) }}"
                                                     >
@@ -1068,7 +1074,7 @@
                                                 <td>
                                                     <input
                                                         class="costing-form-control costing-duration-input js-duration-field"
-                                                        type="hidden"
+                                                        type="text"
                                                         name="operations[{{ $index }}][runtime_pcs]"
                                                         value="{{ old("operations.$index.runtime_pcs", $formatHours($operation->runtime_pcs ?? 0)) }}"
                                                     >
@@ -1076,7 +1082,7 @@
                                                 <td>
                                                     <input
                                                         class="costing-form-control costing-duration-input js-duration-field js-runtime-total-field"
-                                                        type="hidden"
+                                                        type="text"
                                                         name="operations[{{ $index }}][runtime_total]"
                                                         value="{{ old("operations.$index.runtime_total", $formatHours($operation->runtime_total ?? 0)) }}"
                                                     >
@@ -1084,7 +1090,7 @@
                                                 <td>
                                                     <input
                                                         class="costing-form-control costing-duration-input js-duration-field js-row-total-time"
-                                                        type="hidden"
+                                                        type="text"
                                                         name="operations[{{ $index }}][total_time_operation]"
                                                         value="{{ old("operations.$index.total_time_operation", $index === 0 ? '0:00:00' : $formatHours($operation->total_time_operation ?? 0)) }}"
                                                     >
@@ -1096,19 +1102,31 @@
                                         <tr class="costing-table-total-row">
                                             <td class="costing-summary-label" colspan="2">Total Times:</td>
                                             <td class="costing-summary-center">
-                                                <input class="costing-form-control costing-summary-center costing-summary-readonly" type="text" name="sum_programming" value="{{ old('sum_programming', $formatHours($sumProgramming)) }}" readonly>
+                                                <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-times-display" type="text" name="sum_programming" value="{{ old('sum_programming', $formatHours($sumProgramming)) }}" readonly>
                                             </td>
                                             <td class="costing-summary-center">
-                                                <input class="costing-form-control costing-summary-center costing-summary-readonly" type="text" name="sum_setup" value="{{ old('sum_setup', $formatHours($sumSetup)) }}" readonly>
+                                                <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-times-display" type="text" name="sum_setup" value="{{ old('sum_setup', $formatHours($sumSetup)) }}" readonly>
                                             </td>
                                             <td class="costing-summary-center">
-                                                <input class="costing-form-control costing-summary-center costing-summary-readonly" type="text" name="sum_runtime_pcs" value="{{ old('sum_runtime_pcs', $formatHours($sumRuntimePcs)) }}" readonly>
+                                                <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-times-display" type="text" name="sum_runtime_pcs" value="{{ old('sum_runtime_pcs', $formatHours($sumRuntimePcs)) }}" readonly>
                                             </td>
                                             <td class="costing-summary-center">
-                                                <input class="costing-form-control costing-summary-center costing-summary-readonly" type="text" name="sum_runtime_total" value="{{ old('sum_runtime_total', $formatHours($sumRuntimeTotal)) }}" readonly>
+                                                <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-times-display" type="text" name="sum_runtime_total" value="{{ old('sum_runtime_total', $formatHours($sumRuntimeTotal)) }}" readonly>
                                             </td>
                                             <td class="costing-summary-center costing-summary-value">
-                                                <input class="costing-form-control costing-summary-center costing-summary-value costing-summary-readonly" type="text" name="total_time_order" value="{{ old('total_time_order', $formatHours($costing->total_time_order ?? $sumTotalTimeOperation)) }}" readonly>
+                                                <input class="costing-form-control costing-summary-center costing-summary-value costing-summary-readonly js-total-times-display" type="text" name="total_time_order" value="{{ old('total_time_order', $formatHours($costing->total_time_order ?? $sumTotalTimeOperation)) }}" readonly>
+                                            </td>
+                                        </tr>
+                                        <tr class="costing-table-total-row">
+                                            <td class="costing-summary-label" colspan="6">Actual Hours:</td>
+                                            <td class="costing-summary-center">
+                                                <input class="costing-form-control costing-summary-center js-hours-display" type="text" name="hrs_actual" value="{{ old('hrs_actual', isset($costing) && (float) ($costing->hrs_actual ?? 0) !== 0.0 ? $formatHours($costing->hrs_actual) : '') }}">
+                                            </td>
+                                        </tr>
+                                        <tr class="costing-table-total-row">
+                                            <td class="costing-summary-label" colspan="6">Hours Variance:</td>
+                                            <td class="costing-summary-center">
+                                                <input class="costing-form-control costing-summary-center costing-summary-readonly js-hours-display" type="text" name="hrs_variance" value="{{ old('hrs_variance', isset($costing) && (float) ($costing->hrs_variance ?? 0) !== 0.0 ? $formatHours($costing->hrs_variance) : '') }}" readonly>
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -1362,24 +1380,6 @@
             const orderQty = {{ (int) ($order->qty ?? 0) }};
             const orderWoQty = {{ (float) ($order->wo_qty ?? 0) }};
             const laborRatePerHour = 120;
-            let $activeDurationField = null;
-
-            const $durationPanel = $(`
-                <div class="costing-duration-panel js-global-duration-panel">
-                    <div class="costing-duration-grid">
-                        <div class="costing-duration-group">
-                            <label>Hr</label>
-                            <select class="js-duration-hours"></select>
-                        </div>
-                        <div class="costing-duration-group">
-                            <label>Min</label>
-                            <select class="js-duration-minutes"></select>
-                        </div>
-                    </div>
-                </div>
-            `);
-
-            $('body').append($durationPanel);
 
             function nextRowIndex() {
                 return $tableBody.find('.operation-row').length;
@@ -1407,12 +1407,21 @@
                 const raw = String(value || '').trim();
                 if (!raw) return '0:00:00';
 
-                if (/^\d+:\d{2}:\d{2}$/.test(raw)) {
-                    const [hours, minutes, seconds] = raw.split(':').map(Number);
-                    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                if (/^-?\d+:\d{2}:\d{2}$/.test(raw)) {
+                    const sign = raw.startsWith('-') ? '-' : '';
+                    const clean = sign ? raw.slice(1) : raw;
+                    const [hours, minutes, seconds] = clean.split(':').map(Number);
+                    return `${sign}${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 }
 
-                if (/^\d+(\.\d+)?$/.test(raw)) {
+                if (/^-?\d+:\d{2}$/.test(raw)) {
+                    const sign = raw.startsWith('-') ? '-' : '';
+                    const clean = sign ? raw.slice(1) : raw;
+                    const [hours, minutes] = clean.split(':').map(Number);
+                    return `${sign}${hours}:${String(minutes).padStart(2, '0')}:00`;
+                }
+
+                if (/^-?\d+(\.\d+)?$/.test(raw)) {
                     return decimalHoursToTime(parseFloat(raw));
                 }
 
@@ -1421,16 +1430,20 @@
 
             function timeToSeconds(value) {
                 const normalized = normalizeTime(value);
-                const [hours, minutes, seconds] = normalized.split(':').map(Number);
-                return (hours * 3600) + (minutes * 60) + seconds;
+                const sign = normalized.startsWith('-') ? -1 : 1;
+                const clean = sign === -1 ? normalized.slice(1) : normalized;
+                const [hours, minutes, seconds] = clean.split(':').map(Number);
+                return sign * ((hours * 3600) + (minutes * 60) + seconds);
             }
 
             function secondsToTime(totalSeconds) {
-                const safeSeconds = Math.max(0, parseInt(totalSeconds || 0, 10));
+                const numericSeconds = parseInt(totalSeconds || 0, 10);
+                const sign = numericSeconds < 0 ? '-' : '';
+                const safeSeconds = Math.abs(numericSeconds);
                 const hours = Math.floor(safeSeconds / 3600);
                 const minutes = Math.floor((safeSeconds % 3600) / 60);
                 const seconds = safeSeconds % 60;
-                return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                return `${sign}${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
 
             function decimalHoursToTime(value) {
@@ -1441,6 +1454,24 @@
                 const normalized = normalizeTime(value);
                 const [hours, minutes] = normalized.split(':');
                 return `${hours}:${minutes}`;
+            }
+
+            function displayTimeOrBlank(value) {
+                const normalized = normalizeTime(value);
+                return timeToSeconds(normalized) === 0 ? '' : displayTime(normalized);
+            }
+
+            function setDisplayTime($input, value) {
+                $input.val(displayTime(value));
+            }
+
+            function updateHoursVariance() {
+                const actualHours = timeToSeconds($('input[name="hrs_actual"]').val());
+                const totalTimeOrder = timeToSeconds($('input[name="total_time_order"]').val());
+                const varianceSeconds = actualHours - totalTimeOrder;
+                const $varianceInput = $('input[name="hrs_variance"]');
+                $varianceInput.val(varianceSeconds === 0 ? '' : displayTime(secondsToTime(varianceSeconds)));
+                paintValueState($varianceInput, varianceSeconds);
             }
 
             function formatMoney(value) {
@@ -1466,29 +1497,9 @@
                 }
             }
 
-            function buildDurationOptions(max, selected) {
-                let html = '';
-                for (let i = 0; i <= max; i += 1) {
-                    const rawValue = String(i);
-                    const label = i < 10 ? `0${i}` : rawValue;
-                    html += `<option value="${rawValue}"${i === selected ? ' selected' : ''}>${label}</option>`;
-                }
-                return html;
-            }
-
-            function buildDurationControl(value, readonly = false) {
-                const normalized = normalizeTime(value);
-
-                return `
-                    <div class="costing-duration-cell">
-                        <button type="button" class="costing-duration-trigger js-duration-trigger"${readonly ? ' disabled' : ''}>${displayTime(normalized)}</button>
-                    </div>
-                `;
-            }
-
-            function setDurationTriggerReadonly($field, readonly) {
-                const $trigger = $field.siblings('.costing-duration-cell').find('.js-duration-trigger');
-                $trigger.prop('disabled', readonly);
+            function setDurationFieldReadonly($field, readonly) {
+                $field.prop('readonly', readonly);
+                $field.toggleClass('costing-summary-readonly', readonly);
             }
 
             function canEditRowTotal($row) {
@@ -1502,71 +1513,26 @@
                 return programming === 0 && setup === 0 && runtimeTotal === 0;
             }
 
-            function syncDurationField($field) {
-                if (!$field || !$field.length) return;
-
-                const hours = parseInt($durationPanel.find('.js-duration-hours').val() || '0', 10);
-                const minutes = parseInt($durationPanel.find('.js-duration-minutes').val() || '0', 10);
-                const formatted = `${hours}:${String(minutes).padStart(2, '0')}:00`;
-                $field.val(formatted);
-                $field.siblings('.costing-duration-cell').find('.js-duration-trigger').text(displayTime(formatted));
-            }
-
-            function closeDurationPanel() {
-                $durationPanel.removeClass('is-open');
-                $activeDurationField = null;
-            }
-
-            function openDurationPanel($field) {
-                const normalized = normalizeTime($field.val());
-                const [hours, minutes] = normalized.split(':').map(Number);
-                const $trigger = $field.siblings('.costing-duration-cell').find('.js-duration-trigger');
-                const triggerRect = $trigger[0].getBoundingClientRect();
-                const panelWidth = 148;
-                const panelHeight = 104;
-                let left = triggerRect.left + (triggerRect.width / 2) - (panelWidth / 2);
-                let top = triggerRect.bottom + 6;
-
-                if (left < 8) left = 8;
-                if (left + panelWidth > window.innerWidth - 8) {
-                    left = window.innerWidth - panelWidth - 8;
-                }
-
-                if (top + panelHeight > window.innerHeight - 8) {
-                    top = Math.max(8, triggerRect.top - panelHeight - 6);
-                }
-
-                $durationPanel.find('.js-duration-hours').html(buildDurationOptions(99, hours));
-                $durationPanel.find('.js-duration-minutes').html(buildDurationOptions(59, minutes));
-                $durationPanel.css({ left: `${left}px`, top: `${top}px` }).addClass('is-open');
-                $activeDurationField = $field;
-            }
-
-            function renderDurationPickers(scope) {
+            function renderDurationInputs(scope) {
                 $(scope).find('.js-duration-field').each(function () {
                     const $field = $(this);
                     const isFirstRow = $field.closest('.operation-row').index() === 0;
                     const isRowTotalField = $field.hasClass('js-row-total-time');
                     const readonly = $field.hasClass('js-runtime-total-field') || (isFirstRow && !isRowTotalField);
-                    $field.val(normalizeTime($field.val()));
-
-                    if (!$field.siblings('.costing-duration-cell').length) {
-                        $field.after(buildDurationControl($field.val(), readonly));
-                    }
+                    $field.val(displayTimeOrBlank($field.val()));
+                    setDurationFieldReadonly($field, readonly);
                 });
 
-                $(scope).find('.js-duration-trigger')
-                    .off('click.costingDuration')
-                    .on('click.costingDuration', function (event) {
-                        event.stopPropagation();
-                        const $field = $(this).closest('td').find('.js-duration-field');
-
-                        if ($activeDurationField && $activeDurationField[0] === $field[0] && $durationPanel.hasClass('is-open')) {
-                            closeDurationPanel();
-                            return;
+                $(scope).find('.js-duration-field')
+                    .off('blur.costingDuration')
+                    .on('blur.costingDuration', function () {
+                        const $field = $(this);
+                        if ($field.val().trim() !== '') {
+                            $field.val(displayTime($field.val()));
                         }
-
-                        openDurationPanel($field);
+                        const $row = $field.closest('.operation-row');
+                        updateRowTotals($row);
+                        updateSummaryTotals();
                     });
             }
 
@@ -1578,9 +1544,8 @@
                 const $runtimeTotalField = $row.find('.js-runtime-total-field');
 
                 if (rowIndex === 0) {
-                    $totalField.val(normalizeTime($totalField.val()));
-                    $totalField.siblings('.costing-duration-cell').find('.js-duration-trigger').text(displayTime($totalField.val()));
-                    setDurationTriggerReadonly($totalField, false);
+                    $totalField.val(displayTimeOrBlank($totalField.val()));
+                    setDurationFieldReadonly($totalField, false);
                     return;
                 }
 
@@ -1589,20 +1554,18 @@
                 const runtimePcs = timeToSeconds($row.find('input[name$="[runtime_pcs]"]').val());
                 const runtimeTotal = runtimePcs * orderQty;
 
-                $runtimeTotalField.val(secondsToTime(runtimeTotal));
-                $runtimeTotalField.siblings('.costing-duration-cell').find('.js-duration-trigger').text(displayTime($runtimeTotalField.val()));
-                setDurationTriggerReadonly($runtimeTotalField, true);
+                $runtimeTotalField.val(runtimeTotal === 0 ? '' : displayTime(secondsToTime(runtimeTotal)));
+                setDurationFieldReadonly($runtimeTotalField, true);
 
                 if (canEditRowTotal($row)) {
-                    setDurationTriggerReadonly($totalField, false);
+                    setDurationFieldReadonly($totalField, false);
                     return;
                 }
 
                 const rowTotal = programming + setup + runtimeTotal;
 
-                $totalField.val(secondsToTime(rowTotal));
-                $totalField.siblings('.costing-duration-cell').find('.js-duration-trigger').text(displayTime($totalField.val()));
-                setDurationTriggerReadonly($totalField, true);
+                $totalField.val(rowTotal === 0 ? '' : displayTime(secondsToTime(rowTotal)));
+                setDurationFieldReadonly($totalField, true);
             }
 
             function updateSummaryTotals() {
@@ -1620,12 +1583,13 @@
                     sumTotalTimeOrder += timeToSeconds($(this).find('input[name$="[total_time_operation]"]').val());
                 });
 
-                $('input[name="sum_programming"]').val(secondsToTime(sumProgramming));
-                $('input[name="sum_setup"]').val(secondsToTime(sumSetup));
-                $('input[name="sum_runtime_pcs"]').val(secondsToTime(sumRuntimePcs));
-                $('input[name="sum_runtime_total"]').val(secondsToTime(sumRuntimeTotal));
-                $('input[name="total_time_order"]').val(secondsToTime(sumTotalTimeOrder));
+                setDisplayTime($('input[name="sum_programming"]'), secondsToTime(sumProgramming));
+                setDisplayTime($('input[name="sum_setup"]'), secondsToTime(sumSetup));
+                setDisplayTime($('input[name="sum_runtime_pcs"]'), secondsToTime(sumRuntimePcs));
+                setDisplayTime($('input[name="sum_runtime_total"]'), secondsToTime(sumRuntimeTotal));
+                setDisplayTime($('input[name="total_time_order"]'), secondsToTime(sumTotalTimeOrder));
                 $('input[name="total_labor"]').val(formatMoney((sumTotalTimeOrder / 3600) * laborRatePerHour));
+                updateHoursVariance();
                 updateCostSummary();
             }
 
@@ -1654,11 +1618,11 @@
                     <tr class="operation-row">
                         <td><input class="costing-form-control" type="text" name="operations[${index}][name_operation]" value="${isFirstRow ? 'Traveler Process' : opLabel(index)}"></td>
                         <td><input class="costing-form-control" type="text" name="operations[${index}][resource_name]" value=""></td>
-                        <td><input class="costing-form-control costing-duration-input js-duration-field" type="hidden" name="operations[${index}][time_programming]" value="0:00:00"></td>
-                        <td><input class="costing-form-control costing-duration-input js-duration-field" type="hidden" name="operations[${index}][time_setup]" value="0:00:00"></td>
-                        <td><input class="costing-form-control costing-duration-input js-duration-field" type="hidden" name="operations[${index}][runtime_pcs]" value="0:00:00"></td>
-                        <td><input class="costing-form-control costing-duration-input js-duration-field js-runtime-total-field" type="hidden" name="operations[${index}][runtime_total]" value="0:00:00"></td>
-                        <td><input class="costing-form-control costing-duration-input js-duration-field js-row-total-time" type="hidden" name="operations[${index}][total_time_operation]" value="0:00:00"></td>
+                        <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][time_programming]" value="0:00:00"></td>
+                        <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][time_setup]" value="0:00:00"></td>
+                        <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][runtime_pcs]" value="0:00:00"></td>
+                        <td><input class="costing-form-control costing-duration-input js-duration-field js-runtime-total-field" type="text" name="operations[${index}][runtime_total]" value="0:00:00"></td>
+                        <td><input class="costing-form-control costing-duration-input js-duration-field js-row-total-time" type="text" name="operations[${index}][total_time_operation]" value="0:00:00"></td>
                     </tr>
                 `;
             }
@@ -1667,7 +1631,7 @@
                 const $row = $(buildRow(nextRowIndex()));
                 $tableBody.append($row);
                 normalizeOperationLabels();
-                renderDurationPickers($row);
+                renderDurationInputs($row);
                 updateRowTotals($row);
                 updateSummaryTotals();
             });
@@ -1679,27 +1643,6 @@
                     normalizeOperationLabels();
                     updateSummaryTotals();
                 }
-            });
-
-            $durationPanel.on('click', function (event) {
-                event.stopPropagation();
-            });
-
-            $durationPanel.find('select').on('change', function () {
-                if (!$activeDurationField || !$activeDurationField.length) return;
-
-                syncDurationField($activeDurationField);
-                const $row = $activeDurationField.closest('.operation-row');
-                updateRowTotals($row);
-                updateSummaryTotals();
-            });
-
-            $(window).on('resize scroll', function () {
-                closeDurationPanel();
-            });
-
-            $(document).on('click', function () {
-                closeDurationPanel();
             });
 
             $('#openCostingLogs').on('click', function () {
@@ -1851,12 +1794,33 @@
                 updateCostSummary();
             });
 
+            $('.js-total-times-display').each(function () {
+                const $input = $(this);
+                if ($input.val().trim() !== '') {
+                    $input.val(displayTime($input.val()));
+                }
+            });
+
+            $('.js-hours-display').each(function () {
+                const $input = $(this);
+                if ($input.val().trim() !== '') {
+                    $input.val(displayTimeOrBlank($input.val()));
+                }
+            }).on('blur', function () {
+                const $input = $(this);
+                if ($input.val().trim() !== '') {
+                    $input.val(displayTimeOrBlank($input.val()));
+                }
+                updateHoursVariance();
+            });
+
             normalizeOperationLabels();
-            renderDurationPickers(document);
+            renderDurationInputs(document);
             $tableBody.find('.operation-row').each(function () {
                 updateRowTotals($(this));
             });
             updateSummaryTotals();
+            updateHoursVariance();
             updateCostSummary();
         });
     </script>
