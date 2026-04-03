@@ -4,6 +4,7 @@
             @csrf
             @method('PUT')
             <input type="hidden" name="id" id="edit-id">
+            <input type="hidden" id="edit-status-inspection" value="">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header fai-modal-header align-items-center py-2">
                     <div class="d-flex align-items-center">

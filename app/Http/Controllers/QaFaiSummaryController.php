@@ -322,7 +322,8 @@ class QaFaiSummaryController extends Controller
               data-pn="' . e($r->PN) . '"
               data-description="' . e($r->Part_description) . '"
               data-sampling="' . e($r->sampling ?? 0) . '"
-              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '">
+              data-sampling_check="' . e($r->sampling_check ?? 'Normal') . '"
+              data-status-inspection="' . e(strtolower((string) ($r->status_inspection ?? 'pending'))) . '">
               <i class="fas fa-edit"></i>
             </button>';
 
@@ -2904,7 +2905,6 @@ class QaFaiSummaryController extends Controller
         ]);
     }
 }
-
 
 
 
