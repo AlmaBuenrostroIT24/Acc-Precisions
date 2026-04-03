@@ -218,12 +218,24 @@
 
         .costing-form-table th:nth-child(1),
         .costing-form-table td:nth-child(1) {
-            width: 16%;
+            width: 9%;
         }
 
         .costing-form-table th:nth-child(2),
         .costing-form-table td:nth-child(2) {
-            width: 16%;
+            width: 22%;
+        }
+
+        .costing-form-table tbody .operation-row td:nth-child(1),
+        .costing-form-table tbody .operation-row td:nth-child(1) .costing-form-control,
+        .costing-form-table tbody .operation-row td:nth-child(1) .costing-locked-cell {
+            word-break: break-word;
+            text-align: left;
+        }
+
+        .costing-form-table tbody .operation-row td:nth-child(1) .costing-form-control,
+        .costing-form-table tbody .operation-row td:nth-child(1) .costing-locked-cell {
+            padding-left: 24%;
         }
 
         .costing-form-table th:nth-child(3),
@@ -236,8 +248,31 @@
         .costing-form-table td:nth-child(6),
         .costing-form-table th:nth-child(7),
         .costing-form-table td:nth-child(7) {
-            width: 14%;
+            width: 9%;
             text-align: center;
+        }
+
+        .costing-form-table th:nth-child(3),
+        .costing-form-table th:nth-child(4),
+        .costing-form-table th:nth-child(5),
+        .costing-form-table th:nth-child(6),
+        .costing-form-table th:nth-child(7),
+        .costing-form-table td:nth-child(3),
+        .costing-form-table td:nth-child(4),
+        .costing-form-table td:nth-child(5),
+        .costing-form-table td:nth-child(6),
+        .costing-form-table td:nth-child(7) {
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
+        .costing-form-table td:nth-child(3) .costing-form-control,
+        .costing-form-table td:nth-child(4) .costing-form-control,
+        .costing-form-table td:nth-child(5) .costing-form-control,
+        .costing-form-table td:nth-child(6) .costing-form-control,
+        .costing-form-table td:nth-child(7) .costing-form-control {
+            max-width: 88px;
+            margin: 0 auto;
         }
 
         .costing-form-table thead th {
@@ -269,11 +304,21 @@
             box-shadow: inset 0 0 0 1px #cfe0f5;
             border-radius: 4px;
             padding: 2px 6px;
+            min-height: 34px;
         }
 
         .costing-form-control:focus,
         .costing-inline-input:focus {
             background: #dbeafe;
+        }
+
+        .costing-opspecs-input {
+            resize: none;
+            overflow: hidden;
+            min-height: 34px;
+            line-height: 1.25;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .costing-table-total-label {
@@ -333,6 +378,14 @@
 
         .costing-table-total-row .costing-form-control {
             font-weight: 800;
+        }
+
+        .costing-table-hours-row td {
+            background: #fff;
+        }
+
+        .costing-table-hours-row td:last-child {
+            background: #f1f5f9;
         }
 
         .costing-summary-right {
@@ -1007,13 +1060,13 @@
                                 <table class="costing-form-table">
                                     <thead>
                                         <tr>
-                                            <th>OP Description</th>
-                                            <th>Resource ID</th>
-                                            <th>Programming</th>
+                                                <th>SUB/OP</th>
+                                            <th>OP Specs</th>
+                                                <th>PROG. TIME</th>
                                             <th>Setup</th>
-                                            <th>Run Time * Pcs</th>
-                                            <th>Run Time Total</th>
-                                            <th>Total Time OP</th>
+                                                <th>Run Time<br>Pcs</th>
+                                            <th>Run Time<br>Total</th>
+                                            <th>Total Time<br>OP</th>
                                         </tr>
                                     </thead>
                                     <tbody id="operationsTableBody">
@@ -1025,9 +1078,9 @@
                                                             class="costing-form-control"
                                                             type="hidden"
                                                             name="operations[{{ $index }}][name_operation]"
-                                                            value="Traveler Process"
+                                                            value="Travel Proc."
                                                         >
-                                                        <div class="costing-locked-cell">Traveler Process</div>
+                                                        <div class="costing-locked-cell">Travel Proc.</div>
                                                     @else
                                                         <input
                                                             class="costing-form-control"
@@ -1047,12 +1100,11 @@
                                                         >
                                                         <div class="costing-locked-cell">-----</div>
                                                     @else
-                                                        <input
-                                                            class="costing-form-control"
-                                                            type="text"
+                                                        <textarea
+                                                            class="costing-form-control costing-opspecs-input js-opspecs-input"
+                                                            rows="1"
                                                             name="operations[{{ $index }}][resource_name]"
-                                                            value="{{ old("operations.$index.resource_name", $operation->resource_name ?? '') }}"
-                                                        >
+                                                        >{{ old("operations.$index.resource_name", $operation->resource_name ?? '') }}</textarea>
                                                     @endif
                                                 </td>
                                                 <td>
@@ -1114,16 +1166,23 @@
                                                 <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-times-display" type="text" name="sum_runtime_total" value="{{ old('sum_runtime_total', $formatHours($sumRuntimeTotal)) }}" readonly>
                                             </td>
                                             <td class="costing-summary-center costing-summary-value">
-                                                <input class="costing-form-control costing-summary-center costing-summary-value costing-summary-readonly js-total-times-display" type="text" name="total_time_order" value="{{ old('total_time_order', $formatHours($costing->total_time_order ?? $sumTotalTimeOperation)) }}" readonly>
+                                                <input type="hidden" name="total_time_order" value="{{ old('total_time_order', $formatHours($costing->total_time_order ?? $sumTotalTimeOperation)) }}">
+                                                <span>&nbsp;</span>
                                             </td>
                                         </tr>
-                                        <tr class="costing-table-total-row">
+                                        <tr class="costing-table-total-row costing-table-hours-row">
+                                            <td class="costing-summary-label" colspan="6">Total Hours:</td>
+                                            <td class="costing-summary-center">
+                                                <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-hours-display" type="text" value="{{ old('total_time_order', $formatHours($costing->total_time_order ?? $sumTotalTimeOperation)) }}" readonly>
+                                            </td>
+                                        </tr>
+                                        <tr class="costing-table-total-row costing-table-hours-row">
                                             <td class="costing-summary-label" colspan="6">Actual Hours:</td>
                                             <td class="costing-summary-center">
                                                 <input class="costing-form-control costing-summary-center js-hours-display" type="text" name="hrs_actual" value="{{ old('hrs_actual', isset($costing) && (float) ($costing->hrs_actual ?? 0) !== 0.0 ? $formatHours($costing->hrs_actual) : '') }}">
                                             </td>
                                         </tr>
-                                        <tr class="costing-table-total-row">
+                                        <tr class="costing-table-total-row costing-table-hours-row">
                                             <td class="costing-summary-label" colspan="6">Hours Variance:</td>
                                             <td class="costing-summary-center">
                                                 <input class="costing-form-control costing-summary-center costing-summary-readonly js-hours-display" type="text" name="hrs_variance" value="{{ old('hrs_variance', isset($costing) && (float) ($costing->hrs_variance ?? 0) !== 0.0 ? $formatHours($costing->hrs_variance) : '') }}" readonly>
@@ -1386,18 +1445,18 @@
             }
 
             function opLabel(index) {
-                return `OP${index}`;
+                return '0 /';
             }
 
             function normalizeOperationLabels() {
                 $tableBody.find('.operation-row').each(function (index) {
                     const $input = $(this).find('input[name$="[name_operation]"]');
                     if (index === 0) {
-                        $input.val('Traveler Process');
+                        $input.val('Travel Proc.');
                         return;
                     }
 
-                    if (!$input.val() || /^OP\d+$/i.test($input.val().trim())) {
+                    if (!$input.val() || $input.val().trim() === '/' || $input.val().trim() === '0/' || $input.val().trim() === '0 /' || /^OP\d+$/i.test($input.val().trim())) {
                         $input.val(opLabel(index));
                     }
                 });
@@ -1552,7 +1611,8 @@
                 const programming = timeToSeconds($row.find('input[name$="[time_programming]"]').val());
                 const setup = timeToSeconds($row.find('input[name$="[time_setup]"]').val());
                 const runtimePcs = timeToSeconds($row.find('input[name$="[runtime_pcs]"]').val());
-                const runtimeTotal = runtimePcs * orderQty;
+                const effectiveQty = Math.max(orderQty - 1, 0);
+                const runtimeTotal = runtimePcs * effectiveQty;
 
                 $runtimeTotalField.val(runtimeTotal === 0 ? '' : displayTime(secondsToTime(runtimeTotal)));
                 setDurationFieldReadonly($runtimeTotalField, true);
@@ -1588,6 +1648,7 @@
                 setDisplayTime($('input[name="sum_runtime_pcs"]'), secondsToTime(sumRuntimePcs));
                 setDisplayTime($('input[name="sum_runtime_total"]'), secondsToTime(sumRuntimeTotal));
                 setDisplayTime($('input[name="total_time_order"]'), secondsToTime(sumTotalTimeOrder));
+                $('.js-total-hours-display').val(sumTotalTimeOrder === 0 ? '' : displayTime(secondsToTime(sumTotalTimeOrder)));
                 $('input[name="total_labor"]').val(formatMoney((sumTotalTimeOrder / 3600) * laborRatePerHour));
                 updateHoursVariance();
                 updateCostSummary();
@@ -1612,12 +1673,19 @@
                 paintValueState($('input[name="percentage"]'), result);
             }
 
+            function autosizeOpspecs(scope) {
+                $(scope).find('.js-opspecs-input').each(function () {
+                    this.style.height = 'auto';
+                    this.style.height = `${this.scrollHeight}px`;
+                });
+            }
+
             function buildRow(index) {
                 const isFirstRow = index === 0;
                 return `
                     <tr class="operation-row">
-                        <td><input class="costing-form-control" type="text" name="operations[${index}][name_operation]" value="${isFirstRow ? 'Traveler Process' : opLabel(index)}"></td>
-                        <td><input class="costing-form-control" type="text" name="operations[${index}][resource_name]" value=""></td>
+                        <td><input class="costing-form-control" type="text" name="operations[${index}][name_operation]" value="${isFirstRow ? 'Travel Proc.' : opLabel(index)}"></td>
+                        <td><textarea class="costing-form-control costing-opspecs-input js-opspecs-input" rows="1" name="operations[${index}][resource_name]"></textarea></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][time_programming]" value="0:00:00"></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][time_setup]" value="0:00:00"></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][runtime_pcs]" value="0:00:00"></td>
@@ -1631,6 +1699,7 @@
                 const $row = $(buildRow(nextRowIndex()));
                 $tableBody.append($row);
                 normalizeOperationLabels();
+                autosizeOpspecs($row);
                 renderDurationInputs($row);
                 updateRowTotals($row);
                 updateSummaryTotals();
@@ -1801,6 +1870,13 @@
                 }
             });
 
+            $('.js-total-hours-display').each(function () {
+                const $input = $(this);
+                if ($input.val().trim() !== '') {
+                    $input.val(displayTimeOrBlank($input.val()));
+                }
+            });
+
             $('.js-hours-display').each(function () {
                 const $input = $(this);
                 if ($input.val().trim() !== '') {
@@ -1814,7 +1890,13 @@
                 updateHoursVariance();
             });
 
+            $(document).on('input', '.js-opspecs-input', function () {
+                this.style.height = 'auto';
+                this.style.height = `${this.scrollHeight}px`;
+            });
+
             normalizeOperationLabels();
+            autosizeOpspecs(document);
             renderDurationInputs(document);
             $tableBody.find('.operation-row').each(function () {
                 updateRowTotals($(this));

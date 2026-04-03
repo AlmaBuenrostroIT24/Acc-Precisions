@@ -85,6 +85,26 @@
             vertical-align: top;
         }
 
+        .pdf-operations-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .pdf-op-col-subop {
+            width: 12%;
+        }
+
+        .pdf-op-col-specs {
+            width: 34%;
+        }
+
+        .pdf-op-col-time {
+            width: 10.8%;
+            padding-left: 2pt;
+            padding-right: 2pt;
+            font-size: 8.5pt;
+        }
+
         .title {
             font-size: 14pt;
             font-weight: 800;
@@ -195,9 +215,12 @@
             $totalSeconds = (int) round($value * 3600);
             $hours = intdiv($totalSeconds, 3600);
             $minutes = intdiv($totalSeconds % 3600, 60);
-            $seconds = $totalSeconds % 60;
 
-            return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
+            if ($totalSeconds === 0) {
+                return '';
+            }
+
+            return sprintf('%d:%02d', $hours, $minutes);
         };
 
         $formatMoney = function ($value, $blankWhenZero = false) {
@@ -305,32 +328,38 @@
                 <td class="label">Material Type:</td>
                 <td class="value">{{ $costing->type_material ?? '' }}</td>
             </tr>
+            <tr>
+                <td class="label">Setup:</td>
+                <td class="value">{{ $faiPassSummary ?? '' }}</td>
+                <td class="label">Qty Material:</td>
+                <td class="value">{{ abs((float) ($costing->qty_material ?? 0)) > 0.00001 ? number_format((float) $costing->qty_material, 4) : '' }}</td>
+            </tr>
         </table>
     </div>
 
     <div class="section">
-        <table>
+        <table class="pdf-operations-table">
             <thead>
                 <tr>
-                    <th class="header-cell">OP Description</th>
-                    <th class="header-cell">Resource ID</th>
-                    <th class="header-cell">Programming</th>
-                    <th class="header-cell">Setup</th>
-                    <th class="header-cell">Run Time * Pcs</th>
-                    <th class="header-cell">Run Time Total</th>
-                    <th class="header-cell">Total Tme OP</th>
+                    <th class="header-cell pdf-op-col-subop">SUB/OP</th>
+                    <th class="header-cell pdf-op-col-specs">OP Specs</th>
+                    <th class="header-cell pdf-op-col-time">PROG.<br>TIME</th>
+                    <th class="header-cell pdf-op-col-time">Setup</th>
+                    <th class="header-cell pdf-op-col-time">Run Time<br>Pcs</th>
+                    <th class="header-cell pdf-op-col-time">Run Time<br>Total</th>
+                    <th class="header-cell pdf-op-col-time">Total<br>OP</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($operations as $operation)
                     <tr>
-                        <td>{{ $operation->name_operation }}</td>
-                        <td>{{ $operation->resource_name ?: '-----' }}</td>
-                        <td class="text-center">{{ $formatHours($operation->time_programming ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->time_setup ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->runtime_pcs ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->runtime_total ?? 0) }}</td>
-                        <td class="text-center">{{ $formatHours($operation->total_time_operation ?? 0) }}</td>
+                        <td class="pdf-op-col-subop">{{ $operation->name_operation }}</td>
+                        <td class="pdf-op-col-specs">{{ $operation->resource_name ?: '-----' }}</td>
+                        <td class="text-center pdf-op-col-time">{{ $formatHours($operation->time_programming ?? 0) }}</td>
+                        <td class="text-center pdf-op-col-time">{{ $formatHours($operation->time_setup ?? 0) }}</td>
+                        <td class="text-center pdf-op-col-time">{{ $formatHours($operation->runtime_pcs ?? 0) }}</td>
+                        <td class="text-center pdf-op-col-time">{{ $formatHours($operation->runtime_total ?? 0) }}</td>
+                        <td class="text-center pdf-op-col-time">{{ $formatHours($operation->total_time_operation ?? 0) }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -339,11 +368,23 @@
                 @endforelse
                 <tr>
                     <td colspan="2" class="summary-label">Total Times:</td>
-                    <td class="text-center">{{ $formatHours($sumProgramming) }}</td>
-                    <td class="text-center">{{ $formatHours($sumSetup) }}</td>
-                    <td class="text-center">{{ $formatHours($sumRuntimePcs) }}</td>
-                    <td class="text-center">{{ $formatHours($sumRuntimeTotal) }}</td>
-                    <td class="text-center"><strong>{{ $formatHours($costing->total_time_order ?? $sumTotalTimeOperation) }}</strong></td>
+                    <td class="text-center pdf-op-col-time">{{ $formatHours($sumProgramming) }}</td>
+                    <td class="text-center pdf-op-col-time">{{ $formatHours($sumSetup) }}</td>
+                    <td class="text-center pdf-op-col-time">{{ $formatHours($sumRuntimePcs) }}</td>
+                    <td class="text-center pdf-op-col-time">{{ $formatHours($sumRuntimeTotal) }}</td>
+                    <td class="text-center"></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="summary-label" style="background:#fff;">Total Hours:</td>
+                    <td class="text-center" style="background:#f1f5f9;"><strong>{{ $formatHours($costing->total_time_order ?? $sumTotalTimeOperation) }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="summary-label" style="background:#fff;">Actual Hours:</td>
+                    <td class="text-center" style="background:#f1f5f9;"><strong>{{ $formatHours($costing->hrs_actual ?? 0) }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="summary-label" style="background:#fff;">Hours Variance:</td>
+                    <td class="text-center" style="background:#f1f5f9;"><strong>{{ $formatHours($costing->hrs_variance ?? 0) }}</strong></td>
                 </tr>
             </tbody>
         </table>
