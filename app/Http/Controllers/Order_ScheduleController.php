@@ -28,6 +28,7 @@ class Order_ScheduleController extends Controller
      * 1. TAB "General Schedule" CONSULTAS
      * ===================================================================================================================
      */
+    
 
     public function index(Request $request)
     {
