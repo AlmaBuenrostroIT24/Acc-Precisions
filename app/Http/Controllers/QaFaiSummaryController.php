@@ -29,6 +29,7 @@ class QaFaiSummaryController extends Controller
      * ===================================================================================================================
      */
     //abr.01.26-(3.12 se completo el diseno faicomplete)
+    //abr.03.26-(4.1 se acomodo el error de guardado de hora en el modal faisummary yla vizuallizacion de la alerta FAI no pass)
 
     public function partsrevision()
     {
@@ -903,8 +904,8 @@ class QaFaiSummaryController extends Controller
     {
         $data = $this->getFaiSummaryData($request);
 
-        // ALERTAS: evaluar el último FAI por operación. Si alguna operación queda en No Pass,
-        // la orden sigue alertando aunque otra operación más reciente tenga Pass.
+        // ALERTAS: evaluar el ï¿½ltimo FAI por operaciï¿½n. Si alguna operaciï¿½n queda en No Pass,
+        // la orden sigue alertando aunque otra operaciï¿½n mï¿½s reciente tenga Pass.
         $failedOrders = QaFaiSummary::with('orderSchedule')
             ->whereRaw("UPPER(TRIM(insp_type)) = 'FAI'")
             ->whereHas('orderSchedule', function ($q) {
