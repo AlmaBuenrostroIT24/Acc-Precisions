@@ -3606,14 +3606,16 @@ body .content {
 
     // ================== Fila: borrador y desde DB ==================
     function createDraftRow() {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
       const totalOps = parseInt(ctx.modal.$operationInput.val());
       const isNumber = !isNaN(totalOps) && totalOps > 0;
       const orderId = $('#order-id').val();
       const sampling = parseInt(ctx.modal.$samplingResult.val()) || 0;
 
       const $row = $('<tr></tr>');
-      $row.append(`<td><input type="date" name="date[]" class="form-control" value="${today}"></td>`);
+      $row.append(`<td><input type="datetime-local" name="date[]" class="form-control" value="${today}"></td>`);
 
       const $inspType = $(`
         <select name="insp_type[]" class="form-control">
@@ -3738,10 +3740,17 @@ body .content {
         $row.attr('data-qty_process', String(data.qty_process));
       }
 
-      const dateOnly = data.date ? data.date.split(' ')[0] : '';
+      let dateOnly = '';
+      if (data.date) {
+        const parsed = new Date(String(data.date).replace(' ', 'T'));
+        if (!Number.isNaN(parsed.getTime())) {
+          const pad = (n) => String(n).padStart(2, '0');
+          dateOnly = `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+        }
+      }
       $row.append(`
   <td>
-    <input type="date" name="date[]" class="form-control" value="${dateOnly}" disabled>
+    <input type="datetime-local" name="date[]" class="form-control" value="${dateOnly}" disabled>
   </td>
 `);
 
