@@ -34,28 +34,29 @@ class CostingController extends Controller
             ->groupBy('order_schedule_id')
             ->map(function ($rows) {
                 $items = $rows
-                    ->map(function ($row) {
+                    ->groupBy(function ($row) {
+                        return trim((string) ($row->operation ?? ''));
+                    })
+                    ->map(function ($operationRows, $operation) {
+                        $operator = $operationRows
+                            ->pluck('operator')
+                            ->map(fn ($value) => trim((string) $value))
+                            ->filter()
+                            ->first();
+
+                        if ($operation === '' || !$operator) {
+                            return null;
+                        }
+
                         return [
-                            'operation' => trim((string) ($row->operation ?? '')),
-                            'operator' => trim((string) ($row->operator ?? '')),
+                            'operation' => $operation,
+                            'operator' => $operator,
                         ];
                     })
-                    ->filter(fn ($item) => $item['operator'] !== '')
+                    ->filter()
                     ->values();
 
-                if ($items->isEmpty()) {
-                    return null;
-                }
-
-                $uniqueOperators = $items->pluck('operator')->unique()->values();
-
-                if ($uniqueOperators->count() === 1) {
-                    return $uniqueOperators->first();
-                }
-
-                return $items
-                    ->map(fn ($item) => ($item['operation'] !== '' ? $item['operation'] . ': ' : '') . $item['operator'])
-                    ->implode("\n");
+                return $this->summarizeFaiPassOperators($items);
             });
 
         $costingsByOrder = Costing::query()
