@@ -5,6 +5,8 @@
     data-summary-costed="{{ $summary['costed_pn_count'] ?? 0 }}"
     data-summary-notes="{{ $summary['notes_pn_count'] ?? 0 }}"
     data-summary-latest-due="{{ !empty($summary['latest_costing_date']) ? \Carbon\Carbon::parse($summary['latest_costing_date'])->format('M-d-Y') : 'N/A' }}"
+    data-filter-with-costing="{{ !empty($withCosting) ? '1' : '0' }}"
+    data-filter-with-notes="{{ !empty($withNotes) ? '1' : '0' }}"
 ></div>
 
 <div class="table-responsive position-relative fai-table-shell">

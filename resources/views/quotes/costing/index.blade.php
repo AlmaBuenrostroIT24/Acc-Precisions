@@ -32,6 +32,21 @@
             overflow: hidden;
         }
 
+        .costing-kpi-card.is-clickable {
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        }
+
+        .costing-kpi-card.is-clickable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .costing-kpi-card.is-active {
+            border-color: #86efac;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.14), 0 8px 18px rgba(15, 23, 42, 0.08);
+        }
+
         .costing-kpi-card::before {
             content: "";
             position: absolute;
@@ -1020,7 +1035,7 @@
                 <span class="costing-kpi-value" id="costingKpiPn">{{ number_format($pnCount) }}</span>
             </div>
         </div>
-        <div class="costing-kpi-card is-green">
+        <div class="costing-kpi-card is-green is-clickable {{ !empty($withCosting) ? 'is-active' : '' }}" id="costingKpiWithCosting" data-filter-card="with-costing">
             <span class="costing-kpi-icon">
                 <i class="fas fa-calculator"></i>
             </span>
@@ -1029,7 +1044,7 @@
                 <span class="costing-kpi-value" id="costingKpiCosted">{{ number_format($costedPnCount) }}</span>
             </div>
         </div>
-        <div class="costing-kpi-card is-amber">
+        <div class="costing-kpi-card is-amber is-clickable {{ !empty($withNotes) ? 'is-active' : '' }}" id="costingKpiWithNotes" data-filter-card="with-notes">
             <span class="costing-kpi-icon">
                 <i class="fas fa-sticky-note"></i>
             </span>
@@ -1071,8 +1086,8 @@
                     </div>
 
                     <div class="costing-table-tools">
-                        <form method="GET" action="{{ route('costing') }}" class="costing-table-search" id="costingSearchForm">
-                            <div class="fai-global-search">
+                            <form method="GET" action="{{ route('costing') }}" class="costing-table-search" id="costingSearchForm">
+                                <div class="fai-global-search">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input
                                     name="search"
@@ -1082,6 +1097,8 @@
                                     autocomplete="off"
                                     value="{{ $search }}"
                                 >
+                                <input type="hidden" name="with_costing" id="costingWithCostingFilter" value="{{ !empty($withCosting) ? '1' : '' }}">
+                                <input type="hidden" name="with_notes" id="costingWithNotesFilter" value="{{ !empty($withNotes) ? '1' : '' }}">
                                 <button type="button" class="costing-search-clear {{ $search !== '' ? 'is-visible' : '' }}" id="costingSearchClear" aria-label="Clear search" title="Clear search">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -1120,7 +1137,11 @@
             const $results = $('#costingResults');
             const $searchForm = $('#costingSearchForm');
             const $searchInput = $searchForm.find('input[name="search"]');
+            const $withCostingInput = $('#costingWithCostingFilter');
+            const $withNotesInput = $('#costingWithNotesFilter');
             const $searchClear = $('#costingSearchClear');
+            const $withCostingCard = $('#costingKpiWithCosting');
+            const $withNotesCard = $('#costingKpiWithNotes');
 
             function syncSearchClear() {
                 $searchClear.toggleClass('is-visible', $.trim($searchInput.val()) !== '');
@@ -1133,12 +1154,18 @@
                     $('#costingRecordCount').text(`Total ${totalRecords}`);
                 }
 
-                if ($summaryData.length) {
-                    $('#costingKpiPn').text(Number($summaryData.data('summary-pn') || 0).toLocaleString());
-                    $('#costingKpiCosted').text(Number($summaryData.data('summary-costed') || 0).toLocaleString());
-                    $('#costingKpiNotes').text(Number($summaryData.data('summary-notes') || 0).toLocaleString());
-                    $('#costingKpiLatestDue').text($summaryData.data('summary-latest-due') || 'N/A');
-                }
+                  if ($summaryData.length) {
+                      $('#costingKpiPn').text(Number($summaryData.data('summary-pn') || 0).toLocaleString());
+                      $('#costingKpiCosted').text(Number($summaryData.data('summary-costed') || 0).toLocaleString());
+                      $('#costingKpiNotes').text(Number($summaryData.data('summary-notes') || 0).toLocaleString());
+                      $('#costingKpiLatestDue').text($summaryData.data('summary-latest-due') || 'N/A');
+                      const withCostingActive = String($summaryData.data('filter-with-costing') || '0') === '1';
+                      const withNotesActive = String($summaryData.data('filter-with-notes') || '0') === '1';
+                      $withCostingInput.val(withCostingActive ? '1' : '');
+                      $withNotesInput.val(withNotesActive ? '1' : '');
+                      $withCostingCard.toggleClass('is-active', withCostingActive);
+                      $withNotesCard.toggleClass('is-active', withNotesActive);
+                  }
 
                 $results.find('.pagination a').off('click.costing').on('click.costing', function (event) {
                     event.preventDefault();
@@ -1202,12 +1229,30 @@
                 }, 300);
             });
 
-            $searchClear.on('click', function () {
-                $searchInput.val('');
-                syncSearchClear();
-                loadResults($searchForm.attr('action'), { syncUrl: false });
-                $searchInput.trigger('focus');
-            });
+              $searchClear.on('click', function () {
+                  $searchInput.val('');
+                  syncSearchClear();
+                  loadResults($searchForm.attr('action'), { syncUrl: false });
+                  $searchInput.trigger('focus');
+              });
+
+              $withCostingCard.on('click', function () {
+                  const nextActive = !$withCostingCard.hasClass('is-active');
+                  $withCostingInput.val(nextActive ? '1' : '');
+                  $withCostingCard.toggleClass('is-active', nextActive);
+                  const query = $searchForm.serialize();
+                  const url = query ? `${$searchForm.attr('action')}?${query}` : $searchForm.attr('action');
+                  loadResults(url, { syncUrl: false });
+              });
+
+              $withNotesCard.on('click', function () {
+                  const nextActive = !$withNotesCard.hasClass('is-active');
+                  $withNotesInput.val(nextActive ? '1' : '');
+                  $withNotesCard.toggleClass('is-active', nextActive);
+                  const query = $searchForm.serialize();
+                  const url = query ? `${$searchForm.attr('action')}?${query}` : $searchForm.attr('action');
+                  loadResults(url, { syncUrl: false });
+              });
 
             $(document).on('click', '.toggle-detail', function () {
                 const target = $(this).data('target');

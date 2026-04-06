@@ -386,8 +386,14 @@
                             <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
                         </tr>
                         <tr>
-                            <td class="label">Setup:</td>
-                            <td class="value">{{ $faiPassSummary ?? '' }}</td>
+                            <td class="label">Date:</td>
+                            <td class="value">
+                                @if($order->due_date)
+                                    {{ \Illuminate\Support\Str::ucfirst(str_replace('.', '', \Carbon\Carbon::parse($order->due_date)->locale('es')->translatedFormat('M-d-Y'))) }}
+                                @else
+                                    N/A
+                                @endif
+                            </td>
                         </tr>
                     </table>
                 </td>
@@ -402,8 +408,8 @@
                             <td class="value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
                         </tr>
                         <tr>
-                            <td class="label">Date:</td>
-                            <td class="value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</td>
+                            <td class="label">Setup:</td>
+                            <td class="value">{{ $faiPassSummary ?? '' }}</td>
                         </tr>
                         <tr>
                             <td class="label">Operation:</td>

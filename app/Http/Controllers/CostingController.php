@@ -22,6 +22,8 @@ class CostingController extends Controller
     public function index()
     {
         $search = trim((string) request('search'));
+        $withCosting = request()->boolean('with_costing');
+        $withNotes = request()->boolean('with_notes');
         $faiPassSetupByOrder = QaFaiSummary::query()
             ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
             ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) = 'pass'")
@@ -174,6 +176,14 @@ class CostingController extends Controller
             });
         }
 
+        if ($withCosting) {
+            $pnOrders = $pnOrders->filter(fn ($pnOrder) => !empty($pnOrder->has_costing));
+        }
+
+        if ($withNotes) {
+            $pnOrders = $pnOrders->filter(fn ($pnOrder) => (int) ($pnOrder->notes_count ?? 0) > 0);
+        }
+
         $pnOrders = $pnOrders->values();
 
         $summary = [
@@ -204,10 +214,10 @@ class CostingController extends Controller
         );
 
         if (request()->ajax()) {
-            return view('quotes.costing._results', compact('pnOrders', 'summary'));
+            return view('quotes.costing._results', compact('pnOrders', 'summary', 'withCosting', 'withNotes'));
         }
 
-        return view('quotes.costing.index', compact('orders', 'pnOrders', 'search', 'summary'));
+        return view('quotes.costing.index', compact('orders', 'pnOrders', 'search', 'summary', 'withCosting', 'withNotes'));
     }
 
     public function edit(OrderSchedule $order)
@@ -256,19 +266,7 @@ class CostingController extends Controller
             })
             ->filter()
             ->values();
-        $faiPassSummary = null;
-
-        if ($faiPassOperators->isNotEmpty()) {
-            $uniqueOperators = $faiPassOperators
-                ->pluck('operator')
-                ->filter()
-                ->unique()
-                ->values();
-
-            $faiPassSummary = $uniqueOperators->count() === 1
-                ? $uniqueOperators->first()
-                : $faiPassOperators->map(fn ($item) => $item['operation'] . ': ' . $item['operator'])->implode(' | ');
-        }
+        $faiPassSummary = $this->summarizeFaiPassOperators($faiPassOperators);
 
         if ($costing) {
             $userIds = collect([$costing->created_by, $costing->updated_by])
@@ -685,49 +683,8 @@ class CostingController extends Controller
     {
         $order->loadMissing('costing.operations');
 
-        $faiPassOperators = QaFaiSummary::query()
-            ->where('order_schedule_id', $order->id)
-            ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
-            ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) IN ('pass')")
-            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('date', 'asc')
-            ->orderBy('id', 'asc')
-            ->get(['operation', 'operator'])
-            ->groupBy(function ($row) {
-                return trim((string) ($row->operation ?? ''));
-            })
-            ->map(function ($rows, $operation) {
-                $operator = $rows
-                    ->pluck('operator')
-                    ->map(fn ($value) => trim((string) $value))
-                    ->filter()
-                    ->first();
-
-                if ($operation === '' || !$operator) {
-                    return null;
-                }
-
-                return [
-                    'operation' => $operation,
-                    'operator' => $operator,
-                ];
-            })
-            ->filter()
-            ->values();
-
-        $faiPassSummary = null;
-
-        if ($faiPassOperators->isNotEmpty()) {
-            $uniqueOperators = $faiPassOperators
-                ->pluck('operator')
-                ->filter()
-                ->unique()
-                ->values();
-
-            $faiPassSummary = $uniqueOperators->count() === 1
-                ? $uniqueOperators->first()
-                : $faiPassOperators->map(fn ($item) => $item['operation'] . ': ' . $item['operator'])->implode(' | ');
-        }
+        $faiPassOperators = $this->getFaiPassOperators($order->id);
+        $faiPassSummary = $this->summarizeFaiPassOperators($faiPassOperators);
 
         $pdf = Pdf::loadView('quotes.costing.pdf', [
             'order' => $order,
@@ -746,49 +703,8 @@ class CostingController extends Controller
     {
         $order->loadMissing('costing.operations');
 
-        $faiPassOperators = QaFaiSummary::query()
-            ->where('order_schedule_id', $order->id)
-            ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
-            ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) IN ('pass')")
-            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('date', 'asc')
-            ->orderBy('id', 'asc')
-            ->get(['operation', 'operator'])
-            ->groupBy(function ($row) {
-                return trim((string) ($row->operation ?? ''));
-            })
-            ->map(function ($rows, $operation) {
-                $operator = $rows
-                    ->pluck('operator')
-                    ->map(fn ($value) => trim((string) $value))
-                    ->filter()
-                    ->first();
-
-                if ($operation === '' || !$operator) {
-                    return null;
-                }
-
-                return [
-                    'operation' => $operation,
-                    'operator' => $operator,
-                ];
-            })
-            ->filter()
-            ->values();
-
-        $faiPassSummary = null;
-
-        if ($faiPassOperators->isNotEmpty()) {
-            $uniqueOperators = $faiPassOperators
-                ->pluck('operator')
-                ->filter()
-                ->unique()
-                ->values();
-
-            $faiPassSummary = $uniqueOperators->count() === 1
-                ? $uniqueOperators->first()
-                : $faiPassOperators->map(fn ($item) => $item['operation'] . ': ' . $item['operator'])->implode(' | ');
-        }
+        $faiPassOperators = $this->getFaiPassOperators($order->id);
+        $faiPassSummary = $this->summarizeFaiPassOperators($faiPassOperators);
 
         $pdf = Pdf::loadView('quotes.costing.pdf_sheet', [
             'order' => $order,
@@ -831,6 +747,73 @@ class CostingController extends Controller
         $seconds = (int) ($parts[2] ?? 0);
 
         return round($hours + ($minutes / 60) + ($seconds / 3600), 4);
+    }
+
+    private function getFaiPassOperators(int $orderScheduleId): Collection
+    {
+        return QaFaiSummary::query()
+            ->where('order_schedule_id', $orderScheduleId)
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) IN ('pass')")
+            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get(['operation', 'operator'])
+            ->groupBy(function ($row) {
+                return trim((string) ($row->operation ?? ''));
+            })
+            ->map(function ($rows, $operation) {
+                $operator = $rows
+                    ->pluck('operator')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->filter()
+                    ->first();
+
+                if ($operation === '' || !$operator) {
+                    return null;
+                }
+
+                return [
+                    'operation' => $operation,
+                    'operator' => $operator,
+                ];
+            })
+            ->filter()
+            ->values();
+    }
+
+    private function summarizeFaiPassOperators(Collection $faiPassOperators): ?string
+    {
+        if ($faiPassOperators->isEmpty()) {
+            return null;
+        }
+
+        $uniqueOperators = $faiPassOperators
+            ->pluck('operator')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($uniqueOperators->count() === 1) {
+            return $uniqueOperators->first();
+        }
+
+        return $faiPassOperators
+            ->groupBy('operator')
+            ->map(function (Collection $rows, string $operator) {
+                $operations = $rows
+                    ->pluck('operation')
+                    ->filter()
+                    ->map(function ($operation) {
+                        return trim(preg_replace('/\bOp\b\.?/i', '', (string) $operation));
+                    })
+                    ->filter()
+                    ->values();
+
+                return $operations->implode(', ') . ': ' . $operator;
+            })
+            ->values()
+            ->implode(' | ');
     }
 
     private function logCostingChanges(Costing $costing, array $original, array $payload, bool $isNew): void
