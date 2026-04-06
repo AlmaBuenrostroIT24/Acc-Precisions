@@ -746,10 +746,55 @@ class CostingController extends Controller
     {
         $order->loadMissing('costing.operations');
 
+        $faiPassOperators = QaFaiSummary::query()
+            ->where('order_schedule_id', $order->id)
+            ->whereRaw("UPPER(TRIM(COALESCE(insp_type, ''))) = 'FAI'")
+            ->whereRaw("LOWER(TRIM(COALESCE(results, ''))) IN ('pass')")
+            ->orderByRaw('CASE WHEN date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get(['operation', 'operator'])
+            ->groupBy(function ($row) {
+                return trim((string) ($row->operation ?? ''));
+            })
+            ->map(function ($rows, $operation) {
+                $operator = $rows
+                    ->pluck('operator')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->filter()
+                    ->first();
+
+                if ($operation === '' || !$operator) {
+                    return null;
+                }
+
+                return [
+                    'operation' => $operation,
+                    'operator' => $operator,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        $faiPassSummary = null;
+
+        if ($faiPassOperators->isNotEmpty()) {
+            $uniqueOperators = $faiPassOperators
+                ->pluck('operator')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $faiPassSummary = $uniqueOperators->count() === 1
+                ? $uniqueOperators->first()
+                : $faiPassOperators->map(fn ($item) => $item['operation'] . ': ' . $item['operator'])->implode(' | ');
+        }
+
         $pdf = Pdf::loadView('quotes.costing.pdf_sheet', [
             'order' => $order,
             'costing' => $order->costing,
             'operations' => $order->costing?->operations ?? collect(),
+            'faiPassSummary' => $faiPassSummary,
         ])->setPaper('letter', 'portrait');
 
         $cleanWorkId = preg_replace('/[\/\\\\]/', '_', (string) $order->work_id);

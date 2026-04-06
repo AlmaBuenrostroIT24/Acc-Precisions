@@ -6,14 +6,14 @@
     <style>
         @page {
             size: letter portrait;
-            margin: 12pt;
+            margin: 10pt;
         }
 
         body {
             font-family: DejaVu Sans, sans-serif;
             color: #111827;
             font-size: 9.5pt;
-            margin: 74pt 0 34pt;
+            margin: 34pt 0 28pt;
         }
 
         header {
@@ -21,7 +21,7 @@
             top: -2pt;
             left: 0;
             right: 0;
-            height: 66pt;
+            height: 58pt;
         }
 
         footer {
@@ -29,7 +29,7 @@
             bottom: -6pt;
             left: 0;
             right: 0;
-            height: 24pt;
+            height: 20pt;
             font-size: 8pt;
             color: #475569;
         }
@@ -37,7 +37,7 @@
         .footer-table td {
             border: 0;
             border-top: 1px solid #cbd5e1;
-            padding: 6pt 0 0;
+            padding: 4pt 0 0;
         }
 
         .header-table td {
@@ -70,7 +70,7 @@
         }
 
         .logo {
-            height: 36pt;
+            height: 32pt;
         }
 
         table {
@@ -81,12 +81,12 @@
 
         th, td {
             border: 1px solid #1f2937;
-            padding: 3pt 5pt;
+            padding: 2pt 4pt;
             vertical-align: top;
         }
 
         .section {
-            margin-bottom: 10pt;
+            margin-bottom: 2pt;
         }
 
         .section-banner {
@@ -97,23 +97,72 @@
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            padding: 4pt 10pt;
+            padding: 3pt 10pt;
             border-radius: 2pt;
-            margin-bottom: 10pt;
+            margin-bottom: 4pt;
         }
 
         .meta-table td {
-            height: 15pt;
+            height: 12pt;
+        }
+
+        .meta-split-table,
+        .meta-split-table td,
+        .meta-inner-table,
+        .meta-inner-table td {
+            border: 0;
+            padding: 0;
+        }
+
+        .meta-split-table {
+            table-layout: fixed;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        .meta-inner-table td {
+            border: 1px solid #1f2937;
+            padding: 2pt 4pt;
+            height: 18pt;
+            vertical-align: top;
+        }
+
+        .meta-inner-left td:last-child {
+            border-right: 0;
+        }
+
+        .meta-inner-left .label {
+            width: 28%;
+        }
+
+        .meta-inner-left .value {
+            width: 72%;
+        }
+
+        .meta-inner-right .label {
+            width: 24%;
+        }
+
+        .meta-inner-right .value {
+            width: 76%;
+        }
+
+        .meta-inner-right tr:nth-child(5) td,
+        .meta-inner-right tr:nth-child(6) td {
+            height: 22pt;
+        }
+
+        .meta-inner-left tr:nth-child(5) td,
+        .meta-inner-left tr:nth-child(6) td {
+            height: 22pt;
         }
 
         .label {
             font-weight: 800;
-            width: 18%;
             background: #f8fafc;
         }
 
         .value {
-            width: 32%;
         }
 
         .header-cell {
@@ -137,6 +186,25 @@
             text-align: center;
         }
 
+        .pdf-operations-table {
+            table-layout: fixed;
+        }
+
+        .pdf-op-col-subop {
+            width: 12%;
+        }
+
+        .pdf-op-col-specs {
+            width: 34%;
+        }
+
+        .pdf-op-col-time {
+            width: 10.8%;
+            padding-left: 2pt;
+            padding-right: 2pt;
+            font-size: 8pt;
+        }
+
         .operations-row td {
             height: 15pt;
             vertical-align: middle;
@@ -155,6 +223,8 @@
             text-transform: uppercase;
             text-align: right;
             background: #f8fafc;
+            padding-top: 2pt;
+            padding-bottom: 2pt;
         }
 
         .summary-title {
@@ -164,24 +234,33 @@
             font-size: 12pt;
             background: #e8f0fb;
             color: #1f3a66;
+            padding-top: 2pt;
+            padding-bottom: 2pt;
         }
 
         .notes-box {
-            min-height: 78pt;
+            height: 44pt;
             white-space: pre-wrap;
+            padding-top: 2pt;
+            padding-bottom: 2pt;
+        }
+
+        .pdf-summary-table td {
+            padding-top: 2pt;
+            padding-bottom: 2pt;
         }
     </style>
 </head>
 <body>
     @php
         $operations = collect([
-            (object) ['name_operation' => 'Traveler Process', 'resource_name' => '-----'],
-            (object) ['name_operation' => 'OP1', 'resource_name' => null],
-            (object) ['name_operation' => 'OP2', 'resource_name' => null],
-            (object) ['name_operation' => 'OP3', 'resource_name' => null],
-            (object) ['name_operation' => 'OP4', 'resource_name' => null],
-            (object) ['name_operation' => 'OP5', 'resource_name' => null],
-            (object) ['name_operation' => 'OP6', 'resource_name' => null],
+            (object) ['name_operation' => 'Travel Proc.', 'resource_name' => '-----'],
+            (object) ['name_operation' => '0 /', 'resource_name' => null],
+            (object) ['name_operation' => '0 /', 'resource_name' => null],
+            (object) ['name_operation' => '0 /', 'resource_name' => null],
+            (object) ['name_operation' => '0 /', 'resource_name' => null],
+            (object) ['name_operation' => '0 /', 'resource_name' => null],
+            (object) ['name_operation' => '0 /', 'resource_name' => null],
             (object) ['name_operation' => null, 'resource_name' => null],
             (object) ['name_operation' => null, 'resource_name' => null],
             (object) ['name_operation' => null, 'resource_name' => null],
@@ -192,6 +271,17 @@
         if ($resolvedRevision === '' || strtolower($resolvedRevision) === 'default_value') {
             preg_match('/\bREV(?:ISION)?\.?\s*[:\-]?\s*([A-Z0-9\-]+)/i', (string) ($order->Part_description ?? ''), $revisionMatches);
             $resolvedRevision = isset($revisionMatches[1]) ? 'REV. ' . trim($revisionMatches[1]) : '';
+        }
+
+        $partDescription = (string) ($order->Part_description ?? '');
+        $partDescriptionStyle = 'white-space: nowrap;';
+
+        if (mb_strlen($partDescription) > 60) {
+            $partDescriptionStyle .= ' font-size: 7.6pt;';
+        }
+
+        if (mb_strlen($partDescription) > 85) {
+            $partDescriptionStyle .= ' font-size: 6.8pt;';
         }
     @endphp
 
@@ -231,75 +321,105 @@
     </div>
 
     <div class="section">
-        <table class="meta-table">
+        <table class="meta-split-table">
             <tr>
-                <td class="label">Customer:</td>
-                <td class="value">{{ $order->costumer ?: 'N/A' }}</td>
-                <td class="label">PN:</td>
-                <td class="value">{{ $order->PN ?: 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td class="label">WO#:</td>
-                <td class="value">{{ $order->work_id ?: 'N/A' }}</td>
-                <td class="label">Revision:</td>
-                <td class="value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td class="label">CO:</td>
-                <td class="value">{{ $order->co ?: 'N/A' }}</td>
-                <td class="label">Date:</td>
-                <td class="value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Cust PO:</td>
-                <td class="value">{{ $order->cust_po ?: 'N/A' }}</td>
-                <td class="label">Operation:</td>
-                <td class="value">
-                    @if(filled($order->operation))
-                        <span class="operation-pill">{{ $order->operation }}</span>
-                    @else
-                        N/A
-                    @endif
+                <td style="width: 33%; padding-right: 0;">
+                    <table class="meta-inner-table meta-inner-left">
+                        <tr>
+                            <td class="label">Customer:</td>
+                            <td class="value">{{ $order->costumer ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">WO#:</td>
+                            <td class="value">{{ $order->work_id ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">CO:</td>
+                            <td class="value">{{ $order->co ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Cust PO:</td>
+                            <td class="value">{{ $order->cust_po ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Qty:</td>
+                            <td class="value">{{ $order->qty ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">WO Qty:</td>
+                            <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Setup:</td>
+                            <td class="value">{{ $faiPassSummary ?? '' }}</td>
+                        </tr>
+                    </table>
                 </td>
-            </tr>
-            <tr>
-                <td class="label">Qty:</td>
-                <td class="value">{{ $order->qty ?? 'N/A' }}</td>
-                <td class="label">Part Description:</td>
-                <td class="value">{{ $order->Part_description ?: 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td class="label">WO Qty:</td>
-                <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
-                <td class="label">Material Type:</td>
-                <td class="value"></td>
+                <td style="width: 67%; padding-left: 0; padding-right: 0;">
+                    <table class="meta-inner-table meta-inner-right">
+                        <tr>
+                            <td class="label">PN:</td>
+                            <td class="value">{{ $order->PN ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Revision:</td>
+                            <td class="value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Date:</td>
+                            <td class="value">{{ optional($order->due_date)->format('Y-m-d') ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Operation:</td>
+                            <td class="value">
+                                @if(filled($order->operation))
+                                    <span class="operation-pill">{{ $order->operation }}</span>
+                                @else
+                                    N/A
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">Part Description:</td>
+                            <td class="value" style="{{ $partDescriptionStyle }}">{{ $partDescription ?: 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Material Type:</td>
+                            <td class="value"></td>
+                        </tr>
+                        <tr>
+                            <td class="label">Qty Material:</td>
+                            <td class="value"></td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
         </table>
     </div>
 
     <div class="section">
-        <table>
+        <table class="pdf-operations-table">
             <thead>
                 <tr>
-                    <th class="header-cell">OP Description</th>
-                    <th class="header-cell">Resource ID</th>
-                    <th class="header-cell">Programming</th>
-                    <th class="header-cell">Setup</th>
-                    <th class="header-cell">Run Time * Pcs</th>
-                    <th class="header-cell">Run Time Total</th>
-                    <th class="header-cell">Total Tme OP</th>
+                    <th class="header-cell pdf-op-col-subop">SUB/OP</th>
+                    <th class="header-cell pdf-op-col-specs">OP Specs</th>
+                    <th class="header-cell pdf-op-col-time">PROG.<br>TIME</th>
+                    <th class="header-cell pdf-op-col-time">Setup</th>
+                    <th class="header-cell pdf-op-col-time">Run Time<br>Pcs</th>
+                    <th class="header-cell pdf-op-col-time">Run Time<br>Total</th>
+                    <th class="header-cell pdf-op-col-time">Total<br>OP</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($operations as $operation)
                     <tr class="operations-row">
-                        <td>{{ $operation->name_operation }}</td>
-                        <td>{{ $operation->resource_name ?: '' }}</td>
-                        <td class="text-center"></td>
-                        <td class="text-center"></td>
-                        <td class="text-center"></td>
-                        <td class="text-center"></td>
-                        <td class="text-center"></td>
+                        <td class="pdf-op-col-subop">{{ $operation->name_operation }}</td>
+                        <td class="pdf-op-col-specs">{{ $operation->resource_name ?: '' }}</td>
+                        <td class="text-center pdf-op-col-time"></td>
+                        <td class="text-center pdf-op-col-time"></td>
+                        <td class="text-center pdf-op-col-time"></td>
+                        <td class="text-center pdf-op-col-time"></td>
+                        <td class="text-center pdf-op-col-time"></td>
                     </tr>
                 @empty
                     <tr>
@@ -308,11 +428,23 @@
                 @endforelse
                 <tr>
                     <td colspan="2" class="summary-label">Total Times:</td>
-                    <td class="text-center"></td>
-                    <td class="text-center"></td>
-                    <td class="text-center"></td>
-                    <td class="text-center"></td>
+                    <td class="text-center pdf-op-col-time"></td>
+                    <td class="text-center pdf-op-col-time"></td>
+                    <td class="text-center pdf-op-col-time"></td>
+                    <td class="text-center pdf-op-col-time"></td>
                     <td class="text-center"><strong></strong></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="summary-label" style="background:#fff;">Total Hours:</td>
+                    <td class="text-center" style="background:#f1f5f9;"><strong></strong></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="summary-label" style="background:#fff;">Actual Hours:</td>
+                    <td class="text-center" style="background:#f1f5f9;"><strong></strong></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="summary-label" style="background:#fff;">Hours Variance:</td>
+                    <td class="text-center" style="background:#f1f5f9;"><strong></strong></td>
                 </tr>
             </tbody>
         </table>
@@ -322,7 +454,7 @@
         <table>
             <tr>
                 <td style="width:56%; padding:0; border:0;">
-                    <table>
+                    <table class="pdf-summary-table">
                         <tr>
                             <td class="summary-label" style="width:48%;">Total Labor:</td>
                             <td style="width:6%;" class="text-center">$</td>
@@ -340,13 +472,12 @@
                         </tr>
                         <tr>
                             <td colspan="3" class="notes-box">
-                                <strong>Notes:</strong><br>
                             </td>
                         </tr>
                     </table>
                 </td>
                 <td style="width:44%; padding:0; border:0;">
-                    <table>
+                    <table class="pdf-summary-table">
                         <tr>
                             <td colspan="4" class="summary-title">Final Comparation</td>
                         </tr>
