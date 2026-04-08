@@ -116,6 +116,19 @@
             color: #b91c1c;
         }
 
+        .costing-erp-btn-success {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #15803d;
+        }
+
+        .costing-erp-btn-success:hover,
+        .costing-erp-btn-success:focus {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #166534;
+        }
+
         .costing-edit-title,
         .costing-files-title {
             font-size: 1.34rem;
@@ -183,6 +196,11 @@
             color: #111827;
             padding: 0 0 2px;
             font-size: 1.18rem;
+        }
+
+        .costing-inline-input-sm {
+            width: 52%;
+            min-width: 120px;
         }
 
         .costing-inline-textarea {
@@ -910,17 +928,6 @@
         };
 
         $operationRows = $operations->values();
-        if ($operationRows->isEmpty()) {
-            $operationRows = collect([(object) [
-                'name_operation' => '',
-                'resource_name' => '',
-                'time_programming' => 0,
-                'time_setup' => 0,
-                'runtime_pcs' => 0,
-                'runtime_total' => 0,
-                'total_time_operation' => 0,
-            ]]);
-        }
         $sumProgramming = $operations->sum(fn ($operation) => (float) ($operation->time_programming ?? 0));
         $sumSetup = $operations->sum(fn ($operation) => (float) ($operation->time_setup ?? 0));
         $sumRuntimePcs = $operations->sum(fn ($operation) => (float) ($operation->runtime_pcs ?? 0));
@@ -979,7 +986,6 @@
                         <form method="POST" action="{{ route('costing.update', $order) }}" id="costingForm" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
-
                             <div class="costing-top-card">
                                 <div class="costing-top-grid">
                                     <div class="costing-info-row">
@@ -1015,16 +1021,24 @@
                                     <div class="costing-info-row">
                                         <div class="costing-info-label">Qty:</div>
                                         <div class="costing-info-value">{{ $order->qty ?? 'N/A' }}</div>
-                                        <div class="costing-info-label">Part Description:</div>
-                                        <div class="costing-info-value">{{ $order->Part_description ?: 'N/A' }}</div>
+                                        <div class="costing-info-label">Qty Costing:</div>
+                                        <div class="costing-info-value">
+                                            <input
+                                                class="costing-inline-input costing-inline-input-sm"
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                name="qty_costing"
+                                                id="qtyCostingInput"
+                                                value="{{ old('qty_costing', (int) ($costing->qty_costing ?? 0)) ?: '' }}"
+                                            >
+                                        </div>
                                     </div>
                                     <div class="costing-info-row">
                                         <div class="costing-info-label">WO Qty:</div>
                                         <div class="costing-info-value">{{ $order->wo_qty ?? 'N/A' }}</div>
-                                        <div class="costing-info-label">Material Type:</div>
-                                        <div class="costing-info-value">
-                                            <input class="costing-inline-input" type="text" name="type_material" value="{{ old('type_material', $costing->type_material ?? '') }}">
-                                        </div>
+                                        <div class="costing-info-label">Part Description:</div>
+                                        <div class="costing-info-value">{{ $order->Part_description ?: 'N/A' }}</div>
                                     </div>
                                     <div class="costing-info-row">
                                         <div class="costing-info-label">Setup:</div>
@@ -1035,6 +1049,14 @@
                                                 N/A
                                             @endif
                                         </div>
+                                        <div class="costing-info-label">Material Type:</div>
+                                        <div class="costing-info-value">
+                                            <input class="costing-inline-input" type="text" name="type_material" value="{{ old('type_material', $costing->type_material ?? '') }}">
+                                        </div>
+                                    </div>
+                                    <div class="costing-info-row">
+                                        <div class="costing-info-label"></div>
+                                        <div class="costing-info-value"></div>
                                         <div class="costing-info-label">Qty Material:</div>
                                         <div class="costing-info-value">
                                             <input class="costing-inline-input" type="text" name="qty_material" value="{{ old('qty_material', isset($costing) && (float) ($costing->qty_material ?? 0) !== 0.0 ? number_format((float) $costing->qty_material, 4, '.', '') : '') }}">
@@ -1050,7 +1072,7 @@
                                 <button type="button" class="costing-erp-btn costing-erp-btn-danger costing-row-icon-btn" id="removeOperationRow" title="Remove Row" aria-label="Remove Row">
                                     <i class="fas fa-minus"></i>
                                 </button>
-                                <button type="submit" class="costing-erp-btn costing-erp-btn-primary" title="Save" aria-label="Save">
+                                <button type="submit" class="costing-erp-btn costing-erp-btn-success" title="Save" aria-label="Save">
                                     <i class="fas fa-save"></i>
                                     <span class="ml-1">Save</span>
                                 </button>
@@ -1073,39 +1095,19 @@
                                         @foreach($operationRows as $index => $operation)
                                             <tr class="operation-row">
                                                 <td>
-                                                    @if($index === 0)
-                                                        <input
-                                                            class="costing-form-control"
-                                                            type="hidden"
-                                                            name="operations[{{ $index }}][name_operation]"
-                                                            value="Travel Proc."
-                                                        >
-                                                        <div class="costing-locked-cell">Travel Proc.</div>
-                                                    @else
-                                                        <input
-                                                            class="costing-form-control"
-                                                            type="text"
-                                                            name="operations[{{ $index }}][name_operation]"
-                                                            value="{{ old("operations.$index.name_operation", $operation->name_operation ?? 'OP' . $index) }}"
-                                                        >
-                                                    @endif
+                                                    <input
+                                                        class="costing-form-control"
+                                                        type="text"
+                                                        name="operations[{{ $index }}][name_operation]"
+                                                        value="{{ old("operations.$index.name_operation", $operation->name_operation ?? '0 /') }}"
+                                                    >
                                                 </td>
                                                 <td>
-                                                    @if($index === 0)
-                                                        <input
-                                                            class="costing-form-control"
-                                                            type="hidden"
-                                                            name="operations[{{ $index }}][resource_name]"
-                                                            value=""
-                                                        >
-                                                        <div class="costing-locked-cell">-----</div>
-                                                    @else
-                                                        <textarea
-                                                            class="costing-form-control costing-opspecs-input js-opspecs-input"
-                                                            rows="1"
-                                                            name="operations[{{ $index }}][resource_name]"
-                                                        >{{ old("operations.$index.resource_name", $operation->resource_name ?? '') }}</textarea>
-                                                    @endif
+                                                    <textarea
+                                                        class="costing-form-control costing-opspecs-input js-opspecs-input"
+                                                        rows="1"
+                                                        name="operations[{{ $index }}][resource_name]"
+                                                    >{{ old("operations.$index.resource_name", $operation->resource_name ?? '') }}</textarea>
                                                 </td>
                                                 <td>
                                                     <input
@@ -1144,7 +1146,7 @@
                                                         class="costing-form-control costing-duration-input js-duration-field js-row-total-time"
                                                         type="text"
                                                         name="operations[{{ $index }}][total_time_operation]"
-                                                        value="{{ old("operations.$index.total_time_operation", $index === 0 ? '0:00:00' : $formatHours($operation->total_time_operation ?? 0)) }}"
+                                                        value="{{ old("operations.$index.total_time_operation", $formatHours($operation->total_time_operation ?? 0)) }}"
                                                     >
                                                 </td>
                                             </tr>
@@ -1176,13 +1178,13 @@
                                                 <input class="costing-form-control costing-summary-center costing-summary-readonly js-total-hours-display" type="text" value="{{ old('total_time_order', $formatHours($costing->total_time_order ?? $sumTotalTimeOperation)) }}" readonly>
                                             </td>
                                         </tr>
-                                        <tr class="costing-table-total-row costing-table-hours-row">
+                                        <tr class="costing-table-total-row costing-table-hours-row d-none">
                                             <td class="costing-summary-label" colspan="6">Actual Hours:</td>
                                             <td class="costing-summary-center">
                                                 <input class="costing-form-control costing-summary-center js-hours-display" type="text" name="hrs_actual" value="{{ old('hrs_actual', isset($costing) && (float) ($costing->hrs_actual ?? 0) !== 0.0 ? $formatHours($costing->hrs_actual) : '') }}">
                                             </td>
                                         </tr>
-                                        <tr class="costing-table-total-row costing-table-hours-row">
+                                        <tr class="costing-table-total-row costing-table-hours-row d-none">
                                             <td class="costing-summary-label" colspan="6">Hours Variance:</td>
                                             <td class="costing-summary-center">
                                                 <input class="costing-form-control costing-summary-center costing-summary-readonly js-hours-display" type="text" name="hrs_variance" value="{{ old('hrs_variance', isset($costing) && (float) ($costing->hrs_variance ?? 0) !== 0.0 ? $formatHours($costing->hrs_variance) : '') }}" readonly>
@@ -1239,7 +1241,7 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="costing-summary-label">Grandtotal Cost:</td>
+                                                <td class="costing-summary-label">Cost:</td>
                                                 <td class="costing-summary-center">$</td>
                                                 <td colspan="2">
                                                     <input class="costing-form-control costing-summary-right-text costing-summary-value costing-summary-readonly" type="text" inputmode="decimal" name="grandtotal_cost" value="{{ old('grandtotal_cost', $costing->grandtotal_cost ?? 5210.00) }}" readonly>
@@ -1436,9 +1438,12 @@
     <script>
         $(function () {
             const $tableBody = $('#operationsTableBody');
+            const $costingForm = $('#costingForm');
             const orderQty = {{ (int) ($order->qty ?? 0) }};
             const orderWoQty = {{ (float) ($order->wo_qty ?? 0) }};
             const laborRatePerHour = 120;
+            const $qtyCostingInput = $('#qtyCostingInput');
+            const initialQtyCosting = parseInt($qtyCostingInput.val() || '0', 10) || 0;
 
             function nextRowIndex() {
                 return $tableBody.find('.operation-row').length;
@@ -1451,11 +1456,6 @@
             function normalizeOperationLabels() {
                 $tableBody.find('.operation-row').each(function (index) {
                     const $input = $(this).find('input[name$="[name_operation]"]');
-                    if (index === 0) {
-                        $input.val('Travel Proc.');
-                        return;
-                    }
-
                     if (!$input.val() || $input.val().trim() === '/' || $input.val().trim() === '0/' || $input.val().trim() === '0 /' || /^OP\d+$/i.test($input.val().trim())) {
                         $input.val(opLabel(index));
                     }
@@ -1510,14 +1510,12 @@
             }
 
             function displayTime(value) {
-                const normalized = normalizeTime(value);
-                const [hours, minutes] = normalized.split(':');
-                return `${hours}:${minutes}`;
+                return normalizeTime(value);
             }
 
             function displayTimeOrBlank(value) {
                 const normalized = normalizeTime(value);
-                return timeToSeconds(normalized) === 0 ? '' : displayTime(normalized);
+                return timeToSeconds(normalized) === 0 ? '' : normalized;
             }
 
             function setDisplayTime($input, value) {
@@ -1561,9 +1559,26 @@
                 $field.toggleClass('costing-summary-readonly', readonly);
             }
 
+            function getQtyCosting() {
+                const rawValue = parseInt(String($qtyCostingInput.val() || '').trim(), 10);
+                if (!Number.isNaN(rawValue) && rawValue >= 0) {
+                    return rawValue;
+                }
+
+                return 0;
+            }
+
+            function submitQtyCostingSelection(value) {
+                if (!$costingForm.length) {
+                    return;
+                }
+
+                $qtyCostingInput.val(value);
+                $costingForm.trigger('submit');
+            }
+
             function canEditRowTotal($row) {
                 if (!$row || !$row.length) return false;
-                if ($row.index() === 0) return false;
 
                 const programming = timeToSeconds($row.find('input[name$="[time_programming]"]').val());
                 const setup = timeToSeconds($row.find('input[name$="[time_setup]"]').val());
@@ -1575,9 +1590,7 @@
             function renderDurationInputs(scope) {
                 $(scope).find('.js-duration-field').each(function () {
                     const $field = $(this);
-                    const isFirstRow = $field.closest('.operation-row').index() === 0;
-                    const isRowTotalField = $field.hasClass('js-row-total-time');
-                    const readonly = $field.hasClass('js-runtime-total-field') || (isFirstRow && !isRowTotalField);
+                    const readonly = $field.hasClass('js-runtime-total-field');
                     $field.val(displayTimeOrBlank($field.val()));
                     setDurationFieldReadonly($field, readonly);
                 });
@@ -1602,16 +1615,10 @@
                 const $totalField = $row.find('.js-row-total-time');
                 const $runtimeTotalField = $row.find('.js-runtime-total-field');
 
-                if (rowIndex === 0) {
-                    $totalField.val(displayTimeOrBlank($totalField.val()));
-                    setDurationFieldReadonly($totalField, false);
-                    return;
-                }
-
                 const programming = timeToSeconds($row.find('input[name$="[time_programming]"]').val());
                 const setup = timeToSeconds($row.find('input[name$="[time_setup]"]').val());
                 const runtimePcs = timeToSeconds($row.find('input[name$="[runtime_pcs]"]').val());
-                const effectiveQty = Math.max(orderQty - 1, 0);
+                const effectiveQty = Math.max(getQtyCosting() - 1, 0);
                 const runtimeTotal = runtimePcs * effectiveQty;
 
                 $runtimeTotalField.val(runtimeTotal === 0 ? '' : displayTime(secondsToTime(runtimeTotal)));
@@ -1662,7 +1669,8 @@
                 const salePrice = parseMoney($('input[name="sale_price"]').val());
                 const difference = salePrice - grandTotal;
                 const result = salePrice > 0 ? (difference / salePrice) * 100 : 0;
-                const costPcs = orderWoQty > 0 ? grandTotal / orderWoQty : 0;
+                const qtyCosting = getQtyCosting();
+                const costPcs = qtyCosting > 0 ? grandTotal / qtyCosting : 0;
 
                 $('input[name="grandtotal_cost"]').val(formatMoney(grandTotal));
                 $('input[name="price_pcs"]').val(costPcs > 0 ? formatMoney(costPcs) : '');
@@ -1681,10 +1689,9 @@
             }
 
             function buildRow(index) {
-                const isFirstRow = index === 0;
                 return `
                     <tr class="operation-row">
-                        <td><input class="costing-form-control" type="text" name="operations[${index}][name_operation]" value="${isFirstRow ? 'Travel Proc.' : opLabel(index)}"></td>
+                        <td><input class="costing-form-control" type="text" name="operations[${index}][name_operation]" value="${opLabel(index)}"></td>
                         <td><textarea class="costing-form-control costing-opspecs-input js-opspecs-input" rows="1" name="operations[${index}][resource_name]"></textarea></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][time_programming]" value="0:00:00"></td>
                         <td><input class="costing-form-control costing-duration-input js-duration-field" type="text" name="operations[${index}][time_setup]" value="0:00:00"></td>
@@ -1707,7 +1714,7 @@
 
             $('#removeOperationRow').on('click', function () {
                 const $rows = $tableBody.find('.operation-row');
-                if ($rows.length > 1) {
+                if ($rows.length > 0) {
                     $rows.last().remove();
                     normalizeOperationLabels();
                     updateSummaryTotals();
@@ -1809,6 +1816,73 @@
                 });
             });
 
+            function promptQtyCosting() {
+                if (!$qtyCostingInput.length || initialQtyCosting > 0) {
+                    return;
+                }
+
+                if (typeof Swal === 'undefined') {
+                    const useOrderQty = confirm(`Use Qty ${orderQty} for costing?`);
+                    if (useOrderQty) {
+                        submitQtyCostingSelection(orderQty);
+                        return;
+                    }
+
+                    const manualValue = window.prompt('Enter Qty Costing:', '');
+                    const parsedManual = parseInt(String(manualValue || '').trim(), 10);
+                    if (!Number.isNaN(parsedManual) && parsedManual >= 0) {
+                        submitQtyCostingSelection(parsedManual);
+                    }
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Qty Costing',
+                    text: `Do you want to use Qty ${orderQty} for this costing?`,
+                    icon: 'question',
+                    showDenyButton: true,
+                    confirmButtonText: 'Use Qty',
+                    denyButtonText: 'Another Qty',
+                    confirmButtonColor: '#0d6efd',
+                    denyButtonColor: '#64748b',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        submitQtyCostingSelection(orderQty);
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Qty Costing',
+                        input: 'number',
+                        inputLabel: 'Enter the quantity for costing',
+                        inputAttributes: {
+                            min: 0,
+                            step: 1,
+                        },
+                        inputValue: orderQty > 0 ? orderQty : '',
+                        showCancelButton: true,
+                        confirmButtonText: 'Save Qty',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#0d6efd',
+                        preConfirm: (value) => {
+                            const parsed = parseInt(String(value || '').trim(), 10);
+                            if (Number.isNaN(parsed) || parsed < 0) {
+                                Swal.showValidationMessage('Enter a valid integer quantity.');
+                                return false;
+                            }
+
+                            return parsed;
+                        }
+                    }).then((qtyResult) => {
+                        if (qtyResult.isConfirmed && typeof qtyResult.value !== 'undefined') {
+                            submitQtyCostingSelection(qtyResult.value);
+                        }
+                    });
+                });
+            }
+
             $(document).on('change', '.js-costing-file-input', function () {
                 const fileName = this.files && this.files[0] ? this.files[0].name : 'No file chosen';
                 const target = $(this).data('target');
@@ -1895,6 +1969,14 @@
                 this.style.height = `${this.scrollHeight}px`;
             });
 
+            $qtyCostingInput.on('input change', function () {
+                $tableBody.find('.operation-row').each(function () {
+                    updateRowTotals($(this));
+                });
+                updateSummaryTotals();
+            });
+
+            promptQtyCosting();
             normalizeOperationLabels();
             autosizeOpspecs(document);
             renderDurationInputs(document);

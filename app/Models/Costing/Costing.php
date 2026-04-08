@@ -19,6 +19,7 @@ class Costing extends Model
         'drawing_pdf_path',
         'quote_pdf_path',
         'type_material',
+        'qty_costing',
         'qty_material',
         'price_material',
         'total_material',
@@ -43,6 +44,7 @@ class Costing extends Model
     ];
 
     protected $casts = [
+        'qty_costing' => 'integer',
         'qty_material' => 'decimal:4',
         'price_material' => 'decimal:4',
         'total_material' => 'decimal:4',

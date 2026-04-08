@@ -12,7 +12,7 @@
         body {
             font-family: DejaVu Sans, sans-serif;
             color: #111827;
-            font-size: 9.5pt;
+            font-size: 12pt;
             margin: 34pt 0 28pt;
         }
 
@@ -96,13 +96,14 @@
 
         .pdf-op-col-specs {
             width: 34%;
+            font-size: 11pt;
         }
 
         .pdf-op-col-time {
             width: 10.8%;
             padding-left: 2pt;
             padding-right: 2pt;
-            font-size: 8pt;
+            font-size: 10pt;
         }
 
         .title {
@@ -186,6 +187,11 @@
             height: 22pt;
         }
 
+        .meta-inner-left tr:nth-child(7) td,
+        .meta-inner-right tr:nth-child(7) td {
+            height: 18pt;
+        }
+
         .label {
             font-weight: 800;
             background: #f8fafc;
@@ -200,7 +206,7 @@
             font-weight: 800;
             text-transform: uppercase;
             text-align: center;
-            font-size: 8.5pt;
+            font-size: 10.5pt;
         }
 
         .operation-pill {
@@ -276,12 +282,13 @@
             $totalSeconds = (int) round($value * 3600);
             $hours = intdiv($totalSeconds, 3600);
             $minutes = intdiv($totalSeconds % 3600, 60);
+            $seconds = $totalSeconds % 60;
 
             if ($totalSeconds === 0) {
                 return '';
             }
 
-            return sprintf('%d:%02d', $hours, $minutes);
+            return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
         };
 
         $formatMoney = function ($value, $blankWhenZero = false) {
@@ -311,13 +318,46 @@
 
         $partDescription = (string) ($order->Part_description ?? '');
         $partDescriptionStyle = 'white-space: nowrap;';
+        $pnValue = (string) ($order->PN ?? '');
+        $pnValueStyle = 'white-space: nowrap;';
 
-        if (mb_strlen($partDescription) > 60) {
-            $partDescriptionStyle .= ' font-size: 7.6pt;';
+        if (mb_strlen($pnValue) > 12) {
+            $pnValueStyle .= ' font-size: 9pt;';
         }
 
-        if (mb_strlen($partDescription) > 85) {
-            $partDescriptionStyle .= ' font-size: 6.8pt;';
+        if (mb_strlen($pnValue) > 18) {
+            $pnValueStyle .= ' font-size: 8pt;';
+        }
+
+        if (mb_strlen($pnValue) > 24) {
+            $pnValueStyle .= ' font-size: 7pt; white-space: normal; word-break: break-word; line-height: 1.1;';
+        }
+
+        $customerValue = (string) ($order->costumer ?? '');
+        $customerValueStyle = 'white-space: nowrap;';
+
+        if (mb_strlen($customerValue) > 12) {
+            $customerValueStyle .= ' font-size: 9pt;';
+        }
+
+        if (mb_strlen($customerValue) > 18) {
+            $customerValueStyle .= ' font-size: 8pt;';
+        }
+
+        if (mb_strlen($customerValue) > 24) {
+            $customerValueStyle .= ' font-size: 7pt; white-space: normal; word-break: break-word; line-height: 1.1;';
+        }
+
+        if (mb_strlen($partDescription) > 50) {
+            $partDescriptionStyle .= ' font-size: 10pt;';
+        }
+
+        if (mb_strlen($partDescription) > 70) {
+            $partDescriptionStyle .= ' font-size: 9pt;';
+        }
+
+        if (mb_strlen($partDescription) > 90) {
+            $partDescriptionStyle .= ' font-size: 8pt;';
         }
     @endphp
 
@@ -357,84 +397,60 @@
     </div>
 
     <div class="section">
-        <table class="meta-split-table">
+        <table class="meta-inner-table" style="width: 100%; table-layout: fixed;">
             <tr>
-                <td style="width: 33%; padding-right: 0;">
-                    <table class="meta-inner-table meta-inner-left">
-                        <tr>
-                            <td class="label">Customer:</td>
-                            <td class="value">{{ $order->costumer ?: 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">WO#:</td>
-                            <td class="value">{{ $order->work_id ?: 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">CO:</td>
-                            <td class="value">{{ $order->co ?: 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Cust PO:</td>
-                            <td class="value">{{ $order->cust_po ?: 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Qty:</td>
-                            <td class="value">{{ $order->qty ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">WO Qty:</td>
-                            <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Date:</td>
-                            <td class="value">
-                                @if($order->due_date)
-                                    {{ \Illuminate\Support\Str::ucfirst(str_replace('.', '', \Carbon\Carbon::parse($order->due_date)->locale('es')->translatedFormat('M-d-Y'))) }}
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                        </tr>
-                    </table>
+                <td class="label" style="width: 14.5%;">Customer:</td>
+                <td class="value" style="width: 19.5%; {{ $customerValueStyle }}">{{ $order->costumer ?: 'N/A' }}</td>
+                <td class="label" style="width: 15.5%;">PN:</td>
+                <td class="value" style="width: 17.5%; {{ $pnValueStyle }}">{{ $order->PN ?: 'N/A' }}</td>
+                <td class="label" style="width: 13%;">Revision:</td>
+                <td class="value" style="width: 20%;">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">WO#:</td>
+                <td class="value">{{ $order->work_id ?: 'N/A' }}</td>
+                <td class="label">CO:</td>
+                <td class="value">{{ $order->co ?: 'N/A' }}</td>
+                <td class="label">Cust PO:</td>
+                <td class="value">{{ $order->cust_po ?: 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Qty:</td>
+                <td class="value">{{ $order->qty ?? 'N/A' }}</td>
+                <td class="label">WO Qty:</td>
+                <td class="value">{{ $order->wo_qty ?? 'N/A' }}</td>
+                <td class="label">Qty Costing:</td>
+                <td class="value">{{ (int) ($costing->qty_costing ?? 0) > 0 ? (int) $costing->qty_costing : '' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Setup:</td>
+                <td class="value">{{ $faiPassSummary ?? '' }}</td>
+                <td class="label">Operation:</td>
+                <td class="value">
+                    @if(filled($order->operation))
+                        <span class="operation-pill">{{ $order->operation }}</span>
+                    @else
+                        N/A
+                    @endif
                 </td>
-                <td style="width: 67%; padding-left: 0; padding-right: 0;">
-                    <table class="meta-inner-table meta-inner-right">
-                        <tr>
-                            <td class="label">PN:</td>
-                            <td class="value">{{ $order->PN ?: 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Revision:</td>
-                            <td class="value">{{ $resolvedRevision !== '' ? $resolvedRevision : 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Setup:</td>
-                            <td class="value">{{ $faiPassSummary ?? '' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Operation:</td>
-                            <td class="value">
-                                @if(filled($order->operation))
-                                    <span class="operation-pill">{{ $order->operation }}</span>
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="label">Part Description:</td>
-                            <td class="value" style="{{ $partDescriptionStyle }}">{{ $partDescription ?: 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Material Type:</td>
-                            <td class="value">{{ $costing->type_material ?? '' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Qty Material:</td>
-                            <td class="value">{{ abs((float) ($costing->qty_material ?? 0)) > 0.00001 ? number_format((float) $costing->qty_material, 4) : '' }}</td>
-                        </tr>
-                    </table>
+                <td class="label">Date:</td>
+                <td class="value">
+                    @if($order->due_date)
+                        {{ \Illuminate\Support\Str::ucfirst(str_replace('.', '', \Carbon\Carbon::parse($order->due_date)->locale('es')->translatedFormat('M-d-Y'))) }}
+                    @else
+                        N/A
+                    @endif
                 </td>
+            </tr>
+            <tr>
+                <td class="label">Qty Material:</td>
+                <td class="value">{{ abs((float) ($costing->qty_material ?? 0)) > 0.00001 ? rtrim(rtrim(number_format((float) $costing->qty_material, 4, '.', ','), '0'), '.') : '' }}</td>
+                <td class="label">Material Type:</td>
+                <td class="value" colspan="3">{{ $costing->type_material ?? '' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Part Desc.</td>
+                <td class="value" colspan="5" style="{{ $partDescriptionStyle }}">{{ $partDescription ?: 'N/A' }}</td>
             </tr>
         </table>
     </div>
@@ -480,14 +496,6 @@
                     <td colspan="6" class="summary-label" style="background:#fff;">Total Hours:</td>
                     <td class="text-center" style="background:#f1f5f9;"><strong>{{ $formatHours($costing->total_time_order ?? $sumTotalTimeOperation) }}</strong></td>
                 </tr>
-                <tr>
-                    <td colspan="6" class="summary-label" style="background:#fff;">Actual Hours:</td>
-                    <td class="text-center" style="background:#f1f5f9;"><strong>{{ $formatHours($costing->hrs_actual ?? 0) }}</strong></td>
-                </tr>
-                <tr>
-                    <td colspan="6" class="summary-label" style="background:#fff;">Hours Variance:</td>
-                    <td class="text-center" style="background:#f1f5f9;"><strong>{{ $formatHours($costing->hrs_variance ?? 0) }}</strong></td>
-                </tr>
             </tbody>
         </table>
     </div>
@@ -530,7 +538,7 @@
                             <td colspan="2" class="text-right">{{ $formatMoney($costing->sale_price ?? 0, true) }}</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Grandtotal Cost:</td>
+                            <td class="summary-label">Cost:</td>
                             <td class="text-center">$</td>
                             <td colspan="2" class="text-right">{{ $formatMoney($costing->grandtotal_cost ?? 0, true) }}</td>
                         </tr>

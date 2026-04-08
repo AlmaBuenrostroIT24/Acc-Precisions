@@ -98,10 +98,11 @@ class CostingController extends Controller
             $order->costing_notes_date = optional($costing?->updated_at)->format('Y-m-d H:i:s');
             $order->costing_updated_at = optional($costing?->updated_at)->format('Y-m-d H:i:s');
             $storedPricePcs = (float) ($costing->price_pcs ?? 0);
+            $qtyCosting = (int) ($costing->qty_costing ?? 0);
             $order->price_pcs = $storedPricePcs > 0
                 ? $storedPricePcs
-                : ((float) ($order->wo_qty ?? 0) > 0
-                    ? round($order->grandtotal_cost / (float) $order->wo_qty, 2)
+                : ($qtyCosting > 0
+                    ? round($order->grandtotal_cost / $qtyCosting, 2)
                     : 0);
             $order->setup_summary = $faiPassSetupByOrder->get($order->id);
             return $order;
@@ -327,6 +328,7 @@ class CostingController extends Controller
     {
         $validated = $request->validate([
             'type_material' => ['nullable', 'string', 'max:100'],
+            'qty_costing' => ['nullable', 'integer', 'min:0'],
             'qty_material' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
             'notes_bottom' => ['nullable', 'string'],
@@ -360,11 +362,12 @@ class CostingController extends Controller
             $notes = trim((string) ($validated['notes_bottom'] ?? ''));
 
             $grandTotalCost = $this->parseMoney($validated['grandtotal_cost'] ?? null);
-            $woQty = (float) ($order->wo_qty ?? 0);
+            $qtyCosting = (int) ($validated['qty_costing'] ?? 0);
 
             $payload = [
                 'status' => 'draft',
                 'type_material' => $validated['type_material'] ?? null,
+                'qty_costing' => $qtyCosting,
                 'qty_material' => $this->parseMoney($validated['qty_material'] ?? null),
                 'total_material' => $this->parseMoney($validated['total_material'] ?? null),
                 'total_outsource' => $this->parseMoney($validated['total_outsource'] ?? null),
@@ -377,7 +380,7 @@ class CostingController extends Controller
                 'hrs_variance' => $this->timeStringToDecimalHours($validated['hrs_actual'] ?? null) - $this->timeStringToDecimalHours($validated['total_time_order'] ?? null),
                 'total_labor' => $this->parseMoney($validated['total_labor'] ?? null),
                 'sale_price' => $this->parseMoney($validated['sale_price'] ?? null),
-                'price_pcs' => $woQty > 0 ? round($grandTotalCost / $woQty, 2) : 0,
+                'price_pcs' => $qtyCosting > 0 ? round($grandTotalCost / $qtyCosting, 2) : 0,
                 'grandtotal_cost' => $grandTotalCost,
                 'difference_cost' => $this->parseMoney($validated['difference_cost'] ?? null),
                 'percentage' => $this->parseMoney($validated['percentage'] ?? null),
@@ -821,6 +824,7 @@ class CostingController extends Controller
     {
         $fields = [
             'type_material',
+            'qty_costing',
             'qty_material',
             'drawing_pdf_path',
             'quote_pdf_path',
