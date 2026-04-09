@@ -251,10 +251,12 @@
         }
 
         .notes-box {
-            height: 44pt;
+            height: 28pt;
             white-space: pre-wrap;
-            padding-top: 2pt;
-            padding-bottom: 2pt;
+            padding-top: 0;
+            padding-bottom: 0;
+            text-align: left;
+            vertical-align: top;
         }
 
         .costing-pdf-costpcs {
@@ -378,6 +380,9 @@
         if (mb_strlen($partDescription) > 90) {
             $partDescriptionStyle .= ' font-size: 8pt;';
         }
+
+        $notesContent = (string) ($costing->notes ?? '');
+        $notesBoxHeight = '58.5pt';
     @endphp
 
     <header>
@@ -545,9 +550,7 @@
                             <td class="text-right summary-value" style="width:36%;">{{ $formatMoney($costing->total_outsource ?? 0) }}</td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="notes-box">
-                                {{ $costing->notes ?? '' }}
-                            </td>
+                            <td colspan="3" class="notes-box" valign="top" style="height:{{ $notesBoxHeight }}; text-align:left; vertical-align:top; padding:0 2pt;"><span style="display:block; text-align:left; white-space:pre-wrap; line-height:1.05; margin:0; padding:0;">{{ $notesContent }}</span></td>
                         </tr>
                     </table>
                 </td>

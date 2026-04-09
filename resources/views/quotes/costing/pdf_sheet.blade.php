@@ -241,10 +241,12 @@
         }
 
         .notes-box {
-            height: 44pt;
+            height: 58pt;
             white-space: pre-wrap;
             padding-top: 2pt;
             padding-bottom: 2pt;
+            text-align: left;
+            vertical-align: top;
         }
 
         .pdf-summary-table {
@@ -282,7 +284,6 @@
 <body>
     @php
         $operations = collect([
-            (object) ['name_operation' => 'Travel Proc.', 'resource_name' => '-----'],
             (object) ['name_operation' => '0 /', 'resource_name' => null],
             (object) ['name_operation' => '0 /', 'resource_name' => null],
             (object) ['name_operation' => '0 /', 'resource_name' => null],
