@@ -226,6 +226,7 @@
             background: #f8fafc;
             padding-top: 2pt;
             padding-bottom: 2pt;
+            white-space: nowrap;
         }
 
         .summary-title {
@@ -246,9 +247,35 @@
             padding-bottom: 2pt;
         }
 
+        .pdf-summary-table {
+            width: 100%;
+            table-layout: auto;
+            border-collapse: collapse;
+        }
+
+        .pdf-summary-table-left {
+            table-layout: fixed;
+        }
+
+        .pdf-summary-table-left .summary-label {
+            text-align: right;
+        }
+
         .pdf-summary-table td {
-            padding-top: 2pt;
-            padding-bottom: 2pt;
+            padding: 1pt 2pt;
+        }
+
+        .summary-value {
+            white-space: nowrap;
+        }
+
+        .summary-currency {
+            text-align: center;
+            white-space: nowrap;
+            padding: 0;
+            font-size: 10pt;
+            line-height: 1;
+            width: 6pt;
         }
     </style>
 </head>
@@ -462,21 +489,26 @@
         <table>
             <tr>
                 <td style="width:56%; padding:0; border:0;">
-                    <table class="pdf-summary-table">
+                    <table class="pdf-summary-table pdf-summary-table-left">
+                        <colgroup>
+                            <col style="width:58%;">
+                            <col style="width:6%;">
+                            <col style="width:36%;">
+                        </colgroup>
                         <tr>
-                            <td class="summary-label" style="width:48%;">Total Labor:</td>
-                            <td style="width:6%;" class="text-center">$</td>
-                            <td class="text-right"></td>
+                            <td class="summary-label" style="width:58%;">Total Labor:</td>
+                            <td class="summary-currency" style="width:6%;">$</td>
+                            <td class="text-right summary-value" style="width:36%;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Total Materials:</td>
-                            <td class="text-center">$</td>
-                            <td class="text-right"></td>
+                            <td class="summary-label" style="width:58%;">Total Materials:</td>
+                            <td class="summary-currency" style="width:6%;">$</td>
+                            <td class="text-right summary-value" style="width:36%;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Total Outsource Process:</td>
-                            <td class="text-center">$</td>
-                            <td class="text-right"></td>
+                            <td class="summary-label" style="width:58%;">Total Outsource Process:</td>
+                            <td class="summary-currency" style="width:6%;">$</td>
+                            <td class="text-right summary-value" style="width:36%;">&nbsp;</td>
                         </tr>
                         <tr>
                             <td colspan="3" class="notes-box">
@@ -486,34 +518,40 @@
                 </td>
                 <td style="width:44%; padding:0; border:0;">
                     <table class="pdf-summary-table">
+                        <colgroup>
+                            <col style="width:44%;">
+                            <col style="width:8%;">
+                            <col style="width:44%;">
+                            <col style="width:12%;">
+                        </colgroup>
                         <tr>
                             <td colspan="4" class="summary-title">Final Comparation</td>
                         </tr>
                         <tr>
-                            <td class="summary-label" style="width:46%;">Sale Price:</td>
-                            <td style="width:6%;" class="text-center">$</td>
-                            <td colspan="2" class="text-right"></td>
+                            <td class="summary-label" style="width:44%;">Sale Price:</td>
+                            <td class="summary-currency" style="width:8%;">$</td>
+                            <td class="text-right summary-value" style="width:44%;" colspan="2">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Cost:</td>
-                            <td class="text-center">$</td>
-                            <td colspan="2" class="text-right"></td>
+                            <td class="summary-label" style="width:44%;">Cost:</td>
+                            <td class="summary-currency" style="width:8%;">$</td>
+                            <td class="text-right summary-value" style="width:44%;" colspan="2">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Cost Pcs:</td>
-                            <td class="text-center">$</td>
-                            <td colspan="2" class="text-right"></td>
+                            <td class="summary-label" style="width:44%;">Cost Pcs:</td>
+                            <td class="summary-currency" style="width:8%;">$</td>
+                            <td class="text-right summary-value" style="width:44%;" colspan="2">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Difference:</td>
-                            <td class="text-center">$</td>
-                            <td colspan="2" class="text-right"></td>
+                            <td class="summary-label" style="width:44%;">Difference:</td>
+                            <td class="summary-currency" style="width:8%;">$</td>
+                            <td class="text-right summary-value" style="width:44%;" colspan="2">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td class="summary-label">Result:</td>
-                            <td class="text-center">$</td>
-                            <td class="text-right"></td>
-                            <td class="text-center">%</td>
+                            <td class="summary-label" style="width:44%;">Result:</td>
+                            <td class="summary-currency" style="width:8%;">$</td>
+                            <td class="text-right summary-value" style="width:44%;">&nbsp;</td>
+                            <td class="text-center summary-currency" style="width:12%;">%</td>
                         </tr>
                     </table>
                 </td>
