@@ -1059,7 +1059,7 @@
                                         <div class="costing-info-value"></div>
                                         <div class="costing-info-label">Qty Material:</div>
                                         <div class="costing-info-value">
-                                            <input class="costing-inline-input" type="text" name="qty_material" value="{{ old('qty_material', isset($costing) && (float) ($costing->qty_material ?? 0) !== 0.0 ? number_format((float) $costing->qty_material, 4, '.', '') : '') }}">
+                                            <input class="costing-inline-input" type="text" name="qty_material" value="{{ old('qty_material', isset($costing) && (float) ($costing->qty_material ?? 0) !== 0.0 ? rtrim(rtrim(number_format((float) $costing->qty_material, 4, '.', ','), '0'), '.') : '') }}">
                                         </div>
                                     </div>
                                 </div>
